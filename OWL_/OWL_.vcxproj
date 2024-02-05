@@ -131,10 +131,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Core\GBuffer.h" />
+    <ClInclude Include="Core\Scene.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="DebugApp2.h" />
     <ClInclude Include="Geometry\Animation.h" />
     <ClInclude Include="Core\BaseRenderer.h" />
-    <ClInclude Include="Core\Buffers.h" />
+    <ClInclude Include="Core\StagingBuffer.h" />
     <ClInclude Include="Core\Camera.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Core\ConstantBuffers.h" />
@@ -149,7 +154,7 @@
     <ClInclude Include="Geometry\Model.h" />
     <ClInclude Include="Geometry\ModelInstance.h" />
     <ClInclude Include="Geometry\ModelLoader.h" />
-    <ClInclude Include="Core\PostProcess.h" />
+    <ClInclude Include="Core\PostProcessor.h" />
     <ClInclude Include="Geometry\SkinnedMeshModel.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Core\StructuredBuffer.h" />
@@ -170,7 +175,12 @@
   <ItemGroup>
     <ClCompile Include="Core\BaseRenderer.cpp" />
     <ClCompile Include="Core\Camera.cpp" />
+    <ClCompile Include="Core\GBuffer.cpp" />
     <ClCompile Include="Core\GraphicsUtils.cpp" />
+    <ClCompile Include="Core\Scene.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Core\Texture3D.cpp" />
     <ClCompile Include="DebugApp.cpp" />
     <ClCompile Include="Geometry\Animation.cpp" />
@@ -183,7 +193,7 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Geometry\Model.cpp" />
     <ClCompile Include="Geometry\ModelLoader.cpp" />
-    <ClCompile Include="Core\PostProcess.cpp" />
+    <ClCompile Include="Core\PostProcessor.cpp" />
     <ClCompile Include="Core\Texture2D.cpp" />
     <ClCompile Include="Util\Util.cpp" />
   </ItemGroup>

@@ -19,7 +19,7 @@ void CheckD3DMemoryLeak()
 
 	OutputDebugStringW(L"================================== Direct3D Object Memory Leak List ==================================\n");
 	pDebug->ReportLiveObjects(DXGI_DEBUG_D3D11, DXGI_DEBUG_RLO_DETAIL);
-	OutputDebugStringW(L"======================================================================================================\n");
+	OutputDebugStringW(L"===========================================================================================\n");
 
 	pDebug->Release();
 }
@@ -33,7 +33,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 #endif
 
 	// std::unique_ptr<hlab::BaseRenderer> app = make_unique<hlab::DebugApp>();
-	Core::BaseRenderer* app = New DebugApp2();
+	Core::BaseRenderer* app = New DebugApp();
 	app->Initialize();
 	app->Run();
 

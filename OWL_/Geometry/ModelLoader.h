@@ -37,7 +37,7 @@ namespace Geometry
 
 	public:
 		std::string szBasePath;
-		std::vector<MeshData> pMeshes;
+		std::vector<struct MeshData> pMeshes;
 
 		AnimationData AnimData;
 

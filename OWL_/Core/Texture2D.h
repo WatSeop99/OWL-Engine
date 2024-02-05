@@ -20,6 +20,7 @@ namespace Core
 		inline ID3D11RenderTargetView* GetRTV() { return m_pRTV; }
 		inline ID3D11ShaderResourceView* GetSRV() { return m_pSRV; }
 		inline ID3D11UnorderedAccessView* GetUAV() { return m_pUAV; }
+		inline ID3D11Texture2D** GetAddressOfTexture() { return &m_pTexture; }
 		inline ID3D11RenderTargetView** GetAddressOfRTV() { return &m_pRTV; }
 		inline ID3D11ShaderResourceView** GetAddressOfSRV() { return &m_pSRV; }
 		inline ID3D11UnorderedAccessView** GetAddressOfUAV() { return &m_pUAV; }

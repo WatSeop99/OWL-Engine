@@ -7,10 +7,6 @@
 
 namespace Geometry
 {
-	using std::cout;
-	using std::endl;
-	using std::string;
-	using std::vector;
 	using DirectX::SimpleMath::Matrix;
 
 	class Model
@@ -71,5 +67,4 @@ namespace Geometry
 		struct Mesh* m_pBoundingBoxMesh = nullptr;
 		struct Mesh* m_pBoundingSphereMesh = nullptr;
 	};
-
-} // namespace hlab
+}

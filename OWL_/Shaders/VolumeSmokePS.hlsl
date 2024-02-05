@@ -2,9 +2,9 @@
 
 #define PI 3.141592f
 
-Texture3D<float> densityTex : register(t5); // t5 부터 시작
-Texture3D<float> lightingTex : register(t6);
-Texture3D<float> temperatureTex : register(t7);
+Texture3D<float> densityTex : register(t6); // t5 부터 시작
+Texture3D<float> lightingTex : register(t7);
+Texture3D<float> temperatureTex : register(t8);
 
 cbuffer Consts : register(b3) // b3 주의
 {

@@ -205,7 +205,7 @@ void Graphics::InitRasterizerStates(ID3D11Device* pDevice)
 	rasterDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_BACK;
 	rasterDesc.FrontCounterClockwise = FALSE;
 	rasterDesc.DepthClipEnable = TRUE;
-	rasterDesc.MultisampleEnable = TRUE;
+	rasterDesc.MultisampleEnable = TRUE; // MSAA.
 	hr = pDevice->CreateRasterizerState(&rasterDesc, &g_pSolidRS);
 	BREAK_IF_FAILED(hr);
 	SET_DEBUG_INFO_TO_OBJECT(g_pSolidRS, "g_pSolidRS");
@@ -231,7 +231,7 @@ void Graphics::InitRasterizerStates(ID3D11Device* pDevice)
 	rasterDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_NONE; // 양면
 	rasterDesc.FrontCounterClockwise = FALSE;
 	rasterDesc.DepthClipEnable = TRUE;
-	rasterDesc.MultisampleEnable = TRUE;
+	rasterDesc.MultisampleEnable = TRUE; // MSAA.
 	hr = pDevice->CreateRasterizerState(&rasterDesc, &g_pSolidBothRS);
 	BREAK_IF_FAILED(hr);
 	SET_DEBUG_INFO_TO_OBJECT(g_pSolidBothRS, "g_pSolidBothRS");
@@ -271,7 +271,7 @@ void Graphics::InitBlendStates(ID3D11Device* pDevice)
 
 	D3D11_BLEND_DESC mirrorBlendDesc;
 	ZeroMemory(&mirrorBlendDesc, sizeof(mirrorBlendDesc));
-	mirrorBlendDesc.AlphaToCoverageEnable = TRUE; // MSAA
+	mirrorBlendDesc.AlphaToCoverageEnable = TRUE;
 	mirrorBlendDesc.IndependentBlendEnable = FALSE;
 	// 개별 RenderTarget에 대해서 설정 (최대 8개).
 	mirrorBlendDesc.RenderTarget[0].BlendEnable = TRUE;
@@ -289,7 +289,7 @@ void Graphics::InitBlendStates(ID3D11Device* pDevice)
 
 	D3D11_BLEND_DESC blendDesc;
 	ZeroMemory(&blendDesc, sizeof(blendDesc));
-	blendDesc.AlphaToCoverageEnable = TRUE; // MSAA
+	blendDesc.AlphaToCoverageEnable = TRUE;
 	blendDesc.IndependentBlendEnable = FALSE;
 	blendDesc.RenderTarget[0].BlendEnable = TRUE;
 	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_BLEND_FACTOR;

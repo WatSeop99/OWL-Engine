@@ -11,6 +11,7 @@ namespace Core
 	class StructuredBuffer
 	{
 	public:
+		StructuredBuffer() = default;
 		virtual ~StructuredBuffer() { destroy(); }
 
 		virtual void Initialize(ID3D11Device* pDevice, const UINT NUM_ELEMENTS)

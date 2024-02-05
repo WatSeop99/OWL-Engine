@@ -138,21 +138,26 @@ void DebugApp::InitScene()
 void DebugApp::Render()
 {
 	Core::BaseRenderer::Render();
-	Core::BaseRenderer::PostRender();
 }
 
 void DebugApp::UpdateGUI()
 {
+	BaseRenderer::UpdateGUI();
+
 	ImGui::SetNextItemOpen(false, ImGuiCond_Once);
 	if (ImGui::TreeNode("General"))
 	{
-		ImGui::Checkbox("Use FPV", &m_Camera.bUseFirstPersonView);
+		ImGui::Checkbox("Use FPV", &(m_Camera.bUseFirstPersonView));
 		ImGui::Checkbox("Wireframe", &m_bDrawAsWire);
 		ImGui::Checkbox("DrawOBB", &m_bDrawOBB);
 		ImGui::Checkbox("DrawBSphere", &m_bDrawBS);
 		if (ImGui::Checkbox("MSAA ON", &m_bUseMSAA))
 		{
+			destroyBuffersForRendering();
 			createBuffers();
+			m_PostProcessor.Initialize(m_pDevice5, m_pContext4,
+									   { m_pGlobalConstsGPU, m_pBackBuffer, m_pFloatBuffer, m_pResolvedBuffer, m_pPrevBuffer, m_pBackBufferRTV, m_pResolvedSRV, m_pPrevSRV, m_pDepthOnlySRV },
+									   m_ScreenWidth, m_ScreenHeight, 4);
 		}
 		ImGui::TreePop();
 	}
@@ -160,53 +165,42 @@ void DebugApp::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Skybox"))
 	{
-		ImGui::SliderFloat("Strength", &m_GlobalConstsCPU.StrengthIBL, 0.0f, 0.5f);
-		ImGui::RadioButton("Env", &m_GlobalConstsCPU.TextureToDraw, 0);
+		ImGui::SliderFloat("Strength", &(m_GlobalConstsCPU.StrengthIBL), 0.0f, 0.5f);
+		ImGui::RadioButton("Env", &(m_GlobalConstsCPU.TextureToDraw), 0);
 		ImGui::SameLine();
-		ImGui::RadioButton("Specular", &m_GlobalConstsCPU.TextureToDraw, 1);
+		ImGui::RadioButton("Specular", &(m_GlobalConstsCPU.TextureToDraw), 1);
 		ImGui::SameLine();
-		ImGui::RadioButton("Irradiance", &m_GlobalConstsCPU.TextureToDraw, 2);
-		ImGui::SliderFloat("EnvLodBias", &m_GlobalConstsCPU.EnvLODBias, 0.0f, 10.0f);
+		ImGui::RadioButton("Irradiance", &(m_GlobalConstsCPU.TextureToDraw), 2);
+		ImGui::SliderFloat("EnvLodBias", &(m_GlobalConstsCPU.EnvLODBias), 0.0f, 10.0f);
 		ImGui::TreePop();
 	}
 
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Post Effects"))
 	{
-		int flag = 0;
-		flag += ImGui::RadioButton("Render", &m_PostEffectsConstsCPU.Mode, 1);
+		// 갱신된 내용은 Update()에서 처리.
+		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Render", &(m_PostProcessor.PostEffectsConstsCPU.Mode), 1);
 		ImGui::SameLine();
-		flag += ImGui::RadioButton("Depth", &m_PostEffectsConstsCPU.Mode, 2);
-		flag += ImGui::SliderFloat("DepthScale", &m_PostEffectsConstsCPU.DepthScale, 0.0f, 1.0f);
-		flag += ImGui::SliderFloat("Fog", &m_PostEffectsConstsCPU.FogStrength, 0.0f, 10.0f);
-
-		if (flag)
-		{
-			Graphics::UpdateBuffer(m_pContext, m_PostEffectsConstsCPU, m_pPostEffectsConstsGPU);
-		}
+		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Depth", &(m_PostProcessor.PostEffectsConstsCPU.Mode), 2);
+		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("DepthScale", &(m_PostProcessor.PostEffectsConstsCPU.DepthScale), 0.0f, 1.0f);
+		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("Fog", &(m_PostProcessor.PostEffectsConstsCPU.FogStrength), 0.0f, 10.0f);
 
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNode("Post Processing"))
 	{
-		int flag = 0;
-		flag += ImGui::SliderFloat("Bloom Strength", &m_PostProcess.CombineFilter.ConstantsData.Strength, 0.0f, 1.0f);
-		flag += ImGui::SliderFloat("Exposure", &m_PostProcess.CombineFilter.ConstantsData.Option1, 0.0f, 10.0f);
-		flag += ImGui::SliderFloat("Gamma", &m_PostProcess.CombineFilter.ConstantsData.Option2, 0.1f, 5.0f);
+		// 갱신된 내용은 Update()에서 처리.
+		m_PostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Bloom Strength", &(m_PostProcessor.CombineFilter.ConstantsData.Strength), 0.0f, 1.0f);
+		m_PostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Exposure", &(m_PostProcessor.CombineFilter.ConstantsData.Option1), 0.0f, 10.0f);
+		m_PostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Gamma", &(m_PostProcessor.CombineFilter.ConstantsData.Option2), 0.1f, 5.0f);
 
-		// 편의상 사용자 입력이 인식되면 바로 GPU 버퍼를 업데이트.
-		if (flag)
-		{
-			m_PostProcess.CombineFilter.UpdateConstantBuffers(m_pContext);
-		}
 		ImGui::TreePop();
 	}
 
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Mirror"))
 	{
-
 		ImGui::SliderFloat("Alpha", &m_MirrorAlpha, 0.0f, 1.0f);
 		const float blendColor[4] = { m_MirrorAlpha, m_MirrorAlpha, m_MirrorAlpha, 1.0f };
 		if (m_bDrawAsWire)
@@ -218,8 +212,8 @@ void DebugApp::UpdateGUI()
 			Graphics::g_MirrorBlendSolidPSO.SetBlendFactor(blendColor);
 		}
 
-		ImGui::SliderFloat("Metallic", &m_pMirror->MaterialConstants.CPU.MetallicFactor, 0.0f, 1.0f);
-		ImGui::SliderFloat("Roughness", &m_pMirror->MaterialConstants.CPU.RoughnessFactor, 0.0f, 1.0f);
+		ImGui::SliderFloat("Metallic", &(m_pMirror->MaterialConstants.CPU.MetallicFactor), 0.0f, 1.0f);
+		ImGui::SliderFloat("Roughness", &(m_pMirror->MaterialConstants.CPU.RoughnessFactor), 0.0f, 1.0f);
 
 		ImGui::TreePop();
 	}
@@ -228,9 +222,9 @@ void DebugApp::UpdateGUI()
 	if (ImGui::TreeNode("Light"))
 	{
 		// ImGui::SliderFloat3("Position", &m_GlobalConstsCPU.lights[0].position.x, -5.0f, 5.0f);
-		ImGui::SliderFloat("Halo Radius", &m_GlobalConstsCPU.Lights[1].HaloRadius, 0.0f, 2.0f);
-		ImGui::SliderFloat("Halo Strength", &m_GlobalConstsCPU.Lights[1].HaloStrength, 0.0f, 1.0f);
-		ImGui::SliderFloat("Radius", &m_GlobalConstsCPU.Lights[1].Radius, 0.0f, 0.5f);
+		ImGui::SliderFloat("Halo Radius", &(m_GlobalConstsCPU.Lights[1].HaloRadius), 0.0f, 2.0f);
+		ImGui::SliderFloat("Halo Strength", &(m_GlobalConstsCPU.Lights[1].HaloStrength), 0.0f, 1.0f);
+		ImGui::SliderFloat("Radius", &(m_GlobalConstsCPU.Lights[1].Radius), 0.0f, 0.5f);
 		ImGui::TreePop();
 	}
 
@@ -243,16 +237,16 @@ void DebugApp::UpdateGUI()
 
 		if (m_pPickedModel)
 		{
-			flag += ImGui::SliderFloat("Metallic", &m_pPickedModel->MaterialConstants.CPU.MetallicFactor, 0.0f, 1.0f);
-			flag += ImGui::SliderFloat("Roughness", &m_pPickedModel->MaterialConstants.CPU.RoughnessFactor, 0.0f, 1.0f);
-			flag += ImGui::CheckboxFlags("AlbedoTexture", &m_pPickedModel->MaterialConstants.CPU.bUseAlbedoMap, 1);
-			flag += ImGui::CheckboxFlags("EmissiveTexture", &m_pPickedModel->MaterialConstants.CPU.bUseEmissiveMap, 1);
-			flag += ImGui::CheckboxFlags("Use NormalMapping", &m_pPickedModel->MaterialConstants.CPU.bUseNormalMap, 1);
-			flag += ImGui::CheckboxFlags("Use AO", &m_pPickedModel->MaterialConstants.CPU.bUseAOMap, 1);
-			flag += ImGui::CheckboxFlags("Use HeightMapping", &m_pPickedModel->MeshConstants.CPU.bUseHeightMap, 1);
-			flag += ImGui::SliderFloat("HeightScale", &m_pPickedModel->MeshConstants.CPU.HeightScale, 0.0f, 0.1f);
-			flag += ImGui::CheckboxFlags("Use MetallicMap", &m_pPickedModel->MaterialConstants.CPU.bUseMetallicMap, 1);
-			flag += ImGui::CheckboxFlags("Use RoughnessMap", &m_pPickedModel->MaterialConstants.CPU.bUseRoughnessMap, 1);
+			flag += ImGui::SliderFloat("Metallic", &(m_pPickedModel->MaterialConstants.CPU.MetallicFactor), 0.0f, 1.0f);
+			flag += ImGui::SliderFloat("Roughness", &(m_pPickedModel->MaterialConstants.CPU.RoughnessFactor), 0.0f, 1.0f);
+			flag += ImGui::CheckboxFlags("AlbedoTexture", &(m_pPickedModel->MaterialConstants.CPU.bUseAlbedoMap), TRUE);
+			flag += ImGui::CheckboxFlags("EmissiveTexture", &(m_pPickedModel->MaterialConstants.CPU.bUseEmissiveMap), TRUE);
+			flag += ImGui::CheckboxFlags("Use NormalMapping", &m_pPickedModel->MaterialConstants.CPU.bUseNormalMap, TRUE);
+			flag += ImGui::CheckboxFlags("Use AO", &(m_pPickedModel->MaterialConstants.CPU.bUseAOMap), 1);
+			flag += ImGui::CheckboxFlags("Use HeightMapping", &(m_pPickedModel->MeshConstants.CPU.bUseHeightMap), TRUE);
+			flag += ImGui::SliderFloat("HeightScale", &(m_pPickedModel->MeshConstants.CPU.HeightScale), 0.0f, 0.1f);
+			flag += ImGui::CheckboxFlags("Use MetallicMap", &(m_pPickedModel->MaterialConstants.CPU.bUseMetallicMap), TRUE);
+			flag += ImGui::CheckboxFlags("Use RoughnessMap", &(m_pPickedModel->MaterialConstants.CPU.bUseRoughnessMap), TRUE);
 			if (flag)
 			{
 				m_pPickedModel->UpdateConstantBuffers(m_pDevice5, m_pContext4);
@@ -262,4 +256,6 @@ void DebugApp::UpdateGUI()
 
 		ImGui::TreePop();
 	}
+
+	ImGui::End();
 }

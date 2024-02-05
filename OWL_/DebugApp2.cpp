@@ -120,6 +120,8 @@ void DebugApp2::InitScene()
 
 void DebugApp2::UpdateGUI()
 {
+	BaseRenderer::UpdateGUI();
+
 	ImGui::SetNextItemOpen(false, ImGuiCond_Once);
 	if (ImGui::TreeNode("General"))
 	{
@@ -129,7 +131,11 @@ void DebugApp2::UpdateGUI()
 		ImGui::Checkbox("DrawBSphere", &m_bDrawBS);
 		if (ImGui::Checkbox("MSAA ON", &m_bUseMSAA))
 		{
+			Core::BaseRenderer::destroyBuffersForRendering();
 			Core::BaseRenderer::createBuffers();
+			m_PostProcessor.Initialize(m_pDevice5, m_pContext4,
+									   { m_pGlobalConstsGPU, m_pBackBuffer, m_pFloatBuffer, m_pResolvedBuffer, m_pPrevBuffer, m_pBackBufferRTV, m_pResolvedSRV, m_pPrevSRV, m_pDepthOnlySRV },
+									   m_ScreenWidth, m_ScreenHeight, 4);
 		}
 		ImGui::TreePop();
 	}
@@ -151,33 +157,33 @@ void DebugApp2::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Post Effects"))
 	{
-		int flag = 0;
-		flag += ImGui::RadioButton("Render", &(m_PostEffectsConstsCPU.Mode), 1);
+		// int flag = 0;
+		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Render", &(m_PostProcessor.PostEffectsConstsCPU.Mode), 1);
 		ImGui::SameLine();
-		flag += ImGui::RadioButton("Depth", &(m_PostEffectsConstsCPU.Mode), 2);
-		flag += ImGui::SliderFloat("DepthScale", &(m_PostEffectsConstsCPU.DepthScale), 0.0f, 1.0f);
-		flag += ImGui::SliderFloat("Fog", &(m_PostEffectsConstsCPU.FogStrength), 0.0f, 10.0f);
+		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Depth", &(m_PostProcessor.PostEffectsConstsCPU.Mode), 2);
+		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("DepthScale", &(m_PostProcessor.PostEffectsConstsCPU.DepthScale), 0.0f, 1.0f);
+		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("Fog", &(m_PostProcessor.PostEffectsConstsCPU.FogStrength), 0.0f, 10.0f);
 
-		if (flag)
+		/*if (flag)
 		{
 			Graphics::UpdateBuffer(m_pContext4, m_PostEffectsConstsCPU, m_pPostEffectsConstsGPU);
-		}
+		}*/
 
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNode("Post Processing"))
 	{
-		int flag = 0;
-		flag += ImGui::SliderFloat("Bloom Strength", &(m_PostProcess.CombineFilter.ConstantsData.Strength), 0.0f, 1.0f);
-		flag += ImGui::SliderFloat("Exposure", &(m_PostProcess.CombineFilter.ConstantsData.Option1), 0.0f, 10.0f);
-		flag += ImGui::SliderFloat("Gamma", &(m_PostProcess.CombineFilter.ConstantsData.Option2), 0.1f, 5.0f);
+		// int flag = 0;
+		m_PostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Bloom Strength", &(m_PostProcessor.CombineFilter.ConstantsData.Strength), 0.0f, 1.0f);
+		m_PostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Exposure", &(m_PostProcessor.CombineFilter.ConstantsData.Option1), 0.0f, 10.0f);
+		m_PostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Gamma", &(m_PostProcessor.CombineFilter.ConstantsData.Option2), 0.1f, 5.0f);
 
 		// 편의상 사용자 입력이 인식되면 바로 GPU 버퍼를 업데이트.
-		if (flag)
+		/*if (flag)
 		{
 			m_PostProcess.CombineFilter.UpdateConstantBuffers(m_pContext4);
-		}
+		}*/
 		ImGui::TreePop();
 	}
 
@@ -242,6 +248,8 @@ void DebugApp2::UpdateGUI()
 
 		ImGui::TreePop();
 	}
+
+	ImGui::End();
 }
 
 void DebugApp2::Update(float deltaTime)
@@ -331,7 +339,9 @@ void DebugApp2::Update(float deltaTime)
 void DebugApp2::Render()
 {
 	m_pTimer->Start(m_pContext4, true);
+
 	Core::BaseRenderer::Render();
-	Core::BaseRenderer::PostRender();
+
+	OutputDebugStringA("Rendering time ==> ");
 	m_pTimer->End(m_pContext4);
 }

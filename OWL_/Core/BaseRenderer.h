@@ -5,7 +5,7 @@
 #include "GraphicsCommon.h"
 #include "../Geometry/MeshData.h"
 #include "../Geometry/Model.h"
-#include "PostProcess.h"
+#include "PostProcessor.h"
 #include "Timer.h"
 
 namespace Core
@@ -29,32 +29,34 @@ namespace Core
 
 		virtual void Initialize();
 		virtual void InitScene();
+		void InitCubemaps(std::wstring&& basePath, std::wstring&& envFileName, std::wstring&& specularFileName, std::wstring&& irradianceFileName, std::wstring&& brdfFileName);
 
-		virtual void UpdateGUI() { }
-		virtual void Update(float deltaTime);
+		virtual void UpdateGUI();
 		virtual void UpdateLights(float deltaTime);
+		void UpdateGlobalConstants(const float& DELTA_TIME, const Vector3& EYE_WORLD, const Matrix& VIEW, const Matrix& PROJECTION, const Matrix& REFLECTION = Matrix());
+		virtual void Update(float deltaTime);
 
 		virtual void RenderDepthOnly();
 		virtual void RenderShadowMaps();
 		virtual void RenderOpaqueObjects();
-		virtual void RenderMirror();
+		//
+		/*virtual void RenderGBuffer();
+		virtual void RenderLights();*/
+		//
+		virtual void RenderMirror(); // forward shading 처리.
+		virtual void RenderGUI();
 		virtual void Render();
 
 		virtual void OnMouseMove(int mouseX, int mouseY);
 		virtual void OnMouseClick(int mouseX, int mouseY);
 		virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-		void InitCubemaps(std::wstring&& basePath, std::wstring&& envFileName,  std::wstring&& specularFileName, std::wstring&& irradianceFileName, std::wstring&& brdfFileName);
 		
-		void UpdateGlobalConstants(const float& DELTA_TIME, const Vector3& EYE_WORLD, const Matrix& VIEW, const Matrix& PROJECTION, const Matrix& REFLECTION = Matrix());
 		void SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU);
 		void SetPipelineState(const Graphics::GraphicsPSO& PSO);
 		void SetPipelineState(const Graphics::ComputePSO& PSO);
 		
 		Geometry::Model* PickClosest(const Ray& PICKNG_RAY, float* pMinDist);
 		void ProcessMouseControl();
-
-		void PostRender();
 
 	protected:
 		void initMainWindow();
@@ -67,6 +69,8 @@ namespace Core
 		void setMainViewport();
 		void setShadowViewport();
 		void setComputeShaderBarrier();
+
+		void destroyBuffersForRendering();
 
 	protected:
 		int m_ScreenWidth;
@@ -88,6 +92,7 @@ namespace Core
 		ID3D11DeviceContext4* m_pContext4 = nullptr;
 		IDXGISwapChain* m_pSwapChain = nullptr;
 		IDXGISwapChain4* m_pSwapChain4 = nullptr;
+
 		ID3D11Texture2D* m_pBackBuffer = nullptr;
 		ID3D11RenderTargetView* m_pBackBufferRTV = nullptr;
 
@@ -95,7 +100,8 @@ namespace Core
 		// Deferred shading을 위한 시험용 멤버변수.
 		////////////////////////////////////////////////////
 		
-		
+		/*GBuffer m_GBuffer;
+		LightManager m_LightManager;*/
 
 		////////////////////////////////////////////////////
 
@@ -103,22 +109,22 @@ namespace Core
 		// -> 후처리(블룸, 톤매핑) -> backBuffer(최종 SwapChain Present)
 
 		ID3D11Texture2D* m_pFloatBuffer = nullptr;
-		ID3D11Texture2D* m_pResolvedBuffer = nullptr;
-		ID3D11Texture2D* m_pPostEffectsBuffer = nullptr;
-		ID3D11Texture2D* m_pPrevBuffer = nullptr; // 간단한 모션 블러 효과
 		ID3D11RenderTargetView* m_pFloatRTV = nullptr;
+
+		ID3D11Texture2D* m_pResolvedBuffer = nullptr;
 		ID3D11RenderTargetView* m_pResolvedRTV = nullptr;
-		ID3D11RenderTargetView* m_pPostEffectsRTV = nullptr;
-		ID3D11RenderTargetView* m_pPrevRTV = nullptr;
 		ID3D11ShaderResourceView* m_pResolvedSRV = nullptr;
-		ID3D11ShaderResourceView* m_pPostEffectsSRV = nullptr;
+
+		ID3D11Texture2D* m_pPrevBuffer = nullptr; // 간단한 모션 블러 효과
+		ID3D11RenderTargetView* m_pPrevRTV = nullptr;
 		ID3D11ShaderResourceView* m_pPrevSRV = nullptr;
 
 		// Depth buffer 관련
 		ID3D11Texture2D* m_pDepthOnlyBuffer = nullptr; // No MSAA
 		ID3D11DepthStencilView* m_pDepthOnlyDSV = nullptr;
-		ID3D11DepthStencilView* m_pDefaultDSV = nullptr;
 		ID3D11ShaderResourceView* m_pDepthOnlySRV = nullptr;
+
+		ID3D11DepthStencilView* m_pDefaultDSV = nullptr;
 
 		// Shadow maps
 		int m_ShadowWidth;
@@ -127,7 +133,7 @@ namespace Core
 		ID3D11DepthStencilView* m_ppShadowDSVs[MAX_LIGHTS] = { nullptr, };
 		ID3D11ShaderResourceView* m_ppShadowSRVs[MAX_LIGHTS] = { nullptr, };
 
-		D3D11_VIEWPORT m_screenViewport;
+		D3D11_VIEWPORT m_ScreenViewport;
 
 		// 시점을 결정하는 카메라 클래스 추가
 		Camera m_Camera;
@@ -145,10 +151,7 @@ namespace Core
 		int m_MouseY;
 
 		// 렌더링 -> PostEffects -> PostProcess
-		PostEffectsConstants m_PostEffectsConstsCPU;
-		ID3D11Buffer* m_pPostEffectsConstsGPU = nullptr;
-
-		PostProcess m_PostProcess;
+		PostProcessor m_PostProcessor;
 
 		// 다양한 Pass들을 더 간단히 구현하기 위해 ConstBuffer들 분리
 		GlobalConstants m_GlobalConstsCPU;
@@ -180,6 +183,7 @@ namespace Core
 		// 거울이 아닌 물체들의 리스트. (for문으로 그리기 위함)
 		std::vector<Geometry::Model*> m_pBasicList;
 
+		// for debugging.
 		Timer* m_pTimer = nullptr;
 	};
 }

@@ -1,14 +1,15 @@
-#include "Common.hlsli" // 쉐이더에서도 include 사용 가능
+#include "Common.hlsli"
 #include "DiskSamples.hlsli"
 
 // https://github.com/Nadrin/PBR/blob/master/data/shaders/hlsl/pbr.hlsl
 
 // 메쉬 재질 텍스춰들 t0 부터 시작.
 Texture2D albedoTex : register(t0);
-Texture2D normalTex : register(t1);
-Texture2D aoTex : register(t2);
-Texture2D metallicRoughnessTex : register(t3);
-Texture2D emissiveTex : register(t4);
+Texture2D emissiveTex : register(t1);
+Texture2D normalTex : register(t2);
+Texture2D aoTex : register(t3);
+Texture2D metallicTex : register(t4);
+Texture2D roughnessTex : register(t5);
 
 struct PixelShaderOutput
 {
@@ -192,15 +193,15 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
 {
     // Directional light.
     float3 lightVec = (light.type & LIGHT_DIRECTIONAL ?
-                       -light.direction : 
+                       -light.direction :
                        representativePoint - posWorld); // light.position - posWorld;
 
     float lightDist = length(lightVec);
     lightVec /= lightDist;
 
     // Spot light.
-    float spotFator = (light.type & LIGHT_SPOT ? 
-                       pow(max(-dot(lightVec, light.direction), 0.0f), light.spotPower) : 
+    float spotFator = (light.type & LIGHT_SPOT ?
+                       pow(max(-dot(lightVec, light.direction), 0.0f), light.spotPower) :
                        1.0f);
         
     // Distance attenuation.
@@ -249,20 +250,20 @@ PixelShaderOutput main(PixelShaderInput input)
     float3 pixelToEye = normalize(eyeWorld - input.posWorld);
     float3 normalWorld = GetNormal(input);
     
-    float4 albedo = (useAlbedoMap ? 
-                     albedoTex.SampleLevel(linearWrapSampler, input.texcoord, lodBias) * float4(albedoFactor, 1.0f) : 
+    float4 albedo = (useAlbedoMap ?
+                     albedoTex.SampleLevel(linearWrapSampler, input.texcoord, lodBias) * float4(albedoFactor, 1.0f) :
                      float4(albedoFactor, 1.0f));
     clip(albedo.a - 0.5f); // Tree leaves. 투명한 부분의 픽셀은 그리지 않음.
     
     float ao = (useAOMap ? aoTex.SampleLevel(linearWrapSampler, input.texcoord, lodBias).r : 1.0f);
-    float metallic = (useMetallicMap ? 
-                      metallicRoughnessTex.SampleLevel(linearWrapSampler, input.texcoord, lodBias).b * metallicFactor : 
+    float metallic = (useMetallicMap ?
+                      metallicTex.SampleLevel(linearWrapSampler, input.texcoord, lodBias).b * metallicFactor :
                       metallicFactor);
-    float roughness = (useRoughnessMap ? 
-                       metallicRoughnessTex.SampleLevel(linearWrapSampler, input.texcoord, lodBias).g * roughnessFactor : 
+    float roughness = (useRoughnessMap ?
+                       roughnessTex.SampleLevel(linearWrapSampler, input.texcoord, lodBias).g * roughnessFactor :
                        roughnessFactor);
-    float3 emission = (useEmissiveMap ? 
-                       emissiveTex.SampleLevel(linearWrapSampler, input.texcoord, lodBias).rgb : 
+    float3 emission = (useEmissiveMap ?
+                       emissiveTex.SampleLevel(linearWrapSampler, input.texcoord, lodBias).rgb :
                        emissionFactor);
 
     float3 ambientLighting = AmbientLightingByIBL(albedo.rgb, normalWorld, pixelToEye, ao, metallic, roughness) * strengthIBL;

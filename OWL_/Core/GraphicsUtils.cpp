@@ -178,11 +178,7 @@ HRESULT CreateTextureHelper(ID3D11Device* pDevice, ID3D11DeviceContext* pContext
 	HRESULT hr = S_OK;
 
 	// 스테이징 텍스쳐를 만들고 CPU에서 이미지 복사.
-	ID3D11Texture2D* pStagingTexture = Graphics::CreateStagingTexture(pDevice,
-																	  pContext,
-																	  WIDTH, HEIGHT,
-																	  image,
-																	  PIXEL_FORMAT);
+	ID3D11Texture2D* pStagingTexture = Graphics::CreateStagingTexture(pDevice, pContext, WIDTH, HEIGHT, image, PIXEL_FORMAT);
 	if (pStagingTexture == nullptr)
 	{
 		hr = E_FAIL;
@@ -211,12 +207,7 @@ HRESULT CreateTextureHelper(ID3D11Device* pDevice, ID3D11DeviceContext* pContext
 		}
 
 		// 스테이징 텍스쳐로부터 가장 해상도가 높은 이미지 복사.
-		pContext->CopySubresourceRegion(*ppTexture,
-										0,
-										0, 0, 0,
-										pStagingTexture,
-										0,
-										nullptr);
+		pContext->CopySubresourceRegion(*ppTexture, 0, 0, 0, 0, pStagingTexture, 0, nullptr);
 		RELEASE(pStagingTexture);
 
 		// ResourceView 만들기.
@@ -238,26 +229,6 @@ namespace Graphics
 {
 	using namespace std;
 	using namespace DirectX;
-
-	//void CheckResult(HRESULT hr, ID3DBlob* errorBlob)
-	//{
-	//	if (FAILED(hr))
-	//	{
-	//		// 파일이 없을 경우.
-	//		if ((hr & D3D11_ERROR_FILE_NOT_FOUND) != 0)
-	//		{
-	//			OutputDebugStringA("File not found.\n");
-	//		}
-
-	//		// 에러 메시지가 있으면 출력.
-	//		if (errorBlob)
-	//		{
-	//			OutputDebugStringA("Shader compile error\n");
-	//			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-	//			OutputDebugStringA("\n");
-	//		}
-	//	}
-	//}
 
 	HRESULT CreateVertexShaderAndInputLayout(ID3D11Device* pDevice, const wchar_t* pszFileName, const D3D11_INPUT_ELEMENT_DESC* pINPUT_ELEMENTS, const UINT ELEMENTS_SIZE, const D3D_SHADER_MACRO* pSHADER_MACROS,
 											 ID3D11VertexShader** ppVertexShader, ID3D11InputLayout** ppInputLayout)

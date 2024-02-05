@@ -18,14 +18,18 @@ namespace Geometry
 		ID3D11Texture2D* pNormalTexture = nullptr;
 		ID3D11Texture2D* pHeightTexture = nullptr;
 		ID3D11Texture2D* pAOTexture = nullptr;
-		ID3D11Texture2D* pMetallicRoughnessTexture = nullptr;
+		// ID3D11Texture2D* pMetallicRoughnessTexture = nullptr;
+		ID3D11Texture2D* pMetallicTexture = nullptr;
+		ID3D11Texture2D* pRoughnessTexture = nullptr;
 
 		ID3D11ShaderResourceView* pAlbedoSRV = nullptr;
 		ID3D11ShaderResourceView* pEmissiveSRV = nullptr;
 		ID3D11ShaderResourceView* pNormalSRV = nullptr;
 		ID3D11ShaderResourceView* pHeightSRV = nullptr;
 		ID3D11ShaderResourceView* pAOSRV = nullptr;
-		ID3D11ShaderResourceView* pMetallicRoughnessSRV = nullptr;
+		// ID3D11ShaderResourceView* pMetallicRoughnessSRV = nullptr;
+		ID3D11ShaderResourceView* pMetallicSRV = nullptr;
+		ID3D11ShaderResourceView* pRoughnessSRV = nullptr;
 
 		// 3D Textures.
 		Core::Texture3D DensityTex;
@@ -38,14 +42,14 @@ namespace Geometry
 	};
 }
 
-#define INIT_MESH											  \
-	{														  \
-		nullptr, nullptr,									  \
-		nullptr, nullptr,									  \
-		nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, \
-		nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, \
-		Core::Texture3D(), Core::Texture3D(),				  \
-		0, 0, 0, 0											  \
+#define INIT_MESH													   \
+	{																   \
+		nullptr, nullptr,											   \
+		nullptr, nullptr,											   \
+		nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, \
+		nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, \
+		Core::Texture3D(), Core::Texture3D(),						   \
+		0, 0, 0, 0													   \
 	}
 
 static void ReleaseMesh(Geometry::Mesh** ppMesh)
@@ -65,14 +69,18 @@ static void ReleaseMesh(Geometry::Mesh** ppMesh)
 	SAFE_RELEASE((*ppMesh)->pNormalTexture);
 	SAFE_RELEASE((*ppMesh)->pHeightTexture);
 	SAFE_RELEASE((*ppMesh)->pAOTexture);
-	SAFE_RELEASE((*ppMesh)->pMetallicRoughnessTexture);
+	// SAFE_RELEASE((*ppMesh)->pMetallicRoughnessTexture);
+	SAFE_RELEASE((*ppMesh)->pMetallicTexture);
+	SAFE_RELEASE((*ppMesh)->pRoughnessTexture);
 
 	SAFE_RELEASE((*ppMesh)->pAlbedoSRV);
 	SAFE_RELEASE((*ppMesh)->pEmissiveSRV);
 	SAFE_RELEASE((*ppMesh)->pNormalSRV);
 	SAFE_RELEASE((*ppMesh)->pHeightSRV);
 	SAFE_RELEASE((*ppMesh)->pAOSRV);
-	SAFE_RELEASE((*ppMesh)->pMetallicRoughnessSRV);
+	// SAFE_RELEASE((*ppMesh)->pMetallicRoughnessSRV);
+	SAFE_RELEASE((*ppMesh)->pMetallicSRV);
+	SAFE_RELEASE((*ppMesh)->pRoughnessSRV);
 
 	free(*ppMesh);
 	*ppMesh = nullptr;

@@ -49,6 +49,12 @@ namespace Core
 	{
 		g_pAppBase = this;
 		m_Camera.SetAspectRatio(GetAspectRatio());
+
+		initMainWindow();
+		initDirect3D();
+
+		// Timer setting.
+		m_pTimer = New Timer(m_pDevice5);
 	}
 
 	BaseRenderer::~BaseRenderer()
@@ -109,22 +115,17 @@ namespace Core
 		SAFE_RELEASE(m_pReflectGlobalConstsGPU);
 		SAFE_RELEASE(m_pGlobalConstsGPU);
 
-		SAFE_RELEASE(m_pPostEffectsConstsGPU);
-
 		SAFE_RELEASE(m_pDepthOnlySRV);
 		SAFE_RELEASE(m_pDefaultDSV);
 		SAFE_RELEASE(m_pDepthOnlyDSV);
 		SAFE_RELEASE(m_pDepthOnlyBuffer);
 
 		SAFE_RELEASE(m_pPrevSRV);
-		SAFE_RELEASE(m_pPostEffectsSRV);
 		SAFE_RELEASE(m_pResolvedSRV);
 		SAFE_RELEASE(m_pPrevRTV);
-		SAFE_RELEASE(m_pPostEffectsRTV);
 		SAFE_RELEASE(m_pResolvedRTV);
 		SAFE_RELEASE(m_pFloatRTV);
 		SAFE_RELEASE(m_pPrevBuffer);
-		SAFE_RELEASE(m_pPostEffectsBuffer);
 		SAFE_RELEASE(m_pResolvedBuffer);
 		SAFE_RELEASE(m_pFloatBuffer);
 
@@ -145,7 +146,7 @@ namespace Core
 	{
 		// 메인 루프.
 		MSG msg = { 0, };
-		while (WM_QUIT != msg.message)
+		while (msg.message != WM_QUIT)
 		{
 			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 			{
@@ -154,42 +155,8 @@ namespace Core
 			}
 			else
 			{
-				ImGui_ImplDX11_NewFrame();
-				ImGui_ImplWin32_NewFrame();
-
-				ImGui::NewFrame();
-				ImGui::Begin("Scene Control");
-
-				// ImGui가 측정해주는 Framerate 출력.
-				ImGui::Text("Average %.3f ms/frame (%.1f FPS)",
-							1000.0f / ImGui::GetIO().Framerate,
-							ImGui::GetIO().Framerate);
-
-				UpdateGUI(); // 추가적으로 사용할 GUI.
-
-				ImGui::End();
-				ImGui::Render();
-
 				Update(ImGui::GetIO().DeltaTime);
-
 				Render(); // <- 중요: 우리가 구현한 렌더링.
-
-				// Example의 Render()에서 RT 설정을 해주지 않았을 경우에도
-				// 백 버퍼에 GUI를 그리기위해 RT 설정.
-				// 예) Render()에서 ComputeShader만 사용
-				setMainViewport();
-				m_pContext4->OMSetRenderTargets(1, &m_pBackBufferRTV, nullptr);
-
-				/*ImGui::NewFrame();
-				ImGui::Begin("Viewport");
-
-				ImGui::Image(m_pBackBuffer, ImVec2(512, 512));
-
-				ImGui::End();
-				ImGui::Render();*/
-
-				// GUI 렌더링.
-				ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
 				// GUI 렌더링 후에 Present() 호출.
 				m_pSwapChain->Present(1, 0);
@@ -201,18 +168,13 @@ namespace Core
 
 	void BaseRenderer::Initialize()
 	{
-		initMainWindow();
-		initDirect3D();
-
-		m_pTimer = New Timer(m_pDevice5);
-
+		/*initMainWindow();
+		initDirect3D();*/
 		initGUI();
-		InitScene();
 
-		// PostEffect에 사용.
-		struct Geometry::MeshData mesh = INIT_MESH_DATA;
-		Geometry::MakeSquare(&mesh);
-		m_pScreenSquare = New Geometry::Model(m_pDevice5, m_pContext4, { mesh });
+		m_pTimer->Start(m_pContext4, false);
+
+		InitScene();
 
 		// 환경 박스 초기화.
 		struct Geometry::MeshData skyboxMesh = INIT_MESH_DATA;
@@ -224,6 +186,9 @@ namespace Core
 
 		// 콘솔창이 렌더링 창을 덮는 것을 방지.
 		SetForegroundWindow(m_hMainWindow);
+
+		OutputDebugStringA("Renderer intialize time ==> ");
+		m_pTimer->End(m_pContext4);
 	}
 
 	// 여러 예제들이 공통적으로 사용하기 좋은 장면 설정
@@ -287,39 +252,38 @@ namespace Core
 		}
 	}
 
-	void BaseRenderer::Update(float deltaTime)
+	void BaseRenderer::InitCubemaps(std::wstring&& basePath, std::wstring&& envFileName, std::wstring&& specularFileName, std::wstring&& irradianceFileName, std::wstring&& brdfFileName)
 	{
-		// 카메라의 이동.
-		m_Camera.UpdateKeyboard(deltaTime, m_pbKeyPressed);
+		HRESULT hr = S_OK;
 
-		// 반사 행렬 추가
-		const Vector3 eyeWorld = m_Camera.GetEyePos();
-		const Matrix reflectRow = Matrix::CreateReflection(m_MirrorPlane);
-		const Matrix viewRow = m_Camera.GetView();
-		const Matrix projRow = m_Camera.GetProjection();
+		// BRDF LookUp Table은 CubeMap이 아니라 2D 텍스춰 입니다.
+		hr = Graphics::CreateDDSTexture(m_pDevice5, (basePath + envFileName).c_str(), true, &m_pEnvSRV);
+		BREAK_IF_FAILED(hr);
+		SET_DEBUG_INFO_TO_OBJECT(m_pEnvSRV, "m_pEnvSRV");
 
-		UpdateLights(deltaTime);
-		UpdateGlobalConstants(deltaTime, eyeWorld, viewRow, projRow, reflectRow);
-		ProcessMouseControl();
+		hr = Graphics::CreateDDSTexture(m_pDevice5, (basePath + specularFileName).c_str(), true, &m_pSpecularSRV);
+		BREAK_IF_FAILED(hr);
+		SET_DEBUG_INFO_TO_OBJECT(m_pSpecularSRV, "m_pSpecularSRV");
 
-		// 거울은 따로 처리.
-		if (m_pMirror)
-		{
-			m_pMirror->UpdateConstantBuffers(m_pDevice5, m_pContext4);
-		}
+		hr = Graphics::CreateDDSTexture(m_pDevice5, (basePath + irradianceFileName).c_str(), true, &m_pIrradianceSRV);
+		BREAK_IF_FAILED(hr);
+		SET_DEBUG_INFO_TO_OBJECT(m_pIrradianceSRV, "m_pIrradianceSRV");
 
-		// 조명의 위치 반영.
-		for (int i = 0; i < MAX_LIGHTS; ++i)
-		{
-			m_ppLightSpheres[i]->UpdateWorld(Matrix::CreateScale(std::max(0.01f, m_GlobalConstsCPU.Lights[i].Radius)) *
-											 Matrix::CreateTranslation(m_GlobalConstsCPU.Lights[i].Position));
-		}
+		hr = Graphics::CreateDDSTexture(m_pDevice5, (basePath + brdfFileName).c_str(), false, &m_pBrdfSRV);
+		BREAK_IF_FAILED(hr);
+		SET_DEBUG_INFO_TO_OBJECT(m_pBrdfSRV, "m_pBrdfSRV");
+	}
 
-		for (size_t i = 0, size = m_pBasicList.size(); i < size; ++i)
-		{
-			Geometry::Model* pCurModel = m_pBasicList[i];
-			pCurModel->UpdateConstantBuffers(m_pDevice5, m_pContext4);
-		}
+	void BaseRenderer::UpdateGUI()
+	{
+		ImGui_ImplDX11_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+
+		ImGui::NewFrame();
+		ImGui::Begin("Scene Control");
+
+		// ImGui가 측정해주는 Framerate 출력.
+		ImGui::Text("Average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	}
 
 	void BaseRenderer::UpdateLights(float dt)
@@ -358,18 +322,6 @@ namespace Core
 				m_pShadowGlobalConstsCPUs[i].InverseProjection = lightProj.Invert().Transpose();
 				m_pShadowGlobalConstsCPUs[i].ViewProjection = (lightView * lightProj).Transpose();
 
-				// LIGHT_FRUSTUM_WIDTH 확인
-				// Vector4 eye(0.0f, 0.0f, 0.0f, 1.0f);
-				// Vector4 xLeft(-1.0f, -1.0f, 0.0f, 1.0f);
-				// Vector4 xRight(1.0f, 1.0f, 0.0f, 1.0f);
-				// eye = Vector4::Transform(eye, lightProj);
-				// xLeft = Vector4::Transform(xLeft, lightProj.Invert());
-				// xRight = Vector4::Transform(xRight, lightProj.Invert());
-				// xLeft /= xLeft.w;
-				// xRight /= xRight.w;
-				// cout << "LIGHT_FRUSTUM_WIDTH = " << xRight.x - xLeft.x <<
-				// endl;
-
 				Graphics::UpdateBuffer(m_pContext4, m_pShadowGlobalConstsCPUs[i], m_ppShadowGlobalConstsGPUs[i]);
 
 				// 그림자를 실제로 렌더링할 때 필요.
@@ -378,6 +330,70 @@ namespace Core
 				m_GlobalConstsCPU.Lights[i].InverseProjection = m_pShadowGlobalConstsCPUs[i].InverseProjection;
 			}
 		}
+	}
+
+	// 여러 물체들이 공통적으료 사용하는 Const 업데이트.
+	void BaseRenderer::UpdateGlobalConstants(const float& DELTA_TIME, const Vector3& EYE_WORLD, const Matrix& VIEW, const Matrix& PROJECTION, const Matrix& REFLECTION)
+	{
+		m_GlobalConstsCPU.GlobalTime += DELTA_TIME;
+		m_GlobalConstsCPU.EyeWorld = EYE_WORLD;
+		m_GlobalConstsCPU.View = VIEW.Transpose();
+		m_GlobalConstsCPU.Projection = PROJECTION.Transpose();
+		m_GlobalConstsCPU.InverseProjection = PROJECTION.Invert().Transpose();
+		m_GlobalConstsCPU.ViewProjection = (VIEW * PROJECTION).Transpose();
+		m_GlobalConstsCPU.InverseView = VIEW.Invert().Transpose();
+
+		// 그림자 렌더링에 사용.
+		m_GlobalConstsCPU.InverseViewProjection = m_GlobalConstsCPU.ViewProjection.Invert();
+
+		// m_ReflectGlobalConstsCPU = m_GlobalConstsCPU;
+		memcpy(&m_ReflectGlobalConstsCPU, &m_GlobalConstsCPU, sizeof(m_GlobalConstsCPU));
+		m_ReflectGlobalConstsCPU.View = (REFLECTION * VIEW).Transpose();
+		m_ReflectGlobalConstsCPU.ViewProjection = (REFLECTION * VIEW * PROJECTION).Transpose();
+		// 그림자 렌더링에 사용 (광원의 위치도 반사시킨 후에 계산해야 함).
+		m_ReflectGlobalConstsCPU.InverseViewProjection = m_ReflectGlobalConstsCPU.ViewProjection.Invert();
+
+		Graphics::UpdateBuffer(m_pContext4, m_GlobalConstsCPU, m_pGlobalConstsGPU);
+		Graphics::UpdateBuffer(m_pContext4, m_ReflectGlobalConstsCPU, m_pReflectGlobalConstsGPU);
+	}
+
+	void BaseRenderer::Update(float deltaTime)
+	{
+		UpdateGUI();
+
+		// 카메라의 이동.
+		m_Camera.UpdateKeyboard(deltaTime, m_pbKeyPressed);
+
+		// 반사 행렬 추가
+		const Vector3 EYE_WORLD = m_Camera.GetEyePos();
+		const Matrix REFLECTION = Matrix::CreateReflection(m_MirrorPlane);
+		const Matrix VIEW = m_Camera.GetView();
+		const Matrix PROJECTION = m_Camera.GetProjection();
+
+		UpdateLights(deltaTime);
+		UpdateGlobalConstants(deltaTime, EYE_WORLD, VIEW, PROJECTION, REFLECTION);
+		ProcessMouseControl();
+
+		// 거울은 따로 처리.
+		if (m_pMirror != nullptr)
+		{
+			m_pMirror->UpdateConstantBuffers(m_pDevice5, m_pContext4);
+		}
+
+		// 조명의 위치 반영.
+		for (int i = 0; i < MAX_LIGHTS; ++i)
+		{
+			m_ppLightSpheres[i]->UpdateWorld(Matrix::CreateScale(std::max(0.01f, m_GlobalConstsCPU.Lights[i].Radius)) *
+											 Matrix::CreateTranslation(m_GlobalConstsCPU.Lights[i].Position));
+		}
+
+		for (size_t i = 0, size = m_pBasicList.size(); i < size; ++i)
+		{
+			Geometry::Model* pCurModel = m_pBasicList[i];
+			pCurModel->UpdateConstantBuffers(m_pDevice5, m_pContext4);
+		}
+
+		m_PostProcessor.Update(m_pContext4);
 	}
 
 	void BaseRenderer::RenderDepthOnly()
@@ -470,13 +486,6 @@ namespace Core
 			pCurModel->Render(m_pContext4);
 		}
 
-		// 거울 반사를 그릴 필요가 없으면 불투명 거울만 그리기.
-		if (m_MirrorAlpha == 1.0f && m_pMirror)
-		{
-			SetPipelineState(m_bDrawAsWire ? Graphics::g_DefaultWirePSO : Graphics::g_DefaultSolidPSO);
-			m_pMirror->Render(m_pContext4);
-		}
-
 		// 노멀 벡터 그리기.
 		SetPipelineState(Graphics::g_NormalsPSO);
 		for (size_t i = 0, size = m_pBasicList.size(); i < size; ++i)
@@ -511,10 +520,33 @@ namespace Core
 		}
 	}
 
+	//void BaseRenderer::RenderGBuffer()
+	//{
+	//	// Render obeject
+	//	
+
+	//	// Render Terrain
+	//	// Render Foliage
+	//}
+
+	//void BaseRenderer::RenderLights()
+	//{
+
+	//}
+
 	void BaseRenderer::RenderMirror()
 	{
-		// 거울 반사를 그려야 하는 상황.
-		if (m_MirrorAlpha < 1.0f && m_pMirror)
+		if (m_pMirror == nullptr)
+		{
+			return;
+		}
+
+		if (m_MirrorAlpha == 1.0f) // 불투명하면 거울만 그림.
+		{
+			SetPipelineState(m_bDrawAsWire ? Graphics::g_DefaultWirePSO : Graphics::g_DefaultSolidPSO);
+			m_pMirror->Render(m_pContext4);
+		}
+		else if (m_MirrorAlpha < 1.0f) // 투명도가 조금이라도 있으면 반사 처리.
 		{
 			// 거울 위치만 StencilBuffer에 1로 표기.
 			SetPipelineState(Graphics::g_StencilMaskPSO);
@@ -538,8 +570,19 @@ namespace Core
 			SetPipelineState(m_bDrawAsWire ? Graphics::g_MirrorBlendWirePSO : Graphics::g_MirrorBlendSolidPSO);
 			SetGlobalConsts(&m_pGlobalConstsGPU);
 			m_pMirror->Render(m_pContext4);
+		}
+	}
 
-		} // end of if (m_MirrorAlpha < 1.0f)
+	void BaseRenderer::RenderGUI()
+	{
+		// Example의 Render()에서 RT 설정을 해주지 않았을 경우에도
+		// 백 버퍼에 GUI를 그리기위해 RT 설정.
+		// 예) Render()에서 ComputeShader만 사용
+		setMainViewport();
+
+		// GUI 렌더링.
+		ImGui::Render();
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	}
 
 	void BaseRenderer::Render()
@@ -559,6 +602,18 @@ namespace Core
 		RenderShadowMaps();
 		RenderOpaqueObjects();
 		RenderMirror();
+		m_PostProcessor.Render(m_pContext4);
+		RenderGUI(); // 추후 editor/game 모드를 설정하여 따로 렌더링하도록 구상.
+
+		////////////////////// deferred shading //////////////////
+		// Culling();
+		//RenderDepthOnly();
+		//RenderGBuffer();
+		//RenderShadowMaps();
+		//RenderLights(); // local illumination.
+		//RenderMirror();
+		//m_PostProcessor.Render(m_pContext4);
+		//RenderGUI();
 	}
 
 	void BaseRenderer::OnMouseMove(int mouseX, int mouseY)
@@ -621,47 +676,20 @@ namespace Core
 #endif 
 
 					// 기존 버퍼 초기화.
-					{
-						RELEASE(m_pBackBuffer);
-						RELEASE(m_pBackBufferRTV);
-						RELEASE(m_pPrevBuffer);
-						RELEASE(m_pPrevRTV);
-						RELEASE(m_pPrevSRV);
-						RELEASE(m_pFloatBuffer);
-						RELEASE(m_pFloatRTV);
-						RELEASE(m_pPostEffectsBuffer);
-						RELEASE(m_pResolvedBuffer);
-						RELEASE(m_pResolvedSRV);
-						RELEASE(m_pPostEffectsSRV);
-						RELEASE(m_pResolvedRTV);
-						RELEASE(m_pPostEffectsRTV);
-						RELEASE(m_pDefaultDSV);
-						RELEASE(m_pDepthOnlyBuffer);
-						RELEASE(m_pDepthOnlyDSV);
-						RELEASE(m_pDepthOnlySRV);
-						for (int i = 0; i < MAX_LIGHTS; ++i)
-						{
-							RELEASE(m_ppShadowBuffers[i]);
-							RELEASE(m_ppShadowDSVs[i]);
-							RELEASE(m_ppShadowSRVs[i]);
-						}
-					}
-
-					m_pSwapChain4->ResizeBuffers(0,                   // 현재 개수 유지
-												(UINT)m_ScreenWidth, // 해상도 변경
+					destroyBuffersForRendering();
+					m_pSwapChain4->ResizeBuffers(0,                  // 현재 개수 유지.
+												(UINT)m_ScreenWidth, // 해상도 변경.
 												(UINT)m_ScreenHeight,
-												DXGI_FORMAT_UNKNOWN, // 현재 포맷 유지
+												DXGI_FORMAT_UNKNOWN, // 현재 포맷 유지.
 												0);
 
 
 					createBuffers();
 					setMainViewport();
 					m_Camera.SetAspectRatio(GetAspectRatio());
-
-					m_PostProcess.Initialize(m_pDevice5, m_pContext4,
-											 { m_pPostEffectsSRV, m_pPrevSRV },
-											 { m_pBackBufferRTV },
-											 m_ScreenWidth, m_ScreenHeight, 4);
+					m_PostProcessor.Initialize(m_pDevice5, m_pContext4,
+											   { m_pGlobalConstsGPU, m_pBackBuffer, m_pFloatBuffer, m_pResolvedBuffer, m_pPrevBuffer, m_pBackBufferRTV, m_pResolvedSRV, m_pPrevSRV, m_pDepthOnlySRV },
+											   m_ScreenWidth, m_ScreenHeight, 4);
 				}
 			}
 
@@ -763,57 +791,10 @@ namespace Core
 			return 0;
 
 		default:
-			return DefWindowProc(hwnd, msg, wParam, lParam);
+			break;
 		}
 
 		return DefWindowProc(hwnd, msg, wParam, lParam);
-	}
-
-	void BaseRenderer::InitCubemaps(std::wstring&& basePath, std::wstring&& envFileName, std::wstring&& specularFileName, std::wstring&& irradianceFileName, std::wstring&& brdfFileName)
-	{
-		HRESULT hr = S_OK;
-
-		// BRDF LookUp Table은 CubeMap이 아니라 2D 텍스춰 입니다.
-		hr = Graphics::CreateDDSTexture(m_pDevice5, (basePath + envFileName).c_str(), true, &m_pEnvSRV);
-		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pEnvSRV, "m_pEnvSRV");
-
-		hr = Graphics::CreateDDSTexture(m_pDevice5, (basePath + specularFileName).c_str(), true, &m_pSpecularSRV);
-		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pSpecularSRV, "m_pSpecularSRV");
-
-		hr = Graphics::CreateDDSTexture(m_pDevice5, (basePath + irradianceFileName).c_str(), true, &m_pIrradianceSRV);
-		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pIrradianceSRV, "m_pIrradianceSRV");
-
-		hr = Graphics::CreateDDSTexture(m_pDevice5, (basePath + brdfFileName).c_str(), false, &m_pBrdfSRV);
-		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pBrdfSRV, "m_pBrdfSRV");
-	}
-
-	// 여러 물체들이 공통적으료 사용하는 Const 업데이트.
-	void BaseRenderer::UpdateGlobalConstants(const float& DELTA_TIME, const Vector3& EYE_WORLD, const Matrix& VIEW, const Matrix& PROJECTION, const Matrix& REFLECTION)
-	{
-		m_GlobalConstsCPU.GlobalTime += DELTA_TIME;
-		m_GlobalConstsCPU.EyeWorld = EYE_WORLD;
-		m_GlobalConstsCPU.View = VIEW.Transpose();
-		m_GlobalConstsCPU.Projection = PROJECTION.Transpose();
-		m_GlobalConstsCPU.InverseProjection = PROJECTION.Invert().Transpose();
-		m_GlobalConstsCPU.ViewProjection = (VIEW * PROJECTION).Transpose();
-		m_GlobalConstsCPU.InverseView = VIEW.Invert().Transpose();
-
-		// 그림자 렌더링에 사용.
-		m_GlobalConstsCPU.InverseViewProjection = m_GlobalConstsCPU.ViewProjection.Invert();
-
-		// m_ReflectGlobalConstsCPU = m_GlobalConstsCPU;
-		memcpy(&m_ReflectGlobalConstsCPU, &m_GlobalConstsCPU, sizeof(m_GlobalConstsCPU));
-		m_ReflectGlobalConstsCPU.View = (REFLECTION * VIEW).Transpose();
-		m_ReflectGlobalConstsCPU.ViewProjection = (REFLECTION * VIEW * PROJECTION).Transpose();
-		// 그림자 렌더링에 사용 (광원의 위치도 반사시킨 후에 계산해야 함).
-		m_ReflectGlobalConstsCPU.InverseViewProjection = m_ReflectGlobalConstsCPU.ViewProjection.Invert();
-
-		Graphics::UpdateBuffer(m_pContext4, m_GlobalConstsCPU, m_pGlobalConstsGPU);
-		Graphics::UpdateBuffer(m_pContext4, m_ReflectGlobalConstsCPU, m_pReflectGlobalConstsGPU);
 	}
 
 	void BaseRenderer::SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU)
@@ -987,55 +968,8 @@ namespace Core
 		}
 	}
 
-	void BaseRenderer::PostRender()
-	{
-		// Resolve MSAA texture.
-		m_pContext4->ResolveSubresource(m_pResolvedBuffer, 0, m_pFloatBuffer, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
-
-		// PostEffects (m_pGlobalConstsGPU 사용).
-		setMainViewport();
-		SetPipelineState(Graphics::g_PostEffectsPSO);
-		SetGlobalConsts(&m_pGlobalConstsGPU);
-		ID3D11ShaderResourceView* ppPostEffectsSRVs[] = { m_pResolvedSRV, m_pDepthOnlySRV };
-		UINT numPostEffectsSRVs = _countof(ppPostEffectsSRVs);
-		m_pContext4->PSSetShaderResources(20, numPostEffectsSRVs, ppPostEffectsSRVs);
-		m_pContext4->OMSetRenderTargets(1, &m_pPostEffectsRTV, nullptr);
-		m_pContext4->PSSetConstantBuffers(5, 1, &m_pPostEffectsConstsGPU);
-		m_pScreenSquare->Render(m_pContext4);
-
-		ID3D11ShaderResourceView* ppNulls[2] = { nullptr, };
-		m_pContext4->PSSetShaderResources(20, 2, ppNulls);
-
-		// 후처리 (블룸 같은 순수 이미지 처리).
-		SetPipelineState(Graphics::g_PostProcessingPSO);
-		m_PostProcess.Render(m_pContext4);
-
-		/*HRESULT hr = S_OK;
-		ID3D11Texture2D* pBackBuffer = nullptr;
-		hr = m_pSwapChain4->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
-		BREAK_IF_FAILED(hr);*/
-
-		m_pContext4->CopyResource(m_pPrevBuffer, m_pBackBuffer); // 모션 블러 효과를 위해 렌더링 결과 보관.
-		// RELEASE(pBackBuffer);
-	}
-
 	void BaseRenderer::initMainWindow()
 	{
-		//WNDCLASSEX wc =
-		//{ 
-		//	sizeof(WNDCLASSEX),
-		//	CS_CLASSDC,
-		//	WndProc,
-		//	0L,
-		//	0L,
-		//	GetModuleHandle(NULL),
-		//	NULL,
-		//	NULL,
-		//	NULL,
-		//	NULL,
-		//	L"OWL", // lpszClassName, L-string
-		//	NULL
-		//};
 		WNDCLASSEX wc =
 		{
 			sizeof(WNDCLASSEX),			// cbSize
@@ -1143,8 +1077,16 @@ namespace Core
 			//swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
 			swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_UNORDERED_ACCESS;
 			swapChainDesc.BufferCount = 2;
-			swapChainDesc.SampleDesc.Count = 1;
-			swapChainDesc.SampleDesc.Quality = 0;
+			if (m_bUseMSAA && m_NumQualityLevels)
+			{
+				swapChainDesc.SampleDesc.Count = 4;
+				swapChainDesc.SampleDesc.Quality = m_NumQualityLevels - 1;
+			}
+			else
+			{
+				swapChainDesc.SampleDesc.Count = 1;
+				swapChainDesc.SampleDesc.Quality = 0;
+			}
 			swapChainDesc.Scaling = DXGI_SCALING_NONE;
 			swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 			swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
@@ -1157,12 +1099,7 @@ namespace Core
 			fsSwapChainDesc.Windowed = TRUE;
 
 			IDXGISwapChain1* pSwapChain1 = nullptr;
-			hr = pFactory->CreateSwapChainForHwnd(m_pDevice5,
-												  m_hMainWindow,
-												  &swapChainDesc,
-												  &fsSwapChainDesc,
-												  nullptr,
-												  &pSwapChain1);
+			hr = pFactory->CreateSwapChainForHwnd(m_pDevice5, m_hMainWindow, &swapChainDesc, &fsSwapChainDesc, nullptr, &pSwapChain1);
 			BREAK_IF_FAILED(hr);
 
 			pSwapChain1->QueryInterface(IID_PPV_ARGS(&m_pSwapChain4));
@@ -1178,6 +1115,7 @@ namespace Core
 		hr = Graphics::CreateConstBuffer(m_pDevice5, m_GlobalConstsCPU, &m_pGlobalConstsGPU);
 		BREAK_IF_FAILED(hr);
 		SET_DEBUG_INFO_TO_OBJECT(m_pGlobalConstsGPU, "m_pGlobalConstsGPU");
+
 		hr = Graphics::CreateConstBuffer(m_pDevice5, m_ReflectGlobalConstsCPU, &m_pReflectGlobalConstsGPU);
 		BREAK_IF_FAILED(hr);
 		SET_DEBUG_INFO_TO_OBJECT(m_pReflectGlobalConstsGPU, "m_pReflectGlobalConstsGPU");
@@ -1194,10 +1132,9 @@ namespace Core
 #endif
 		}
 
-		// 후처리 효과용 ConstBuffer.
-		hr = Graphics::CreateConstBuffer(m_pDevice5, m_PostEffectsConstsCPU, &m_pPostEffectsConstsGPU);
-		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pPostEffectsConstsGPU, "m_pPostEffectsConstsGPU");
+		m_PostProcessor.Initialize(m_pDevice5, m_pContext4,
+								   { m_pGlobalConstsGPU, m_pBackBuffer, m_pFloatBuffer, m_pResolvedBuffer, m_pPrevBuffer, m_pBackBufferRTV, m_pResolvedSRV, m_pPrevSRV, m_pDepthOnlySRV },
+								   m_ScreenWidth, m_ScreenHeight, 4);
 
 		RELEASE(pFactory);
 		RELEASE(pAdapter);
@@ -1254,9 +1191,11 @@ namespace Core
 		hr = m_pDevice5->CreateTexture2D(&desc, nullptr, &m_pPrevBuffer);
 		BREAK_IF_FAILED(hr);
 		SET_DEBUG_INFO_TO_OBJECT(m_pPrevBuffer, "m_pPrevBuffer");
+
 		hr = m_pDevice5->CreateRenderTargetView(m_pPrevBuffer, nullptr, &m_pPrevRTV);
 		BREAK_IF_FAILED(hr);
 		SET_DEBUG_INFO_TO_OBJECT(m_pPrevRTV, "m_pPrevRTV");
+
 		hr = m_pDevice5->CreateShaderResourceView(m_pPrevBuffer, nullptr, &m_pPrevSRV);
 		BREAK_IF_FAILED(hr);
 		SET_DEBUG_INFO_TO_OBJECT(m_pPrevSRV, "m_pPrevSRV");
@@ -1292,29 +1231,15 @@ namespace Core
 		BREAK_IF_FAILED(hr);
 		SET_DEBUG_INFO_TO_OBJECT(m_pResolvedBuffer, "m_pResolvedBuffer");
 
-		hr = m_pDevice5->CreateTexture2D(&desc, nullptr, &m_pPostEffectsBuffer);
-		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pPostEffectsBuffer, "m_pPostEffectsBuffer");
-
 		hr = m_pDevice5->CreateShaderResourceView(m_pResolvedBuffer, nullptr, &m_pResolvedSRV);
 		BREAK_IF_FAILED(hr);
 		SET_DEBUG_INFO_TO_OBJECT(m_pResolvedSRV, "m_pResolvedSRV");
-
-		hr = m_pDevice5->CreateShaderResourceView(m_pPostEffectsBuffer, nullptr, &m_pPostEffectsSRV);
-		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pPostEffectsSRV, "m_pPostEffectsSRV");
 
 		hr = m_pDevice5->CreateRenderTargetView(m_pResolvedBuffer, nullptr, &m_pResolvedRTV);
 		BREAK_IF_FAILED(hr);
 		SET_DEBUG_INFO_TO_OBJECT(m_pResolvedRTV, "m_pResolvedRTV");
 
-		hr = m_pDevice5->CreateRenderTargetView(m_pPostEffectsBuffer, nullptr, &m_pPostEffectsRTV);
-		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pPostEffectsRTV, "m_pPostEffectsRTV");
-
 		createDepthBuffers();
-
-		m_PostProcess.Initialize(m_pDevice5, m_pContext4, { m_pPostEffectsSRV, m_pPrevSRV }, { m_pBackBufferRTV }, m_ScreenWidth, m_ScreenHeight, 4);
 	}
 
 	void BaseRenderer::createDepthBuffers()
@@ -1415,15 +1340,15 @@ namespace Core
 	void BaseRenderer::setMainViewport()
 	{
 		// Set the viewport
-		m_screenViewport = { 0, };
-		m_screenViewport.TopLeftX = 0;
-		m_screenViewport.TopLeftY = 0;
-		m_screenViewport.Width = (float)m_ScreenWidth;
-		m_screenViewport.Height = (float)m_ScreenHeight;
-		m_screenViewport.MinDepth = 0.0f;
-		m_screenViewport.MaxDepth = 1.0f;
+		m_ScreenViewport = { 0, };
+		m_ScreenViewport.TopLeftX = 0;
+		m_ScreenViewport.TopLeftY = 0;
+		m_ScreenViewport.Width = (float)m_ScreenWidth;
+		m_ScreenViewport.Height = (float)m_ScreenHeight;
+		m_ScreenViewport.MinDepth = 0.0f;
+		m_ScreenViewport.MaxDepth = 1.0f;
 
-		m_pContext4->RSSetViewports(1, &m_screenViewport);
+		m_pContext4->RSSetViewports(1, &m_ScreenViewport);
 	}
 
 	void BaseRenderer::setShadowViewport()
@@ -1447,5 +1372,30 @@ namespace Core
 		ID3D11UnorderedAccessView* ppNullUAVs[6] = { nullptr, };
 		m_pContext4->CSSetShaderResources(0, 6, ppNullSRVs);
 		m_pContext4->CSSetUnorderedAccessViews(0, 6, ppNullUAVs, nullptr);
+	}
+
+	void BaseRenderer::destroyBuffersForRendering()
+	{
+		// swap chain에 사용될 back bufffer와 관련된 모든 버퍼를 초기화.
+		RELEASE(m_pBackBuffer);
+		RELEASE(m_pBackBufferRTV);
+		RELEASE(m_pPrevBuffer);
+		RELEASE(m_pPrevRTV);
+		RELEASE(m_pPrevSRV);
+		RELEASE(m_pFloatBuffer);
+		RELEASE(m_pFloatRTV);
+		RELEASE(m_pResolvedBuffer);
+		RELEASE(m_pResolvedSRV);
+		RELEASE(m_pResolvedRTV);
+		RELEASE(m_pDefaultDSV);
+		RELEASE(m_pDepthOnlyBuffer);
+		RELEASE(m_pDepthOnlyDSV);
+		RELEASE(m_pDepthOnlySRV);
+		for (int i = 0; i < MAX_LIGHTS; ++i)
+		{
+			RELEASE(m_ppShadowBuffers[i]);
+			RELEASE(m_ppShadowDSVs[i]);
+			RELEASE(m_ppShadowSRVs[i]);
+		}
 	}
 }

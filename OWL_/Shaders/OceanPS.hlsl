@@ -1,4 +1,4 @@
-#include "common.hlsli"
+#include "Common.hlsli"
 
 // Very fast procedural ocean 
 // https://www.shadertoy.com/view/MdXyzX

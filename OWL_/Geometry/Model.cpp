@@ -82,17 +82,18 @@ namespace Geometry
 		MeshConstants.Initialize(pDevice);
 		MaterialConstants.Initialize(pDevice);
 
+		pMeshes.reserve(MESHES.size());
 		for (size_t i = 0, meshSize = MESHES.size(); i < meshSize; ++i)
 		{
 			const struct MeshData& MESH_DATA = MESHES[i];
 			struct Mesh* newMesh = (struct Mesh*)Malloc(sizeof(struct Mesh));
+			struct _stat64 sourceFileStat;
 			*newMesh = INIT_MESH;
 
 			InitMeshBuffers(pDevice, MESH_DATA, newMesh);
 
 			if (!MESH_DATA.szAlbedoTextureFileName.empty())
 			{
-				struct _stat64 sourceFileStat;
 				std::string albedoTextureA(MESH_DATA.szAlbedoTextureFileName.begin(), MESH_DATA.szAlbedoTextureFileName.end());
 
 				if (_stat64(albedoTextureA.c_str(), &sourceFileStat) != -1)
@@ -122,7 +123,6 @@ namespace Geometry
 
 			if (!MESH_DATA.szEmissiveTextureFileName.empty())
 			{
-				struct _stat64 sourceFileStat;
 				std::string emissiveTextureA(MESH_DATA.szEmissiveTextureFileName.begin(), MESH_DATA.szEmissiveTextureFileName.end());
 
 				if (_stat64(emissiveTextureA.c_str(), &sourceFileStat) != -1)
@@ -143,7 +143,6 @@ namespace Geometry
 
 			if (!MESH_DATA.szNormalTextureFileName.empty())
 			{
-				struct _stat64 sourceFileStat;
 				std::string normalTextureA(MESH_DATA.szNormalTextureFileName.begin(), MESH_DATA.szNormalTextureFileName.end());
 
 				if (_stat64(normalTextureA.c_str(), &sourceFileStat) != -1)
@@ -164,7 +163,6 @@ namespace Geometry
 
 			if (!MESH_DATA.szHeightTextureFileName.empty())
 			{
-				struct _stat64 sourceFileStat;
 				std::string heightTextureA(MESH_DATA.szHeightTextureFileName.begin(), MESH_DATA.szHeightTextureFileName.end());
 
 				if (_stat64(heightTextureA.c_str(), &sourceFileStat) != -1)
@@ -185,7 +183,6 @@ namespace Geometry
 
 			if (!MESH_DATA.szAOTextureFileName.empty())
 			{
-				struct _stat64 sourceFileStat;
 				std::string aoTextureA(MESH_DATA.szAOTextureFileName.begin(), MESH_DATA.szAOTextureFileName.end());
 
 				if (_stat64(aoTextureA.c_str(), &sourceFileStat) != -1)
@@ -206,7 +203,7 @@ namespace Geometry
 
 			// GLTF 방식으로 Metallic과 Roughness를 한 텍스춰에 넣음.
 			// Green : Roughness, Blue : Metallic(Metalness).
-			if (!MESH_DATA.szMetallicTextureFileName.empty() ||
+			/*if (!MESH_DATA.szMetallicTextureFileName.empty() ||
 				!MESH_DATA.szRoughnessTextureFileName.empty())
 			{
 				struct _stat64 sourceFileStat1;
@@ -239,6 +236,48 @@ namespace Geometry
 			if (!MESH_DATA.szRoughnessTextureFileName.empty())
 			{
 				MaterialConstants.CPU.bUseRoughnessMap = TRUE;
+			}*/
+
+			if (!MESH_DATA.szMetallicTextureFileName.empty())
+			{
+				std::string metallicTextureA(MESH_DATA.szMetallicTextureFileName.begin(), MESH_DATA.szMetallicTextureFileName.end());
+
+				if (_stat64(metallicTextureA.c_str(), &sourceFileStat) != -1)
+				{
+					/*hr = Graphics::CreateMetallicRoughnessTexture(pDevice, pContext, MESH_DATA.szMetallicTextureFileName.c_str(), MESH_DATA.szRoughnessTextureFileName.c_str(),
+																  &(newMesh->pMetallicTexture), &(newMesh->pMetallicSRV));*/
+					hr = Graphics::CreateTexture(pDevice, pContext, MESH_DATA.szMetallicTextureFileName.c_str(), false, 
+												 &(newMesh->pMetallicTexture), &(newMesh->pMetallicSRV));
+					BREAK_IF_FAILED(hr);
+					SET_DEBUG_INFO_TO_OBJECT(newMesh->pMetallicTexture, "Model::newMesh->pMetallicTexture");
+					SET_DEBUG_INFO_TO_OBJECT(newMesh->pMetallicSRV, "Model::newMesh->pMetallicSRV");
+				}
+				else
+				{
+					OutputDebugStringW(MESH_DATA.szMetallicTextureFileName.c_str());
+					OutputDebugStringA(" does not exists. Skip texture reading.\n");
+				}
+			}
+
+			if (!MESH_DATA.szRoughnessTextureFileName.empty())
+			{
+				std::string roughnessTextureA(MESH_DATA.szRoughnessTextureFileName.begin(), MESH_DATA.szRoughnessTextureFileName.end());
+
+				if (_stat64(roughnessTextureA.c_str(), &sourceFileStat) != -1)
+				{
+					/*hr = Graphics::CreateMetallicRoughnessTexture(pDevice, pContext, MESH_DATA.szMetallicTextureFileName.c_str(), MESH_DATA.szRoughnessTextureFileName.c_str(),
+																  &(newMesh->pMetallicTexture), &(newMesh->pMetallicSRV));*/
+					hr = Graphics::CreateTexture(pDevice, pContext, MESH_DATA.szRoughnessTextureFileName.c_str(), false, 
+												 &(newMesh->pRoughnessTexture), &(newMesh->pRoughnessSRV));
+					BREAK_IF_FAILED(hr);
+					SET_DEBUG_INFO_TO_OBJECT(newMesh->pRoughnessTexture, "Model::newMesh->pRoughnessTexture");
+					SET_DEBUG_INFO_TO_OBJECT(newMesh->pRoughnessSRV, "Model::newMesh->pRoughnessSRV");
+				}
+				else
+				{
+					OutputDebugStringW(MESH_DATA.szRoughnessTextureFileName.c_str());
+					OutputDebugStringA(" does not exists. Skip texture reading.\n");
+				}
 			}
 
 			newMesh->pMeshConstantsGPU = MeshConstants.pGPU;
@@ -393,8 +432,8 @@ namespace Geometry
 				// 물체 렌더링할 때 여러가지 텍스춰 사용. (t0 부터시작)
 				ID3D11ShaderResourceView* ppSRVs[] =
 				{
-					pMESH->pAlbedoSRV, pMESH->pNormalSRV, pMESH->pAOSRV,
-					pMESH->pMetallicRoughnessSRV, pMESH->pEmissiveSRV
+					pMESH->pAlbedoSRV, pMESH->pEmissiveSRV, pMESH->pNormalSRV, 
+					pMESH->pAOSRV, pMESH->pMetallicSRV, pMESH->pRoughnessSRV, 
 				};
 				UINT numSRVs = _countof(ppSRVs);
 				pContext->PSSetShaderResources(0, numSRVs, ppSRVs);
@@ -405,11 +444,11 @@ namespace Geometry
 				ID3D11ShaderResourceView* ppLightingSRV = pMESH->LightingTex.GetSRV();
 				if (ppDensitySRV)
 				{
-					pContext->PSSetShaderResources(5, 1, &ppDensitySRV);
+					pContext->PSSetShaderResources(6, 1, &ppDensitySRV);
 				}
 				if (ppLightingSRV)
 				{
-					pContext->PSSetShaderResources(6, 1, &ppLightingSRV);
+					pContext->PSSetShaderResources(7, 1, &ppLightingSRV);
 				}
 
 				pContext->IASetVertexBuffers(0, 1, &(pMESH->pVertexBuffer), &pMESH->Stride, &pMESH->Offset);
@@ -418,7 +457,7 @@ namespace Geometry
 
 				// Release resources.
 				ID3D11ShaderResourceView* ppNulls[3] = { nullptr, nullptr, nullptr };
-				pContext->PSSetShaderResources(5, 3, ppNulls);
+				pContext->PSSetShaderResources(6, 3, ppNulls);
 			}
 		}
 	}
