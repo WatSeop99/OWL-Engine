@@ -68,10 +68,16 @@ cbuffer GlobalConstants : register(b0)
     float lodBias = 2.0f; // 다른 물체들 LodBias
     float globalTime;
     
-    Light lights[MAX_LIGHTS];
+    int dummy[4];
+    // Light lights[MAX_LIGHTS];
 };
 
-cbuffer MeshConstants : register(b1)
+cbuffer LightConstants : register(b1)
+{
+    Light lights[MAX_LIGHTS];
+}
+
+cbuffer MeshConstants : register(b2)
 {
     matrix world; // Model(또는 Object) 좌표계 -> World로 변환
     matrix worldIT; // World의 InverseTranspose
@@ -82,7 +88,7 @@ cbuffer MeshConstants : register(b1)
     float windLeaves;
 };
 
-cbuffer MaterialConstants : register(b2)
+cbuffer MaterialConstants : register(b3)
 {
     float3 albedoFactor; // baseColor
     float roughnessFactor;

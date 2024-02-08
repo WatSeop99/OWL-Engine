@@ -4,27 +4,50 @@
 
 namespace Core
 {
-	void Texture2D::Initialize(ID3D11Device* pDevice, UINT width, UINT height, DXGI_FORMAT pixelFormat)
+	void Texture2D::Initialize(ID3D11Device* pDevice, UINT width, UINT height, DXGI_FORMAT pixelFormat, bool bIsDepthStencil)
 	{
+		HRESULT hr = S_OK;
+
 		m_Width = width;
 		m_Height = height;
 
-		destroy();
-		Graphics::CreateUATexture(pDevice,
-								  width, height, pixelFormat,
-								  &m_pTexture, &m_pRTV, &m_pSRV, &m_pUAV);
+		Destroy();
+
+		hr = Graphics::CreateTexture2D(pDevice, width, height, pixelFormat, bIsDepthStencil, &m_pTexture, &m_pRTV, &m_pSRV, &m_pDSV, &m_pUAV);
+		BREAK_IF_FAILED(hr);
 		SET_DEBUG_INFO_TO_OBJECT(m_pTexture, "Texture2D::m_pTexture");
 		SET_DEBUG_INFO_TO_OBJECT(m_pRTV, "Texture2D::m_pRTV");
 		SET_DEBUG_INFO_TO_OBJECT(m_pSRV, "Texture2D::m_pSRV");
+		SET_DEBUG_INFO_TO_OBJECT(m_pDSV, "Texture2D::m_pDSV");
+		SET_DEBUG_INFO_TO_OBJECT(m_pUAV, "Texture2D::m_pUAV");
+	}
+
+	void Texture2D::Initialize(ID3D11Device* pDevice, D3D11_TEXTURE2D_DESC& desc)
+	{
+		HRESULT hr = S_OK;
+
+		m_Width = desc.Width;
+		m_Height = desc.Height;
+
+		Destroy();
+
+		hr = Graphics::CreateTexture2D(pDevice, desc, &m_pTexture, &m_pRTV, &m_pSRV, &m_pDSV, &m_pUAV);
+		BREAK_IF_FAILED(hr);
+		SET_DEBUG_INFO_TO_OBJECT(m_pTexture, "Texture2D::m_pTexture");
+		SET_DEBUG_INFO_TO_OBJECT(m_pRTV, "Texture2D::m_pRTV");
+		SET_DEBUG_INFO_TO_OBJECT(m_pSRV, "Texture2D::m_pSRV");
+		SET_DEBUG_INFO_TO_OBJECT(m_pDSV, "Texture2D::m_pDSV");
 		SET_DEBUG_INFO_TO_OBJECT(m_pUAV, "Texture2D::m_pUAV");
 	}
 
 	void Texture2D::Upload(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const std::vector<uint8_t>& DATA)
 	{
+		_ASSERT(m_pTexture != nullptr);
+
 		D3D11_TEXTURE2D_DESC desc = { 0, };
 		m_pTexture->GetDesc(&desc);
 
-		if (!m_pStaging)
+		if (m_pStaging == nullptr)
 		{
 			m_pStaging = Graphics::CreateStagingTexture(pDevice, pContext, desc.Width, desc.Height, DATA, desc.Format, desc.MipLevels, desc.ArraySize);
 			SET_DEBUG_INFO_TO_OBJECT(m_pStaging, "Texture2D::m_pStaging");
@@ -51,6 +74,9 @@ namespace Core
 
 	void Texture2D::Download(ID3D11DeviceContext* pContext, std::vector<uint8_t>& buffer)
 	{
+		_ASSERT(m_pTexture != nullptr);
+		_ASSERT(m_pStaging != nullptr);
+
 		pContext->CopyResource(m_pStaging, m_pTexture);
 
 		D3D11_MAPPED_SUBRESOURCE mappedResource = { 0, };
@@ -59,12 +85,13 @@ namespace Core
 		pContext->Unmap(m_pStaging, 0);
 	}
 
-	void Texture2D::destroy()
+	void Texture2D::Destroy()
 	{
 		SAFE_RELEASE(m_pTexture);
 		SAFE_RELEASE(m_pStaging);
 		SAFE_RELEASE(m_pRTV);
 		SAFE_RELEASE(m_pSRV);
+		SAFE_RELEASE(m_pDSV);
 		SAFE_RELEASE(m_pUAV);
 	}
 }

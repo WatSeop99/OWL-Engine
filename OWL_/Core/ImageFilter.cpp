@@ -33,6 +33,24 @@ namespace Core
 		SET_DEBUG_INFO_TO_OBJECT(m_pConstBuffer, "ImageFilter::m_pConstBuffer");
 	}
 
+	void ImageFilter::UpdateConstantBuffers(ID3D11DeviceContext* pContext)
+	{
+		Graphics::UpdateBuffer(pContext, ConstantsData, m_pConstBuffer);
+	}
+
+	void ImageFilter::Render(ID3D11DeviceContext* pContext) const
+	{
+		_ASSERT(m_pSRVs.size() > 0);
+		_ASSERT(m_pRTVs.size() > 0);
+
+		pContext->RSSetViewports(1, &m_Viewport);
+		pContext->OMSetRenderTargets((UINT)(m_pRTVs.size()), m_pRTVs.data(), nullptr);
+
+		pContext->PSSetShader(m_pPixelShader, 0, 0);
+		pContext->PSSetShaderResources(0, (UINT)(m_pSRVs.size()), m_pSRVs.data());
+		pContext->PSSetConstantBuffers(0, 1, &m_pConstBuffer);
+	}
+
 	void ImageFilter::SetShaderResources(const std::vector<ID3D11ShaderResourceView*>& RESOURCES)
 	{
 		m_pSRVs.clear();
@@ -51,24 +69,6 @@ namespace Core
 		{
 			m_pRTVs[i] = TARGETS[i];
 		}
-	}
-
-	void ImageFilter::UpdateConstantBuffers(ID3D11DeviceContext* pContext)
-	{
-		Graphics::UpdateBuffer(pContext, ConstantsData, m_pConstBuffer);
-	}
-
-	void ImageFilter::Render(ID3D11DeviceContext* pContext) const
-	{
-		_ASSERT(m_pSRVs.size() > 0);
-		_ASSERT(m_pRTVs.size() > 0);
-
-		pContext->RSSetViewports(1, &m_Viewport);
-		pContext->OMSetRenderTargets((UINT)(m_pRTVs.size()), m_pRTVs.data(), nullptr);
-
-		pContext->PSSetShader(m_pPixelShader, 0, 0);
-		pContext->PSSetShaderResources(0, (UINT)(m_pSRVs.size()), m_pSRVs.data());
-		pContext->PSSetConstantBuffers(0, 1, &m_pConstBuffer);
 	}
 
 	void ImageFilter::destroy()

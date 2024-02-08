@@ -3,13 +3,13 @@
 #include "../Geometry/GeometryGenerator.h"
 #include "GraphicsCommon.h"
 #include "GraphicsUtils.h"
-#include "../Geometry/MeshData.h"
+#include "../Geometry/MeshInfo.h"
 #include "../Geometry/Model.h"
 #include "PostProcessor.h"
 
 namespace Core
 {
-	void PostProcessor::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const struct PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS)
+	void PostProcessor::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS)
 	{
 		HRESULT hr = S_OK;
 
@@ -19,18 +19,18 @@ namespace Core
 		m_ScreenHeight = HEIGHT;
 
 		// 스크린 공간 설정.
-		struct Geometry::MeshData meshData = INIT_MESH_DATA;
-		Geometry::MakeSquare(&meshData);
+		Geometry::MeshInfo meshInfo = INIT_MESH_INFO;
+		Geometry::MakeSquare(&meshInfo);
 
-		pMesh = (struct Geometry::Mesh*)Malloc(sizeof(struct Geometry::Mesh));
+		pMesh = (Geometry::Mesh*)Malloc(sizeof(Geometry::Mesh));
 		*pMesh = INIT_MESH;
 
-		hr = Graphics::CreateVertexBuffer(pDevice, meshData.Vertices, &(pMesh->pVertexBuffer));
+		hr = Graphics::CreateVertexBuffer(pDevice, meshInfo.Vertices, &(pMesh->pVertexBuffer));
 		BREAK_IF_FAILED(hr);
 		SET_DEBUG_INFO_TO_OBJECT(pMesh->pVertexBuffer, "PostProcess::pMesh->pVertexBuffer");
 
-		pMesh->IndexCount = (UINT)(meshData.Indices.size());
-		hr = Graphics::CreateIndexBuffer(pDevice, meshData.Indices, &(pMesh->pIndexBuffer));
+		pMesh->IndexCount = (UINT)(meshInfo.Indices.size());
+		hr = Graphics::CreateIndexBuffer(pDevice, meshInfo.Indices, &(pMesh->pIndexBuffer));
 		BREAK_IF_FAILED(hr);
 		SET_DEBUG_INFO_TO_OBJECT(pMesh->pIndexBuffer, "PostProcess::pMesh->pIndexBuffer");
 
@@ -124,7 +124,7 @@ namespace Core
 		pContext->ResolveSubresource(m_pResolvedBuffer, 0, m_pFloatBuffer, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
 
 		// 스크린 렌더링을 위한 정점 버퍼와 인텍스 버퍼를 미리 설정.
-		UINT stride = sizeof(struct Geometry::Vertex);
+		UINT stride = sizeof(Geometry::Vertex);
 		UINT offset = 0;
 		pContext->IASetVertexBuffers(0, 1, &(pMesh->pVertexBuffer), &stride, &offset);
 		pContext->IASetIndexBuffer(pMesh->pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -251,7 +251,7 @@ namespace Core
 		pContext->RSSetViewports(1, &m_Viewport);
 	}
 
-	void PostProcessor::setRenderConfig(const struct PostProcessingBuffers& CONFIG)
+	void PostProcessor::setRenderConfig(const PostProcessingBuffers& CONFIG)
 	{
 		m_pGlobalConstsGPU = CONFIG.pGlobalConstsGPU;
 		m_pBackBuffer = CONFIG.pBackBuffer;

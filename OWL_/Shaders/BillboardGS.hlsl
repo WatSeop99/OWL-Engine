@@ -6,7 +6,7 @@
 // Stream-Output Object
 // https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-so-type
 
-cbuffer BillboardContsts : register(b3)
+cbuffer BillboardContsts : register(b4)
 {
     float widthWorld;
     float3 dirWorld;

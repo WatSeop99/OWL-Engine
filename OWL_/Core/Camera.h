@@ -37,6 +37,16 @@ namespace Core
 					DirectX::XMMatrixOrthographicOffCenterLH(-m_Aspect, m_Aspect, -1.0f, 1.0f, m_NearZ, m_FarZ));
 		}
 		inline Vector3 GetEyePos() { return m_Position; }
+		inline Vector3 GetViewDir() { return m_ViewDirection; }
+		inline Vector3 GetUpDir() { return m_UpDirection; }
+		inline Vector3 GetRightDir() { return m_RightDirection; }
+
+		inline void SetEyePos(const Vector3& POS) { m_Position = POS; }
+		inline void SetViewDir(const Vector3& VIEW_DIR) { m_ViewDirection = VIEW_DIR; }
+		inline void SetUpDir(const Vector3& UP_DIR) { m_UpDirection = UP_DIR; }
+		inline void SetProjectionFovAngleY(const float ANGLE) { m_ProjectionFovAngleY = ANGLE; }
+		inline void SetNearZ(const float NEAR_Z) { m_NearZ = NEAR_Z; }
+		inline void SetFarZ(const float FAR_Z) { m_FarZ = FAR_Z; }
 
 		inline void Reset(Vector3 pos, float yaw, float pitch)
 		{

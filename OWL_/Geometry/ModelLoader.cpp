@@ -2,7 +2,6 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include "../Common.h"
-#include "MeshData.h"
 #include "ModelLoader.h"
 
 namespace Geometry
@@ -10,7 +9,7 @@ namespace Geometry
 	using namespace std;
 	using namespace DirectX::SimpleMath;
 
-	void UpdateNormals(std::vector<struct MeshData>& meshes)
+	void UpdateNormals(std::vector<MeshInfo>& meshes)
 	{
 		// 노멀 벡터가 없는 경우를 대비하여 다시 계산
 		// 한 위치에는 한 버텍스만 있어야 연결 관계를 찾을 수 있음
@@ -168,16 +167,16 @@ namespace Geometry
 		return hr;
 	}
 
-	void ModelLoader::findDeformingBones(const struct aiScene* pSCENE)
+	void ModelLoader::findDeformingBones(const aiScene* pSCENE)
 	{
 		for (UINT i = 0; i < pSCENE->mNumMeshes; ++i)
 		{
-			const struct aiMesh* pMESH = pSCENE->mMeshes[i];
+			const aiMesh* pMESH = pSCENE->mMeshes[i];
 			if (pMESH->HasBones())
 			{
 				for (UINT j = 0; j < pMESH->mNumBones; ++j)
 				{
-					const struct aiBone* pBONE = pMESH->mBones[j];
+					const aiBone* pBONE = pMESH->mBones[j];
 
 					// bone과 대응되는 node의 이름은 동일.
 					// 뒤에서 node 이름으로 부모를 찾을 수 있음.
@@ -188,7 +187,7 @@ namespace Geometry
 		}
 	}
 
-	const struct aiNode* ModelLoader::findParent(const struct aiNode* pNODE)
+	const aiNode* ModelLoader::findParent(const aiNode* pNODE)
 	{
 		if (!pNODE)
 		{
@@ -201,16 +200,14 @@ namespace Geometry
 		return findParent(pNODE->mParent);
 	}
 
-	void ModelLoader::processNode(struct aiNode* pNode,
-								  const struct aiScene* pSCENE,
-								  Matrix& transform)
+	void ModelLoader::processNode(aiNode* pNode, const aiScene* pSCENE, Matrix& transform)
 	{
 		// https://ogldev.org/www/tutorial38/tutorial38.html
 		// If a node represents a bone in the hierarchy then the node name must
 		// match the bone name.
 
 		// 사용되는 부모 뼈를 찾아서 부모의 인덱스 저장.
-		const struct aiNode* pPARENT = findParent(pNode->mParent);
+		const aiNode* pPARENT = findParent(pNode->mParent);
 		if (pNode->mParent &&
 			AnimData.BoneNameToID.count(pNode->mName.C_Str()) > 0 &&
 			pPARENT)
@@ -224,17 +221,17 @@ namespace Geometry
 
 		for (UINT i = 0; i < pNode->mNumMeshes; ++i)
 		{
-			struct aiMesh* pMesh = pSCENE->mMeshes[pNode->mMeshes[i]];
-			struct MeshData newMesh;
+			aiMesh* pMesh = pSCENE->mMeshes[pNode->mMeshes[i]];
+			MeshInfo newMeshInfo;
 
-			processMesh(pMesh, pSCENE, &newMesh);
-			for (size_t j = 0, size = newMesh.Vertices.size(); j < size; ++j)
+			processMesh(pMesh, pSCENE, &newMeshInfo);
+			for (size_t j = 0, size = newMeshInfo.Vertices.size(); j < size; ++j)
 			{
-				Vertex& v = newMesh.Vertices[j];
+				Vertex& v = newMeshInfo.Vertices[j];
 				v.Position = DirectX::SimpleMath::Vector3::Transform(v.Position, m);
 			}
 
-			pMeshes.push_back(newMesh);
+			pMeshInfos.push_back(newMeshInfo);
 		}
 
 		for (UINT i = 0; i < pNode->mNumChildren; ++i)
@@ -243,17 +240,17 @@ namespace Geometry
 		}
 	}
 
-	void ModelLoader::processMesh(struct aiMesh* pMesh, const struct aiScene* pSCENE, struct MeshData* pMeshData)
+	void ModelLoader::processMesh(aiMesh* pMesh, const aiScene* pSCENE, MeshInfo* pMeshInfo)
 	{
-		std::vector<struct Vertex>& vertices = pMeshData->Vertices;
-		std::vector<uint32_t>& indices = pMeshData->Indices;
-		std::vector<struct SkinnedVertex>& skinnedVertices = pMeshData->SkinnedVertices;
+		std::vector<Vertex>& vertices = pMeshInfo->Vertices;
+		std::vector<uint32_t>& indices = pMeshInfo->Indices;
+		std::vector<SkinnedVertex>& skinnedVertices = pMeshInfo->SkinnedVertices;
 
 		// Walk through each of the mesh's vertices.
 		vertices.resize(pMesh->mNumVertices);
 		for (UINT i = 0; i < pMesh->mNumVertices; ++i)
 		{
-			struct Vertex& vertex = vertices[i];
+			Vertex& vertex = vertices[i];
 
 			vertex.Position.x = pMesh->mVertices[i].x;
 			vertex.Position.y = pMesh->mVertices[i].y;
@@ -357,37 +354,37 @@ namespace Geometry
 		if (pMesh->mMaterialIndex >= 0)
 		{
 			HRESULT hr = S_OK;
-			struct aiMaterial* material = pSCENE->mMaterials[pMesh->mMaterialIndex];
+			aiMaterial* material = pSCENE->mMaterials[pMesh->mMaterialIndex];
 
-			hr = readTextureFileName(pSCENE, material, aiTextureType_BASE_COLOR, &(pMeshData->szAlbedoTextureFileName));
-			if (pMeshData->szAlbedoTextureFileName.empty())
+			hr = readTextureFileName(pSCENE, material, aiTextureType_BASE_COLOR, &(pMeshInfo->szAlbedoTextureFileName));
+			if (pMeshInfo->szAlbedoTextureFileName.empty())
 			{
-				hr = readTextureFileName(pSCENE, material, aiTextureType_DIFFUSE, &(pMeshData->szAlbedoTextureFileName));
+				hr = readTextureFileName(pSCENE, material, aiTextureType_DIFFUSE, &(pMeshInfo->szAlbedoTextureFileName));
 			}
-			hr = readTextureFileName(pSCENE, material, aiTextureType_EMISSIVE, &(pMeshData->szEmissiveTextureFileName));
-			hr = readTextureFileName(pSCENE, material, aiTextureType_HEIGHT, &(pMeshData->szHeightTextureFileName));
-			hr = readTextureFileName(pSCENE, material, aiTextureType_NORMALS, &(pMeshData->szNormalTextureFileName));
-			hr = readTextureFileName(pSCENE, material, aiTextureType_METALNESS, &(pMeshData->szMetallicTextureFileName));
-			hr = readTextureFileName(pSCENE, material, aiTextureType_DIFFUSE_ROUGHNESS, &(pMeshData->szRoughnessTextureFileName));
-			hr = readTextureFileName(pSCENE, material, aiTextureType_AMBIENT_OCCLUSION, &(pMeshData->szAOTextureFileName));
-			if (pMeshData->szAOTextureFileName.empty())
+			hr = readTextureFileName(pSCENE, material, aiTextureType_EMISSIVE, &(pMeshInfo->szEmissiveTextureFileName));
+			hr = readTextureFileName(pSCENE, material, aiTextureType_HEIGHT, &(pMeshInfo->szHeightTextureFileName));
+			hr = readTextureFileName(pSCENE, material, aiTextureType_NORMALS, &(pMeshInfo->szNormalTextureFileName));
+			hr = readTextureFileName(pSCENE, material, aiTextureType_METALNESS, &(pMeshInfo->szMetallicTextureFileName));
+			hr = readTextureFileName(pSCENE, material, aiTextureType_DIFFUSE_ROUGHNESS, &(pMeshInfo->szRoughnessTextureFileName));
+			hr = readTextureFileName(pSCENE, material, aiTextureType_AMBIENT_OCCLUSION, &(pMeshInfo->szAOTextureFileName));
+			if (pMeshInfo->szAOTextureFileName.empty())
 			{
-				hr = readTextureFileName(pSCENE, material, aiTextureType_LIGHTMAP, &(pMeshData->szAOTextureFileName));
+				hr = readTextureFileName(pSCENE, material, aiTextureType_LIGHTMAP, &(pMeshInfo->szAOTextureFileName));
 			}
-			hr = readTextureFileName(pSCENE, material, aiTextureType_OPACITY, &(pMeshData->szOpacityTextureFileName)); // 불투명도를 표현하는 텍스쳐.
+			hr = readTextureFileName(pSCENE, material, aiTextureType_OPACITY, &(pMeshInfo->szOpacityTextureFileName)); // 불투명도를 표현하는 텍스쳐.
 
-			if (!pMeshData->szOpacityTextureFileName.empty())
+			if (!pMeshInfo->szOpacityTextureFileName.empty())
 			{
-				OutputDebugStringW(pMeshData->szAlbedoTextureFileName.c_str());
+				OutputDebugStringW(pMeshInfo->szAlbedoTextureFileName.c_str());
 				OutputDebugStringA("\n");
 				OutputDebugStringA("Opacity ");
-				OutputDebugStringW(pMeshData->szOpacityTextureFileName.c_str());
+				OutputDebugStringW(pMeshInfo->szOpacityTextureFileName.c_str());
 				OutputDebugStringA("\n");
 			}
 		}
 	}
 
-	void ModelLoader::readAnimation(const struct aiScene* pSCENE)
+	void ModelLoader::readAnimation(const aiScene* pSCENE)
 	{
 		AnimData.pClips.resize(pSCENE->mNumAnimations);
 
@@ -404,7 +401,7 @@ namespace Geometry
 			for (UINT c = 0; c < pANIM->mNumChannels; ++c)
 			{
 				// channel은 각 뼈들의 움직임이 channel로 제공됨을 의미.
-				const struct aiNodeAnim* pNODE_ANIM = pANIM->mChannels[c];
+				const aiNodeAnim* pNODE_ANIM = pANIM->mChannels[c];
 				const int BONE_ID = AnimData.BoneNameToID[pNODE_ANIM->mNodeName.C_Str()];
 				clip.pKeys[BONE_ID].resize(pNODE_ANIM->mNumPositionKeys);
 
@@ -423,13 +420,13 @@ namespace Geometry
 		}
 	}
 
-	HRESULT ModelLoader::readTextureFileName(const struct aiScene* pSCENE, struct aiMaterial* pMaterial, aiTextureType type, std::wstring* pDst)
+	HRESULT ModelLoader::readTextureFileName(const aiScene* pSCENE, aiMaterial* pMaterial, aiTextureType type, std::wstring* pDst)
 	{
 		HRESULT hr = S_OK;
 
 		if (pMaterial->GetTextureCount(type) > 0)
 		{
-			struct aiString filePath;
+			aiString filePath;
 			pMaterial->GetTexture(type, 0, &filePath);
 
 			std::string fullPath = szBasePath + Utility::RemoveBasePath(filePath.C_Str());
@@ -477,10 +474,10 @@ namespace Geometry
 
 		// https://github.com/microsoft/DirectXMesh/wiki/ComputeTangentFrame
 		// 추후 시간 체크 해볼 것.
-		for (size_t i = 0, size = pMeshes.size(); i < size; ++i)
+		for (size_t i = 0, size = pMeshInfos.size(); i < size; ++i)
 		{
 			// 방법 1.
-			/*struct MeshData& m = pMeshes[i];
+			/*MeshInfo& m = pMeshInfos[i];
 
 			std::vector<XMFLOAT3> positions(m.vertices.size());
 			std::vector<XMFLOAT3> normals(m.vertices.size());
@@ -490,7 +487,7 @@ namespace Geometry
 
 			for (size_t j = 0, vertSize = m.vertices.size(); j < vertSize; ++j)
 			{
-				struct Vertex& v = m.vertices[j];
+				Vertex& v = m.vertices[j];
 				positions[j] = v.Position;
 				normals[i] = v.Normal;
 				texcoords[j] = v.Texcoord;
@@ -515,10 +512,10 @@ namespace Geometry
 			}*/
 
 			// 방법 2.
-			struct MeshData& curMeshData = pMeshes[i];
-			std::vector<struct Vertex>& curVertices = curMeshData.Vertices;
-			std::vector<struct SkinnedVertex>& curSkinnedVertices = curMeshData.SkinnedVertices;
-			std::vector<uint32_t>& curIndices = curMeshData.Indices;
+			MeshInfo& curMeshInfo = pMeshInfos[i];
+			std::vector<Vertex>& curVertices = curMeshInfo.Vertices;
+			std::vector<SkinnedVertex>& curSkinnedVertices = curMeshInfo.SkinnedVertices;
+			std::vector<uint32_t>& curIndices = curMeshInfo.Indices;
 			size_t numFaces = curIndices.size() / 3;
 
 			DirectX::XMFLOAT3 tangent;
@@ -526,8 +523,7 @@ namespace Geometry
 
 			for (size_t j = 0; j < numFaces; ++j)
 			{
-				calculateTangentBitangent(curVertices[curIndices[j * 3]], curVertices[curIndices[j * 3 + 1]], curVertices[curIndices[j * 3 + 2]],
-										  &tangent, &bitangent);
+				calculateTangentBitangent(curVertices[curIndices[j * 3]], curVertices[curIndices[j * 3 + 1]], curVertices[curIndices[j * 3 + 2]], &tangent, &bitangent);
 
 				curVertices[curIndices[j * 3]].Tangent = tangent;
 				curVertices[curIndices[j * 3 + 1]].Tangent = tangent;
@@ -543,7 +539,7 @@ namespace Geometry
 		}
 	}
 
-	void ModelLoader::updateBoneIDs(struct aiNode* pNode, int* pCounter)
+	void ModelLoader::updateBoneIDs(aiNode* pNode, int* pCounter)
 	{
 		static int s_ID = 0;
 		if (pNode)
@@ -560,8 +556,7 @@ namespace Geometry
 		}
 	}
 
-	void ModelLoader::calculateTangentBitangent(const struct Vertex& V1, const struct Vertex& V2, const struct Vertex& V3,
-												DirectX::XMFLOAT3* pTangent, DirectX::XMFLOAT3* pBitangent)
+	void ModelLoader::calculateTangentBitangent(const Vertex& V1, const Vertex& V2, const Vertex& V3, DirectX::XMFLOAT3* pTangent, DirectX::XMFLOAT3* pBitangent)
 	{
 		DirectX::XMFLOAT3 vector1;
 		DirectX::XMFLOAT3 vector2;

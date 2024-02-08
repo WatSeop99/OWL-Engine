@@ -5,6 +5,15 @@ namespace Core
 	class Scene
 	{
 	public:
+		enum eRenderObjectType
+		{
+			Opaque = 0,
+			Transparent,
+			Reflection,
+			TotalObjectType
+		};
+
+	public:
 		Scene() = default;
 		~Scene() = default;
 
@@ -16,6 +25,7 @@ namespace Core
 		std::vector<Geometry::Model*> pRenderObjects;
 		std::vector<Light*> pLights;
 		Light* pDirectionalLight = nullptr;
+
 		Core::Camera& Camera;
 	};
 }

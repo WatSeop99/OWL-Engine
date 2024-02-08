@@ -1,15 +1,13 @@
 ﻿#include "../Common.h"
-#include "MeshData.h"
 #include "ModelLoader.h"
 #include "GeometryGenerator.h"
 
 namespace Geometry
 {
-	using namespace std;
 	using namespace DirectX;
 	using namespace DirectX::SimpleMath;
 
-	HRESULT ReadFromFile(std::vector<struct MeshData>& dst, std::wstring& basePath, std::wstring& fileName, bool bRevertNormals)
+	HRESULT ReadFromFile(std::vector<MeshInfo>& dst, std::wstring& basePath, std::wstring& fileName, bool bRevertNormals)
 	{
 		HRESULT hr = S_OK;
 
@@ -20,14 +18,14 @@ namespace Geometry
 			goto LB_RET;
 		}
 
-		Normalize(Vector3(0.0f), 1.0f, modelLoader.pMeshes, modelLoader.AnimData);
-		dst = modelLoader.pMeshes;
+		Normalize(Vector3(0.0f), 1.0f, modelLoader.pMeshInfos, modelLoader.AnimData);
+		dst = modelLoader.pMeshInfos;
 
 	LB_RET:
 		return hr;
 	}
 
-	HRESULT ReadAnimationFromFile(std::tuple<std::vector<struct MeshData>, AnimationData>& dst, std::wstring& basePath, std::wstring& fileName, bool bRevertNormals)
+	HRESULT ReadAnimationFromFile(std::tuple<std::vector<MeshInfo>, AnimationData>& dst, std::wstring& basePath, std::wstring& fileName, bool bRevertNormals)
 	{
 		HRESULT hr = S_OK;
 
@@ -38,14 +36,14 @@ namespace Geometry
 			goto LB_RET;
 		}
 
-		Normalize(Vector3(0.0f), 1.0f, modelLoader.pMeshes, modelLoader.AnimData);
-		dst = { modelLoader.pMeshes, modelLoader.AnimData };
+		Normalize(Vector3(0.0f), 1.0f, modelLoader.pMeshInfos, modelLoader.AnimData);
+		dst = { modelLoader.pMeshInfos, modelLoader.AnimData };
 
 	LB_RET:
 		return hr;
 	}
 
-	void Normalize(const Vector3 CENTER, const float LONGEST_LENGTH, std::vector<struct MeshData>& meshes, AnimationData& animData)
+	void Normalize(const Vector3 CENTER, const float LONGEST_LENGTH, std::vector<MeshInfo>& meshes, AnimationData& animData)
 	{
 		// 모델의 중심을 원점으로 옮기고 크기를 [-1,1]^3으로 스케일 -> 박스 형태로.
 		using namespace DirectX;
@@ -55,10 +53,10 @@ namespace Geometry
 		Vector3 vmax(-1000, -1000, -1000);
 		for (size_t i = 0, totalMesh = meshes.size(); i < totalMesh; ++i)
 		{
-			struct MeshData& curMesh = meshes[i];
+			MeshInfo& curMesh = meshes[i];
 			for (size_t j = 0, vertSize = curMesh.Vertices.size(); j < vertSize; ++j)
 			{
-				struct Vertex& v = curMesh.Vertices[j];
+				Vertex& v = curMesh.Vertices[j];
 				vmin.x = XMMin(vmin.x, v.Position.x);
 				vmin.y = XMMin(vmin.y, v.Position.y);
 				vmin.z = XMMin(vmin.z, v.Position.z);
@@ -74,15 +72,15 @@ namespace Geometry
 
 		for (size_t i = 0, totalMesh = meshes.size(); i < totalMesh; ++i)
 		{
-			struct MeshData& curMesh = meshes[i];
+			MeshInfo& curMesh = meshes[i];
 			for (size_t j = 0, vertSize = curMesh.Vertices.size(); j < vertSize; ++j)
 			{
-				struct Vertex& v = curMesh.Vertices[j];
+				Vertex& v = curMesh.Vertices[j];
 				v.Position = (v.Position + translation) * scale;
 			}
 			for (size_t j = 0, skinnedVertSize = curMesh.SkinnedVertices.size(); j < skinnedVertSize; ++j)
 			{
-				struct SkinnedVertex& v = curMesh.SkinnedVertices[j];
+				SkinnedVertex& v = curMesh.SkinnedVertices[j];
 				v.Position = (v.Position + translation) * scale;
 			}
 		}
@@ -91,7 +89,7 @@ namespace Geometry
 		animData.DefaultTransform = Matrix::CreateTranslation(translation) * Matrix::CreateScale(scale);
 	}
 
-	void MakeSquare(struct MeshData* pDst, const float SCALE, const Vector2 TEX_SCALE)
+	void MakeSquare(MeshInfo* pDst, const float SCALE, const Vector2 TEX_SCALE)
 	{
 		// Texture Coordinates (Direct3D 9)
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d9/texture-coordinates
@@ -122,7 +120,7 @@ namespace Geometry
 		pDst->Indices = { 0, 1, 2, 0, 2, 3, };
 	}
 
-	void MakeSquareGrid(struct MeshData* pDst, const int NUM_SLICES, const int NUM_STACKS, const float SCALE, const Vector2 TEX_SCALE)
+	void MakeSquareGrid(MeshInfo* pDst, const int NUM_SLICES, const int NUM_STACKS, const float SCALE, const Vector2 TEX_SCALE)
 	{
 		_ASSERT(pDst);
 
@@ -138,7 +136,7 @@ namespace Geometry
 			float x = -1.0f;
 			for (int i = 0; i < NUM_SLICES + 1; ++i)
 			{
-				struct Vertex& v = pDst->Vertices[j * (NUM_SLICES + 1) + i];
+				Vertex& v = pDst->Vertices[j * (NUM_SLICES + 1) + i];
 				v.Position = Vector3(x, y, 0.0f) * SCALE;
 				v.Normal = Vector3(0.0f, 0.0f, -1.0f);
 				v.Texcoord = Vector2(x + 1.0f, y + 1.0f) * 0.5f * TEX_SCALE;
@@ -164,7 +162,7 @@ namespace Geometry
 		}
 	}
 
-	void MakeGrass(struct MeshData* pDst)
+	void MakeGrass(MeshInfo* pDst)
 	{
 		_ASSERT(pDst);
 
@@ -172,7 +170,7 @@ namespace Geometry
 
 		for (size_t i = 0, size = pDst->Vertices.size(); i < size; ++i)
 		{
-			struct Vertex& v = pDst->Vertices[i];
+			Vertex& v = pDst->Vertices[i];
 
 			// 적당히 가늘게 조절.
 			v.Position.x *= 0.02f;
@@ -193,7 +191,7 @@ namespace Geometry
 		pDst->Vertices[0].Texcoord.x = 0.5f;
 	}
 
-	void MakeBox(struct MeshData* pDst, const float SCALE)
+	void MakeBox(MeshInfo* pDst, const float SCALE)
 	{
 		_ASSERT(pDst);
 
@@ -312,7 +310,7 @@ namespace Geometry
 		};
 	}
 
-	void MakeWireBox(struct MeshData* pDst, const Vector3 CENTER, const Vector3 EXTENTS)
+	void MakeWireBox(MeshInfo* pDst, const Vector3 CENTER, const Vector3 EXTENTS)
 	{
 		// 상자를 와이어 프레임으로 그리는 용도.
 
@@ -371,7 +369,7 @@ namespace Geometry
 		};
 	}
 
-	void MakeWireSphere(struct MeshData* pDst, const Vector3 CENTER, const float RADIUS)
+	void MakeWireSphere(MeshInfo* pDst, const Vector3 CENTER, const float RADIUS)
 	{
 		_ASSERT(pDst);
 
@@ -436,7 +434,7 @@ namespace Geometry
 		}
 	}
 
-	void MakeCylinder(struct MeshData* pDst, const float BOTTOM_RADIUS, const float TOP_RADIUS,  float height, int numSlices)
+	void MakeCylinder(MeshInfo* pDst, const float BOTTOM_RADIUS, const float TOP_RADIUS,  float height, int numSlices)
 	{
 		_ASSERT(pDst);
 
@@ -444,7 +442,7 @@ namespace Geometry
 
 		const float D_THETA = -XM_2PI / (float)numSlices;
 
-		std::vector<struct Vertex>& vertices = pDst->Vertices;
+		std::vector<Vertex>& vertices = pDst->Vertices;
 		std::vector<uint32_t>& indices = pDst->Indices;
 		vertices.resize(numSlices * numSlices);
 		indices.reserve(numSlices * 6);
@@ -452,7 +450,7 @@ namespace Geometry
 		// 옆면의 바닥 버텍스들 (인덱스 0 이상 numSlices 미만).
 		for (int i = 0; i <= numSlices; ++i)
 		{
-			struct Vertex& v = vertices[i];
+			Vertex& v = vertices[i];
 			v.Position = Vector3::Transform(Vector3(BOTTOM_RADIUS, -0.5f * height, 0.0f), Matrix::CreateRotationY(D_THETA * (float)i));
 			v.Normal = v.Position - Vector3(0.0f, -0.5f * height, 0.0f);
 			v.Normal.Normalize();
@@ -462,7 +460,7 @@ namespace Geometry
 		// 옆면의 맨 위 버텍스들 (인덱스 numSlices 이상 2 * numSlices 미만).
 		for (int i = 0; i <= numSlices; ++i)
 		{
-			struct Vertex& v = vertices[numSlices + i];
+			Vertex& v = vertices[numSlices + i];
 			v.Position = Vector3::Transform(Vector3(TOP_RADIUS, 0.5f * height, 0.0f), Matrix::CreateRotationY(D_THETA * (float)i));
 			v.Normal = v.Position - Vector3(0.0f, 0.5f * height, 0.0f);
 			v.Normal.Normalize();
@@ -481,7 +479,7 @@ namespace Geometry
 		}
 	}
 
-	void MakeSphere(struct MeshData* pDst, const float RADIUS, const int NUM_SLICES, const int NUM_STACKS, const Vector2 TEX_SCALE)
+	void MakeSphere(MeshInfo* pDst, const float RADIUS, const int NUM_SLICES, const int NUM_STACKS, const Vector2 TEX_SCALE)
 	{
 		// 참고: OpenGL Sphere
 		// http://www.songho.ca/opengl/gl_sphere.html
@@ -493,7 +491,7 @@ namespace Geometry
 		const float D_THETA = -XM_2PI / (float)NUM_SLICES;
 		const float D_PHI = -XM_PI / (float)NUM_STACKS;
 
-		vector<struct Vertex>& vertices = pDst->Vertices;
+		vector<Vertex>& vertices = pDst->Vertices;
 		vector<uint32_t>& indices = pDst->Indices;
 		vertices.resize((NUM_STACKS + 1) * (NUM_SLICES + 1));
 		indices.reserve(NUM_SLICES * NUM_STACKS * 6);
@@ -505,7 +503,7 @@ namespace Geometry
 
 			for (int i = 0; i <= NUM_SLICES; ++i)
 			{
-				struct Vertex& v = vertices[j * (NUM_SLICES + 1) + i];
+				Vertex& v = vertices[j * (NUM_SLICES + 1) + i];
 
 				// 시작점을 x-z 평면에서 회전시키면서 원을 만드는 구조.
 				v.Position = Vector3::Transform( stackStartPoint, Matrix::CreateRotationY(D_THETA * float(i)));
@@ -542,7 +540,7 @@ namespace Geometry
 		}
 	}
 
-	void MakeTetrahedron(struct MeshData* pDst)
+	void MakeTetrahedron(MeshInfo* pDst)
 	{
 		// Regular Tetrahedron.
 		// https://mathworld.wolfram.com/RegularTetrahedron.html
@@ -577,7 +575,7 @@ namespace Geometry
 
 		for (int i = 0; i < 4; ++i)
 		{
-			struct Vertex& v = pDst->Vertices[i];
+			Vertex& v = pDst->Vertices[i];
 			v.Position = points[i];
 			v.Normal = v.Position; // 중심이 원점.
 			v.Normal.Normalize();
@@ -586,7 +584,7 @@ namespace Geometry
 		pDst->Indices = { 0, 1, 2, 3, 2, 1, 0, 3, 1, 0, 2, 3 };
 	}
 
-	void MakeIcosahedron(struct MeshData* pDst)
+	void MakeIcosahedron(MeshInfo* pDst)
 	{
 		// 등20면체.
 		// https://mathworld.wolfram.com/Isohedron.html
@@ -607,7 +605,7 @@ namespace Geometry
 		};
 		for (int i = 0; i < 12; ++i)
 		{
-			struct Vertex& v = pDst->Vertices[i];
+			Vertex& v = pDst->Vertices[i];
 			v.Position = pos[i];
 			v.Normal = v.Position;
 			v.Normal.Normalize();
@@ -622,7 +620,7 @@ namespace Geometry
 		};
 	}
 
-	void SubdivideToSphere(struct MeshData* pDst, const float RADIUS, struct MeshData& meshData)
+	void SubdivideToSphere(MeshInfo* pDst, const float RADIUS, MeshInfo& meshData)
 	{
 		using namespace DirectX;
 		using DirectX::SimpleMath::Matrix;
@@ -637,7 +635,7 @@ namespace Geometry
 		}
 
 		// 구의 표면으로 옮기고 노멀과 texture 좌표 계산.
-		auto ProjectVertex = [&](struct Vertex& v)
+		auto ProjectVertex = [&](Vertex& v)
 			{
 				v.Normal = v.Position;
 				v.Normal.Normalize();
@@ -652,7 +650,7 @@ namespace Geometry
 				// v.Texcoord.y = phi / XM_PI;
 			};
 
-		auto UpdateFaceNormal = [](struct Vertex& v0, struct Vertex& v1, struct Vertex& v2)
+		auto UpdateFaceNormal = [](Vertex& v0, Vertex& v1, Vertex& v2)
 			{
 				Vector3 faceNormal = (v1.Position - v0.Position).Cross(v2.Position - v0.Position);
 				faceNormal.Normalize();

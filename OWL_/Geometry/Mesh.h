@@ -1,66 +1,136 @@
 ﻿#pragma once
 
 #include "../Common.h"
+#include "../Core/Texture2D.h"
 #include "../Core/Texture3D.h"
 
 namespace Geometry
 {
+	//struct Mesh
+	//{
+	//	ID3D11Buffer* pVertexBuffer = nullptr;
+	//	ID3D11Buffer* pIndexBuffer = nullptr;
+
+	//	ID3D11Buffer* pMeshConstantsGPU = nullptr;
+	//	ID3D11Buffer* pMaterialConstantsGPU = nullptr;
+
+	//	ID3D11Texture2D* pAlbedoTexture = nullptr;
+	//	ID3D11Texture2D* pEmissiveTexture = nullptr;
+	//	ID3D11Texture2D* pNormalTexture = nullptr;
+	//	ID3D11Texture2D* pHeightTexture = nullptr;
+	//	ID3D11Texture2D* pAOTexture = nullptr;
+	//	ID3D11Texture2D* pMetallicTexture = nullptr;
+	//	ID3D11Texture2D* pRoughnessTexture = nullptr;
+
+	//	ID3D11ShaderResourceView* pAlbedoSRV = nullptr;
+	//	ID3D11ShaderResourceView* pEmissiveSRV = nullptr;
+	//	ID3D11ShaderResourceView* pNormalSRV = nullptr;
+	//	ID3D11ShaderResourceView* pHeightSRV = nullptr;
+	//	ID3D11ShaderResourceView* pAOSRV = nullptr;
+	//	ID3D11ShaderResourceView* pMetallicSRV = nullptr;
+	//	ID3D11ShaderResourceView* pRoughnessSRV = nullptr;
+
+	//	// 3D Textures.
+	//	Core::Texture3D DensityTex;
+	//	Core::Texture3D LightingTex;
+
+	//	UINT IndexCount;
+	//	UINT VertexCount;
+	//	UINT Stride;
+	//	UINT Offset;
+	//};
+
+	//struct MeshInfo
+	//{
+	//	std::vector<struct Vertex> Vertices;
+	//	std::vector<struct SkinnedVertex> SkinnedVertices;
+	//	std::vector<uint32_t> Indices;
+	//	std::wstring szAlbedoTextureFileName;
+	//	std::wstring szEmissiveTextureFileName;
+	//	std::wstring szNormalTextureFileName;
+	//	std::wstring szHeightTextureFileName;
+	//	std::wstring szAOTextureFileName; // Ambient Occlusion
+	//	std::wstring szMetallicTextureFileName;
+	//	std::wstring szRoughnessTextureFileName;
+	//	std::wstring szOpacityTextureFileName;
+	//};
+
+	struct Material
+	{
+		// 2D textures.
+		Core::Texture2D Albedo;
+		Core::Texture2D Emissive;
+		Core::Texture2D Normal;
+		Core::Texture2D Height;
+		Core::Texture2D AmbientOcclusion;
+		Core::Texture2D Metallic;
+		Core::Texture2D Roughness;
+
+		// 3D textures.
+		Core::Texture3D Density;
+		Core::Texture3D Lighting;
+	};
+
 	struct Mesh
 	{
 		ID3D11Buffer* pVertexBuffer = nullptr;
 		ID3D11Buffer* pIndexBuffer = nullptr;
+		Material* pMaterialBuffer = nullptr;
 
-		ID3D11Buffer* pMeshConstantsGPU = nullptr;
-		ID3D11Buffer* pMaterialConstantsGPU = nullptr;
-
-		ID3D11Texture2D* pAlbedoTexture = nullptr;
-		ID3D11Texture2D* pEmissiveTexture = nullptr;
-		ID3D11Texture2D* pNormalTexture = nullptr;
-		ID3D11Texture2D* pHeightTexture = nullptr;
-		ID3D11Texture2D* pAOTexture = nullptr;
-		// ID3D11Texture2D* pMetallicRoughnessTexture = nullptr;
-		ID3D11Texture2D* pMetallicTexture = nullptr;
-		ID3D11Texture2D* pRoughnessTexture = nullptr;
-
-		ID3D11ShaderResourceView* pAlbedoSRV = nullptr;
-		ID3D11ShaderResourceView* pEmissiveSRV = nullptr;
-		ID3D11ShaderResourceView* pNormalSRV = nullptr;
-		ID3D11ShaderResourceView* pHeightSRV = nullptr;
-		ID3D11ShaderResourceView* pAOSRV = nullptr;
-		// ID3D11ShaderResourceView* pMetallicRoughnessSRV = nullptr;
-		ID3D11ShaderResourceView* pMetallicSRV = nullptr;
-		ID3D11ShaderResourceView* pRoughnessSRV = nullptr;
-
-		// 3D Textures.
-		Core::Texture3D DensityTex;
-		Core::Texture3D LightingTex;
-
-		UINT IndexCount;
 		UINT VertexCount;
+		UINT IndexCount;
 		UINT Stride;
 		UINT Offset;
+
+		Core::ConstantsBuffer<Core::MeshConstants> MeshConstants;
+		Core::ConstantsBuffer<Core::MaterialConstants> MaterialConstants;
 	};
 }
 
-#define INIT_MESH													   \
-	{																   \
-		nullptr, nullptr,											   \
-		nullptr, nullptr,											   \
-		nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, \
-		nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, \
-		Core::Texture3D(), Core::Texture3D(),						   \
-		0, 0, 0, 0													   \
+//#define INIT_MESH													   \
+//	{																   \
+//		nullptr, nullptr,											   \
+//		nullptr, nullptr,											   \
+//		nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, \
+//		nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, \
+//		Core::Texture3D(), Core::Texture3D(),						   \
+//		0, 0, 0, 0													   \
+//	}
+
+#define INIT_MESH																					   \
+	{																								   \
+		nullptr, nullptr, nullptr,																	   \
+		0, 0, 0, 0,																					   \
+		Core::ConstantsBuffer<Core::MeshConstants>(), Core::ConstantsBuffer<Core::MaterialConstants>() \
+	}
+
+#define INIT_MATERIAL																														 \
+	{																																		 \
+		Core::Texture2D(), Core::Texture2D(), Core::Texture2D(), Core::Texture2D(), Core::Texture2D(), Core::Texture2D(), Core::Texture2D(), \
+		Core::Texture3D(), Core::Texture3D()																								 \
 	}
 
 static void ReleaseMesh(Geometry::Mesh** ppMesh)
 {
 	_ASSERT(*ppMesh);
 
+	if ((*ppMesh)->pMaterialBuffer != nullptr)
+	{
+		delete (*ppMesh)->pMaterialBuffer;
+		(*ppMesh)->pMaterialBuffer = nullptr;
+	}
 	SAFE_RELEASE((*ppMesh)->pVertexBuffer);
 	SAFE_RELEASE((*ppMesh)->pIndexBuffer);
 
-	// SAFE_RELEASE(meshConstsGPU);
-	// SAFE_RELEASE(materialConstsGPU);
+	(*ppMesh)->MeshConstants.Destroy();
+	(*ppMesh)->MaterialConstants.Destroy();
+
+	free(*ppMesh);
+	*ppMesh = nullptr;
+
+	/*SAFE_RELEASE((*ppMesh)->pVertexBuffer);
+	SAFE_RELEASE((*ppMesh)->pIndexBuffer);
+
 	(*ppMesh)->pMeshConstantsGPU = nullptr;
 	(*ppMesh)->pMaterialConstantsGPU = nullptr;
 
@@ -69,7 +139,6 @@ static void ReleaseMesh(Geometry::Mesh** ppMesh)
 	SAFE_RELEASE((*ppMesh)->pNormalTexture);
 	SAFE_RELEASE((*ppMesh)->pHeightTexture);
 	SAFE_RELEASE((*ppMesh)->pAOTexture);
-	// SAFE_RELEASE((*ppMesh)->pMetallicRoughnessTexture);
 	SAFE_RELEASE((*ppMesh)->pMetallicTexture);
 	SAFE_RELEASE((*ppMesh)->pRoughnessTexture);
 
@@ -78,10 +147,11 @@ static void ReleaseMesh(Geometry::Mesh** ppMesh)
 	SAFE_RELEASE((*ppMesh)->pNormalSRV);
 	SAFE_RELEASE((*ppMesh)->pHeightSRV);
 	SAFE_RELEASE((*ppMesh)->pAOSRV);
-	// SAFE_RELEASE((*ppMesh)->pMetallicRoughnessSRV);
 	SAFE_RELEASE((*ppMesh)->pMetallicSRV);
 	SAFE_RELEASE((*ppMesh)->pRoughnessSRV);
 
 	free(*ppMesh);
-	*ppMesh = nullptr;
+	*ppMesh = nullptr;*/
+
+
 }

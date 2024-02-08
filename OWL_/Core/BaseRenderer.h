@@ -3,7 +3,8 @@
 #include "Camera.h"
 #include "ConstantBuffers.h"
 #include "GraphicsCommon.h"
-#include "../Geometry/MeshData.h"
+#include "Light.h"
+#include "../Geometry/MeshInfo.h"
 #include "../Geometry/Model.h"
 #include "PostProcessor.h"
 #include "Timer.h"
@@ -33,7 +34,7 @@ namespace Core
 
 		virtual void UpdateGUI();
 		virtual void UpdateLights(float deltaTime);
-		void UpdateGlobalConstants(const float& DELTA_TIME, const Vector3& EYE_WORLD, const Matrix& VIEW, const Matrix& PROJECTION, const Matrix& REFLECTION = Matrix());
+		void UpdateGlobalConstants(const float DELTA_TIME, const Vector3& EYE_WORLD, const Matrix& VIEW, const Matrix& PROJECTION, const Matrix& REFLECTION = Matrix());
 		virtual void Update(float deltaTime);
 
 		virtual void RenderDepthOnly();
@@ -51,7 +52,7 @@ namespace Core
 		virtual void OnMouseClick(int mouseX, int mouseY);
 		virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 		
-		void SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU);
+		void SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU, UINT slot);
 		void SetPipelineState(const Graphics::GraphicsPSO& PSO);
 		void SetPipelineState(const Graphics::ComputePSO& PSO);
 		
@@ -67,14 +68,14 @@ namespace Core
 		void createDepthBuffers();
 
 		void setMainViewport();
-		void setShadowViewport();
+		// void setShadowViewport();
 		void setComputeShaderBarrier();
 
 		void destroyBuffersForRendering();
 
 	protected:
-		int m_ScreenWidth;
-		int m_ScreenHeight;
+		UINT m_ScreenWidth;
+		UINT m_ScreenHeight;
 		HWND m_hMainWindow;
 		bool m_bUseMSAA;
 		UINT m_NumQualityLevels;
@@ -85,6 +86,7 @@ namespace Core
 		D3D_FEATURE_LEVEL m_FeatureLevel;
 		DXGI_ADAPTER_DESC2 m_AdapterDesc;
 		DXGI_FORMAT m_BackBufferFormat;
+		D3D11_VIEWPORT m_ScreenViewport;
 
 		ID3D11Device* m_pDevice = nullptr;
 		ID3D11Device5* m_pDevice5 = nullptr;
@@ -96,7 +98,6 @@ namespace Core
 		ID3D11Texture2D* m_pBackBuffer = nullptr;
 		ID3D11RenderTargetView* m_pBackBufferRTV = nullptr;
 
-
 		// Deferred shading을 위한 시험용 멤버변수.
 		////////////////////////////////////////////////////
 		
@@ -107,33 +108,16 @@ namespace Core
 
 		// 삼각형 레스터화 -> float(MSAA) -> resolved(No MSAA)
 		// -> 후처리(블룸, 톤매핑) -> backBuffer(최종 SwapChain Present)
+		Texture2D m_FloatBuffer;
+		Texture2D m_ResolvedBuffer;
+		Texture2D m_PrevBuffer; // 간단한 모션 블러 효과를 위함.
 
-		ID3D11Texture2D* m_pFloatBuffer = nullptr;
-		ID3D11RenderTargetView* m_pFloatRTV = nullptr;
-
-		ID3D11Texture2D* m_pResolvedBuffer = nullptr;
-		ID3D11RenderTargetView* m_pResolvedRTV = nullptr;
-		ID3D11ShaderResourceView* m_pResolvedSRV = nullptr;
-
-		ID3D11Texture2D* m_pPrevBuffer = nullptr; // 간단한 모션 블러 효과
-		ID3D11RenderTargetView* m_pPrevRTV = nullptr;
-		ID3D11ShaderResourceView* m_pPrevSRV = nullptr;
-
-		// Depth buffer 관련
-		ID3D11Texture2D* m_pDepthOnlyBuffer = nullptr; // No MSAA
-		ID3D11DepthStencilView* m_pDepthOnlyDSV = nullptr;
-		ID3D11ShaderResourceView* m_pDepthOnlySRV = nullptr;
-
+		// Depth buffer 관련.
 		ID3D11DepthStencilView* m_pDefaultDSV = nullptr;
+		Texture2D m_DepthOnlyBuffer; // No MSAA
 
-		// Shadow maps
-		int m_ShadowWidth;
-		int m_ShadowHeight;
-		ID3D11Texture2D* m_ppShadowBuffers[MAX_LIGHTS] = { nullptr, }; // No MSAA
-		ID3D11DepthStencilView* m_ppShadowDSVs[MAX_LIGHTS] = { nullptr, };
-		ID3D11ShaderResourceView* m_ppShadowSRVs[MAX_LIGHTS] = { nullptr, };
-
-		D3D11_VIEWPORT m_ScreenViewport;
+		// Light.
+		Light m_pLights[MAX_LIGHTS];
 
 		// 시점을 결정하는 카메라 클래스 추가
 		Camera m_Camera;
@@ -155,22 +139,23 @@ namespace Core
 
 		// 다양한 Pass들을 더 간단히 구현하기 위해 ConstBuffer들 분리
 		GlobalConstants m_GlobalConstsCPU;
-		GlobalConstants m_ReflectGlobalConstsCPU;
-		GlobalConstants m_pShadowGlobalConstsCPUs[MAX_LIGHTS];
 		ID3D11Buffer* m_pGlobalConstsGPU = nullptr;
-		ID3D11Buffer* m_pReflectGlobalConstsGPU = nullptr;
-		ID3D11Buffer* m_ppShadowGlobalConstsGPUs[MAX_LIGHTS] = { nullptr, };
 
-		// 공통으로 사용하는 텍스춰들
+		GlobalConstants m_ReflectGlobalConstsCPU;
+		ID3D11Buffer* m_pReflectGlobalConstsGPU = nullptr;
+
+		LightConstants m_LightConstantsCPU;
+		ID3D11Buffer* m_pLightConstantsGPU = nullptr;
+
+		// 공통으로 사용하는 텍스쳐들.
 		ID3D11ShaderResourceView* m_pEnvSRV = nullptr;
 		ID3D11ShaderResourceView* m_pIrradianceSRV = nullptr;
 		ID3D11ShaderResourceView* m_pSpecularSRV = nullptr;
 		ID3D11ShaderResourceView* m_pBrdfSRV = nullptr;
 
-		bool m_bLightRotate;
 		bool m_bPauseAnimation;
 
-		// 여러 예제들 공용
+		// 여러 예제들 공용.
 		Geometry::Model* m_pScreenSquare = nullptr; // PostEffect에 사용
 		Geometry::Model* m_pSkybox = nullptr;
 		Geometry::Model* m_pPickedModel = nullptr;

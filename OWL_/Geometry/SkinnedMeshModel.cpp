@@ -1,25 +1,22 @@
 #include "../Common.h"
 #include "../Core/GraphicsCommon.h"
 #include "../Core/GraphicsUtils.h"
-#include "Mesh.h"
-#include "MeshData.h"
-#include "Model.h"
 #include "SkinnedMeshModel.h"
 
 namespace Geometry
 {
-	SkinnedMeshModel::SkinnedMeshModel(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const std::vector<struct MeshData>& MESHES, const AnimationData& ANIM_DATA)
+	SkinnedMeshModel::SkinnedMeshModel(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const std::vector<MeshInfo>& MESHES, const AnimationData& ANIM_DATA)
 	{
 		Initialize(pDevice, pContext, MESHES, ANIM_DATA);
 	}
 
-	void SkinnedMeshModel::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const std::vector<struct MeshData>& MESHES, const AnimationData& ANIM_DATA)
+	void SkinnedMeshModel::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const std::vector<MeshInfo>& MESHES, const AnimationData& ANIM_DATA)
 	{
 		InitAnimationData(pDevice, ANIM_DATA);
 		Model::Initialize(pDevice, pContext, MESHES);
 	}
 
-	void SkinnedMeshModel::InitMeshBuffers(ID3D11Device* pDevice, const struct MeshData& MESH_DATA, struct Mesh* pNewMesh)
+	void SkinnedMeshModel::InitMeshBuffers(ID3D11Device* pDevice, const MeshInfo& MESH_DATA, Mesh* pNewMesh)
 	{
 		HRESULT hr = S_OK;
 		hr = Graphics::CreateVertexBuffer(pDevice, MESH_DATA.SkinnedVertices, &(pNewMesh->pVertexBuffer));
@@ -30,7 +27,7 @@ namespace Geometry
 
 		pNewMesh->IndexCount = (UINT)(MESH_DATA.Indices.size());
 		pNewMesh->VertexCount = (UINT)(MESH_DATA.SkinnedVertices.size());
-		pNewMesh->Stride = sizeof(struct SkinnedVertex);
+		pNewMesh->Stride = sizeof(SkinnedVertex);
 	}
 
 	void SkinnedMeshModel::InitAnimationData(ID3D11Device* pDevice, const AnimationData& ANIM_DATA)
@@ -62,21 +59,6 @@ namespace Geometry
 		}
 
 		m_BoneTransforms.Upload(pContext);
-	}
-
-	Graphics::GraphicsPSO& SkinnedMeshModel::GetPSO(const bool bWIRED)
-	{
-		return (bWIRED ? Graphics::g_SkinnedWirePSO : Graphics::g_SkinnedSolidPSO);
-	}
-
-	Graphics::GraphicsPSO& SkinnedMeshModel::GetDepthOnlyPSO()
-	{
-		return Graphics::g_DepthOnlySkinnedPSO;
-	}
-
-	Graphics::GraphicsPSO& SkinnedMeshModel::GetReflectPSO(const bool bWIRED)
-	{
-		return (bWIRED ? Graphics::g_ReflectSkinnedWirePSO : Graphics::g_ReflectSkinnedSolidPSO);
 	}
 
 	void SkinnedMeshModel::Render(ID3D11DeviceContext* pContext)

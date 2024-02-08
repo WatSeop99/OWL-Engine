@@ -7,10 +7,10 @@
 
 namespace Geometry
 {
-	struct MeshData
+	struct MeshInfo
 	{
-		std::vector<struct Vertex> Vertices;
-		std::vector<struct SkinnedVertex> SkinnedVertices;
+		std::vector<Vertex> Vertices;
+		std::vector<SkinnedVertex> SkinnedVertices;
 		std::vector<uint32_t> Indices;
 		std::wstring szAlbedoTextureFileName;
 		std::wstring szEmissiveTextureFileName;
@@ -23,20 +23,20 @@ namespace Geometry
 	};
 }
 
-#define INIT_MESH_DATA							 \
+#define INIT_MESH_INFO							 \
 	{											 \
 		{}, {}, {},								 \
 		L"",  L"", L"", L"", L"", L"", L"", L"", \
 	}
 
-static void ReleaseMeshData(struct Geometry::MeshData** ppMeshData)
+static void ReleaseMeshInfo(Geometry::MeshInfo** ppMeshInfo)
 {
-	_ASSERT(*ppMeshData);
+	_ASSERT(*ppMeshInfo);
 
-	(*ppMeshData)->Vertices.clear();
-	(*ppMeshData)->SkinnedVertices.clear();
-	(*ppMeshData)->Indices.clear();
+	(*ppMeshInfo)->Vertices.clear();
+	(*ppMeshInfo)->SkinnedVertices.clear();
+	(*ppMeshInfo)->Indices.clear();
 
-	free(*ppMeshData);
-	*ppMeshData = nullptr;
+	free(*ppMeshInfo);
+	*ppMeshInfo = nullptr;
 }

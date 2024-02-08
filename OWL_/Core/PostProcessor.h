@@ -31,7 +31,7 @@ namespace Core
 		{ }
 		~PostProcessor() { destroy(); }
 
-		void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const struct PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS);
+		void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS);
 
 		void Update(ID3D11DeviceContext* pContext);
 
@@ -46,7 +46,7 @@ namespace Core
 		void renderImageFilter(ID3D11DeviceContext* pContext, const ImageFilter& IMAGE_FILTER);
 
 		void setViewport(ID3D11DeviceContext* pContext);
-		void setRenderConfig(const struct PostProcessingBuffers& CONFIG);
+		void setRenderConfig(const PostProcessingBuffers& CONFIG);
 		void setPipelineState(ID3D11DeviceContext* pContext, Graphics::GraphicsPSO& PSO);
 		void setGlobalConsts(ID3D11DeviceContext* pContext, ID3D11Buffer** ppGlobalConstsGPU);
 

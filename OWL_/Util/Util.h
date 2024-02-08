@@ -26,7 +26,8 @@
     {                       \
         __debugbreak();     \
     }
-#define SET_DEBUG_INFO_TO_OBJECT(ptr, name)  (ptr)->SetPrivateData(WKPDID_D3DDebugObjectName, sizeof(name) - 1, (name))
+#define SET_DEBUG_INFO_TO_OBJECT(ptr, name) \
+    if (ptr) { (ptr)->SetPrivateData(WKPDID_D3DDebugObjectName, sizeof(name) - 1, (name)); }
 
 #else
 

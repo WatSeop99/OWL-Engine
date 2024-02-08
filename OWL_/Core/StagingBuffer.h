@@ -9,13 +9,13 @@ namespace Core
 	class StagingBuffer
 	{
 	public:
-		~StagingBuffer() { destroy(); }
+		~StagingBuffer() { Destroy(); }
 
 		void Initialize(ID3D11Device* pDevice, const std::vector<DATA_TYPE>& DATA)
 		{
 			HRESULT hr = S_OK;
 
-			destroy();
+			Destroy();
 
 			CPU = DATA;
 			hr = Graphics::CreateStagingBuffer(pDevice, (UINT)(DATA.size()), sizeof(DATA_TYPE), DATA.data(), &pGPU);
@@ -33,15 +33,14 @@ namespace Core
 			pContext->Unmap(pGPU, 0);
 		}
 
-	protected:
-		void destroy()
+		void Destroy()
 		{
 			SAFE_RELEASE(pGPU);
 			CPU.clear();
 		}
 
 	public:
-		std::vector<DATA_TYPE> CPU;
 		ID3D11Buffer* pGPU = nullptr;
+		std::vector<DATA_TYPE> CPU;
 	};
 }

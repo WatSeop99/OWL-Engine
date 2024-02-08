@@ -30,7 +30,7 @@ void DebugApp2::InitScene()
 	// 조명 설정.
 	{
 		// 조명 0은 고정.
-		m_GlobalConstsCPU.Lights[0].Radiance = Vector3(5.0f);
+		/*m_GlobalConstsCPU.Lights[0].Radiance = Vector3(5.0f);
 		m_GlobalConstsCPU.Lights[0].Position = Vector3(0.0f, 2.0f, 2.0f);
 		m_GlobalConstsCPU.Lights[0].Direction = Vector3(0.2f, -1.0f, 0.0f);
 		m_GlobalConstsCPU.Lights[0].SpotPower = 0.0f;
@@ -38,13 +38,22 @@ void DebugApp2::InitScene()
 		m_GlobalConstsCPU.Lights[0].Type = LIGHT_POINT | LIGHT_SHADOW;
 
 		m_GlobalConstsCPU.Lights[1].Type = LIGHT_OFF;
-		m_GlobalConstsCPU.Lights[2].Type = LIGHT_OFF;
+		m_GlobalConstsCPU.Lights[2].Type = LIGHT_OFF;*/
+		m_pLights[0].Property.Radiance = Vector3(5.0f);
+		m_pLights[0].Property.Position = Vector3(0.0f, 2.0f, 2.0f);
+		m_pLights[0].Property.Direction = Vector3(0.2f, -1.0f, 0.0f);
+		m_pLights[0].Property.SpotPower = 0.0f;
+		m_pLights[0].Property.Radius = 0.1f;
+		m_pLights[0].Property.LightType = LIGHT_POINT | LIGHT_SHADOW;
+
+		m_pLights[1].Property.LightType = LIGHT_OFF;
+		m_pLights[2].Property.LightType = LIGHT_OFF;
 	}
 
 	// 바닥(거울).
 	{
 		// https://freepbr.com/materials/stringy-marble-pbr/
-		Geometry::MeshData mesh = INIT_MESH_DATA;
+		Geometry::MeshInfo mesh = INIT_MESH_INFO;
 		Geometry::MakeSquare(&mesh, 5.0f);
 
 		std::wstring path = L"./Assets/Textures/PBR/stringy-marble-ue/";
@@ -56,10 +65,10 @@ void DebugApp2::InitScene()
 		mesh.szRoughnessTextureFileName = path + L"stringy_marble_Roughness.png";
 
 		m_pGround = New Geometry::Model(m_pDevice5, m_pContext4, { mesh });
-		m_pGround->MaterialConstants.CPU.AlbedoFactor = Vector3(0.7f);
-		m_pGround->MaterialConstants.CPU.EmissionFactor = Vector3(0.0f);
-		m_pGround->MaterialConstants.CPU.MetallicFactor = 0.5f;
-		m_pGround->MaterialConstants.CPU.RoughnessFactor = 0.3f;
+		m_pGround->pMeshes[0]->MaterialConstants.CPU.AlbedoFactor = Vector3(0.7f);
+		m_pGround->pMeshes[0]->MaterialConstants.CPU.EmissionFactor = Vector3(0.0f);
+		m_pGround->pMeshes[0]->MaterialConstants.CPU.MetallicFactor = 0.5f;
+		m_pGround->pMeshes[0]->MaterialConstants.CPU.RoughnessFactor = 0.3f;
 
 		Vector3 position = Vector3(0.0f, 0.0f, 2.0f);
 		m_pGround->UpdateWorld(Matrix::CreateRotationX(DirectX::XM_PI * 0.5f) *
@@ -84,14 +93,14 @@ void DebugApp2::InitScene()
 		Geometry::AnimationData aniData;
 
 		std::wstring filename = L"character.fbx";
-		std::tuple<std::vector<struct Geometry::MeshData>, Geometry::AnimationData> data;
+		std::tuple<std::vector<Geometry::MeshInfo>, Geometry::AnimationData> data;
 		Geometry::ReadAnimationFromFile(data, path, filename);
-		std::vector<struct Geometry::MeshData>& meshes = std::get<0>(data);
+		std::vector<Geometry::MeshInfo>& meshInfos = std::get<0>(data);
 
 		for (size_t i = 0, size = clipNames.size(); i < size; ++i)
 		{
 			std::wstring& name = clipNames[i];
-			std::tuple<std::vector<struct Geometry::MeshData>, Geometry::AnimationData> tempData;
+			std::tuple<std::vector<Geometry::MeshInfo>, Geometry::AnimationData> tempData;
 			Geometry::ReadAnimationFromFile(tempData, path, name);
 			Geometry::AnimationData& anim = std::get<1>(tempData);
 
@@ -106,12 +115,18 @@ void DebugApp2::InitScene()
 		}
 
 		Vector3 center(0.0f, 0.5f, 2.0f);
-		m_pCharacter = New Geometry::SkinnedMeshModel(m_pDevice5, m_pContext4, meshes, aniData);
-		m_pCharacter->MaterialConstants.CPU.AlbedoFactor = Vector3(1.0f);
+		m_pCharacter = New Geometry::SkinnedMeshModel(m_pDevice5, m_pContext4, meshInfos, aniData);
+		/*m_pCharacter->MaterialConstants.CPU.AlbedoFactor = Vector3(1.0f);
 		m_pCharacter->MaterialConstants.CPU.RoughnessFactor = 0.8f;
-		m_pCharacter->MaterialConstants.CPU.MetallicFactor = 0.0f;
-		m_pCharacter->UpdateWorld(Matrix::CreateScale(1.0f) *
-								  Matrix::CreateTranslation(center));
+		m_pCharacter->MaterialConstants.CPU.MetallicFactor = 0.0f;*/
+		for (size_t i = 0, size = m_pCharacter->pMeshes.size(); i < size; ++i)
+		{
+			Geometry::Mesh* pCurMesh = m_pCharacter->pMeshes[i];
+			pCurMesh->MaterialConstants.CPU.AlbedoFactor = Vector3(1.0f);
+			pCurMesh->MaterialConstants.CPU.RoughnessFactor = 0.8f;
+			pCurMesh->MaterialConstants.CPU.MetallicFactor = 0.0f;
+		}
+		m_pCharacter->UpdateWorld(Matrix::CreateScale(1.0f) * Matrix::CreateTranslation(center));
 
 		m_pBasicList.push_back(m_pCharacter); // 리스트에 등록
 		m_pPickedModel = m_pCharacter;
@@ -134,7 +149,7 @@ void DebugApp2::UpdateGUI()
 			Core::BaseRenderer::destroyBuffersForRendering();
 			Core::BaseRenderer::createBuffers();
 			m_PostProcessor.Initialize(m_pDevice5, m_pContext4,
-									   { m_pGlobalConstsGPU, m_pBackBuffer, m_pFloatBuffer, m_pResolvedBuffer, m_pPrevBuffer, m_pBackBufferRTV, m_pResolvedSRV, m_pPrevSRV, m_pDepthOnlySRV },
+									   { m_pGlobalConstsGPU, m_pBackBuffer, m_FloatBuffer.GetTexture(), m_ResolvedBuffer.GetTexture(), m_PrevBuffer.GetTexture(), m_pBackBufferRTV, m_ResolvedBuffer.GetSRV(), m_PrevBuffer.GetSRV(), m_DepthOnlyBuffer.GetSRV() },
 									   m_ScreenWidth, m_ScreenHeight, 4);
 		}
 		ImGui::TreePop();
@@ -157,33 +172,21 @@ void DebugApp2::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Post Effects"))
 	{
-		// int flag = 0;
 		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Render", &(m_PostProcessor.PostEffectsConstsCPU.Mode), 1);
 		ImGui::SameLine();
 		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Depth", &(m_PostProcessor.PostEffectsConstsCPU.Mode), 2);
 		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("DepthScale", &(m_PostProcessor.PostEffectsConstsCPU.DepthScale), 0.0f, 1.0f);
 		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("Fog", &(m_PostProcessor.PostEffectsConstsCPU.FogStrength), 0.0f, 10.0f);
 
-		/*if (flag)
-		{
-			Graphics::UpdateBuffer(m_pContext4, m_PostEffectsConstsCPU, m_pPostEffectsConstsGPU);
-		}*/
-
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNode("Post Processing"))
 	{
-		// int flag = 0;
 		m_PostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Bloom Strength", &(m_PostProcessor.CombineFilter.ConstantsData.Strength), 0.0f, 1.0f);
 		m_PostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Exposure", &(m_PostProcessor.CombineFilter.ConstantsData.Option1), 0.0f, 10.0f);
 		m_PostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Gamma", &(m_PostProcessor.CombineFilter.ConstantsData.Option2), 0.1f, 5.0f);
 
-		// 편의상 사용자 입력이 인식되면 바로 GPU 버퍼를 업데이트.
-		/*if (flag)
-		{
-			m_PostProcess.CombineFilter.UpdateConstantBuffers(m_pContext4);
-		}*/
 		ImGui::TreePop();
 	}
 
@@ -201,8 +204,8 @@ void DebugApp2::UpdateGUI()
 			Graphics::g_MirrorBlendSolidPSO.SetBlendFactor(BLEND_COLOR);
 		}
 
-		ImGui::SliderFloat("Metallic", &(m_pMirror->MaterialConstants.CPU.MetallicFactor), 0.0f, 1.0f);
-		ImGui::SliderFloat("Roughness", &(m_pMirror->MaterialConstants.CPU.RoughnessFactor), 0.0f, 1.0f);
+		ImGui::SliderFloat("Metallic", &(m_pMirror->pMeshes[0]->MaterialConstants.CPU.MetallicFactor), 0.0f, 1.0f);
+		ImGui::SliderFloat("Roughness", &(m_pMirror->pMeshes[0]->MaterialConstants.CPU.RoughnessFactor), 0.0f, 1.0f);
 
 		ImGui::TreePop();
 	}
@@ -212,9 +215,12 @@ void DebugApp2::UpdateGUI()
 	{
 		// ImGui::SliderFloat3("Position",
 		// &m_globalConstsCPU.lights[0].position.x, -5.0f, 5.0f);
-		ImGui::SliderFloat("Halo Radius", &(m_GlobalConstsCPU.Lights[1].HaloRadius), 0.0f, 2.0f);
+		/*ImGui::SliderFloat("Halo Radius", &(m_GlobalConstsCPU.Lights[1].HaloRadius), 0.0f, 2.0f);
 		ImGui::SliderFloat("Halo Strength", &(m_GlobalConstsCPU.Lights[1].HaloStrength), 0.0f, 1.0f);
-		ImGui::SliderFloat("Radius", &(m_GlobalConstsCPU.Lights[1].Radius), 0.0f, 0.5f);
+		ImGui::SliderFloat("Radius", &(m_GlobalConstsCPU.Lights[1].Radius), 0.0f, 0.5f);*/
+		ImGui::SliderFloat("Halo Radius", &(m_pLights[1].Property.HaloRadius), 0.0f, 2.0f);
+		ImGui::SliderFloat("Halo Strength", &(m_pLights[1].Property.HaloStrength), 0.0f, 1.0f);
+		ImGui::SliderFloat("Radius", &(m_pLights[1].Property.Radius), 0.0f, 0.5f);
 
 		ImGui::TreePop();
 	}
@@ -228,16 +234,19 @@ void DebugApp2::UpdateGUI()
 
 		if (m_pPickedModel != nullptr)
 		{
-			flag += ImGui::SliderFloat("Metallic", &(m_pPickedModel->MaterialConstants.CPU.MetallicFactor), 0.0f, 1.0f);
-			flag += ImGui::SliderFloat("Roughness", &(m_pPickedModel->MaterialConstants.CPU.RoughnessFactor), 0.0f, 1.0f);
-			flag += ImGui::CheckboxFlags("AlbedoTexture", &(m_pPickedModel->MaterialConstants.CPU.bUseAlbedoMap), 1);
-			flag += ImGui::CheckboxFlags("EmissiveTexture", &(m_pPickedModel->MaterialConstants.CPU.bUseEmissiveMap), 1);
-			flag += ImGui::CheckboxFlags("Use NormalMapping", &(m_pPickedModel->MaterialConstants.CPU.bUseNormalMap), 1);
-			flag += ImGui::CheckboxFlags("Use AO", &(m_pPickedModel->MaterialConstants.CPU.bUseAOMap), 1);
-			flag += ImGui::CheckboxFlags("Use HeightMapping", &(m_pPickedModel->MeshConstants.CPU.bUseHeightMap), 1);
-			flag += ImGui::SliderFloat("HeightScale", &(m_pPickedModel->MeshConstants.CPU.HeightScale), 0.0f, 0.1f);
-			flag += ImGui::CheckboxFlags("Use MetallicMap", &(m_pPickedModel->MaterialConstants.CPU.bUseMetallicMap), 1);
-			flag += ImGui::CheckboxFlags("Use RoughnessMap", &(m_pPickedModel->MaterialConstants.CPU.bUseRoughnessMap), 1);
+			for (size_t i = 0, size = m_pPickedModel->pMeshes.size(); i < size; ++i)
+			{
+				flag += ImGui::SliderFloat("Metallic", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.MetallicFactor), 0.0f, 1.0f);
+				flag += ImGui::SliderFloat("Roughness", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.RoughnessFactor), 0.0f, 1.0f);
+				flag += ImGui::CheckboxFlags("AlbedoTexture", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseAlbedoMap), 1);
+				flag += ImGui::CheckboxFlags("EmissiveTexture", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseEmissiveMap), 1);
+				flag += ImGui::CheckboxFlags("Use NormalMapping", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseNormalMap), 1);
+				flag += ImGui::CheckboxFlags("Use AO", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseAOMap), 1);
+				flag += ImGui::CheckboxFlags("Use HeightMapping", &(m_pPickedModel->pMeshes[i]->MeshConstants.CPU.bUseHeightMap), 1);
+				flag += ImGui::SliderFloat("HeightScale", &(m_pPickedModel->pMeshes[i]->MeshConstants.CPU.HeightScale), 0.0f, 0.1f);
+				flag += ImGui::CheckboxFlags("Use MetallicMap", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseMetallicMap), 1);
+				flag += ImGui::CheckboxFlags("Use RoughnessMap", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseRoughnessMap), 1);
+			}
 
 			if (flag)
 			{

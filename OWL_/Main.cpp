@@ -32,7 +32,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
-	// std::unique_ptr<hlab::BaseRenderer> app = make_unique<hlab::DebugApp>();
 	Core::BaseRenderer* app = New DebugApp();
 	app->Initialize();
 	app->Run();

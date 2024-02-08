@@ -5,7 +5,7 @@ namespace Geometry
 {
 	void AnimationData::Update(int clipID, int frame)
 	{
-		struct AnimationClip& clip = pClips[clipID];
+		AnimationClip& clip = pClips[clipID];
 
 		for (size_t boneID = 0, totalTransformSize = pBoneTransforms.size(); boneID < totalTransformSize; ++boneID)
 		{

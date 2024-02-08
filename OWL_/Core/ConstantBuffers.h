@@ -51,7 +51,7 @@ namespace Core
 		float dummy = 0.0f;
 	};
 
-	struct Light
+	ALIGN(16) struct LightProperty
 	{
 		Vector3 Radiance = Vector3(5.0f); // strength.
 		float FallOffStart = 0.0f;
@@ -62,7 +62,7 @@ namespace Core
 
 		// Light type bitmasking.
 		// ex) LIGHT_SPOT | LIGHT_SHADOW
-		uint32_t Type = LIGHT_OFF;
+		uint32_t LightType = LIGHT_OFF;
 		float Radius = 0.035f; // 반지름.
 
 		float HaloRadius = 0.0f;
@@ -70,6 +70,10 @@ namespace Core
 
 		Matrix ViewProjection;	  // 그림자 렌더링에 필요.
 		Matrix InverseProjection; // 그림자 렌더링 디버깅용.
+	};
+	ALIGN(16) struct LightConstants
+	{
+		LightProperty Lights[MAX_LIGHTS];
 	};
 
 	// register(b1) 사용
@@ -90,7 +94,8 @@ namespace Core
 		float LODBias = 2.0f;    // 다른 물체들 LodBias.
 		float GlobalTime = 0.0f;
 
-		Light Lights[MAX_LIGHTS];
+		int dummy[4];
+		// LightConstants Lights[MAX_LIGHTS];
 	};
 
 	// register(b5) 사용, PostEffectsPS.hlsl
@@ -120,33 +125,26 @@ namespace Core
 	class ConstantsBuffer
 	{
 	public:
-		~ConstantsBuffer() { destroy(); }
+		ConstantsBuffer() = default;
+		~ConstantsBuffer() { Destroy(); }
 
 		void Initialize(ID3D11Device* pDevice)
 		{
 			HRESULT hr = S_OK;
 
-			destroy();
+			Destroy();
 
 			hr = Graphics::CreateConstBuffer(pDevice, CPU, &pGPU);
 			BREAK_IF_FAILED(hr);
 			SET_DEBUG_INFO_TO_OBJECT(pGPU, "ConstantsBuffer::pGPU");
 		}
 
-		void Upload(ID3D11DeviceContext* pContext)
-		{
-			Graphics::UpdateBuffer(pContext, CPU, pGPU);
-		}
+		void Upload(ID3D11DeviceContext* pContext) { Graphics::UpdateBuffer(pContext, CPU, pGPU); }
 
-	protected:
-		void destroy()
-		{
-			SAFE_RELEASE(pGPU);
-		}
+		void Destroy() { SAFE_RELEASE(pGPU); }	
 
 	public:
-		CONSTANTS CPU;
 		ID3D11Buffer* pGPU = nullptr;
+		CONSTANTS CPU;
 	};
-
 }

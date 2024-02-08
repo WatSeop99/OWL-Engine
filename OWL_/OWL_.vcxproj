@@ -131,11 +131,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Core\GBuffer.h" />
+    <ClInclude Include="Core\GBuffer.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Core\Light.h" />
     <ClInclude Include="Core\Scene.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="Core\ShadowMap.h" />
     <ClInclude Include="DebugApp2.h" />
     <ClInclude Include="Geometry\Animation.h" />
     <ClInclude Include="Core\BaseRenderer.h" />
@@ -150,7 +155,7 @@
     <ClInclude Include="Core\PipelineState.h" />
     <ClInclude Include="Core\ImageFilter.h" />
     <ClInclude Include="Geometry\Mesh.h" />
-    <ClInclude Include="Geometry\MeshData.h" />
+    <ClInclude Include="Geometry\MeshInfo.h" />
     <ClInclude Include="Geometry\Model.h" />
     <ClInclude Include="Geometry\ModelInstance.h" />
     <ClInclude Include="Geometry\ModelLoader.h" />
@@ -175,13 +180,19 @@
   <ItemGroup>
     <ClCompile Include="Core\BaseRenderer.cpp" />
     <ClCompile Include="Core\Camera.cpp" />
-    <ClCompile Include="Core\GBuffer.cpp" />
+    <ClCompile Include="Core\GBuffer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Core\GraphicsUtils.cpp" />
+    <ClCompile Include="Core\Light.cpp" />
     <ClCompile Include="Core\Scene.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Core\ShadowMap.cpp" />
     <ClCompile Include="Core\Texture3D.cpp" />
+    <ClCompile Include="Core\Timer.cpp" />
     <ClCompile Include="DebugApp.cpp" />
     <ClCompile Include="Geometry\Animation.cpp" />
     <ClCompile Include="DebugApp2.cpp" />

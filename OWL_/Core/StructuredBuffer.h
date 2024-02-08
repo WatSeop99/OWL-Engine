@@ -12,7 +12,7 @@ namespace Core
 	{
 	public:
 		StructuredBuffer() = default;
-		virtual ~StructuredBuffer() { destroy(); }
+		virtual ~StructuredBuffer() { Destroy(); }
 
 		virtual void Initialize(ID3D11Device* pDevice, const UINT NUM_ELEMENTS)
 		{
@@ -23,18 +23,20 @@ namespace Core
 		{
 			HRESULT hr = S_OK;
 
-			hr = Graphics::CreateStructuredBuffer(pDevice,
-												  (UINT)(CPU.size()), sizeof(DATA_TYPE), CPU.data(),
-												  &pGPU, &pSRV, &pUAV);
+			// Destroy();
+			_ASSERT(pGPU == nullptr);
+			_ASSERT(pStaging == nullptr);
+			_ASSERT(pSRV == nullptr);
+			_ASSERT(pUAV == nullptr);
+
+			hr = Graphics::CreateStructuredBuffer(pDevice, (UINT)(CPU.size()), sizeof(DATA_TYPE), CPU.data(), &pGPU, &pSRV, &pUAV);
 			BREAK_IF_FAILED(hr);
 			SET_DEBUG_INFO_TO_OBJECT(pGPU, "StructuredBuffer::pGPU");
 			SET_DEBUG_INFO_TO_OBJECT(pSRV, "StructuredBuffer::pSRV");
 			SET_DEBUG_INFO_TO_OBJECT(pUAV, "StructuredBuffer::pUAV");
 
 			// Staging은 주로 디버깅 용도.
-			hr = Graphics::CreateStagingBuffer(pDevice,
-											   (UINT)(CPU.size()), sizeof(DATA_TYPE), nullptr,
-											   &pStaging);
+			hr = Graphics::CreateStagingBuffer(pDevice, (UINT)(CPU.size()), sizeof(DATA_TYPE), nullptr, &pStaging);
 			BREAK_IF_FAILED(hr);
 			SET_DEBUG_INFO_TO_OBJECT(pStaging, "StructuredBuffer::pStaging");
 		}
@@ -63,8 +65,7 @@ namespace Core
 			Graphics::CopyFromStagingBuffer(pContext, pStaging, (UINT)(arrCPU.size() * sizeof(DATA_TYPE)), arrCPU.data());
 		}
 
-	protected:
-		void destroy()
+		void Destroy()
 		{
 			SAFE_RELEASE(pGPU);
 			SAFE_RELEASE(pStaging);
@@ -74,12 +75,11 @@ namespace Core
 		}
 
 	public:
-		std::vector<DATA_TYPE> CPU;
 		ID3D11Buffer* pGPU = nullptr;
 		ID3D11Buffer* pStaging = nullptr;
-
 		ID3D11ShaderResourceView* pSRV = nullptr;
 		ID3D11UnorderedAccessView* pUAV = nullptr;
+		std::vector<DATA_TYPE> CPU;
 	};
 
 	// StructuredBuffer 대신 AppendBuffer 사용할 수도 있음.
@@ -93,6 +93,8 @@ namespace Core
 
 		void Initialize(ID3D11Device* pDevice)
 		{
+			BaseClass::Destroy();
+
 			Graphics::CreateAppendBuffer(pDevice, UINT(BaseClass::CPU.size()), sizeof(DATA_TYPE), BaseClass::CPU.data(),
 										 &BaseClass::pGPU, &BaseClass::pSRV, &BaseClass::pUAV);
 		}
