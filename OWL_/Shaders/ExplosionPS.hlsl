@@ -1,34 +1,33 @@
 cbuffer BillboardModelConstantData : register(b1)
 {
-    float3 eyeWorld;
-    float width;
-    Matrix model; // For vertex shader
-    Matrix view; // For vertex shader
-    Matrix proj; // For vertex shader
-    float objectTime;
+    float3 EyeWorld;
+    float Width;
+    Matrix Model; // For vertex shader
+    Matrix View; // For vertex shader
+    Matrix Projection; // For vertex shader
+    float ObjectTime;
     float3 padding;
 };
 
 struct PixelShaderInput
 {
-    float4 pos : SV_POSITION; // Screen position
-    float4 posWorld : POSITION0;
-    float4 center : POSITION1;
-    float2 texCoord : TEXCOORD;
-    uint primID : SV_PrimitiveID;
+    float4 ProjectedPosition : SV_POSITION; // Screen position
+    float4 WorldPosition : POSITION0;
+    float4 Center : POSITION1;
+    float2 Texcoord : TEXCOORD;
+    uint PrimID : SV_PrimitiveID;
 };
 struct PixelShaderOutput
 {
-    float4 pixelColor : SV_TARGET0;
+    float4 PixelColor : SV_TARGET0;
 };
 
-Texture2DArray g_texArray : register(t5);
-SamplerState g_sampler : register(s0);
+Texture2DArray g_TexArray : register(t5);
+SamplerState g_Sampler : register(s0);
 
 // Game Explosion
 // https://www.shadertoy.com/view/XtVyDz
 
-#define loop
 static const int LAYERS = 128;
 static const float BLUR = 0.1f;
 static const float SPEED = 4.0f;
@@ -50,12 +49,8 @@ float Circle(float radius, float2 pos)
 
 PixelShaderOutput main(PixelShaderInput input)
 {
-    float time = objectTime * 1.5f;
-//#ifdef loop
-//    time = fmod(time, 5.);
-//#endif
-    
-    float2 uv = (input.texCoord * 2.0f - 1.0f) * 4.0f;
+    float time = ObjectTime * 1.5f;
+    float2 uv = (input.Texcoord * 2.0f - 1.0f) * 4.0f;
     float2 puv = float2(length(uv), atan2(uv.x, uv.y)); //polar coordinates.
 
     float3 col = float3(0.0f, 0.0f, 0.0f);
@@ -63,7 +58,7 @@ PixelShaderOutput main(PixelShaderInput input)
     {
         float prog = (float) i / (float) LAYERS;
         float radius = prog * ((1.0f - 1.0f / pow(abs(time * SPEED), 1.0f / 3.0f)) * 2.0f); //decrease radius using cubed
-        radius += sin(puv.y * PEAKS + Hash(prog) * 513.) * PEAK_STRENGTH; //modulate radius so it isnt enitly symetrical
+        radius += sin(puv.y * PEAKS + Hash(prog) * 513.0f) * PEAK_STRENGTH; //modulate radius so it isnt enitly symetrical
         float3 color = float3(1.0f / radius, 0.25f, 0.1f * (2.0f - radius)) / time / abs(log(time * RING_SPEED) - puv.x); // base explosion color, decrease with time and with distance from center
         float3 temp;
         temp.rgb = (1.0f - time / SMOKE_TIME) * puv.x * SMOKE;
@@ -75,7 +70,7 @@ PixelShaderOutput main(PixelShaderInput input)
     
     PixelShaderOutput output;
     float alpha = saturate(smoothstep(dot(float3(1.0f, 1.0f, 1.0f), col), 0.0f, 1.0f));
-    output.pixelColor = float4(col.rgb, alpha);
+    output.PixelColor = float4(col.rgb, alpha);
     return output;
 }
 

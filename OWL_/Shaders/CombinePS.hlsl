@@ -1,24 +1,24 @@
-Texture2D g_texture0 : register(t0);
-Texture2D g_texture1 : register(t1);
-Texture2D g_prevFrame : register(t2);
-SamplerState g_sampler : register(s0);
+Texture2D g_Texture0 : register(t0);
+Texture2D g_Texture1 : register(t1);
+Texture2D g_PrevFrame : register(t2);
+SamplerState g_Sampler : register(s0);
 
 cbuffer ImageFilterConstData : register(b0)
 {
-    float dx;
-    float dy;
-    float threshold;
-    float strength;
-    float exposure; // option1 in c++
-    float gamma; // option2 in c++
-    float blur; // option3 in c++
-    float option4;
+    float DX;
+    float DY;
+    float Threshold;
+    float Strength;
+    float Exposure; // option1 in c++
+    float Gamma; // option2 in c++
+    float Blur; // option3 in c++
+    float Option4;
 };
 
 struct SamplingPixelShaderInput
 {
-    float4 position : SV_POSITION;
-    float2 texcoord : TEXCOORD;
+    float4 ProjectedPosition : SV_POSITION;
+    float2 Texcoord : TEXCOORD;
 };
 
 float3 FilmicToneMapping(float3 color)
@@ -30,9 +30,9 @@ float3 FilmicToneMapping(float3 color)
 
 float3 LinearToneMapping(float3 color)
 {
-    float3 invGamma = float3(1.0f, 1.0f, 1.0f) / gamma;
+    float3 invGamma = float3(1.0f, 1.0f, 1.0f) / Gamma;
 
-    color = clamp(exposure * color, 0.0f, 1.0f);
+    color = clamp(Exposure * color, 0.0f, 1.0f);
     color = pow(color, invGamma);
     return color;
 }
@@ -47,17 +47,17 @@ float3 Uncharted2ToneMapping(float3 color)
     float F = 0.30f;
     float W = 11.2f;
     
-    color *= exposure;
+    color *= Exposure;
     color = ((color * (A * color + C * B) + D * E) / (color * (A * color + B) + D * F)) - E / F;
     float white = ((W * (A * W + C * B) + D * E) / (W * (A * W + B) + D * F)) - E / F;
     color /= white;
-    color = pow(color, float3(1.0f, 1.0f, 1.0f) / gamma);
+    color = pow(color, float3(1.0f, 1.0f, 1.0f) / Gamma);
     return color;
 }
 
 float3 LumaBasedReinhardToneMapping(float3 color)
 {
-    float3 invGamma = float3(1.0f, 1.0f, 1.0f) / gamma;
+    float3 invGamma = float3(1.0f, 1.0f, 1.0f) / Gamma;
     float luma = dot(color, float3(0.2126f, 0.7152f, 0.0722f));
     float toneMappedLuma = luma / (1.0f + luma);
     color *= toneMappedLuma / luma;
@@ -67,13 +67,13 @@ float3 LumaBasedReinhardToneMapping(float3 color)
 
 float4 main(SamplingPixelShaderInput input) : SV_TARGET
 {
-    float3 color0 = g_texture0.Sample(g_sampler, input.texcoord).rgb;
-    float3 color1 = g_texture1.Sample(g_sampler, input.texcoord).rgb;
-    float3 combined = (1.0f - strength) * color0 + strength * color1;
+    float3 color0 = g_Texture0.Sample(g_Sampler, input.Texcoord).rgb;
+    float3 color1 = g_Texture1.Sample(g_Sampler, input.Texcoord).rgb;
+    float3 combined = (1.0f - Strength) * color0 + Strength * color1;
 
     // Tone Mapping.
     combined = LinearToneMapping(combined);
-    combined = lerp(combined, g_prevFrame.Sample(g_sampler, input.texcoord).rgb, blur);
+    combined = lerp(combined, g_PrevFrame.Sample(g_Sampler, input.Texcoord).rgb, Blur);
     
     return float4(combined, 1.0f);
 }

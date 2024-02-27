@@ -41,7 +41,7 @@ float GetWaves(float2 position, int iterations)
         float2 p = float2(sin(iter), cos(iter));
         
         // calculate wave data
-        float2 res = WaveDX(position, p, frequency, globalTime * timeMultiplier);
+        float2 res = WaveDX(position, p, frequency, g_GlobalTime * timeMultiplier);
 
         // shift position around according to wave drag and derivative of the wave
         position += p * res.y * weight * DRAG_MULT;
@@ -125,7 +125,7 @@ float3 ExtraCheapAtmosphere(float3 raydir, float3 sundir)
 // Calculate where the sun should be, it will be moving around the sky
 float3 GetSunDirection()
 {
-    return normalize(float3(sin(globalTime * 0.1f), 1.0f, cos(globalTime * 0.1f)));
+    return normalize(float3(sin(g_GlobalTime * 0.1f), 1.0f, cos(g_GlobalTime * 0.1f)));
 }
 
 // Get atmosphere color for given direction
@@ -143,7 +143,7 @@ float GetSun(float3 dir)
 // Main
 float4 main(PixelShaderInput input) : SV_Target0
 {
-    float3 ray = -normalize(eyeWorld - input.posWorld);
+    float3 ray = -normalize(g_EyeWorld - input.WorldPosition);
 
     // now ray.y must be negative, water must be hit
     // define water planes
@@ -153,7 +153,7 @@ float4 main(PixelShaderInput input) : SV_Target0
     // define ray origin, moving around
     //float3 origin = float3(globalTime, CAMERA_HEIGHT, globalTime);
    // float3 origin = float3(0, CAMERA_HEIGHT, 0);
-    float3 origin = eyeWorld;
+    float3 origin = g_EyeWorld;
 
     // calculate intersections and reconstruct positions
     float highPlaneHit = IntersectPlane(origin, ray, waterPlaneHigh, float3(0.0f, 1.0f, 0.0f));

@@ -2,11 +2,11 @@
 
 struct GrassPixelInput
 {
-    float4 posProj : SV_POSITION;
-    float3 posWorld : POSITION;
-    float3 normalWorld : NORMAL;
-    float2 texcoord : TEXCOORD;
-    float3 baseColor : COLOR;
+    float4 ProjectedPosition : SV_POSITION;
+    float3 WorldPosition : POSITION;
+    float3 WorldNormal : NORMAL;
+    float2 Texcoord : TEXCOORD;
+    float3 BaseColor : COLOR;
 };
 
 float4 main(GrassPixelInput input) : SV_TARGET
@@ -14,7 +14,7 @@ float4 main(GrassPixelInput input) : SV_TARGET
     float3 lightDir = normalize(float3(0.2f, 1.0f, 0.0f));
     
     // 간단한 directional light, 양면이라서 abs 사용.
-    float3 color = input.baseColor * abs(dot(input.normalWorld, lightDir)) * 2.0f;
+    float3 color = input.BaseColor * abs(dot(input.WorldNormal, lightDir)) * 2.0f;
     return float4(color, 1.0f);
 }
 

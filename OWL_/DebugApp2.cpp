@@ -18,68 +18,9 @@ DebugApp2::~DebugApp2()
 
 void DebugApp2::InitScene()
 {
-	m_GlobalConstsCPU.StrengthIBL = 1.0f;
 	Core::BaseRenderer::m_Camera.Reset(Vector3(3.74966f, 5.03645f, -2.54918f), -0.819048f, 0.741502f);
 
-	Core::BaseRenderer::InitCubemaps(L"./Assets/Textures/Cubemaps/HDRI/", L"clear_pureskyEnvHDR.dds",
-									 L"clear_pureskySpecularHDR.dds", L"clear_pureskyDiffuseHDR.dds",
-									 L"clear_pureskyBrdf.dds");
-
 	Core::BaseRenderer::InitScene();
-
-	// 조명 설정.
-	{
-		// 조명 0은 고정.
-		/*m_GlobalConstsCPU.Lights[0].Radiance = Vector3(5.0f);
-		m_GlobalConstsCPU.Lights[0].Position = Vector3(0.0f, 2.0f, 2.0f);
-		m_GlobalConstsCPU.Lights[0].Direction = Vector3(0.2f, -1.0f, 0.0f);
-		m_GlobalConstsCPU.Lights[0].SpotPower = 0.0f;
-		m_GlobalConstsCPU.Lights[0].Radius = 0.1f;
-		m_GlobalConstsCPU.Lights[0].Type = LIGHT_POINT | LIGHT_SHADOW;
-
-		m_GlobalConstsCPU.Lights[1].Type = LIGHT_OFF;
-		m_GlobalConstsCPU.Lights[2].Type = LIGHT_OFF;*/
-		m_pLights[0].Property.Radiance = Vector3(5.0f);
-		m_pLights[0].Property.Position = Vector3(0.0f, 2.0f, 2.0f);
-		m_pLights[0].Property.Direction = Vector3(0.2f, -1.0f, 0.0f);
-		m_pLights[0].Property.SpotPower = 0.0f;
-		m_pLights[0].Property.Radius = 0.1f;
-		m_pLights[0].Property.LightType = LIGHT_POINT | LIGHT_SHADOW;
-
-		m_pLights[1].Property.LightType = LIGHT_OFF;
-		m_pLights[2].Property.LightType = LIGHT_OFF;
-	}
-
-	// 바닥(거울).
-	{
-		// https://freepbr.com/materials/stringy-marble-pbr/
-		Geometry::MeshInfo mesh = INIT_MESH_INFO;
-		Geometry::MakeSquare(&mesh, 5.0f);
-
-		std::wstring path = L"./Assets/Textures/PBR/stringy-marble-ue/";
-		mesh.szAlbedoTextureFileName = path + L"stringy_marble_albedo.png";
-		mesh.szEmissiveTextureFileName = L"";
-		mesh.szAOTextureFileName = path + L"stringy_marble_ao.png";
-		mesh.szMetallicTextureFileName = path + L"stringy_marble_Metallic.png";
-		mesh.szNormalTextureFileName = path + L"stringy_marble_Normal-dx.png";
-		mesh.szRoughnessTextureFileName = path + L"stringy_marble_Roughness.png";
-
-		m_pGround = New Geometry::Model(m_pDevice5, m_pContext4, { mesh });
-		m_pGround->pMeshes[0]->MaterialConstants.CPU.AlbedoFactor = Vector3(0.7f);
-		m_pGround->pMeshes[0]->MaterialConstants.CPU.EmissionFactor = Vector3(0.0f);
-		m_pGround->pMeshes[0]->MaterialConstants.CPU.MetallicFactor = 0.5f;
-		m_pGround->pMeshes[0]->MaterialConstants.CPU.RoughnessFactor = 0.3f;
-
-		Vector3 position = Vector3(0.0f, 0.0f, 2.0f);
-		m_pGround->UpdateWorld(Matrix::CreateRotationX(DirectX::XM_PI * 0.5f) *
-							   Matrix::CreateTranslation(position));
-		m_pGround->bCastShadow = false; // 바닥은 그림자 만들기 생략.
-
-		m_MirrorPlane = DirectX::SimpleMath::Plane(position, Vector3(0.0f, 1.0f, 0.0f));
-		m_pMirror = m_pGround; // 바닥에 거울처럼 반사 구현.
-
-		// m_basicList.push_back(m_ground); // 거울은 리스트에 등록 X
-	}
 
 	// Main Object.
 	{
@@ -116,9 +57,6 @@ void DebugApp2::InitScene()
 
 		Vector3 center(0.0f, 0.5f, 2.0f);
 		m_pCharacter = New Geometry::SkinnedMeshModel(m_pDevice5, m_pContext4, meshInfos, aniData);
-		/*m_pCharacter->MaterialConstants.CPU.AlbedoFactor = Vector3(1.0f);
-		m_pCharacter->MaterialConstants.CPU.RoughnessFactor = 0.8f;
-		m_pCharacter->MaterialConstants.CPU.MetallicFactor = 0.0f;*/
 		for (size_t i = 0, size = m_pCharacter->pMeshes.size(); i < size; ++i)
 		{
 			Geometry::Mesh* pCurMesh = m_pCharacter->pMeshes[i];
@@ -128,7 +66,7 @@ void DebugApp2::InitScene()
 		}
 		m_pCharacter->UpdateWorld(Matrix::CreateScale(1.0f) * Matrix::CreateTranslation(center));
 
-		m_pBasicList.push_back(m_pCharacter); // 리스트에 등록
+		m_Scene.pRenderObjects.push_back(m_pCharacter); // 리스트에 등록
 		m_pPickedModel = m_pCharacter;
 	}
 }
@@ -136,20 +74,21 @@ void DebugApp2::InitScene()
 void DebugApp2::UpdateGUI()
 {
 	BaseRenderer::UpdateGUI();
+	Core::GlobalConstants& globalConstsCPU = m_Scene.GetGlobalConstantsCPU();
 
 	ImGui::SetNextItemOpen(false, ImGuiCond_Once);
 	if (ImGui::TreeNode("General"))
 	{
 		ImGui::Checkbox("Use FPV", &(m_Camera.bUseFirstPersonView));
-		ImGui::Checkbox("Wireframe", &m_bDrawAsWire);
-		ImGui::Checkbox("DrawOBB", &m_bDrawOBB);
-		ImGui::Checkbox("DrawBSphere", &m_bDrawBS);
+		ImGui::Checkbox("Wireframe", &(m_Scene.bDrawAsWire));
+		ImGui::Checkbox("DrawOBB", &(m_Scene.bDrawOBB));
+		ImGui::Checkbox("DrawBSphere", &(m_Scene.bDrawBS));
 		if (ImGui::Checkbox("MSAA ON", &m_bUseMSAA))
 		{
 			Core::BaseRenderer::destroyBuffersForRendering();
 			Core::BaseRenderer::createBuffers();
 			m_PostProcessor.Initialize(m_pDevice5, m_pContext4,
-									   { m_pGlobalConstsGPU, m_pBackBuffer, m_FloatBuffer.GetTexture(), m_ResolvedBuffer.GetTexture(), m_PrevBuffer.GetTexture(), m_pBackBufferRTV, m_ResolvedBuffer.GetSRV(), m_PrevBuffer.GetSRV(), m_DepthOnlyBuffer.GetSRV() },
+									   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, m_FloatBuffer.pTexture, m_ResolvedBuffer.pTexture, m_PrevBuffer.pTexture, m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV() },
 									   m_ScreenWidth, m_ScreenHeight, 4);
 		}
 		ImGui::TreePop();
@@ -158,14 +97,14 @@ void DebugApp2::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Skybox"))
 	{
-		ImGui::SliderFloat("Strength", &(m_GlobalConstsCPU.StrengthIBL), 0.0f,
+		ImGui::SliderFloat("Strength", &(globalConstsCPU.StrengthIBL), 0.0f,
 						   0.5f);
-		ImGui::RadioButton("Env", &(m_GlobalConstsCPU.TextureToDraw), 0);
+		ImGui::RadioButton("Env", &(globalConstsCPU.TextureToDraw), 0);
 		ImGui::SameLine();
-		ImGui::RadioButton("Specular", &m_GlobalConstsCPU.TextureToDraw, 1);
+		ImGui::RadioButton("Specular", &(globalConstsCPU.TextureToDraw), 1);
 		ImGui::SameLine();
-		ImGui::RadioButton("Irradiance", &(m_GlobalConstsCPU.TextureToDraw), 2);
-		ImGui::SliderFloat("EnvLodBias", &(m_GlobalConstsCPU.EnvLODBias), 0.0f, 10.0f);
+		ImGui::RadioButton("Irradiance", &(globalConstsCPU.TextureToDraw), 2);
+		ImGui::SliderFloat("EnvLodBias", &(globalConstsCPU.EnvLODBias), 0.0f, 10.0f);
 		ImGui::TreePop();
 	}
 
@@ -193,9 +132,9 @@ void DebugApp2::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Mirror"))
 	{
-		ImGui::SliderFloat("Alpha", &m_MirrorAlpha, 0.0f, 1.0f);
-		const float BLEND_COLOR[4] = { m_MirrorAlpha, m_MirrorAlpha, m_MirrorAlpha, 1.0f };
-		if (m_bDrawAsWire)
+		ImGui::SliderFloat("Alpha", &(m_Scene.MirrorAlpha), 0.0f, 1.0f);
+		const float BLEND_COLOR[4] = { m_Scene.MirrorAlpha, m_Scene.MirrorAlpha, m_Scene.MirrorAlpha, 1.0f };
+		if (m_Scene.bDrawAsWire)
 		{
 			Graphics::g_MirrorBlendWirePSO.SetBlendFactor(BLEND_COLOR);
 		}
@@ -204,8 +143,9 @@ void DebugApp2::UpdateGUI()
 			Graphics::g_MirrorBlendSolidPSO.SetBlendFactor(BLEND_COLOR);
 		}
 
-		ImGui::SliderFloat("Metallic", &(m_pMirror->pMeshes[0]->MaterialConstants.CPU.MetallicFactor), 0.0f, 1.0f);
-		ImGui::SliderFloat("Roughness", &(m_pMirror->pMeshes[0]->MaterialConstants.CPU.RoughnessFactor), 0.0f, 1.0f);
+		Geometry::Model* pMirror = m_Scene.GetMirror();
+		ImGui::SliderFloat("Metallic", &(pMirror->pMeshes[0]->MaterialConstants.CPU.MetallicFactor), 0.0f, 1.0f);
+		ImGui::SliderFloat("Roughness", &(pMirror->pMeshes[0]->MaterialConstants.CPU.RoughnessFactor), 0.0f, 1.0f);
 
 		ImGui::TreePop();
 	}
@@ -213,14 +153,10 @@ void DebugApp2::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Light"))
 	{
-		// ImGui::SliderFloat3("Position",
-		// &m_globalConstsCPU.lights[0].position.x, -5.0f, 5.0f);
-		/*ImGui::SliderFloat("Halo Radius", &(m_GlobalConstsCPU.Lights[1].HaloRadius), 0.0f, 2.0f);
-		ImGui::SliderFloat("Halo Strength", &(m_GlobalConstsCPU.Lights[1].HaloStrength), 0.0f, 1.0f);
-		ImGui::SliderFloat("Radius", &(m_GlobalConstsCPU.Lights[1].Radius), 0.0f, 0.5f);*/
-		ImGui::SliderFloat("Halo Radius", &(m_pLights[1].Property.HaloRadius), 0.0f, 2.0f);
-		ImGui::SliderFloat("Halo Strength", &(m_pLights[1].Property.HaloStrength), 0.0f, 1.0f);
-		ImGui::SliderFloat("Radius", &(m_pLights[1].Property.Radius), 0.0f, 0.5f);
+		// ImGui::SliderFloat3("Position", &m_globalConstsCPU.lights[0].position.x, -5.0f, 5.0f);
+		ImGui::SliderFloat("Halo Radius", &(m_Scene.pLights[1].Property.HaloRadius), 0.0f, 2.0f);
+		ImGui::SliderFloat("Halo Strength", &(m_Scene.pLights[1].Property.HaloStrength), 0.0f, 1.0f);
+		ImGui::SliderFloat("Radius", &(m_Scene.pLights[1].Property.Radius), 0.0f, 0.5f);
 
 		ImGui::TreePop();
 	}
@@ -228,7 +164,7 @@ void DebugApp2::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Material"))
 	{
-		ImGui::SliderFloat("LodBias", &(m_GlobalConstsCPU.LODBias), 0.0f, 10.0f);
+		ImGui::SliderFloat("LodBias", &(globalConstsCPU.LODBias), 0.0f, 10.0f);
 
 		int flag = 0;
 
@@ -250,7 +186,7 @@ void DebugApp2::UpdateGUI()
 
 			if (flag)
 			{
-				m_pPickedModel->UpdateConstantBuffers(m_pDevice5, m_pContext4);
+				m_pPickedModel->UpdateConstantBuffers(m_pContext4);
 			}
 			ImGui::Checkbox("Draw Normals", &(m_pPickedModel->bDrawNormals));
 		}

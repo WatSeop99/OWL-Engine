@@ -22,20 +22,16 @@ namespace Core
 		};
 
 	public:
-		PostProcessor() :
-			m_Viewport{ 0, }, 
-			m_ScreenWidth(0), 
-			m_ScreenHeight(0),
-			PostEffectsUpdateFlag(0),
-			CombineUpdateFlag(0)
-		{ }
-		~PostProcessor() { destroy(); }
+		PostProcessor() = default;
+		~PostProcessor() { Destroy(); }
 
 		void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS);
 
 		void Update(ID3D11DeviceContext* pContext);
 
 		void Render(ID3D11DeviceContext* pContext);
+
+		void Destroy();
 
 	protected:
 		void createPostBackBuffers(ID3D11Device* pDevice);
@@ -50,21 +46,19 @@ namespace Core
 		void setPipelineState(ID3D11DeviceContext* pContext, Graphics::GraphicsPSO& PSO);
 		void setGlobalConsts(ID3D11DeviceContext* pContext, ID3D11Buffer** ppGlobalConstsGPU);
 
-		void destroy();
-
 	public:
 		PostEffectsConstants PostEffectsConstsCPU;
-		int PostEffectsUpdateFlag;
+		int PostEffectsUpdateFlag = 0;
 
 		ImageFilter CombineFilter;
-		int CombineUpdateFlag;
+		int CombineUpdateFlag = 0;
 
 		struct Geometry::Mesh* pMesh = nullptr;
 
 	private:
-		D3D11_VIEWPORT m_Viewport;
-		int m_ScreenWidth;
-		int m_ScreenHeight;
+		D3D11_VIEWPORT m_Viewport = { 0, };
+		UINT m_ScreenWidth = 0;
+		UINT m_ScreenHeight = 0;
 
 		ID3D11Buffer* m_pPostEffectsConstsGPU = nullptr;
 

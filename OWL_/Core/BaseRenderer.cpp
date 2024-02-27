@@ -23,31 +23,13 @@ namespace Core
 		return g_pAppBase->MsgProc(hWnd, msg, wParam, lParam);
 	}
 
-	BaseRenderer::BaseRenderer() :
-		m_ScreenWidth(1280),
-		m_ScreenHeight(720),
-		m_hMainWindow(nullptr),
-		m_bUseMSAA(true),
-		m_NumQualityLevels(0),
-		m_bDrawAsWire(false),
-		m_bDrawOBB(false),
-		m_bDrawBS(false),
-		m_BackBufferFormat(DXGI_FORMAT_R8G8B8A8_UNORM),
-		/*m_ShadowWidth(1280),
-		m_ShadowHeight(1280),*/
-		m_bLeftButton(false),
-		m_bRightButton(false),
-		m_bDragStartFlag(false),
-		m_MouseNDCX(0.0f),
-		m_MouseNDCY(0.0f),
-		m_WheelDelta(0.0f),
-		m_MouseX(-1),
-		m_MouseY(-1),
-		m_bPauseAnimation(false),
-		m_MirrorAlpha(1.0f)
+	BaseRenderer::BaseRenderer() : m_Scene(m_Camera, m_FloatBuffer, m_ResolvedBuffer)
 	{
 		g_pAppBase = this;
 		m_Camera.SetAspectRatio(GetAspectRatio());
+
+		m_Scene.SetScreenWidth(m_ScreenWidth);
+		m_Scene.SetScreenHeight(m_ScreenHeight);
 	}
 
 	BaseRenderer::~BaseRenderer()
@@ -67,45 +49,8 @@ namespace Core
 			delete m_pTimer;
 			m_pTimer = nullptr;
 		}
-
-		for (size_t i = 0, size = m_pBasicList.size(); i < size; ++i)
-		{
-			delete m_pBasicList[i];
-			m_pBasicList[i] = nullptr;
-		}
-		m_pBasicList.clear();
-
-		m_pMirror = nullptr;
+		
 		m_pCursorSphere = nullptr;
-		for (int i = 0; i < MAX_LIGHTS; ++i)
-		{
-			m_ppLightSpheres[i] = nullptr;
-		}
-		m_pPickedModel = nullptr;
-		if (m_pSkybox)
-		{
-			delete m_pSkybox;
-			m_pSkybox = nullptr;
-		}
-		if (m_pScreenSquare)
-		{
-			delete m_pScreenSquare;
-			m_pScreenSquare = nullptr;
-		}
-
-		SAFE_RELEASE(m_pBrdfSRV);
-		SAFE_RELEASE(m_pSpecularSRV);
-		SAFE_RELEASE(m_pIrradianceSRV);
-		SAFE_RELEASE(m_pEnvSRV);
-
-		SAFE_RELEASE(m_pLightConstantsGPU);
-		SAFE_RELEASE(m_pReflectGlobalConstsGPU);
-		SAFE_RELEASE(m_pGlobalConstsGPU);
-
-		SAFE_RELEASE(m_pDefaultDSV);
-		// SAFE_RELEASE(m_pDepthOnlySRV);
-		// SAFE_RELEASE(m_pDepthOnlyDSV);
-		// SAFE_RELEASE(m_pDepthOnlyBuffer);
 
 		SAFE_RELEASE(m_pBackBufferRTV);
 		SAFE_RELEASE(m_pBackBuffer);
@@ -158,13 +103,10 @@ namespace Core
 
 		InitScene();
 
-		// 환경 박스 초기화.
-		Geometry::MeshInfo skyboxMeshInfo = INIT_MESH_INFO;
-		Geometry::MakeBox(&skyboxMeshInfo, 40.0f);
-
-		std::reverse(skyboxMeshInfo.Indices.begin(), skyboxMeshInfo.Indices.end());
-		m_pSkybox = New Geometry::Model(m_pDevice5, m_pContext4, { skyboxMeshInfo });
-		m_pSkybox->Name = "SkyBox";
+		// postprocessor 초기화.
+		m_PostProcessor.Initialize(m_pDevice5, m_pContext4,
+								   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, m_FloatBuffer.pTexture, m_ResolvedBuffer.pTexture, m_PrevBuffer.pTexture, m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV() },
+								   m_ScreenWidth, m_ScreenHeight, 4);
 
 		// 콘솔창이 렌더링 창을 덮는 것을 방지.
 		SetForegroundWindow(m_hMainWindow);
@@ -176,55 +118,8 @@ namespace Core
 	// 여러 예제들이 공통적으로 사용하기 좋은 장면 설정
 	void BaseRenderer::InitScene()
 	{
-		// 조명 설정.
-		{
-			// 조명 0은 고정.
-			m_pLights[0].Property.Radiance = Vector3(5.0f);
-			m_pLights[0].Property.Position = Vector3(0.0f, 1.5f, 1.1f);
-			m_pLights[0].Property.Direction = Vector3(0.0f, -1.0f, 0.0f);
-			m_pLights[0].Property.SpotPower = 3.0f;
-			m_pLights[0].Property.Radius = 0.04f;
-			m_pLights[0].Property.LightType = LIGHT_SPOT | LIGHT_SHADOW;
-
-			// 조명 1의 위치와 방향은 Update()에서 설정.
-			m_pLights[1].Property.Radiance = Vector3(5.0f);
-			m_pLights[1].Property.FallOffEnd = 20.0f;
-			m_pLights[1].Property.Position = Vector3(0.0f, 1.1f, 2.0f);
-			m_pLights[1].Property.SpotPower = 3.0f;
-			m_pLights[1].Property.Direction = Vector3(0.0f, -0.5f, 1.7f) - m_pLights[1].Property.Position;
-			m_pLights[1].Property.LightType = LIGHT_SPOT | LIGHT_SHADOW;
-			m_pLights[1].Property.Radius = 0.02f;
-
-			// 조명 2는 꺼놓음.
-			m_pLights[2].Property.LightType = LIGHT_OFF;
-		}
-
-		// 조명 위치 표시.
-		{
-			for (int i = 0; i < MAX_LIGHTS; ++i)
-			{
-				Geometry::MeshInfo sphere = INIT_MESH_INFO;
-				Geometry::MakeSphere(&sphere, 1.0f, 20, 20);
-
-				m_ppLightSpheres[i] = New Geometry::Model(m_pDevice5, m_pContext4, { sphere });
-				m_ppLightSpheres[i]->UpdateWorld(Matrix::CreateTranslation(m_pLights[i].GetPosition()));
-				m_ppLightSpheres[i]->pMeshes[0]->MaterialConstants.CPU.AlbedoFactor = Vector3(0.0f);
-				m_ppLightSpheres[i]->pMeshes[0]->MaterialConstants.CPU.EmissionFactor = Vector3(1.0f, 1.0f, 0.0f);
-				m_ppLightSpheres[i]->bCastShadow = false; // 조명 표시 물체들은 그림자 X.
-				for (size_t j = 0, size = m_ppLightSpheres[i]->pMeshes.size(); j < size; ++j)
-				{
-					Geometry::Mesh* pCurMesh = m_ppLightSpheres[i]->pMeshes[j];
-					pCurMesh->MaterialConstants.CPU.AlbedoFactor = Vector3(0.0f);
-					pCurMesh->MaterialConstants.CPU.EmissionFactor = Vector3(1.0f, 1.0f, 0.0f);
-				}
-
-				m_ppLightSpheres[i]->bIsVisible = false;
-				m_ppLightSpheres[i]->Name = "LightSphere" + std::to_string(i);
-				m_ppLightSpheres[i]->bIsPickable = false;
-
-				m_pBasicList.push_back(m_ppLightSpheres[i]); // 리스트에 등록.
-			}
-		}
+		m_Scene.Initialize(m_pDevice5, m_pContext4);
+		m_Scene.ResetDepthBuffers(m_pDevice5, m_bUseMSAA, m_NumQualityLevels);
 
 		// 커서 표시 (Main sphere와의 충돌이 감지되면 월드 공간에 작게 그려지는 구).
 		{
@@ -237,30 +132,8 @@ namespace Core
 			m_pCursorSphere->pMeshes[0]->MaterialConstants.CPU.AlbedoFactor = Vector3(0.0f);
 			m_pCursorSphere->pMeshes[0]->MaterialConstants.CPU.EmissionFactor = Vector3(0.0f, 1.0f, 0.0f);
 
-			m_pBasicList.push_back(m_pCursorSphere); // 리스트에 등록.
+			m_Scene.pRenderObjects.push_back(m_pCursorSphere); // 리스트에 등록.
 		}
-	}
-
-	void BaseRenderer::InitCubemaps(std::wstring&& basePath, std::wstring&& envFileName, std::wstring&& specularFileName, std::wstring&& irradianceFileName, std::wstring&& brdfFileName)
-	{
-		HRESULT hr = S_OK;
-
-		// BRDF LookUp Table은 CubeMap이 아니라 2D 텍스춰 입니다.
-		hr = Graphics::CreateDDSTexture(m_pDevice5, (basePath + envFileName).c_str(), true, &m_pEnvSRV);
-		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pEnvSRV, "m_pEnvSRV");
-
-		hr = Graphics::CreateDDSTexture(m_pDevice5, (basePath + specularFileName).c_str(), true, &m_pSpecularSRV);
-		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pSpecularSRV, "m_pSpecularSRV");
-
-		hr = Graphics::CreateDDSTexture(m_pDevice5, (basePath + irradianceFileName).c_str(), true, &m_pIrradianceSRV);
-		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pIrradianceSRV, "m_pIrradianceSRV");
-
-		hr = Graphics::CreateDDSTexture(m_pDevice5, (basePath + brdfFileName).c_str(), false, &m_pBrdfSRV);
-		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pBrdfSRV, "m_pBrdfSRV");
 	}
 
 	void BaseRenderer::UpdateGUI()
@@ -275,42 +148,6 @@ namespace Core
 		ImGui::Text("Average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	}
 
-	void BaseRenderer::UpdateLights(float deltaTime)
-	{
-		for (int i = 0; i < MAX_LIGHTS; ++i)
-		{
-			m_pLights[i].Update(m_pContext4, deltaTime);
-			m_LightConstantsCPU.Lights[i] = m_pLights[i].Property;
-		}
-
-		Graphics::UpdateBuffer(m_pContext4, m_LightConstantsCPU, m_pLightConstantsGPU);
-	}
-
-	// 여러 물체들이 공통적으료 사용하는 Const 업데이트.
-	void BaseRenderer::UpdateGlobalConstants(const float DELTA_TIME, const Vector3& EYE_WORLD, const Matrix& VIEW, const Matrix& PROJECTION, const Matrix& REFLECTION)
-	{
-		m_GlobalConstsCPU.GlobalTime += DELTA_TIME;
-		m_GlobalConstsCPU.EyeWorld = EYE_WORLD;
-		m_GlobalConstsCPU.View = VIEW.Transpose();
-		m_GlobalConstsCPU.Projection = PROJECTION.Transpose();
-		m_GlobalConstsCPU.InverseProjection = PROJECTION.Invert().Transpose();
-		m_GlobalConstsCPU.ViewProjection = (VIEW * PROJECTION).Transpose();
-		m_GlobalConstsCPU.InverseView = VIEW.Invert().Transpose();
-
-		// 그림자 렌더링에 사용.
-		m_GlobalConstsCPU.InverseViewProjection = m_GlobalConstsCPU.ViewProjection.Invert();
-
-		// m_ReflectGlobalConstsCPU = m_GlobalConstsCPU;
-		memcpy(&m_ReflectGlobalConstsCPU, &m_GlobalConstsCPU, sizeof(m_GlobalConstsCPU));
-		m_ReflectGlobalConstsCPU.View = (REFLECTION * VIEW).Transpose();
-		m_ReflectGlobalConstsCPU.ViewProjection = (REFLECTION * VIEW * PROJECTION).Transpose();
-		// 그림자 렌더링에 사용 (광원의 위치도 반사시킨 후에 계산해야 함).
-		m_ReflectGlobalConstsCPU.InverseViewProjection = m_ReflectGlobalConstsCPU.ViewProjection.Invert();
-
-		Graphics::UpdateBuffer(m_pContext4, m_GlobalConstsCPU, m_pGlobalConstsGPU);
-		Graphics::UpdateBuffer(m_pContext4, m_ReflectGlobalConstsCPU, m_pReflectGlobalConstsGPU);
-	}
-
 	void BaseRenderer::Update(float deltaTime)
 	{
 		UpdateGUI();
@@ -318,139 +155,14 @@ namespace Core
 		// 카메라의 이동.
 		m_Camera.UpdateKeyboard(deltaTime, m_pbKeyPressed);
 
-		const Vector3 EYE_WORLD = m_Camera.GetEyePos();
-		const Matrix REFLECTION = Matrix::CreateReflection(m_MirrorPlane);
-		const Matrix VIEW = m_Camera.GetView();
-		const Matrix PROJECTION = m_Camera.GetProjection();
-		UpdateLights(deltaTime);
-		UpdateGlobalConstants(deltaTime, EYE_WORLD, VIEW, PROJECTION, REFLECTION);
+		// 마우스 처리.
 		ProcessMouseControl();
 
-		// 거울은 따로 처리.
-		if (m_pMirror != nullptr)
-		{
-			m_pMirror->UpdateConstantBuffers(m_pDevice5, m_pContext4);
-		}
+		// 전체 씬 업데이트.
+		m_Scene.Update(m_pContext4, deltaTime);
 
-		// 조명의 위치 반영.
-		for (int i = 0; i < MAX_LIGHTS; ++i)
-		{
-			m_ppLightSpheres[i]->UpdateWorld(Matrix::CreateScale(std::max(0.01f, m_pLights[i].Property.Radius)) *
-											 Matrix::CreateTranslation(m_pLights[i].GetPosition()));
-		}
-
-		for (size_t i = 0, size = m_pBasicList.size(); i < size; ++i)
-		{
-			Geometry::Model* pCurModel = m_pBasicList[i];
-			pCurModel->UpdateConstantBuffers(m_pDevice5, m_pContext4);
-		}
-
+		// 후처리 프로세서 업데이트.
 		m_PostProcessor.Update(m_pContext4);
-	}
-
-	void BaseRenderer::RenderDepthOnly()
-	{
-		ID3D11DepthStencilView* pDepthOnlyDSV = m_DepthOnlyBuffer.GetDSV();
-		m_pContext4->OMSetRenderTargets(0, nullptr, pDepthOnlyDSV);
-		m_pContext4->ClearDepthStencilView(pDepthOnlyDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
-
-		SetGlobalConsts(&m_pGlobalConstsGPU, 0);
-		for (size_t i = 0, size = m_pBasicList.size(); i < size; ++i)
-		{
-			Geometry::Model* pCurModel = m_pBasicList[i];
-			SetPipelineState(pCurModel->GetDepthOnlyPSO());
-			pCurModel->Render(m_pContext4);
-		}
-
-		SetPipelineState(Graphics::g_DepthOnlyPSO);
-		if (m_pSkybox)
-		{
-			m_pSkybox->Render(m_pContext4);
-		}
-		if (m_pMirror)
-		{
-			m_pMirror->Render(m_pContext4);
-		}
-	}
-
-	void BaseRenderer::RenderShadowMaps()
-	{
-		// 쉐도우 맵을 다른 쉐이더에서 SRV 해제.
-		ID3D11ShaderResourceView* ppNulls[2] = { nullptr, };
-		m_pContext4->PSSetShaderResources(15, 2, ppNulls);
-
-		// setShadowViewport(); // 그림자맵 해상도.
-		for (int i = 0; i < MAX_LIGHTS; ++i)
-		{
-			m_pLights[i].RenderShadowMap(m_pContext4, m_pBasicList, m_pMirror);
-		}
-	}
-
-	void BaseRenderer::RenderOpaqueObjects()
-	{
-		// 다시 렌더링 해상도로 되돌리기.
-		setMainViewport();
-
-		// 거울은 빼고 원래 대로 그리기.
-		const float CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-		m_pContext4->ClearRenderTargetView(m_FloatBuffer.GetRTV(), CLEAR_COLOR);
-		m_pContext4->OMSetRenderTargets(1, m_FloatBuffer.GetAddressOfRTV(), m_pDefaultDSV);
-
-		// 그림자맵들도 공용 텍스춰들 이후에 추가.
-		// 주의: 마지막 shadowDSV를 RenderTarget에서 해제한 후 설정.
-		ID3D11ShaderResourceView* ppShadowSRVs[MAX_LIGHTS] = { nullptr, };
-		for (int i = 0; i < MAX_LIGHTS; ++i)
-		{
-			ShadowMap& curShadowMap = m_pLights[i].GetShadowMap();
-			Texture2D& curShadowBuffer = curShadowMap.GetShadowBuffer();
-			ID3D11ShaderResourceView* pShadowSRV = curShadowBuffer.GetSRV();
-			ppShadowSRVs[i] = pShadowSRV;
-		}
-		m_pContext4->PSSetShaderResources(15, MAX_LIGHTS, ppShadowSRVs);
-		m_pContext4->ClearDepthStencilView(m_pDefaultDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-		SetGlobalConsts(&m_pGlobalConstsGPU, 0);
-		SetGlobalConsts(&m_pLightConstantsGPU, 1);
-
-		// 스카이박스 그리기.
-		// 최적화를 하고 싶다면 투명한 물체들만 따로 마지막에 그리면 됨.
-		SetPipelineState(m_bDrawAsWire ? Graphics::g_SkyboxWirePSO : Graphics::g_SkyboxSolidPSO);
-		m_pSkybox->Render(m_pContext4);
-
-		for (size_t i = 0, size = m_pBasicList.size(); i < size; ++i)
-		{
-			Geometry::Model* pCurModel = m_pBasicList[i];
-			SetPipelineState(pCurModel->GetPSO(m_bDrawAsWire));
-			pCurModel->Render(m_pContext4);
-		}
-
-		// 노멀 벡터 그리기.
-		SetPipelineState(Graphics::g_NormalsPSO);
-		for (size_t i = 0, size = m_pBasicList.size(); i < size; ++i)
-		{
-			Geometry::Model* pCurModel = m_pBasicList[i];
-			if (pCurModel->bDrawNormals)
-			{
-				pCurModel->RenderNormals(m_pContext4);
-			}
-		}
-
-		SetPipelineState(Graphics::g_BoundingBoxPSO);
-		if (m_bDrawOBB)
-		{
-			for (size_t i = 0, size = m_pBasicList.size(); i < size; ++i)
-			{
-				Geometry::Model* pCurModel = m_pBasicList[i];
-				pCurModel->RenderWireBoundingBox(m_pContext4);
-			}
-		}
-		if (m_bDrawBS)
-		{
-			for (size_t i = 0, size = m_pBasicList.size(); i < size; ++i)
-			{
-				Geometry::Model* pCurModel = m_pBasicList[i];
-				pCurModel->RenderWireBoundingSphere(m_pContext4);
-			}
-		}
 	}
 
 	//void BaseRenderer::RenderGBuffer()
@@ -467,45 +179,6 @@ namespace Core
 
 	//}
 
-	void BaseRenderer::RenderMirror()
-	{
-		if (m_pMirror == nullptr)
-		{
-			return;
-		}
-
-		if (m_MirrorAlpha == 1.0f) // 불투명하면 거울만 그림.
-		{
-			SetPipelineState(m_bDrawAsWire ? Graphics::g_DefaultWirePSO : Graphics::g_DefaultSolidPSO);
-			m_pMirror->Render(m_pContext4);
-		}
-		else if (m_MirrorAlpha < 1.0f) // 투명도가 조금이라도 있으면 처리.
-		{
-			// 거울 위치만 StencilBuffer에 1로 표기.
-			SetPipelineState(Graphics::g_StencilMaskPSO);
-			m_pMirror->Render(m_pContext4);
-
-			// 거울 위치에 반사된 물체들을 렌더링.
-			SetGlobalConsts(&m_pReflectGlobalConstsGPU, 0);
-			m_pContext4->ClearDepthStencilView(m_pDefaultDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
-
-			for (size_t i = 0, size = m_pBasicList.size(); i < size; ++i)
-			{
-				Geometry::Model* pCurModel = m_pBasicList[i];
-				SetPipelineState(pCurModel->GetPSO(m_bDrawAsWire));
-				pCurModel->Render(m_pContext4);
-			}
-
-			SetPipelineState(m_bDrawAsWire ? Graphics::g_ReflectSkyboxWirePSO : Graphics::g_ReflectSkyboxSolidPSO);
-			m_pSkybox->Render(m_pContext4);
-
-			// 거울 자체의 재질을 "Blend"로 그림.
-			SetPipelineState(m_bDrawAsWire ? Graphics::g_MirrorBlendWirePSO : Graphics::g_MirrorBlendSolidPSO);
-			SetGlobalConsts(&m_pGlobalConstsGPU, 0);
-			m_pMirror->Render(m_pContext4);
-		}
-	}
-
 	void BaseRenderer::RenderGUI()
 	{
 		// Example의 Render()에서 RT 설정을 해주지 않았을 경우에도
@@ -520,21 +193,7 @@ namespace Core
 
 	void BaseRenderer::Render()
 	{
-		setMainViewport();
-
-		// 공통으로 사용하는 샘플러들 설정.
-		m_pContext4->VSSetSamplers(0, (UINT)(Graphics::g_ppSamplerStates.size()), Graphics::g_ppSamplerStates.data());
-		m_pContext4->PSSetSamplers(0, (UINT)(Graphics::g_ppSamplerStates.size()), Graphics::g_ppSamplerStates.data());
-
-		// 공통으로 사용할 텍스춰들: "Common.hlsli"에서 register(t10)부터 시작
-		ID3D11ShaderResourceView* ppCommonSRVs[] = { m_pEnvSRV, m_pSpecularSRV, m_pIrradianceSRV, m_pBrdfSRV };
-		UINT numCommonSRVs = _countof(ppCommonSRVs);
-		m_pContext4->PSSetShaderResources(10, numCommonSRVs, ppCommonSRVs);
-
-		RenderDepthOnly();
-		RenderShadowMaps();
-		RenderOpaqueObjects();
-		RenderMirror();
+		m_Scene.Render(m_pContext4);
 		m_PostProcessor.Render(m_pContext4);
 		RenderGUI(); // 추후 editor/game 모드를 설정하여 따로 렌더링하도록 구상.
 
@@ -619,10 +278,13 @@ namespace Core
 
 
 					createBuffers();
+					m_Scene.SetScreenWidth(m_ScreenWidth);
+					m_Scene.SetScreenHeight(m_ScreenHeight);
+					m_Scene.ResetDepthBuffers(m_pDevice5, m_bUseMSAA, m_NumQualityLevels);
 					setMainViewport();
 					m_Camera.SetAspectRatio(GetAspectRatio());
 					m_PostProcessor.Initialize(m_pDevice5, m_pContext4,
-											   { m_pGlobalConstsGPU, m_pBackBuffer, m_FloatBuffer.GetTexture(), m_ResolvedBuffer.GetTexture(), m_PrevBuffer.GetTexture(), m_pBackBufferRTV, m_ResolvedBuffer.GetSRV(), m_PrevBuffer.GetSRV(), m_DepthOnlyBuffer.GetSRV() },
+											   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, m_FloatBuffer.pTexture, m_ResolvedBuffer.pTexture, m_PrevBuffer.pTexture, m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV() },
 											   m_ScreenWidth, m_ScreenHeight, 4);
 				}
 			}
@@ -684,7 +346,8 @@ namespace Core
 			}
 			if (wParam == VK_SPACE)
 			{
-				m_pLights[1].bRotated = !m_pLights[1].bRotated;
+				// m_pLights[1].bRotated = !m_pLights[1].bRotated;
+				m_Scene.pLights[1].bRotated = !(m_Scene.pLights[1].bRotated);
 			}
 
 			break;
@@ -769,9 +432,9 @@ namespace Core
 		*pMinDist = 1e5f;
 		Geometry::Model* pMinModel = nullptr;
 
-		for (size_t i = 0, size = m_pBasicList.size(); i < size; ++i)
+		for (size_t i = 0, size = m_Scene.pRenderObjects.size(); i < size; ++i)
 		{
-			Geometry::Model* pCurModel = m_pBasicList[i];
+			Geometry::Model* pCurModel = m_Scene.pRenderObjects[i];
 			float dist = 0.0f;
 			if (pCurModel->bIsPickable &&
 				PICKNG_RAY.Intersects(pCurModel->BoundingSphere, dist) &&
@@ -793,7 +456,7 @@ namespace Core
 		static Vector3 s_PrevVector(0.0f);
 
 		// 적용할 회전과 이동 초기화.
-		Quaternion q = Quaternion::CreateFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), 0.0f);
+		Quaternion dragRotation = Quaternion::CreateFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), 0.0f);
 		Vector3 dragTranslation(0.0f);
 		Vector3 pickPoint(0.0f);
 		float dist = 0.0f;
@@ -812,7 +475,7 @@ namespace Core
 			dir.Normalize();
 			const Ray CUR_RAY = SimpleMath::Ray(WORLD_NEAR, dir);
 
-			if (!s_pActiveModel) // 이전 프레임에서 아무 물체도 선택되지 않았을 경우에는 새로 선택.
+			if (s_pActiveModel == nullptr) // 이전 프레임에서 아무 물체도 선택되지 않았을 경우에는 새로 선택.
 			{
 				Geometry::Model* pSelectedModel = PickClosest(CUR_RAY, &dist);
 				if (pSelectedModel)
@@ -860,7 +523,7 @@ namespace Core
 					{
 						Vector3 axis = s_PrevVector.Cross(currentVector);
 						axis.Normalize();
-						q = SimpleMath::Quaternion::CreateFromAxisAngle(axis, theta);
+						dragRotation = SimpleMath::Quaternion::CreateFromAxisAngle(axis, theta);
 						s_PrevVector = currentVector;
 					}
 
@@ -883,13 +546,11 @@ namespace Core
 			s_pActiveModel = nullptr;
 		}
 
-		// Cursor sphere 그리기.
-		if (s_pActiveModel)
+		if (s_pActiveModel != nullptr)
 		{
 			Vector3 translation = s_pActiveModel->World.Translation();
 			s_pActiveModel->World.Translation(Vector3(0.0f));
-			s_pActiveModel->UpdateWorld(s_pActiveModel->World * Matrix::CreateFromQuaternion(q) *
-										Matrix::CreateTranslation(dragTranslation + translation));
+			s_pActiveModel->UpdateWorld(s_pActiveModel->World * Matrix::CreateFromQuaternion(dragRotation) * Matrix::CreateTranslation(dragTranslation + translation));
 			s_pActiveModel->BoundingSphere.Center = s_pActiveModel->World.Translation();
 
 			// 충돌 지점에 작은 구 그리기.
@@ -936,7 +597,7 @@ namespace Core
 									 wr.bottom - wr.top, // 윈도우 세로 방향 해상도
 									 NULL, NULL, wc.hInstance, NULL);
 
-		if (!m_hMainWindow)
+		if (m_hMainWindow == nullptr)
 		{
 			__debugbreak();
 		}
@@ -949,9 +610,9 @@ namespace Core
 	{
 		HRESULT hr = S_OK;
 
-		const D3D_DRIVER_TYPE driverType = D3D_DRIVER_TYPE_UNKNOWN;
-		// const D3D_DRIVER_TYPE driverType = D3D_DRIVER_TYPE_HARDWARE;
-		// const D3D_DRIVER_TYPE driverType = D3D_DRIVER_TYPE_WARP;
+		const D3D_DRIVER_TYPE DRIVER_TYPE = D3D_DRIVER_TYPE_UNKNOWN;
+		// const D3D_DRIVER_TYPE DRIVER_TYPE = D3D_DRIVER_TYPE_HARDWARE;
+		// const D3D_DRIVER_TYPE DRIVER_TYPE = D3D_DRIVER_TYPE_WARP;
 
 		UINT createDeviceFlags = 0;
 		UINT createFactoryFlags = 0;
@@ -981,7 +642,7 @@ namespace Core
 			{
 				pAdapter->GetDesc2(&m_AdapterDesc);
 				hr = D3D11CreateDevice(pAdapter,
-									   driverType,
+									   DRIVER_TYPE,
 									   nullptr,
 									   0,
 									   FEATURE_LEVELS, numFeatureLevels,
@@ -1011,7 +672,7 @@ namespace Core
 			//swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
 			swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_UNORDERED_ACCESS;
 			swapChainDesc.BufferCount = 2;
-			if (m_bUseMSAA && m_NumQualityLevels)
+			if (m_bUseMSAA && m_NumQualityLevels > 0)
 			{
 				swapChainDesc.SampleDesc.Count = 4;
 				swapChainDesc.SampleDesc.Quality = m_NumQualityLevels - 1;
@@ -1047,24 +708,6 @@ namespace Core
 		createBuffers();
 		setMainViewport();
 
-		// 공통으로 쓰이는 ConstBuffers.
-		hr = Graphics::CreateConstBuffer(m_pDevice5, m_GlobalConstsCPU, &m_pGlobalConstsGPU);
-		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pGlobalConstsGPU, "m_pGlobalConstsGPU");
-
-		hr = Graphics::CreateConstBuffer(m_pDevice5, m_ReflectGlobalConstsCPU, &m_pReflectGlobalConstsGPU);
-		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pReflectGlobalConstsGPU, "m_pReflectGlobalConstsGPU");
-
-		hr = Graphics::CreateConstBuffer(m_pDevice5, m_LightConstantsCPU, &m_pLightConstantsGPU);
-		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pLightConstantsGPU, "m_pLightConstantsGPU");
-
-		// postprocessor 초기화.
-		m_PostProcessor.Initialize(m_pDevice5, m_pContext4,
-								   { m_pGlobalConstsGPU, m_pBackBuffer, m_FloatBuffer.GetTexture(), m_ResolvedBuffer.GetTexture(), m_PrevBuffer.GetTexture(), m_pBackBufferRTV, m_ResolvedBuffer.GetSRV(), m_PrevBuffer.GetSRV(), m_DepthOnlyBuffer.GetSRV() },
-								   m_ScreenWidth, m_ScreenHeight, 4);
-
 		RELEASE(pFactory);
 		RELEASE(pAdapter);
 	}
@@ -1098,11 +741,9 @@ namespace Core
 		// BackBuffer는 화면으로 최종 출력. (SRV는 불필요)
 		hr = m_pSwapChain4->GetBuffer(0, IID_PPV_ARGS(&m_pBackBuffer));
 		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pBackBuffer, "m_pBackBuffer");
 
 		hr = m_pDevice5->CreateRenderTargetView(m_pBackBuffer, nullptr, &m_pBackBufferRTV);
 		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pBackBufferRTV, "m_pBackBufferRTV");
 
 		// 이전 프레임 저장용.
 		D3D11_TEXTURE2D_DESC desc = { 0, };
@@ -1116,44 +757,6 @@ namespace Core
 
 		desc.MipLevels = desc.ArraySize = 1;
 		desc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-		desc.Usage = D3D11_USAGE_DEFAULT; // 스테이징 텍스춰로부터 복사 가능.
-		desc.MiscFlags = 0;
-		desc.CPUAccessFlags = 0;
-		if (m_bUseMSAA && m_NumQualityLevels)
-		{
-			desc.SampleDesc.Count = 4;
-			desc.SampleDesc.Quality = m_NumQualityLevels - 1;
-		}
-		else
-		{
-			desc.SampleDesc.Count = 1;
-			desc.SampleDesc.Quality = 0;
-		}
-		m_FloatBuffer.Initialize(m_pDevice5, desc);
-
-		// FLOAT MSAA를 Relsolve해서 저장할 SRV/RTV.
-		desc.SampleDesc.Count = 1;
-		desc.SampleDesc.Quality = 0;
-		desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
-		m_ResolvedBuffer.Initialize(m_pDevice5, desc);
-
-		createDepthBuffers();
-	}
-
-	void BaseRenderer::createDepthBuffers()
-	{
-		HRESULT hr = S_OK;
-
-		// DepthStencilView 만들기
-		D3D11_TEXTURE2D_DESC desc = { 0, };
-		desc.Width = m_ScreenWidth;
-		desc.Height = m_ScreenHeight;
-		desc.MipLevels = 1;
-		desc.ArraySize = 1;
-		desc.Usage = D3D11_USAGE_DEFAULT;
-		desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-		desc.CPUAccessFlags = 0;
-		desc.MiscFlags = 0;
 		if (m_bUseMSAA && m_NumQualityLevels > 0)
 		{
 			desc.SampleDesc.Count = 4;
@@ -1164,31 +767,17 @@ namespace Core
 			desc.SampleDesc.Count = 1;
 			desc.SampleDesc.Quality = 0;
 		}
-		desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // DSV 기준.
+		desc.Usage = D3D11_USAGE_DEFAULT; // 스테이징 텍스춰로부터 복사 가능.
+		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+		desc.MiscFlags = 0;
+		desc.CPUAccessFlags = 0;
+		m_FloatBuffer.Initialize(m_pDevice5, desc);
 
-		ID3D11Texture2D* pDepthStencilBuffer = nullptr;
-		hr = m_pDevice5->CreateTexture2D(&desc, nullptr, &pDepthStencilBuffer);
-		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(pDepthStencilBuffer, "pDepthStencilBuffer");
-
-		hr = m_pDevice5->CreateDepthStencilView(pDepthStencilBuffer, nullptr, &m_pDefaultDSV);
-		RELEASE(pDepthStencilBuffer);
-		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pDefaultDSV, "m_pDefaultDSV");
-
-		// Depth 전용.
-		desc.Format = DXGI_FORMAT_D32_FLOAT; // DSV 기준 포맷.
-		desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+		// FLOAT MSAA를 Relsolve해서 저장할 SRV/RTV.
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
-		m_DepthOnlyBuffer.Initialize(m_pDevice5, desc);
-
-		// 광원마다 shadow map 설정.
-		for (int i = 0; i < MAX_LIGHTS; ++i)
-		{
-			m_pLights[i].SetShadowSize(1280, 1280); // 사이즈 변경 가능.
-			m_pLights[i].Initialize(m_pDevice5);
-		}
+		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET | D3D11_BIND_UNORDERED_ACCESS;
+		m_ResolvedBuffer.Initialize(m_pDevice5, desc);
 	}
 
 	void BaseRenderer::setMainViewport()
@@ -1222,9 +811,5 @@ namespace Core
 		m_PrevBuffer.Destroy();
 		m_FloatBuffer.Destroy();
 		m_ResolvedBuffer.Destroy();
-		RELEASE(m_pDefaultDSV);
-		// RELEASE(m_pDepthOnlyBuffer);
-		// RELEASE(m_pDepthOnlyDSV);
-		// RELEASE(m_pDepthOnlySRV);
 	}
 }

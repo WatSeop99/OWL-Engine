@@ -2,17 +2,16 @@
 
 struct SkyboxPixelShaderInput
 {
-    float4 posProj : SV_POSITION;
-    float3 posModel : POSITION;
+    float4 ProjectedPosition : SV_POSITION;
+    float3 ModelPosition : POSITION;
 };
 
 SkyboxPixelShaderInput main(VertexShaderInput input)
 {
-
     SkyboxPixelShaderInput output;
-    output.posModel = input.posModel;
-    output.posProj = mul(float4(input.posModel, 0.0f), view); // 회전만
-    output.posProj = mul(float4(output.posProj.xyz, 1.0f), proj);
+    output.ModelPosition = input.ModelPosition;
+    output.ProjectedPosition = mul(float4(input.ModelPosition, 0.0f), g_View); // 회전만
+    output.ProjectedPosition = mul(float4(output.ProjectedPosition.xyz, 1.0f), g_Projection);
 
     return output;
 }

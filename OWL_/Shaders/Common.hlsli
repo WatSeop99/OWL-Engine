@@ -12,64 +12,63 @@
 #define LIGHT_SHADOW 0x10
 
 // 샘플러들을 모든 쉐이더에서 공통으로 사용
-SamplerState linearWrapSampler : register(s0);
-SamplerState linearClampSampler : register(s1);
-SamplerState shadowPointSampler : register(s2);
-SamplerComparisonState shadowCompareSampler : register(s3);
-SamplerState pointWrapSampler : register(s4);
-SamplerState linearMirrorSampler : register(s5);
-SamplerState pointClampSampler : register(s6);
+SamplerState g_LinearWrapSampler : register(s0);
+SamplerState g_LinearClampSampler : register(s1);
+SamplerState g_ShadowPointSampler : register(s2);
+SamplerState g_ShadowLinearSampler : register(s3);
+SamplerComparisonState g_ShadowCompareSampler : register(s4);
+SamplerState g_PointWrapSampler : register(s5);
+SamplerState g_LinearMirrorSampler : register(s6);
+SamplerState g_PointClampSampler : register(s7);
 
 // 공용 텍스춰들 t10 부터 시작
-TextureCube envIBLTex : register(t10);
-TextureCube specularIBLTex : register(t11);
-TextureCube irradianceIBLTex : register(t12);
-Texture2D brdfTex : register(t13);
+TextureCube g_EnvIBLTex : register(t10);
+TextureCube g_SpecularIBLTex : register(t11);
+TextureCube g_IrradianceIBLTex : register(t12);
+Texture2D g_BRDFTex : register(t13);
 
-Texture2D shadowMaps[MAX_LIGHTS] : register(t15);
-//Texture2D shadowMap1 : register(t16);
-//Texture2D shadowMap2 : register(t17);
-
-//static Texture2D shadowMaps[MAX_LIGHTS] = { shadowMap0, shadowMap1, shadowMap2 };
+Texture2D g_ShadowMaps[MAX_LIGHTS] : register(t15);
+TextureCube g_PointLightShadowMap : register(t20);
+Texture2DArray g_CascadeShadowMap : register(t25);
 
 struct Light
 {
-    float3 radiance; // Strength
-    float fallOffStart;
-    float3 direction;
-    float fallOffEnd;
-    float3 position;
-    float spotPower;
+    float3 Radiance; // Strength
+    float FallOffStart;
+    float3 Direction;
+    float FallOffEnd;
+    float3 Position;
+    float SpotPower;
     
-    uint type;
-    float radius;
-    float haloRadius;
-    float haloStrength;
+    uint Type;
+    float Radius;
+    float HaloRadius;
+    float HaloStrength;
 
-    matrix viewProj;
-    matrix invProj;
+    matrix ViewProjection[6];
+    matrix Projections[3];
+    matrix InverseProjections[3];
 };
 
 // 공용 Constants
 cbuffer GlobalConstants : register(b0)
 {
-    matrix view;
-    matrix proj;
-    matrix invProj; // 역프로젝션행렬
-    matrix viewProj;
-    matrix invViewProj; // Proj -> World
-    matrix invView;
+    matrix g_View;
+    matrix g_Projection;
+    matrix g_InverseProjection;
+    matrix g_ViewProjection;
+    matrix g_InverseViewProjection; // Proj -> World
+    matrix g_InverseView;
 
-    float3 eyeWorld;
-    float strengthIBL;
+    float3 g_EyeWorld;
+    float g_StrengthIBL;
 
-    int textureToDraw = 0; // 0: Env, 1: Specular, 2: Irradiance, 그외: 검은색
-    float envLodBias = 0.0f; // 환경맵 LodBias
-    float lodBias = 2.0f; // 다른 물체들 LodBias
-    float globalTime;
+    int g_TextureToDraw; // 0: Env, 1: Specular, 2: Irradiance, 그외: 검은색
+    float g_EnvLodBias; // 환경맵 LodBias
+    float g_LODBias; // 다른 물체들 LodBias
+    float g_GlobalTime;
     
     int dummy[4];
-    // Light lights[MAX_LIGHTS];
 };
 
 cbuffer LightConstants : register(b1)
@@ -79,36 +78,36 @@ cbuffer LightConstants : register(b1)
 
 cbuffer MeshConstants : register(b2)
 {
-    matrix world; // Model(또는 Object) 좌표계 -> World로 변환
-    matrix worldIT; // World의 InverseTranspose
-    matrix worldInv;
-    int useHeightMap;
-    float heightScale;
-    float windTrunk;
-    float windLeaves;
+    matrix g_World; // Model(또는 Object) 좌표계 -> World로 변환
+    matrix g_WorldInverseTranspose; // World의 InverseTranspose
+    matrix g_WorldInverse;
+    bool bUseHeightMap;
+    float g_HeightScale;
+    float g_WindTrunk;
+    float g_WindLeaves;
 };
 
 cbuffer MaterialConstants : register(b3)
 {
-    float3 albedoFactor; // baseColor
-    float roughnessFactor;
-    float metallicFactor;
-    float3 emissionFactor;
+    float3 g_AlbedoFactor; // baseColor
+    float g_RoughnessFactor;
+    float g_MetallicFactor;
+    float3 g_EmissionFactor;
 
-    int useAlbedoMap;
-    int useNormalMap;
-    int useAOMap; // Ambient Occlusion
-    int invertNormalMapY;
-    int useMetallicMap;
-    int useRoughnessMap;
-    int useEmissiveMap;
+    bool bUseAlbedoMap;
+    bool bUseNormalMap;
+    bool bUseAOMap; // Ambient Occlusion
+    bool bInvertNormalMapY;
+    bool bUseMetallicMap;
+    bool bUseRoughnessMap;
+    bool bUseEmissiveMap;
     float dummy2;
 };
 
 #ifdef SKINNED
 
 // 관절 개수 제약을 없애게 위해 StructuredBuffer 사용
-StructuredBuffer<float4x4> boneTransforms : register(t9);
+StructuredBuffer<float4x4> g_BoneTransforms : register(t9);
 
 //cbuffer SkinnedConstants : register(b3)
 //{
@@ -119,27 +118,27 @@ StructuredBuffer<float4x4> boneTransforms : register(t9);
 
 struct VertexShaderInput
 {
-    float3 posModel : POSITION; //모델 좌표계의 위치 position
-    float3 normalModel : NORMAL; // 모델 좌표계의 normal    
-    float2 texcoord : TEXCOORD;
-    float3 tangentModel : TANGENT;
+    float3 ModelPosition : POSITION; //모델 좌표계의 위치 position
+    float3 ModelNormal : NORMAL; // 모델 좌표계의 normal    
+    float2 Texcoord : TEXCOORD;
+    float3 ModelTangent : TANGENT;
     
 #ifdef SKINNED
-    float4 boneWeights0 : BLENDWEIGHT0;
-    float4 boneWeights1 : BLENDWEIGHT1;
-    uint4 boneIndices0 : BLENDINDICES0;
-    uint4 boneIndices1 : BLENDINDICES1;
+    float4 BoneWeights0 : BLENDWEIGHT0;
+    float4 BoneWeights1 : BLENDWEIGHT1;
+    uint4 BoneIndices0 : BLENDINDICES0;
+    uint4 BoneIndices1 : BLENDINDICES1;
 #endif
 };
 
 struct PixelShaderInput
 {
-    float4 posProj : SV_POSITION; // Screen position
-    float3 posWorld : POSITION0; // World position (조명 계산에 사용)
-    float3 normalWorld : NORMAL0;
-    float2 texcoord : TEXCOORD0;
-    float3 tangentWorld : TANGENT0;
-    float3 posModel : POSITION1; // Volume casting 시작점
+    float4 ProjectedPosition : SV_POSITION; // Screen position
+    float3 WorldPosition : POSITION0; // World position (조명 계산에 사용)
+    float3 WorldNormal : NORMAL0;
+    float2 Texcoord : TEXCOORD0;
+    float3 WorldTangent : TANGENT0;
+    float3 ModelPosition : POSITION1; // Volume casting 시작점
 };
 
 #endif // __COMMON_HLSLI__

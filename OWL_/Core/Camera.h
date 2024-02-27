@@ -8,27 +8,12 @@ namespace Core
 	class Camera
 	{
 	public:
-		inline Camera() :
-			bUseFirstPersonView(false),
-			m_Position(0.312183f, 0.957463f, -1.88458f),
-			m_ViewDirection(0.0f, 0.0f, 1.0f),
-			m_UpDirection(0.0f, 1.0f, 0.0f),
-			m_RightDirection(1.0f, 0.0f, 0.0f),
-			m_Yaw(-0.0589047f), m_Pitch(0.213803f),
-			m_Speed(3.0f),
-			m_ProjectionFovAngleY(45.0f),
-			m_NearZ(0.01f), m_FarZ(100.0f),
-			m_Aspect(16.0f / 9.0f),
-			m_bUsePerspectiveProjection(true)
-		{ UpdateViewDir(); }
-
-		inline void SetAspectRatio(float aspect) { m_Aspect = aspect; }
+		Camera() { UpdateViewDir(); }
+		~Camera() = default;
 
 		inline Matrix GetView()
 		{
-			return (Matrix::CreateTranslation(-m_Position) *
-					Matrix::CreateRotationY(-m_Yaw) *
-					Matrix::CreateRotationX(-m_Pitch)); // m_Pitch가 양수이면 고개를 드는 방향.
+			return (Matrix::CreateTranslation(-m_Position) * Matrix::CreateRotationY(-m_Yaw) * Matrix::CreateRotationX(-m_Pitch)); // m_Pitch가 양수이면 고개를 드는 방향.
 		}
 		inline Matrix GetProjection()
 		{
@@ -40,7 +25,12 @@ namespace Core
 		inline Vector3 GetViewDir() { return m_ViewDirection; }
 		inline Vector3 GetUpDir() { return m_UpDirection; }
 		inline Vector3 GetRightDir() { return m_RightDirection; }
+		inline float GetProjectionFovAngleY() { return m_ProjectionFovAngleY; }
+		inline float GetAspectRatio() { return m_Aspect; }
+		inline float GetNearZ() { return m_NearZ; }
+		inline float GetFarZ() { return m_FarZ; }
 
+		inline void SetAspectRatio(const float ASPECT_RATIO) { m_Aspect = ASPECT_RATIO; }
 		inline void SetEyePos(const Vector3& POS) { m_Position = POS; }
 		inline void SetViewDir(const Vector3& VIEW_DIR) { m_ViewDirection = VIEW_DIR; }
 		inline void SetUpDir(const Vector3& UP_DIR) { m_UpDirection = UP_DIR; }
@@ -67,27 +57,29 @@ namespace Core
 		void PrintView();
 
 	public:
-		bool bUseFirstPersonView;
+		bool bUseFirstPersonView = false;
 
 	private:
-		Vector3 m_Position;
-		Vector3 m_ViewDirection;
-		Vector3 m_UpDirection; // +Y 방향으로 고정.
-		Vector3 m_RightDirection;
+		bool m_bUsePerspectiveProjection = true;
+
+		Vector3 m_Position = Vector3(0.312183f, 0.957463f, -1.88458f);
+		Vector3 m_ViewDirection = Vector3(0.0f, 0.0f, 1.0f);
+		Vector3 m_UpDirection = Vector3(0.0f, 1.0f, 0.0f); // +Y 방향으로 고정.
+		Vector3 m_RightDirection = Vector3(1.0f, 0.0f, 0.0f);
 
 		// roll, pitch, yaw
 		// https://en.wikipedia.org/wiki/Aircraft_principal_axes
-		float m_Yaw;
-		float m_Pitch;
+		float m_Yaw = -0.0589047f;
+		float m_Pitch = 0.213803f;
 
-		float m_Speed; // 움직이는 속도.
+		// 움직이는 속도.
+		float m_Speed = 3.0f;
 
 		// 프로젝션 옵션도 카메라 클래스로 이동.
-		float m_ProjectionFovAngleY; // Luna 교재 기본 설정.
-		float m_NearZ;
-		float m_FarZ;
-		float m_Aspect;
-		bool m_bUsePerspectiveProjection;
+		float m_ProjectionFovAngleY = 45.0f; // Luna 교재 기본 설정.
+		float m_NearZ = 0.01f;
+		float m_FarZ = 100.0f;
+		float m_Aspect = 16.0f / 9.0f;
 	};
 
 }

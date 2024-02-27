@@ -8,6 +8,7 @@ namespace Graphics
 	ID3D11SamplerState* g_pLinearClampSS = nullptr;
 	ID3D11SamplerState* g_pPointClampSS = nullptr;
 	ID3D11SamplerState* g_pShadowPointSS = nullptr;
+	ID3D11SamplerState* g_pShadowLinearSS = nullptr;
 	ID3D11SamplerState* g_pShadowCompareSS = nullptr;
 	ID3D11SamplerState* g_pPointWrapSS = nullptr;
 	ID3D11SamplerState* g_pLinearMirrorSS = nullptr;
@@ -44,6 +45,8 @@ namespace Graphics
 	ID3D11VertexShader* g_pDepthOnlySkinnedVS = nullptr;
 	ID3D11VertexShader* g_pGrassVS = nullptr;
 	ID3D11VertexShader* g_pBillboardVS = nullptr;
+	ID3D11VertexShader* g_pGBufferVS = nullptr;
+	ID3D11VertexShader* g_pGBufferSkinnedVS = nullptr;
 
 	ID3D11PixelShader* g_pBasicPS = nullptr;
 	ID3D11PixelShader* g_pSkyboxPS = nullptr;
@@ -59,9 +62,18 @@ namespace Graphics
 	ID3D11PixelShader* g_pOceanPS = nullptr;
 	ID3D11PixelShader* g_pVolumetricFirePS = nullptr;
 	ID3D11PixelShader* g_pExplosionPS = nullptr;
+	ID3D11PixelShader* g_pGBufferPS = nullptr;
+	ID3D11PixelShader* g_pDeferredLightingPS = nullptr;
 
 	ID3D11GeometryShader* g_pNormalGS = nullptr;
 	ID3D11GeometryShader* g_pBillboardGS = nullptr;
+
+	ID3D11VertexShader* g_pDepthOnlyCubeVS = nullptr;
+	ID3D11VertexShader* g_pDepthOnlyCascadeVS = nullptr;
+	ID3D11GeometryShader* g_pDepthOnlyCubeGS = nullptr;
+	ID3D11GeometryShader* g_pDepthOnlyCascadeGS = nullptr;
+	ID3D11PixelShader* g_pDepthOnlyCubePS = nullptr;
+	ID3D11PixelShader* g_pDepthOnlyCascadePS = nullptr;
 
 	// Input Layouts
 	ID3D11InputLayout* g_pBasicIL = nullptr;
@@ -97,12 +109,14 @@ namespace Graphics
 	Graphics::GraphicsPSO g_GrassSolidPSO;
 	Graphics::GraphicsPSO g_GrassWirePSO;
 	Graphics::GraphicsPSO g_OceanPSO;
+	Graphics::GraphicsPSO g_GBufferPSO;
+	Graphics::GraphicsPSO g_GBufferSkinnedPSO;
+	Graphics::GraphicsPSO g_DeferredRenderingPSO;
 
 	// 주의: 초기화가 느려서 필요한 경우에만 초기화
 	Graphics::GraphicsPSO g_VolumeSmokePSO;
 
 	// Compute Pipeline States
-
 }
 
 void Graphics::InitCommonStates(ID3D11Device* pDevice)
@@ -160,6 +174,15 @@ void Graphics::InitSamplers(ID3D11Device* pDevice)
 	BREAK_IF_FAILED(hr);
 	SET_DEBUG_INFO_TO_OBJECT(g_pShadowPointSS, "g_pShadowPointSS");
 
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	sampDesc.BorderColor[0] = 1.0f; // 큰 Z값
+	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	hr = pDevice->CreateSamplerState(&sampDesc, &g_pShadowLinearSS);
+	BREAK_IF_FAILED(hr);
+	SET_DEBUG_INFO_TO_OBJECT(g_pShadowLinearSS, "g_pShadowLinearSS");
+
 	// shadowCompareSS, 쉐이더 안에서는 SamplerComparisonState
 	// Filter = "_COMPARISON_" 주의
 	// https://www.gamedev.net/forums/topic/670575-uploading-samplercomparisonstate-in-hlsl/
@@ -185,13 +208,15 @@ void Graphics::InitSamplers(ID3D11Device* pDevice)
 	SET_DEBUG_INFO_TO_OBJECT(g_pLinearMirrorSS, "g_pLinearMirrorSS");
 
 	// 샘플러 순서가 "Common.hlsli"에서와 일관성 있어야 함
+	g_ppSamplerStates.reserve(8);
 	g_ppSamplerStates.push_back(g_pLinearWrapSS);    // s0
 	g_ppSamplerStates.push_back(g_pLinearClampSS);   // s1
 	g_ppSamplerStates.push_back(g_pShadowPointSS);   // s2
-	g_ppSamplerStates.push_back(g_pShadowCompareSS); // s3
-	g_ppSamplerStates.push_back(g_pPointWrapSS);     // s4
-	g_ppSamplerStates.push_back(g_pLinearMirrorSS);  // s5
-	g_ppSamplerStates.push_back(g_pPointClampSS);    // s6
+	g_ppSamplerStates.push_back(g_pShadowLinearSS);  // s3
+	g_ppSamplerStates.push_back(g_pShadowCompareSS); // s4
+	g_ppSamplerStates.push_back(g_pPointWrapSS);     // s5
+	g_ppSamplerStates.push_back(g_pLinearMirrorSS);  // s6
+	g_ppSamplerStates.push_back(g_pPointClampSS);    // s7
 }
 
 void Graphics::InitRasterizerStates(ID3D11Device* pDevice)
@@ -454,122 +479,100 @@ void Graphics::InitShaders(ID3D11Device* pDevice)
 	UINT numGrassIEs = _countof(pGRASS_IEs);
 	UINT numBillboardIEs = _countof(pBILLBOARD_IEs);
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice,
-													L"./Shaders/BasicVS.hlsl",
-													pBASIC_IEs, numBasicIEs, nullptr,
+	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/BasicVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
 													&g_pBasicVS, &g_pBasicIL);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pBasicVS, "g_pBasicVS");
-	SET_DEBUG_INFO_TO_OBJECT(g_pBasicIL, "g_pBasicIL");
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice,
-													L"./Shaders/BasicVS.hlsl",
-													pSKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO,
+	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/BasicVS.hlsl", pSKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO,
 													&g_pSkinnedVS, &g_pSkinnedIL);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pSkinnedVS, "g_pSkinnedVS");
-	SET_DEBUG_INFO_TO_OBJECT(g_pSkinnedIL, "g_pSkinnedIL");
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice,
-													L"./Shaders/NormalVS.hlsl",
-													pBASIC_IEs,numBasicIEs, nullptr,
+	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/NormalVS.hlsl", pBASIC_IEs,numBasicIEs, nullptr,
 													&g_pNormalVS, &g_pBasicIL);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pNormalVS, "g_pNormalVS");
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice,
-													L"./Shaders/SamplingVS.hlsl",
-													pSAMPLING_IEs, numSamplingIEs, nullptr,
+	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/SamplingVS.hlsl", pSAMPLING_IEs, numSamplingIEs, nullptr,
 													&g_pSamplingVS, &g_pSamplingIL);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pSamplingVS, "g_pSamplingVS");
-	SET_DEBUG_INFO_TO_OBJECT(g_pSamplingIL, "g_pSamplingIL");
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice,
-													L"./Shaders/SkyboxVS.hlsl",
-													pSKYBOX_IEs, numSkyboxIEs, nullptr,
+	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/SkyboxVS.hlsl", pSKYBOX_IEs, numSkyboxIEs, nullptr,
 													&g_pSkyboxVS, &g_pSkyboxIL);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pSkyboxVS, "g_pSkyboxVS");
-	SET_DEBUG_INFO_TO_OBJECT(g_pSkyboxIL, "g_pSkyboxIL");
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice,
-													L"./Shaders/DepthOnlyVS.hlsl",
-													pBASIC_IEs, numBasicIEs, nullptr,
+	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthOnlyVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
 													&g_pDepthOnlyVS, &g_pSkyboxIL);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pDepthOnlyVS, "g_pDepthOnlyVS");
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice,
-													L"./Shaders/DepthOnlyVS.hlsl",
-													pSKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO,
+	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthOnlyVS.hlsl", pSKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO,
 													&g_pDepthOnlySkinnedVS, &g_pSkinnedIL);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pDepthOnlySkinnedVS, "g_pDepthOnlySkinnedVS");
-	SET_DEBUG_INFO_TO_OBJECT(g_pSkinnedIL, "g_pSkinnedIL");
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice,
-													L"./Shaders/GrassVS.hlsl",
-													pGRASS_IEs, numGrassIEs, nullptr,
+	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/GrassVS.hlsl", pGRASS_IEs, numGrassIEs, nullptr,
 													&g_pGrassVS, &g_pGrassIL);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pGrassVS, "g_pGrassVS");
-	SET_DEBUG_INFO_TO_OBJECT(g_pGrassIL, "g_pGrassIL");
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice,
-													L"./Shaders/BillboardVS.hlsl",
-													pBILLBOARD_IEs, numBillboardIEs, nullptr,
+	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/BillboardVS.hlsl", pBILLBOARD_IEs, numBillboardIEs, nullptr,
 													&g_pBillboardVS, &g_pBillboardIL);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pBillboardVS, "g_pBillboardVS");
-	SET_DEBUG_INFO_TO_OBJECT(g_pBillboardIL, "g_pBillboardIL");
+
+	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/GBufferVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
+													&g_pGBufferVS, &g_pBasicIL);
+	BREAK_IF_FAILED(hr);
+
+	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/GBufferVS.hlsl", pSKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO,
+													&g_pGBufferSkinnedVS, &g_pSkinnedIL);
+	BREAK_IF_FAILED(hr);
 
 	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/BasicPS.hlsl", &g_pBasicPS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pBasicPS, "g_pBasicPS");
 	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/NormalPS.hlsl", &g_pNormalPS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pNormalPS, "g_pNormalPS");
 	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/SkyboxPS.hlsl", &g_pSkyboxPS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pSkyboxPS, "g_pSkyboxPS");
 	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/CombinePS.hlsl", &g_pCombinePS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pCombinePS, "g_pCombinePS");
 	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/BloomDownPS.hlsl", &g_pBloomDownPS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pBloomDownPS, "g_pBloomDownPS");
 	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/BloomUpPS.hlsl", &g_pBloomUpPS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pBloomUpPS, "g_pBloomUpPS");
 	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/DepthOnlyPS.hlsl", &g_pDepthOnlyPS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pDepthOnlyPS, "g_pDepthOnlyPS");
 	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/PostEffectPS.hlsl", &g_pPostEffectsPS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pPostEffectsPS, "g_pPostEffectsPS");
 	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/ColorPS.hlsl", &g_pColorPS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pColorPS, "g_pColorPS");
 	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/GrassPS.hlsl", &g_pGrassPS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pGrassPS, "g_pGrassPS");
 	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/OceanPS.hlsl", &g_pOceanPS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pOceanPS, "g_pOceanPS");
 	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/ExplosionPS.hlsl", &g_pExplosionPS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pExplosionPS, "g_pExplosionPS");
-	Graphics::CreatePixelShader(pDevice, L"./Shaders/VolumetricFirePS.hlsl", &g_pVolumetricFirePS);
+	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/VolumetricFirePS.hlsl", &g_pVolumetricFirePS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pVolumetricFirePS, "g_pVolumetricFirePS");
+	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/GBufferPS.hlsl", &g_pGBufferPS);
+	BREAK_IF_FAILED(hr);
+	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/DeferredLightingPS.hlsl", &g_pDeferredLightingPS);
+	BREAK_IF_FAILED(hr);
 
 	hr = Graphics::CreateGeometryShader(pDevice, L"./Shaders/NormalGS.hlsl", &g_pNormalGS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pNormalGS, "g_pNormalGS");
 	hr = Graphics::CreateGeometryShader(pDevice, L"./Shaders/BillboardGS.hlsl", &g_pBillboardGS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(g_pBillboardGS, "g_pBillboardGS");
+
+	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthOnlyCubeVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
+													&g_pDepthOnlyCubeVS, &g_pSkyboxIL);
+	BREAK_IF_FAILED(hr);
+	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthOnlyCascadeVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
+													&g_pDepthOnlyCascadeVS, &g_pSkyboxIL);
+	BREAK_IF_FAILED(hr);
+	hr = Graphics::CreateGeometryShader(pDevice, L"./Shaders/DepthOnlyCubeGS.hlsl", &g_pDepthOnlyCubeGS);
+	BREAK_IF_FAILED(hr);
+	hr = Graphics::CreateGeometryShader(pDevice, L"./Shaders/DepthOnlyCascadeGS.hlsl", &g_pDepthOnlyCascadeGS);
+	BREAK_IF_FAILED(hr);
+	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/DepthOnlyCubePS.hlsl", &g_pDepthOnlyCubePS);
+	BREAK_IF_FAILED(hr);
+	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/DepthOnlyCascadePS.hlsl", &g_pDepthOnlyCascadePS);
+	BREAK_IF_FAILED(hr);
 }
 
 void Graphics::InitPipelineStates(ID3D11Device* pDevice)
@@ -703,6 +706,21 @@ void Graphics::InitPipelineStates(ID3D11Device* pDevice)
 	g_OceanPSO.pBlendState = g_pAlphaBS;
 	// g_OceanPSO.pRasterizerState = g_pSolidBothRS; // 양면
 	g_OceanPSO.pPixelShader = g_pOceanPS;
+
+	// g_GBufferPSO
+	g_GBufferPSO = g_DefaultSolidPSO;
+	g_GBufferPSO.pVertexShader = g_pGBufferVS;
+	g_GBufferPSO.pPixelShader = g_pGBufferPS;
+
+	// g_GBufferSkinnedPSO
+	g_GBufferSkinnedPSO = g_GBufferPSO;
+	g_GBufferSkinnedPSO.pVertexShader = g_pGBufferSkinnedVS;
+	g_GBufferSkinnedPSO.pInputLayout = g_pSkinnedIL;
+
+	// g_DeferredRenderingPSO
+	g_DeferredRenderingPSO = g_PostProcessingPSO;
+	g_DeferredRenderingPSO.pPixelShader = g_pDeferredLightingPS;
+	g_DeferredRenderingPSO.pRasterizerState = g_pSolidRS;
 }
 
 // 주의: 초기화가 느려서 필요한 경우에만 초기화하는 쉐이더
@@ -726,6 +744,7 @@ void Graphics::DestroyCommonStates()
 	SAFE_RELEASE(g_pLinearClampSS);
 	SAFE_RELEASE(g_pPointClampSS);
 	SAFE_RELEASE(g_pShadowPointSS);
+	SAFE_RELEASE(g_pShadowLinearSS);
 	SAFE_RELEASE(g_pShadowCompareSS);
 	SAFE_RELEASE(g_pPointWrapSS);
 	SAFE_RELEASE(g_pLinearMirrorSS);
@@ -761,6 +780,8 @@ void Graphics::DestroyCommonStates()
 	SAFE_RELEASE(g_pDepthOnlySkinnedVS);
 	SAFE_RELEASE(g_pGrassVS);
 	SAFE_RELEASE(g_pBillboardVS);
+	SAFE_RELEASE(g_pGBufferVS);
+	SAFE_RELEASE(g_pGBufferSkinnedVS);
 
 	SAFE_RELEASE(g_pBasicPS);
 	SAFE_RELEASE(g_pSkyboxPS);
@@ -776,6 +797,8 @@ void Graphics::DestroyCommonStates()
 	SAFE_RELEASE(g_pOceanPS);
 	SAFE_RELEASE(g_pVolumetricFirePS);
 	SAFE_RELEASE(g_pExplosionPS);
+	SAFE_RELEASE(g_pGBufferPS);
+	SAFE_RELEASE(g_pDeferredLightingPS);
 
 	SAFE_RELEASE(g_pNormalGS);
 	SAFE_RELEASE(g_pBillboardGS);
@@ -788,4 +811,11 @@ void Graphics::DestroyCommonStates()
 	SAFE_RELEASE(g_pPostProcessingIL);
 	SAFE_RELEASE(g_pGrassIL);
 	SAFE_RELEASE(g_pBillboardIL);
+
+	SAFE_RELEASE(g_pDepthOnlyCubeVS);
+	SAFE_RELEASE(g_pDepthOnlyCascadeVS);
+	SAFE_RELEASE(g_pDepthOnlyCubeGS);
+	SAFE_RELEASE(g_pDepthOnlyCascadeGS);
+	SAFE_RELEASE(g_pDepthOnlyCubePS);
+	SAFE_RELEASE(g_pDepthOnlyCascadePS);
 }

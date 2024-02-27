@@ -2,22 +2,22 @@
 
 struct SamplingVertexShaderInput
 {
-    float3 position : POSITION;
-    float2 texcoord : TEXCOORD;
+    float3 ModelPosition : POSITION;
+    float2 Texcoord : TEXCOORD;
 };
 
 struct SamplingPixelShaderInput
 {
-    float4 position : SV_POSITION;
-    float2 texcoord : TEXCOORD;
+    float4 ScreenPosition : SV_POSITION;
+    float2 Texcoord : TEXCOORD;
 };
 
 SamplingPixelShaderInput main(SamplingVertexShaderInput input)
 {
     SamplingPixelShaderInput output;
     
-    output.position = float4(input.position, 1.0f);
-    output.texcoord = input.texcoord;
+    output.ScreenPosition = float4(input.ModelPosition, 1.0f);
+    output.Texcoord = input.Texcoord;
 
     return output;
 }

@@ -2,35 +2,35 @@
 
 struct GrassVertexInput
 {
-    float3 posModel : POSITION;
-    float3 normalModel : NORMAL;
-    float2 texcoord : TEXCOORD;
-    matrix insWorld : WORLD; // Instance World
-    float windStrength : COLOR; // Const로 이동, 여기서는 테스트 용도
+    float3 ModelPosition : POSITION;
+    float3 ModelNormal : NORMAL;
+    float2 Texcoord : TEXCOORD;
+    matrix WorldInstance : WORLD; // Instance World
+    float WindStrength : COLOR; // Const로 이동, 여기서는 테스트 용도
 };
 
 struct GrassPixelInput
 {
-    float4 posProj : SV_POSITION;
-    float3 posWorld : POSITION;
-    float3 normalWorld : NORMAL;
-    float2 texcoord : TEXCOORD;
-    float3 baseColor : COLOR;
+    float4 ProjectedPosition : SV_POSITION;
+    float3 WorldPosition : POSITION;
+    float3 WorldNormal : NORMAL;
+    float2 Texcoord : TEXCOORD;
+    float3 BaseColor : COLOR;
 };
 
 static float3 debugColors[3] = { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } };
 
 // https://thebookofshaders.com/13/
-float WaveFunc1(float x, float u_time)
+float WaveFunc1(float x, float uTime)
 {
     // 여러 가지 경우에 대해 보여주기
-    return sin(x + u_time);
+    return sin(x + uTime);
     
     float amplitude = 1.0f;
     float frequency = 0.5f;
     
     float y = sin(x * frequency);
-    float t = 0.01f * (-u_time * 130.0f);
+    float t = 0.01f * (-uTime * 130.0f);
     y += sin(x * frequency * 2.1f + t) * 4.5f;
     y += sin(x * frequency * 1.72f + t * 1.121f) * 4.0f;
     y += sin(x * frequency * 2.221f + t * 0.437f) * 5.0f;
@@ -40,7 +40,7 @@ float WaveFunc1(float x, float u_time)
     return y;
 }
 
-float WaveFunc2(float x, float u_time)
+float WaveFunc2(float x, float uTime)
 {
     return 0.0f;
     
@@ -48,7 +48,7 @@ float WaveFunc2(float x, float u_time)
     //float frequency = 0.1f;
     
     //float y = sin(x * frequency);
-    //float t = 0.01f * (-u_time * 130.0f);
+    //float t = 0.01f * (-uTime * 130.0f);
     //y += sin(x * frequency * 2.1f + t) * 4.5f;
     //y += sin(x * frequency * 1.72f + t * 1.121f) * 4.0f;
     //y += sin(x * frequency * 2.221f + t * 0.437f) * 5.0f;
@@ -107,7 +107,7 @@ GrassPixelInput main(uint instanceID : SV_InstanceID, // 참고/디버깅용
     // 편의상 worldIT == world 라고 가정 (isotropic scaling)
     // 주의: input.insWorld, world 두 번 변환.
 
-    output.posWorld = mul(float4(input.posModel, 1.0f), input.insWorld).xyz;
+    output.WorldPosition = mul(float4(input.ModelPosition, 1.0f), input.WorldInstance).xyz;
     
     // Deform by wind
     float4x4 mWind = float4x4(1.0f, 0.0f, 0.0f, 0.0f, 
@@ -115,13 +115,13 @@ GrassPixelInput main(uint instanceID : SV_InstanceID, // 참고/디버깅용
                               0.0f, 0.0f, 1.0f, 0.0f, 
                               0.0f, 0.0f, 0.0f, 1.0f);
 
-    float3 windWorld = float3(WaveFunc1(output.posWorld.x, globalTime), 0.0f, WaveFunc2(output.posWorld.z, globalTime + 123.0f)) * input.windStrength;
+    float3 windWorld = float3(WaveFunc1(output.WorldPosition.x, g_GlobalTime), 0.0f, WaveFunc2(output.WorldPosition.z, g_GlobalTime + 123.0f)) * input.WindStrength;
     
     float2 rotCenter = float2(0.0f, 0.1f);
-    float2 temp = (input.posModel.xy - rotCenter);
+    float2 temp = (input.ModelPosition.xy - rotCenter);
     float coeff = pow(max(0, temp.y), 2.0f);
     float3 axis = cross(coeff * windWorld, float3(0.0f, 1.0f, 0.0f));
-    float4 q = RotateAngleAxis(input.windStrength, axis);
+    float4 q = RotateAngleAxis(input.WindStrength, axis);
     mWind = QuaternionToMatrix(q);
 
 
@@ -132,21 +132,21 @@ GrassPixelInput main(uint instanceID : SV_InstanceID, // 참고/디버깅용
     input.posModel.xy = mul(temp, rot);
     input.posModel.xy += rotCenter;*/
     
-    output.normalWorld = mul(float4(input.normalModel, 0.0f), input.insWorld).xyz;
-    output.normalWorld = mul(float4(output.normalWorld, 0.0f), mWind).xyz;
-    output.normalWorld = mul(float4(output.normalWorld, 0.0f), world).xyz;
-    output.normalWorld = normalize(output.normalWorld);
+    output.WorldNormal = mul(float4(input.ModelNormal, 0.0f), input.WorldInstance).xyz;
+    output.WorldNormal = mul(float4(output.WorldNormal, 0.0f), mWind).xyz;
+    output.WorldNormal = mul(float4(output.WorldNormal, 0.0f), g_World).xyz;
+    output.WorldNormal = normalize(output.WorldNormal);
     
-    float3 translation = input.insWorld._m30_m31_m32;
-    output.posWorld -= translation;
-    output.posWorld = mul(float4(output.posWorld, 1.0f), mWind).xyz;
-    output.posWorld += translation;
+    float3 translation = input.WorldInstance._m30_m31_m32;
+    output.WorldPosition -= translation;
+    output.WorldPosition = mul(float4(output.WorldPosition, 1.0f), mWind).xyz;
+    output.WorldPosition += translation;
     
-    output.posWorld = mul(float4(output.posWorld, 1.0f), world).xyz;
-    output.posProj = mul(float4(output.posWorld, 1.0f), viewProj);
-    output.texcoord = input.texcoord;
+    output.WorldPosition = mul(float4(output.WorldPosition, 1.0f), g_World).xyz;
+    output.ProjectedPosition = mul(float4(output.WorldPosition, 1.0f), g_ViewProjection);
+    output.Texcoord = input.Texcoord;
 
-    output.baseColor = float3(0.0f, 1.0f, 0.0f) * pow(saturate(input.texcoord.y), 3.0f);
+    output.BaseColor = float3(0.0f, 1.0f, 0.0f) * pow(saturate(input.Texcoord.y), 3.0f);
     // output.baseColor = debugColors[instanceID % 3] * pow(saturate(input.texcoord.y), 3.0f);
     
     return output;

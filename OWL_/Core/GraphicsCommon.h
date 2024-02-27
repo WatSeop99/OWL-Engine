@@ -12,6 +12,7 @@ namespace Graphics
 	extern ID3D11SamplerState* g_pLinearClampSS;
 	extern ID3D11SamplerState* g_pPointClampSS;
 	extern ID3D11SamplerState* g_pShadowPointSS;
+	extern ID3D11SamplerState* g_pShadowLinearSS;
 	extern ID3D11SamplerState* g_pShadowCompareSS;
 	extern ID3D11SamplerState* g_pPointWrapSS;
 	extern ID3D11SamplerState* g_pLinearMirrorSS;
@@ -44,6 +45,8 @@ namespace Graphics
 	extern ID3D11VertexShader* g_pDepthOnlySkinnedVS;
 	extern ID3D11VertexShader* g_pGrassVS;
 	extern ID3D11VertexShader* g_pBillboardVS;
+	extern ID3D11VertexShader* g_pGBufferVS;
+	extern ID3D11VertexShader* g_pGBufferSkinnedVS;
 	extern ID3D11PixelShader* g_pBasicPS;
 	extern ID3D11PixelShader* g_pSkyboxPS;
 	extern ID3D11PixelShader* g_pCombinePS;
@@ -57,8 +60,17 @@ namespace Graphics
 	extern ID3D11PixelShader* g_pOceanPS;
 	extern ID3D11PixelShader* g_pVolumetricFirePS;
 	extern ID3D11PixelShader* g_pExplosionPS;
+	extern ID3D11PixelShader* g_pGBufferPS;
+	extern ID3D11PixelShader* g_pDeferredLightingPS;
 	extern ID3D11GeometryShader* g_pNormalGS;
 	extern ID3D11GeometryShader* g_pBillboardGS;
+
+	extern ID3D11VertexShader* g_pDepthOnlyCubeVS;
+	extern ID3D11VertexShader* g_pDepthOnlyCascadeVS;
+	extern ID3D11GeometryShader* g_pDepthOnlyCubeGS;
+	extern ID3D11GeometryShader* g_pDepthOnlyCascadeGS;
+	extern ID3D11PixelShader* g_pDepthOnlyCubePS;
+	extern ID3D11PixelShader* g_pDepthOnlyCascadePS;
 
 	// Input Layouts
 	extern ID3D11InputLayout* g_pBasicIL;
@@ -99,6 +111,9 @@ namespace Graphics
 	extern Graphics::GraphicsPSO g_GrassSolidPSO;
 	extern Graphics::GraphicsPSO g_GrassWirePSO;
 	extern Graphics::GraphicsPSO g_OceanPSO;
+	extern Graphics::GraphicsPSO g_GBufferPSO;
+	extern Graphics::GraphicsPSO g_GBufferSkinnedPSO;;
+	extern Graphics::GraphicsPSO g_DeferredRenderingPSO;
 
 	// 주의: 초기화가 느려서 필요한 경우에만 초기화.
 	extern Graphics::GraphicsPSO g_VolumeSmokePSO;

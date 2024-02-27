@@ -10,8 +10,10 @@ namespace Graphics
 	class GraphicsPSO
 	{
 	public:
-		GraphicsPSO() : StencilRef(0), PrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST) { }
-		~GraphicsPSO()
+		GraphicsPSO() = default;
+		~GraphicsPSO() { Destroy(); }
+
+		void Destroy()
 		{
 			pRasterizerState = nullptr;
 			pDepthStencilState = nullptr;
@@ -41,23 +43,19 @@ namespace Graphics
 		ID3D11RasterizerState* pRasterizerState = nullptr;
 
 		float BlendFactor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-		UINT StencilRef;
+		UINT StencilRef = 0;
 
-		D3D11_PRIMITIVE_TOPOLOGY PrimitiveTopology;
+		D3D11_PRIMITIVE_TOPOLOGY PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	};
 
 	class ComputePSO
 	{
 	public:
-		~ComputePSO() { pComputeShader = nullptr; }
+		~ComputePSO() { Destroy(); }
+
+		void Destroy() { pComputeShader = nullptr; }
 
 		inline void operator=(const ComputePSO& RHS) { pComputeShader = RHS.pComputeShader; };
-
-		//void Destroy()
-		//{
-		//	// pComputeShader = nullptr;
-		//	SAFE_RELEASE(pComputeShader);
-		//}
 
 	public:
 		ID3D11ComputeShader* pComputeShader = nullptr;

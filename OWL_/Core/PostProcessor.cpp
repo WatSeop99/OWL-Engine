@@ -13,7 +13,7 @@ namespace Core
 	{
 		HRESULT hr = S_OK;
 
-		destroy();
+		Destroy();
 
 		m_ScreenWidth = WIDTH;
 		m_ScreenHeight = HEIGHT;
@@ -27,12 +27,10 @@ namespace Core
 
 		hr = Graphics::CreateVertexBuffer(pDevice, meshInfo.Vertices, &(pMesh->pVertexBuffer));
 		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(pMesh->pVertexBuffer, "PostProcess::pMesh->pVertexBuffer");
 
 		pMesh->IndexCount = (UINT)(meshInfo.Indices.size());
 		hr = Graphics::CreateIndexBuffer(pDevice, meshInfo.Indices, &(pMesh->pIndexBuffer));
 		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(pMesh->pIndexBuffer, "PostProcess::pMesh->pIndexBuffer");
 
 		// 후처리 효과용 버퍼 생성.
 		setRenderConfig(CONFIG);
@@ -41,7 +39,6 @@ namespace Core
 		// 후처리 효과용 constBuffer.
 		hr = Graphics::CreateConstBuffer(pDevice, PostEffectsConstsCPU, &m_pPostEffectsConstsGPU);
 		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pPostEffectsConstsGPU, "PostProcessor::m_pPostEffectsConstsGPU");
 
 		// Bloom Down/Up.
 		m_pBloomSRVs.resize(BLOOMLEVELS);
@@ -134,6 +131,40 @@ namespace Core
 		renderPostProcessing(pContext);
 	}
 
+	void PostProcessor::Destroy()
+	{
+		m_pGlobalConstsGPU = nullptr;
+		m_pBackBuffer = nullptr;
+		m_pFloatBuffer = nullptr;
+		m_pResolvedBuffer = nullptr;
+		m_pPrevBuffer = nullptr;
+		m_pBackBufferRTV = nullptr;
+		m_pResolvedSRV = nullptr;
+		m_pPrevSRV = nullptr;
+		m_pDepthOnlySRV = nullptr;
+
+		for (size_t i = 0, size = m_pBloomSRVs.size(); i < size; ++i)
+		{
+			RELEASE(m_pBloomSRVs[i]);
+			RELEASE(m_pBloomRTVs[i]);
+		}
+		m_pBloomSRVs.clear();
+		m_pBloomRTVs.clear();
+		m_pBloomDownFilters.clear();
+		m_pBloomUpFilters.clear();
+
+		SAFE_RELEASE(m_pPostEffectsConstsGPU);
+
+		SAFE_RELEASE(m_pPostEffectsBuffer);
+		SAFE_RELEASE(m_pPostEffectsRTV);
+		SAFE_RELEASE(m_pPostEffectsSRV);
+
+		if (pMesh)
+		{
+			ReleaseMesh(&pMesh);
+		}
+	}
+
 	void PostProcessor::createPostBackBuffers(ID3D11Device* pDevice)
 	{
 		// 후처리를 위한 back buffer.
@@ -147,15 +178,12 @@ namespace Core
 
 		hr = pDevice->CreateTexture2D(&desc, nullptr, &m_pPostEffectsBuffer);
 		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pPostEffectsBuffer, "PostProcessor::m_pPostEffectsBuffer");
 
 		hr = pDevice->CreateShaderResourceView(m_pPostEffectsBuffer, nullptr, &m_pPostEffectsSRV);
 		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pPostEffectsSRV, "PostProcessor::m_pPostEffectsSRV");
 
 		hr = pDevice->CreateRenderTargetView(m_pPostEffectsBuffer, nullptr, &m_pPostEffectsRTV);
 		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(m_pPostEffectsRTV, "PostProcessor::m_pPostEffectsRTV");
 	}
 
 	void PostProcessor::createImageResources(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, int width, int height, ID3D11ShaderResourceView** ppSrv, ID3D11RenderTargetView** ppRtv)
@@ -163,7 +191,6 @@ namespace Core
 		HRESULT hr = S_OK;
 
 		ID3D11Texture2D* texture = nullptr;
-
 		D3D11_TEXTURE2D_DESC txtDesc = { 0, };
 		txtDesc.Width = width;
 		txtDesc.Height = height;
@@ -177,7 +204,6 @@ namespace Core
 
 		hr = pDevice->CreateTexture2D(&txtDesc, nullptr, &texture);
 		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(texture, "PostProcessor::texture");
 
 		hr = pDevice->CreateRenderTargetView(texture, nullptr, ppRtv);
 		BREAK_IF_FAILED(hr);
@@ -195,9 +221,8 @@ namespace Core
 		setPipelineState(pContext, Graphics::g_PostEffectsPSO);
 		setGlobalConsts(pContext , &m_pGlobalConstsGPU);
 
-		ID3D11ShaderResourceView* ppPostEffectsSRVs[] = { m_pResolvedSRV, m_pDepthOnlySRV };
-		UINT numPostEffectsSRVs = _countof(ppPostEffectsSRVs);
-		pContext->PSSetShaderResources(20, numPostEffectsSRVs, ppPostEffectsSRVs);
+		ID3D11ShaderResourceView* ppPostEffectsSRVs[2] = { m_pResolvedSRV, m_pDepthOnlySRV };
+		pContext->PSSetShaderResources(20, 2, ppPostEffectsSRVs);
 		pContext->OMSetRenderTargets(1, &m_pPostEffectsRTV, nullptr);
 		pContext->PSSetConstantBuffers(5, 1, &m_pPostEffectsConstsGPU);
 		pContext->DrawIndexed(pMesh->IndexCount, 0, 0);
@@ -285,39 +310,5 @@ namespace Core
 		pContext->VSSetConstantBuffers(0, 1, ppGlobalConstsGPU);
 		pContext->PSSetConstantBuffers(0, 1, ppGlobalConstsGPU);
 		pContext->GSSetConstantBuffers(0, 1, ppGlobalConstsGPU);
-	}
-
-	void PostProcessor::destroy()
-	{
-		m_pGlobalConstsGPU = nullptr;
-		m_pBackBuffer = nullptr;
-		m_pFloatBuffer = nullptr;
-		m_pResolvedBuffer = nullptr;
-		m_pPrevBuffer = nullptr;
-		m_pBackBufferRTV = nullptr;
-		m_pResolvedSRV = nullptr;
-		m_pPrevSRV = nullptr;
-		m_pDepthOnlySRV = nullptr;
-
-		for (size_t i = 0, size = m_pBloomSRVs.size(); i < size; ++i)
-		{
-			RELEASE(m_pBloomSRVs[i]);
-			RELEASE(m_pBloomRTVs[i]);
-		}
-		m_pBloomSRVs.clear();
-		m_pBloomRTVs.clear();
-		m_pBloomDownFilters.clear();
-		m_pBloomUpFilters.clear();
-
-		SAFE_RELEASE(m_pPostEffectsConstsGPU);
-
-		SAFE_RELEASE(m_pPostEffectsBuffer);
-		SAFE_RELEASE(m_pPostEffectsRTV);
-		SAFE_RELEASE(m_pPostEffectsSRV);
-
-		if (pMesh)
-		{
-			ReleaseMesh(&pMesh);
-		}
 	}
 }

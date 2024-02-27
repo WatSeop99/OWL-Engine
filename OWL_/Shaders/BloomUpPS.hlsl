@@ -1,37 +1,37 @@
-Texture2D g_texture0 : register(t0);
-SamplerState g_sampler : register(s0);
+Texture2D g_Texture0 : register(t0);
+SamplerState g_Sampler : register(s0);
 
 cbuffer SamplingPixelConstantData : register(b0)
 {
-    float dx;
-    float dy;
-    float threshold;
-    float strength;
-    float4 options;
+    float DX;
+    float DY;
+    float Threshold;
+    float Strength;
+    float4 Options;
 };
 
 struct SamplingPixelShaderInput
 {
-    float4 position : SV_POSITION;
-    float2 texcoord : TEXCOORD;
+    float4 ProjectedPosition : SV_POSITION;
+    float2 Texcoord : TEXCOORD;
 };
 
 float4 main(SamplingPixelShaderInput input) : SV_TARGET
 {
-    float x = input.texcoord.x;
-    float y = input.texcoord.y;
+    float x = input.Texcoord.x;
+    float y = input.Texcoord.y;
     
-    float3 a = g_texture0.Sample(g_sampler, float2(x - dx, y + dy)).rgb;
-    float3 b = g_texture0.Sample(g_sampler, float2(x, y + dy)).rgb;
-    float3 c = g_texture0.Sample(g_sampler, float2(x + dx, y + dy)).rgb;
+    float3 a = g_Texture0.Sample(g_Sampler, float2(x - DX, y + DY)).rgb;
+    float3 b = g_Texture0.Sample(g_Sampler, float2(x, y + DY)).rgb;
+    float3 c = g_Texture0.Sample(g_Sampler, float2(x + DX, y + DY)).rgb;
 
-    float3 d = g_texture0.Sample(g_sampler, float2(x - dx, y)).rgb;
-    float3 e = g_texture0.Sample(g_sampler, float2(x, y)).rgb;
-    float3 f = g_texture0.Sample(g_sampler, float2(x + dx, y)).rgb;
+    float3 d = g_Texture0.Sample(g_Sampler, float2(x - DX, y)).rgb;
+    float3 e = g_Texture0.Sample(g_Sampler, float2(x, y)).rgb;
+    float3 f = g_Texture0.Sample(g_Sampler, float2(x + DX, y)).rgb;
 
-    float3 g = g_texture0.Sample(g_sampler, float2(x - dx, y - dy)).rgb;
-    float3 h = g_texture0.Sample(g_sampler, float2(x, y - dy)).rgb;
-    float3 i = g_texture0.Sample(g_sampler, float2(x + dx, y - dy)).rgb;
+    float3 g = g_Texture0.Sample(g_Sampler, float2(x - DX, y - DY)).rgb;
+    float3 h = g_Texture0.Sample(g_Sampler, float2(x, y - DY)).rgb;
+    float3 i = g_Texture0.Sample(g_Sampler, float2(x + DX, y - DY)).rgb;
 
     float3 color = e * 4.0f;
     color += (b + d + f + h) * 2.0f;
@@ -39,5 +39,4 @@ float4 main(SamplingPixelShaderInput input) : SV_TARGET
     color *= 1.0 / 16.0f;
   
     return float4(color, 1.0f);
-    //return g_texture0.Sample(g_sampler, input.texcoord);
 }

@@ -18,6 +18,7 @@
 #define ALIGN(size) __declspec(align(size))
 
 #include <assert.h>
+#include <float.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>

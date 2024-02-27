@@ -24,8 +24,7 @@ namespace Geometry
 			{
 				if (frame != 0)
 				{
-					AccumulatedRootTransform = (Matrix::CreateTranslation(key.Position - PrevPos) *
-												AccumulatedRootTransform); // root 뼈의 변환을 누적시킴.
+					AccumulatedRootTransform = (Matrix::CreateTranslation(key.Position - PrevPos) * AccumulatedRootTransform); // root 뼈의 변환을 누적시킴.
 				}
 				else
 				{

@@ -103,18 +103,14 @@ namespace Geometry
 					if (!MESH_DATA.szOpacityTextureFileName.empty())
 					{
 						hr = Graphics::CreateTexture(pDevice, pContext, MESH_DATA.szAlbedoTextureFileName.c_str(), MESH_DATA.szOpacityTextureFileName.c_str(), false,
-													 newMesh->pMaterialBuffer->Albedo.GetAddressOfTexture(), newMesh->pMaterialBuffer->Albedo.GetAddressOfSRV());
+													 &(newMesh->pMaterialBuffer->Albedo.pTexture), &(newMesh->pMaterialBuffer->Albedo.pSRV));
 					}
 					else
 					{
 						hr = Graphics::CreateTexture(pDevice, pContext, MESH_DATA.szAlbedoTextureFileName.c_str(), true,
-													 newMesh->pMaterialBuffer->Albedo.GetAddressOfTexture(), newMesh->pMaterialBuffer->Albedo.GetAddressOfSRV());
+													 &(newMesh->pMaterialBuffer->Albedo.pTexture), &(newMesh->pMaterialBuffer->Albedo.pSRV));
 					}
 					BREAK_IF_FAILED(hr);
-					// SET_DEBUG_INFO_TO_OBJECT(newMesh->pAlbedoTexture, "Model::newMesh->pAlbedoTexture");
-					// SET_DEBUG_INFO_TO_OBJECT(newMesh->pAlbedoSRV, "Model::newMesh->pAlbedoSRV");
-
-					// MaterialConstants.CPU.bUseAlbedoMap = TRUE;
 					newMesh->MaterialConstants.CPU.bUseAlbedoMap = TRUE;
 				}
 				else
@@ -131,12 +127,8 @@ namespace Geometry
 				if (_stat64(emissiveTextureA.c_str(), &sourceFileStat) != -1)
 				{
 					hr = Graphics::CreateTexture(pDevice, pContext, MESH_DATA.szEmissiveTextureFileName.c_str(), true,
-												 newMesh->pMaterialBuffer->Emissive.GetAddressOfTexture(), newMesh->pMaterialBuffer->Emissive.GetAddressOfSRV());
+												 &(newMesh->pMaterialBuffer->Emissive.pTexture), &(newMesh->pMaterialBuffer->Emissive.pSRV));
 					BREAK_IF_FAILED(hr);
-					// SET_DEBUG_INFO_TO_OBJECT(newMesh->pEmissiveTexture, "Model::newMesh->pEmissiveTexture");
-					// SET_DEBUG_INFO_TO_OBJECT(newMesh->pEmissiveSRV, "Model::newMesh->pEmissiveSRV");
-
-					// MaterialConstants.CPU.bUseEmissiveMap = TRUE;
 					newMesh->MaterialConstants.CPU.bUseEmissiveMap = TRUE;
 				}
 				else
@@ -153,12 +145,8 @@ namespace Geometry
 				if (_stat64(normalTextureA.c_str(), &sourceFileStat) != -1)
 				{
 					hr = Graphics::CreateTexture(pDevice, pContext, MESH_DATA.szNormalTextureFileName.c_str(), false,
-												 newMesh->pMaterialBuffer->Normal.GetAddressOfTexture(), newMesh->pMaterialBuffer->Normal.GetAddressOfSRV());
+												 &(newMesh->pMaterialBuffer->Normal.pTexture), &(newMesh->pMaterialBuffer->Normal.pSRV));
 					BREAK_IF_FAILED(hr);
-					// SET_DEBUG_INFO_TO_OBJECT(newMesh->pNormalTexture, "Model::newMesh->pNormalTexture");
-					// SET_DEBUG_INFO_TO_OBJECT(newMesh->pNormalSRV, "Model::newMesh->pNormalSRV");
-					
-					// MaterialConstants.CPU.bUseNormalMap = TRUE;
 					newMesh->MaterialConstants.CPU.bUseNormalMap = TRUE;
 				}
 				else
@@ -175,12 +163,8 @@ namespace Geometry
 				if (_stat64(heightTextureA.c_str(), &sourceFileStat) != -1)
 				{
 					hr = Graphics::CreateTexture(pDevice, pContext, MESH_DATA.szHeightTextureFileName.c_str(), false,
-												 newMesh->pMaterialBuffer->Height.GetAddressOfTexture(), newMesh->pMaterialBuffer->Height.GetAddressOfSRV());
+												 &(newMesh->pMaterialBuffer->Height.pTexture), &(newMesh->pMaterialBuffer->Height.pSRV));
 					BREAK_IF_FAILED(hr);
-					// SET_DEBUG_INFO_TO_OBJECT(newMesh->pHeightTexture, "Model::newMesh->pHeightTexture");
-					// SET_DEBUG_INFO_TO_OBJECT(newMesh->pHeightSRV, "Model::newMesh->pHeightSRV");
-					
-					// MeshConstants.CPU.bUseHeightMap = TRUE;
 					newMesh->MeshConstants.CPU.bUseHeightMap = TRUE;
 				}
 				else
@@ -197,12 +181,8 @@ namespace Geometry
 				if (_stat64(aoTextureA.c_str(), &sourceFileStat) != -1)
 				{
 					hr = Graphics::CreateTexture(pDevice, pContext, MESH_DATA.szAOTextureFileName.c_str(), false,
-												 newMesh->pMaterialBuffer->AmbientOcclusion.GetAddressOfTexture(), newMesh->pMaterialBuffer->AmbientOcclusion.GetAddressOfSRV());
+												 &(newMesh->pMaterialBuffer->AmbientOcclusion.pTexture), &(newMesh->pMaterialBuffer->AmbientOcclusion.pSRV));
 					BREAK_IF_FAILED(hr);
-					// SET_DEBUG_INFO_TO_OBJECT(newMesh->pAOTexture, "Model::newMesh->pAOTexture");
-					// SET_DEBUG_INFO_TO_OBJECT(newMesh->pAOSRV, "Model::newMesh->pAOSRV");
-					
-					// MaterialConstants.CPU.bUseAOMap = TRUE;
 					newMesh->MaterialConstants.CPU.bUseAOMap = TRUE;
 				}
 				else
@@ -219,11 +199,8 @@ namespace Geometry
 				if (_stat64(metallicTextureA.c_str(), &sourceFileStat) != -1)
 				{
 					hr = Graphics::CreateTexture(pDevice, pContext, MESH_DATA.szMetallicTextureFileName.c_str(), false, 
-												 newMesh->pMaterialBuffer->Metallic.GetAddressOfTexture(), newMesh->pMaterialBuffer->Metallic.GetAddressOfSRV());
+												 &(newMesh->pMaterialBuffer->Metallic.pTexture), &(newMesh->pMaterialBuffer->Metallic.pSRV));
 					BREAK_IF_FAILED(hr);
-					// SET_DEBUG_INFO_TO_OBJECT(newMesh->pMetallicTexture, "Model::newMesh->pMetallicTexture");
-					// SET_DEBUG_INFO_TO_OBJECT(newMesh->pMetallicSRV, "Model::newMesh->pMetallicSRV");
-
 					newMesh->MaterialConstants.CPU.bUseMetallicMap = TRUE;
 				}
 				else
@@ -240,11 +217,8 @@ namespace Geometry
 				if (_stat64(roughnessTextureA.c_str(), &sourceFileStat) != -1)
 				{
 					hr = Graphics::CreateTexture(pDevice, pContext, MESH_DATA.szRoughnessTextureFileName.c_str(), false, 
-												 newMesh->pMaterialBuffer->Roughness.GetAddressOfTexture(), newMesh->pMaterialBuffer->Roughness.GetAddressOfSRV());
+												 &(newMesh->pMaterialBuffer->Roughness.pTexture), &(newMesh->pMaterialBuffer->Roughness.pSRV));
 					BREAK_IF_FAILED(hr);
-					// SET_DEBUG_INFO_TO_OBJECT(newMesh->pRoughnessTexture, "Model::newMesh->pRoughnessTexture");
-					// SET_DEBUG_INFO_TO_OBJECT(newMesh->pRoughnessSRV, "Model::newMesh->pRoughnessSRV");
-
 					newMesh->MaterialConstants.CPU.bUseRoughnessMap = TRUE;
 				}
 				else
@@ -253,11 +227,6 @@ namespace Geometry
 					OutputDebugStringA(" does not exists. Skip texture reading.\n");
 				}
 			}
-
-			/*newMesh->pMeshConstantsGPU = MeshConstants.pGPU;
-			newMesh->pMaterialConstantsGPU = MaterialConstants.pGPU;*/
-			/*newMesh->MeshConstants.Upload(pContext);
-			newMesh->MaterialConstants.Upload(pContext);*/
 
 			pMeshes.push_back(newMesh);
 		}
@@ -280,23 +249,17 @@ namespace Geometry
 
 			hr = Graphics::CreateVertexBuffer(pDevice, meshData.Vertices, &(m_pBoundingBoxMesh->pVertexBuffer));
 			BREAK_IF_FAILED(hr);
-			SET_DEBUG_INFO_TO_OBJECT(m_pBoundingBoxMesh->pVertexBuffer, "Model::m_pBoundingBoxMesh->pVertexBuffer");
 
 			hr = Graphics::CreateIndexBuffer(pDevice, meshData.Indices, &(m_pBoundingBoxMesh->pIndexBuffer));
 			BREAK_IF_FAILED(hr);
-			SET_DEBUG_INFO_TO_OBJECT(m_pBoundingBoxMesh->pIndexBuffer, "Model::m_pBoundingBoxMesh->pIndexBuffer");
 
 			m_pBoundingBoxMesh->IndexCount = (UINT)(meshData.Indices.size());
 			m_pBoundingBoxMesh->VertexCount = (UINT)(meshData.Vertices.size());
 			m_pBoundingBoxMesh->Stride = sizeof(Vertex);
 
+			m_pBoundingBoxMesh->MeshConstants.CPU.World = Matrix();
 			m_pBoundingBoxMesh->MeshConstants.Initialize(pDevice);
 			m_pBoundingBoxMesh->MaterialConstants.Initialize(pDevice);
-
-			/*m_pBoundingBoxMesh->pMeshConstantsGPU = MeshConstants.pGPU;
-			m_pBoundingBoxMesh->pMaterialConstantsGPU = MaterialConstants.pGPU;*/
-			/*m_pBoundingBoxMesh->MeshConstants.Upload(pContext);
-			m_pBoundingBoxMesh->MaterialConstants.Upload(pContext);*/
 		}
 
 		// Bounding sphere 초기화.
@@ -325,23 +288,17 @@ namespace Geometry
 
 			hr = Graphics::CreateVertexBuffer(pDevice, meshData.Vertices, &(m_pBoundingSphereMesh->pVertexBuffer));
 			BREAK_IF_FAILED(hr);
-			SET_DEBUG_INFO_TO_OBJECT(m_pBoundingSphereMesh->pVertexBuffer, "Model::m_pBoundingSphereMesh->pVertexBuffer");
 
 			hr = Graphics::CreateIndexBuffer(pDevice, meshData.Indices, &(m_pBoundingSphereMesh->pIndexBuffer));
 			BREAK_IF_FAILED(hr);
-			SET_DEBUG_INFO_TO_OBJECT(m_pBoundingSphereMesh->pIndexBuffer, "Model::m_pBoundingSphereMesh->pIndexBuffer");
 
 			m_pBoundingSphereMesh->IndexCount = (UINT)(meshData.Indices.size());
 			m_pBoundingSphereMesh->VertexCount = (UINT)(meshData.Vertices.size());
 			m_pBoundingSphereMesh->Stride = sizeof(Vertex);
 
+			m_pBoundingSphereMesh->MeshConstants.CPU.World = Matrix();
 			m_pBoundingSphereMesh->MeshConstants.Initialize(pDevice);
 			m_pBoundingSphereMesh->MaterialConstants.Initialize(pDevice);
-
-			/*m_pBoundingSphereMesh->pMeshConstantsGPU = MeshConstants.pGPU;
-			m_pBoundingSphereMesh->pMaterialConstantsGPU = MaterialConstants.pGPU;*/
-			/*m_pBoundingSphereMesh->MeshConstants.Upload(pContext);
-			m_pBoundingSphereMesh->MaterialConstants.Upload(pContext);*/
 		}
 	}
 
@@ -356,25 +313,17 @@ namespace Geometry
 		HRESULT hr = S_OK;
 		hr = Graphics::CreateVertexBuffer(pDevice, MESH_INFO.Vertices, &(pNewMesh->pVertexBuffer));
 		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(pNewMesh->pVertexBuffer, "Model::pNewMesh->pVertexBuffer");
 
 		hr = Graphics::CreateIndexBuffer(pDevice, MESH_INFO.Indices, &(pNewMesh->pIndexBuffer));
 		BREAK_IF_FAILED(hr);
-		SET_DEBUG_INFO_TO_OBJECT(pNewMesh->pIndexBuffer, "Model::pNewMesh->pIndexBuffer");
 
 		pNewMesh->VertexCount = (UINT)(MESH_INFO.Vertices.size());
 		pNewMesh->IndexCount = (UINT)(MESH_INFO.Indices.size());
 		pNewMesh->Stride = sizeof(Vertex);
 	}
 
-	void Model::UpdateConstantBuffers(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
+	void Model::UpdateConstantBuffers(ID3D11DeviceContext* pContext)
 	{
-		/*if (bIsVisible)
-		{
-			MeshConstants.Upload(pContext);
-			MaterialConstants.Upload(pContext);
-		}*/
-
 		if (bIsVisible == false)
 		{
 			return;
@@ -386,6 +335,9 @@ namespace Geometry
 			pCurMesh->MeshConstants.Upload(pContext);
 			pCurMesh->MaterialConstants.Upload(pContext);
 		}
+
+		m_pBoundingBoxMesh->MeshConstants.Upload(pContext);
+		m_pBoundingSphereMesh->MeshConstants.Upload(pContext);
 	}
 
 	void Model::UpdateWorld(const Matrix& WORLD)
@@ -399,17 +351,21 @@ namespace Geometry
 		// 스케일까지 고려하고 싶다면 x, y, z 스케일 중 가장 큰 값으로 스케일.
 		// 구(sphere)라서 회전은 고려할 필요 없음.
 		BoundingSphere.Center = World.Translation();
+		BoundingBox.Center = BoundingSphere.Center;
 
-		/*MeshConstants.CPU.World = WORLD.Transpose();
-		MeshConstants.CPU.WorldInverseTranspose = WorldInverseTranspose.Transpose();
-		MeshConstants.CPU.WorldInverse = MeshConstants.CPU.World.Invert();*/
+		m_pBoundingBoxMesh->MeshConstants.CPU.World = World.Transpose();
+		m_pBoundingBoxMesh->MeshConstants.CPU.WorldInverseTranspose = WorldInverseTranspose.Transpose();
+		m_pBoundingBoxMesh->MeshConstants.CPU.WorldInverse = WorldInverseTranspose;
+		m_pBoundingSphereMesh->MeshConstants.CPU.World = m_pBoundingBoxMesh->MeshConstants.CPU.World;
+		m_pBoundingSphereMesh->MeshConstants.CPU.WorldInverseTranspose = m_pBoundingBoxMesh->MeshConstants.CPU.WorldInverseTranspose;
+		m_pBoundingSphereMesh->MeshConstants.CPU.WorldInverse = m_pBoundingBoxMesh->MeshConstants.CPU.WorldInverse;
 
 		for (size_t i = 0, size = pMeshes.size(); i < size; ++i)
 		{
 			Mesh* pCurMesh = pMeshes[i];
 			pCurMesh->MeshConstants.CPU.World = WORLD.Transpose();
 			pCurMesh->MeshConstants.CPU.WorldInverseTranspose = WorldInverseTranspose.Transpose();
-			pCurMesh->MeshConstants.CPU.WorldInverse = pCurMesh->MeshConstants.CPU.World.Invert();
+			pCurMesh->MeshConstants.CPU.WorldInverse = WorldInverseTranspose.Transpose();
 		}
 	}
 
@@ -436,32 +392,31 @@ namespace Geometry
 			ID3D11Buffer* ppConstantBuffers[] = { pCurMesh->MeshConstants.pGPU, pCurMesh->MaterialConstants.pGPU };
 			UINT numConstantBuffers = _countof(ppConstantBuffers);
 			pContext->VSSetConstantBuffers(2, numConstantBuffers, ppConstantBuffers);
-			pContext->VSSetShaderResources(0, 1, pCurMesh->pMaterialBuffer->Height.GetAddressOfSRV());
+			pContext->VSSetShaderResources(6, 1, &(pCurMesh->pMaterialBuffer->Height.pSRV));
 
 			// 물체 렌더링할 때 여러가지 텍스춰 사용. (t0 부터시작)
 			ID3D11ShaderResourceView* ppSRVs[] =
 			{
-				pCurMesh->pMaterialBuffer->Albedo.GetSRV(),
-				pCurMesh->pMaterialBuffer->Emissive.GetSRV(),
-				pCurMesh->pMaterialBuffer->Normal.GetSRV(),
-				pCurMesh->pMaterialBuffer->AmbientOcclusion.GetSRV(),
-				pCurMesh->pMaterialBuffer->Metallic.GetSRV(),
-				pCurMesh->pMaterialBuffer->Roughness.GetSRV(),
+				pCurMesh->pMaterialBuffer->Albedo.pSRV,
+				pCurMesh->pMaterialBuffer->Emissive.pSRV,
+				pCurMesh->pMaterialBuffer->Normal.pSRV,
+				pCurMesh->pMaterialBuffer->AmbientOcclusion.pSRV,
+				pCurMesh->pMaterialBuffer->Metallic.pSRV,
+				pCurMesh->pMaterialBuffer->Roughness.pSRV,
+				pCurMesh->pMaterialBuffer->Height.pSRV
 			};
 			UINT numSRVs = _countof(ppSRVs);
 			pContext->PSSetShaderResources(0, numSRVs, ppSRVs);
 			pContext->PSSetConstantBuffers(2, numConstantBuffers, ppConstantBuffers);
 
 			// 볼륨 렌더링.
-			ID3D11ShaderResourceView** ppDensitySRV = pCurMesh->pMaterialBuffer->Density.GetAddressOfSRV();
-			ID3D11ShaderResourceView** ppLightingSRV = pCurMesh->pMaterialBuffer->Lighting.GetAddressOfSRV();
-			if (*ppDensitySRV != nullptr)
+			if (pCurMesh->pMaterialBuffer->Density.pSRV != nullptr)
 			{
-				pContext->PSSetShaderResources(6, 1, ppDensitySRV);
+				pContext->PSSetShaderResources(7, 1, &(pCurMesh->pMaterialBuffer->Density.pSRV));
 			}
-			if (*ppLightingSRV != nullptr)
+			if (pCurMesh->pMaterialBuffer->Lighting.pSRV != nullptr)
 			{
-				pContext->PSSetShaderResources(7, 1, ppLightingSRV);
+				pContext->PSSetShaderResources(8, 1, &(pCurMesh->pMaterialBuffer->Lighting.pSRV));
 			}
 
 			pContext->IASetVertexBuffers(0, 1, &(pCurMesh->pVertexBuffer), &(pCurMesh->Stride), &(pCurMesh->Offset));
@@ -470,7 +425,7 @@ namespace Geometry
 
 			// Release resources.
 			ID3D11ShaderResourceView* ppNulls[3] = { nullptr, nullptr, nullptr };
-			pContext->PSSetShaderResources(6, 3, ppNulls);
+			pContext->PSSetShaderResources(7, 3, ppNulls);
 		}
 	}
 

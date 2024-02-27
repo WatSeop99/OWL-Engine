@@ -46,9 +46,9 @@ namespace Graphics
 
 		D3D11_BUFFER_DESC bufferDesc = { 0, };
 		bufferDesc.ByteWidth = (UINT)(sizeof(INSTANCE) * INSTANCES.size());
-		bufferDesc.Usage = D3D11_USAGE_DYNAMIC; // CPU 접근을 위해 시스템 메모리에 저장.
+		bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 		bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		bufferDesc.CPUAccessFlags = 0;
 		bufferDesc.StructureByteStride = sizeof(INSTANCE);
 
 		D3D11_SUBRESOURCE_DATA instanceBufferData = { 0, };
@@ -72,9 +72,9 @@ namespace Graphics
 		// 구조체에서 alignas(256)를 사용할 경우, debug new가 _align_malloc_dbg()를 호출하지 않는 문제가 발생. 
 		// 이를 방지하기 위해 상수버퍼 생성 시, 256byte로 정렬하여 생성.
 		bufferDesc.ByteWidth = (sizeof(CONSTANT_BUFFER_DATA) + (256 - 1)) & ~(256 - 1);
-		bufferDesc.Usage = D3D11_USAGE_DYNAMIC; // CPU 접근을 위해 시스템 메모리에 저장.
+		bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 		bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		bufferDesc.CPUAccessFlags = 0;
 
 		D3D11_SUBRESOURCE_DATA cosntantBufferData = { 0, };
 		cosntantBufferData.pSysMem = &CONSTANT_BUFFER_DATA;
@@ -89,10 +89,7 @@ namespace Graphics
 		_ASSERT(pContext != nullptr);
 		_ASSERT(pBuffer != nullptr);
 
-		D3D11_MAPPED_SUBRESOURCE mappedResource = { 0, };
-		pContext->Map(pBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-		memcpy(mappedResource.pData, BUFFER_DATA.data(), sizeof(DATA) * BUFFER_DATA.size());
-		pContext->Unmap(pBuffer, 0);
+		pContext->UpdateSubresource(pBuffer, 0, nullptr, BUFFER_DATA.data(), 0, 0);
 	}
 
 	template <typename DATA>
@@ -101,10 +98,7 @@ namespace Graphics
 		_ASSERT(pContext != nullptr);
 		_ASSERT(pBuffer != nullptr);
 
-		D3D11_MAPPED_SUBRESOURCE mappedResource = { 0, };
-		pContext->Map(pBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-		memcpy(mappedResource.pData, &BUFFER_DATA, sizeof(BUFFER_DATA));
-		pContext->Unmap(pBuffer, 0);
+		pContext->UpdateSubresource(pBuffer, 0, nullptr, &BUFFER_DATA, 0, 0);
 	}
 
 	HRESULT CreateTexture(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const wchar_t* pszFileName, const bool bUSE_SRGB, ID3D11Texture2D** ppTexture, ID3D11ShaderResourceView** ppTextureResourceView);

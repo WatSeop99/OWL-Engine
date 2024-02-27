@@ -227,7 +227,6 @@ LB_RET:
 
 namespace Graphics
 {
-	using namespace std;
 	using namespace DirectX;
 
 	HRESULT CreateVertexShaderAndInputLayout(ID3D11Device* pDevice, const wchar_t* pszFileName, const D3D11_INPUT_ELEMENT_DESC* pINPUT_ELEMENTS, const UINT ELEMENTS_SIZE, const D3D_SHADER_MACRO* pSHADER_MACROS,
@@ -381,7 +380,7 @@ namespace Graphics
 		return hr;
 	}
 
-	HRESULT CreateIndexBuffer(ID3D11Device* pDevice, const vector<uint32_t>& INDICES, ID3D11Buffer** ppIndexBuffer)
+	HRESULT CreateIndexBuffer(ID3D11Device* pDevice, const std::vector<uint32_t>& INDICES, ID3D11Buffer** ppIndexBuffer)
 	{
 		_ASSERT(pDevice != nullptr);
 		_ASSERT((*ppIndexBuffer) == nullptr);
@@ -497,7 +496,7 @@ namespace Graphics
 
 		{
 			size_t pixelSize = GetPixelSize(PIXEL_FORMAT);
-			D3D11_MAPPED_SUBRESOURCE mappedResource = { 0, };
+			D3D11_MAPPED_SUBRESOURCE mappedResource;
 
 			pContext->Map(pStagingTexture, 0, D3D11_MAP_WRITE, 0, &mappedResource);
 			uint8_t* pData = (uint8_t*)mappedResource.pData;
@@ -806,7 +805,7 @@ namespace Graphics
 				depthStencilDSVFormat = DXGI_FORMAT_D32_FLOAT;
 				break;
 
-			case DXGI_FORMAT_D24_UNORM_S8_UINT: // DXGI_FORMAT_R32_TYPELESS.
+			case DXGI_FORMAT_D24_UNORM_S8_UINT:
 				depthStencilTexFormat = DXGI_FORMAT_R24G8_TYPELESS;
 				depthStencilSRVFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 				depthStencilDSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -1120,7 +1119,7 @@ namespace Graphics
 			D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
 			ZeroMemory(&dsvDesc, sizeof(dsvDesc));
 			dsvDesc.Format = depthStencilDSVFormat;
-			dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+			dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
 			hr = pDevice->CreateDepthStencilView(*ppTexture, &dsvDesc, ppDSV);
 			if (FAILED(hr))
 			{
@@ -1190,10 +1189,8 @@ namespace Graphics
 		_ASSERT(pBuffer != nullptr);
 		_ASSERT(pDest != nullptr);
 
-		HRESULT hr = S_OK;
-
-		D3D11_MAPPED_SUBRESOURCE mappedResource = { 0, };
-		hr = pContext->Map(pBuffer, 0, D3D11_MAP_READ, 0, &mappedResource);
+		D3D11_MAPPED_SUBRESOURCE mappedResource;
+		pContext->Map(pBuffer, 0, D3D11_MAP_READ, 0, &mappedResource);
 		memcpy(pDest, mappedResource.pData, size);
 		pContext->Unmap(pBuffer, 0);
 	}
@@ -1204,12 +1201,10 @@ namespace Graphics
 		_ASSERT(pBuffer != nullptr);
 		_ASSERT(pSrc != nullptr);
 
-		HRESULT hr = S_OK;
-
-		D3D11_MAPPED_SUBRESOURCE mappedResource = { 0, };
-		hr = pContext->Map(pBuffer, NULL, D3D11_MAP_WRITE, NULL, &mappedResource);
+		D3D11_MAPPED_SUBRESOURCE mappedResource;
+		pContext->Map(pBuffer, 0, D3D11_MAP_WRITE, 0, &mappedResource);
 		memcpy(mappedResource.pData, pSrc, size);
-		pContext->Unmap(pBuffer, NULL);
+		pContext->Unmap(pBuffer, 0);
 	}
 
 	HRESULT CreateStructuredBuffer(ID3D11Device* pDevice, const UINT NUM_ELEMENTS, const UINT SIZE_ELEMENT, const void* pINIT_DATA, ID3D11Buffer** ppBuffer, ID3D11ShaderResourceView** ppSRV, ID3D11UnorderedAccessView** ppUAV)
@@ -1478,17 +1473,7 @@ namespace Graphics
 			miscFlags |= D3D11_RESOURCE_MISC_TEXTURECUBE;
 		}
 
-		hr = DirectX::CreateDDSTextureFromFileEx(pDevice,
-												 pszFileName,
-												 0,
-												 D3D11_USAGE_DEFAULT,
-												 D3D11_BIND_SHADER_RESOURCE,
-												 0,
-												 miscFlags,
-												 DirectX::DDS_LOADER_FLAGS(false),
-												 (ID3D11Resource**)(&pTexture),
-												 ppTextureResourceView,
-												 nullptr);
+		hr = DirectX::CreateDDSTextureFromFileEx(pDevice, pszFileName, 0, D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, miscFlags, DirectX::DDS_LOADER_FLAGS(false), (ID3D11Resource**)(&pTexture), ppTextureResourceView, nullptr);
 		SAFE_RELEASE(pTexture);
 		return hr;
 	}
@@ -1526,8 +1511,8 @@ namespace Graphics
 
 		// R8G8B8A8로 가정.
 		std::vector<uint8_t> pixels(desc.Width * desc.Height * 4);
-		D3D11_MAPPED_SUBRESOURCE mappedResource = { 0, };
-		pContext->Map(pStagingTexture, NULL, D3D11_MAP_READ, NULL, &mappedResource);
+		D3D11_MAPPED_SUBRESOURCE mappedResource;
+		pContext->Map(pStagingTexture, 0, D3D11_MAP_READ, 0, &mappedResource);
 
 		// 텍스쳐가 작을 경우,
 		// mappedResource.RowPitch가 width * sizeof(uint8_t) * 4보다 클 수 있어
@@ -1537,7 +1522,7 @@ namespace Graphics
 		{
 			memcpy(&pixels[h * desc.Width * 4], &pData[h * mappedResource.RowPitch], desc.Width * sizeof(uint8_t) * 4);
 		}
-		pContext->Unmap(pStagingTexture, NULL);
+		pContext->Unmap(pStagingTexture, 0);
 
 		char pFileName[MAX_PATH];
 		if (!WideCharToMultiByte(CP_ACP, 0, pszFileName, -1, pFileName, MAX_PATH, nullptr, nullptr))

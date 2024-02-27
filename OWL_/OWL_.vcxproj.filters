@@ -221,6 +221,16 @@
     <FxCompile Include="Shaders\VolumeSmokePS.hlsl" />
     <FxCompile Include="Shaders\ExplosionPS.hlsl" />
     <FxCompile Include="Shaders\VolumetricFirePS.hlsl" />
+    <FxCompile Include="Shaders\GBufferVS.hlsl" />
+    <FxCompile Include="Shaders\GBufferPS.hlsl" />
+    <FxCompile Include="Shaders\DeferredLightingCS.hlsl" />
+    <FxCompile Include="Shaders\DeferredLightingPS.hlsl" />
+    <FxCompile Include="Shaders\DepthOnlyCubeVS.hlsl" />
+    <FxCompile Include="Shaders\DepthOnlyCubeGS.hlsl" />
+    <FxCompile Include="Shaders\DepthOnlyCubePS.hlsl" />
+    <FxCompile Include="Shaders\DepthOnlyCascadeVS.hlsl" />
+    <FxCompile Include="Shaders\DepthOnlyCascadeGS.hlsl" />
+    <FxCompile Include="Shaders\DepthOnlyCascadePS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Common.hlsli" />
@@ -232,5 +242,6 @@
     <None Include="imgui.ini">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

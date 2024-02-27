@@ -17,9 +17,6 @@ namespace Core
 	using DirectX::SimpleMath::Vector2;
 	using DirectX::SimpleMath::Vector3;
 
-	// DirectX-Graphics-Samples/MiniEngine을 따라서 파일이름 변경
-	// __declspec(align(256)) : DX12에서는 256 align (예습)
-
 	// 주로 Vertex/Geometry 쉐이더에서 사용.
 	ALIGN(16) struct MeshConstants
 	{
@@ -62,18 +59,23 @@ namespace Core
 
 		// Light type bitmasking.
 		// ex) LIGHT_SPOT | LIGHT_SHADOW
-		uint32_t LightType = LIGHT_OFF;
+		UINT LightType = LIGHT_OFF;
 		float Radius = 0.035f; // 반지름.
 
 		float HaloRadius = 0.0f;
 		float HaloStrength = 0.0f;
 
-		Matrix ViewProjection;	  // 그림자 렌더링에 필요.
-		Matrix InverseProjection; // 그림자 렌더링 디버깅용.
+		Matrix ViewProjections[6]; // spot은 1개만. point는 전부 사용. 추후 directional은 3개 사용할 수도..
+		Matrix Projections[3];
+		Matrix InverseProjections[3];
 	};
 	ALIGN(16) struct LightConstants
 	{
 		LightProperty Lights[MAX_LIGHTS];
+	};
+	ALIGN(16) struct ShadowConstants
+	{
+		Matrix ViewProjects[6];
 	};
 
 	// register(b1) 사용
@@ -95,7 +97,6 @@ namespace Core
 		float GlobalTime = 0.0f;
 
 		int dummy[4];
-		// LightConstants Lights[MAX_LIGHTS];
 	};
 
 	// register(b5) 사용, PostEffectsPS.hlsl
@@ -136,7 +137,6 @@ namespace Core
 
 			hr = Graphics::CreateConstBuffer(pDevice, CPU, &pGPU);
 			BREAK_IF_FAILED(hr);
-			SET_DEBUG_INFO_TO_OBJECT(pGPU, "ConstantsBuffer::pGPU");
 		}
 
 		void Upload(ID3D11DeviceContext* pContext) { Graphics::UpdateBuffer(pContext, CPU, pGPU); }

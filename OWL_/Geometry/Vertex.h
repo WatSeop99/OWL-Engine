@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include <directxtk/SimpleMath.h>
-#include <vector>
 
 namespace Geometry
 {

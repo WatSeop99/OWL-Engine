@@ -9,7 +9,7 @@ namespace Geometry
 	class ModelLoader
 	{
 	public:
-		ModelLoader() : bIsGLTF(false), bRevertNormals(false) { }
+		ModelLoader() = default;
 		~ModelLoader() { pMeshInfos.clear(); }
 
 		HRESULT Load(std::wstring& basePath, std::wstring& fileName, bool bRevertNormals_);
@@ -36,7 +36,7 @@ namespace Geometry
 
 		AnimationData AnimData;
 
-		bool bIsGLTF; // gltf or fbx.
-		bool bRevertNormals;
+		bool bIsGLTF = false; // gltf or fbx.
+		bool bRevertNormals = false;
 	};
 }

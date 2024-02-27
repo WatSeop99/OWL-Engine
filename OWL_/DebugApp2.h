@@ -12,7 +12,7 @@ public:
 
 	void InitScene() override;
 
-	inline void UpdateLights(float deltaTime) override { Core::BaseRenderer::UpdateLights(deltaTime); }
+	// inline void UpdateLights(float deltaTime) override { Core::BaseRenderer::UpdateLights(deltaTime); }
 	void UpdateGUI() override;
 	void Update(float deltaTime) override;
 

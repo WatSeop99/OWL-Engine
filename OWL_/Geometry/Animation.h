@@ -16,18 +16,17 @@ namespace Geometry
 		class Key
 		{
 		public:
-			inline Key() : Position(0.0f), Scale(1.0f), Rotation() { }
+			Key() = default;
+			~Key() = default;
 
 			inline Matrix GetTransform()
 			{
-				return (Matrix::CreateScale(Scale) *
-						Matrix::CreateFromQuaternion(Rotation) *
-						Matrix::CreateTranslation(Position));
+				return (Matrix::CreateScale(Scale) * Matrix::CreateFromQuaternion(Rotation) * Matrix::CreateTranslation(Position));
 			}
 
 		public:
-			Vector3 Position;
-			Vector3 Scale;
+			Vector3 Position = Vector3(0.0f);
+			Vector3 Scale = Vector3(1.0f);
 			Quaternion Rotation;
 		};
 
@@ -42,23 +41,18 @@ namespace Geometry
 	class AnimationData
 	{
 	public:
-		AnimationData() : 
-			DefaultTransform(), 
-			RootTransform(), 
-			AccumulatedRootTransform(), 
-			PrevPos(0.0f)
-		{ }
+		AnimationData() = default;
+		~AnimationData() = default;
+
+		void Update(int clipID, int frame);
 
 		inline Matrix Get(int clipID, int boneID, int frame)
 		{
 			// DefaultTransform은 모델을 읽어들일때 GeometryGenerator::Normalize()에서 계산. 
 			// DefaultTransform.Invert() * OffsetMatrices[boneID]를 미리 계산해서 합치고 
 			// DefaultTransform * RootTransform을 미리 계산해놓을 수 있음.
-			return (DefaultTransform.Invert() * pOffsetMatrices[boneID] *
-					pBoneTransforms[boneID] * DefaultTransform);
+			return (DefaultTransform.Invert() * pOffsetMatrices[boneID] * pBoneTransforms[boneID] * DefaultTransform);
 		}
-
-		void Update(int clipID, int frame);
 
 	public:
 		std::map<std::string, int32_t> BoneNameToID; // 뼈 이름과 인덱스 정수.
@@ -70,6 +64,6 @@ namespace Geometry
 		Matrix DefaultTransform;
 		Matrix RootTransform;
 		Matrix AccumulatedRootTransform;
-		Vector3 PrevPos;
+		Vector3 PrevPos = Vector3(0.0f);
 	};
 }

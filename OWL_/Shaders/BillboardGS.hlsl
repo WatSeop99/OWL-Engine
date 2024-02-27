@@ -8,34 +8,33 @@
 
 cbuffer BillboardContsts : register(b4)
 {
-    float widthWorld;
-    float3 dirWorld;
+    float g_WidthWorld;
+    float3 g_DirWorld;
 };
 
 struct GeometryShaderInput
 {
-    float4 pos : SV_POSITION;
+    float4 WorldPosition : SV_POSITION;
 };
 
 struct BillboardPixelShaderInput
 {
-    float4 pos : SV_POSITION; // Screen position
-    float4 posWorld : POSITION0;
-    float4 center : POSITION1;
-    float2 texCoord : TEXCOORD;
-    uint primID : SV_PrimitiveID;
+    float4 ProjectedPosition : SV_POSITION; // Screen position
+    float4 WorldPosition : POSITION0;
+    float4 Center : POSITION1;
+    float2 Texcoord : TEXCOORD;
+    uint PrimID : SV_PrimitiveID;
 };
 
 [maxvertexcount(4)]
-void main(point GeometryShaderInput input[1], uint primID : SV_PrimitiveID,
-                              inout TriangleStream<BillboardPixelShaderInput> outputStream)
+void main(point GeometryShaderInput input[1], uint primID : SV_PrimitiveID, inout TriangleStream<BillboardPixelShaderInput> outputStream)
 {
-    float hw = 0.5f * widthWorld;
+    float hw = 0.5f * g_WidthWorld;
     
     //float4 up = float4(0.0, 1.0, 0.0, 0.0);
-    float4 up = mul(float4(0.0f, 1.0f, 0.0f, 0.0f), invView); // <- 뷰의 업벡터를 월드로 변환. (파이어볼을 위에서 보는 경우)
+    float4 up = mul(float4(0.0f, 1.0f, 0.0f, 0.0f), g_InverseView); // <- 뷰의 업벡터를 월드로 변환. (파이어볼을 위에서 보는 경우)
     up.xyz = normalize(up.xyz);
-    float4 front = float4(eyeWorld, 1.0f) - input[0].pos;
+    float4 front = float4(g_EyeWorld, 1.0f) - input[0].WorldPosition;
     front.w = 0.0f; // 벡터
     
     // 빌보드가 시점을 바라보는 방향 기준으로 오른쪽.
@@ -44,41 +43,41 @@ void main(point GeometryShaderInput input[1], uint primID : SV_PrimitiveID,
     
     BillboardPixelShaderInput output;
     
-    output.center = input[0].pos; // 빌보드의 중심.
+    output.Center = input[0].WorldPosition; // 빌보드의 중심.
     
-    output.posWorld = input[0].pos - hw * right - hw * up;
-    output.pos = output.posWorld;
-    output.pos = mul(output.pos, view);
-    output.pos = mul(output.pos, proj);
-    output.texCoord = float2(1.0f, 1.0f);
-    output.primID = primID;
+    output.WorldPosition = input[0].WorldPosition - hw * right - hw * up;
+    output.ProjectedPosition = output.WorldPosition;
+    output.ProjectedPosition = mul(output.ProjectedPosition, g_View);
+    output.ProjectedPosition = mul(output.ProjectedPosition, g_Projection);
+    output.Texcoord = float2(1.0f, 1.0f);
+    output.PrimID = primID;
     
     outputStream.Append(output);
 
-    output.posWorld = input[0].pos - hw * right + hw * up;
-    output.pos = output.posWorld;
-    output.pos = mul(output.pos, view);
-    output.pos = mul(output.pos, proj);
-    output.texCoord = float2(1.0f, 0.0f);
-    output.primID = primID; // 동일.
+    output.WorldPosition = input[0].WorldPosition - hw * right + hw * up;
+    output.ProjectedPosition = output.WorldPosition;
+    output.ProjectedPosition = mul(output.ProjectedPosition, g_View);
+    output.ProjectedPosition = mul(output.ProjectedPosition, g_Projection);
+    output.Texcoord = float2(1.0f, 0.0f);
+    output.PrimID = primID; // 동일.
     
     outputStream.Append(output);
     
-    output.posWorld = input[0].pos + hw * right - hw * up;
-    output.pos = output.posWorld;
-    output.pos = mul(output.pos, view);
-    output.pos = mul(output.pos, proj);
-    output.texCoord = float2(0.0f, 1.0f);
-    output.primID = primID; // 동일.
+    output.WorldPosition = input[0].WorldPosition + hw * right - hw * up;
+    output.ProjectedPosition = output.WorldPosition;
+    output.ProjectedPosition = mul(output.ProjectedPosition, g_View);
+    output.ProjectedPosition = mul(output.ProjectedPosition, g_Projection);
+    output.Texcoord = float2(0.0f, 1.0f);
+    output.PrimID = primID; // 동일.
     
     outputStream.Append(output);
     
-    output.posWorld = input[0].pos + hw * right + hw * up;
-    output.pos = output.posWorld;
-    output.pos = mul(output.pos, view);
-    output.pos = mul(output.pos, proj);
-    output.texCoord = float2(0.0f, 0.0f);
-    output.primID = primID; // 동일.
+    output.WorldPosition = input[0].WorldPosition + hw * right + hw * up;
+    output.ProjectedPosition = output.WorldPosition;
+    output.ProjectedPosition = mul(output.ProjectedPosition, g_View);
+    output.ProjectedPosition = mul(output.ProjectedPosition, g_Projection);
+    output.Texcoord = float2(0.0f, 0.0f);
+    output.PrimID = primID; // 동일.
     
     outputStream.Append(output);
 

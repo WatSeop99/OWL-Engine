@@ -15,29 +15,27 @@ namespace Core
 
 		void Initialize(ID3D11Device* pDevice);
 
-		void Update(ID3D11DeviceContext* pContext, float deltaTime);
+		void Update(ID3D11DeviceContext* pContext, float deltaTime, Camera& mainCamera);
 
 		void RenderShadowMap(ID3D11DeviceContext* pContext, std::vector<Geometry::Model*>& pBasicList, Geometry::Model* pMirror);
 		void Render(ID3D11DeviceContext* pContext, std::vector<Geometry::Model*>& pBasicList, Geometry::Model* pMirror);
 
 		void Destroy();
 
-		inline Vector3 GetPosition() { return m_LightViewCamera.GetEyePos(); }
-		inline Vector3 GetDirection() { return m_LightViewCamera.GetViewDir(); }
 		inline ShadowMap& GetShadowMap() { return m_ShadowMap; }
 		inline ShadowMap* GetAddressOfShadowMap() { return &m_ShadowMap; }
 
-		inline void SetPosition(const Vector3& POS) { m_LightViewCamera.SetEyePos(POS); }
-		inline void SetDirection(const Vector3& DIR) { m_LightViewCamera.SetViewDir(DIR); }
+		inline void SetPosition(const Vector3& pos) { m_LightViewCamera.SetEyePos(pos); }
+		inline void SetDirection(const Vector3& dir) { m_LightViewCamera.SetViewDir(dir); }
 		inline void SetShadowSize(const UINT WIDTH, const UINT HEIGHT) { m_ShadowMap.SetShadowWidth(WIDTH); m_ShadowMap.SetShadowHeight(HEIGHT); }
 
 	public:
 		bool bRotated;
+		bool bVisible;
 		LightProperty Property;
 
 	private:
 		Camera m_LightViewCamera;
 		ShadowMap m_ShadowMap;
-		// ConstantsBuffer<GlobalConstants> m_ShadowConstantsBuffer;
 	};
 }

@@ -556,10 +556,10 @@ namespace Geometry
 
 		Vector3 points[] =
 		{ 
-			{0.0f, X, 0.0f},
-			{-0.5f * A, -D, 0.0f},
-			{+0.5f * A, -D, 0.0f},
-			{0.0f, 0.0f, H} 
+			{ 0.0f, X, 0.0f },
+			{ -0.5f * A, -D, 0.0f },
+			{ 0.5f * A, -D, 0.0f },
+			{ 0.0f, 0.0f, H } 
 		};
 		Vector3 center = Vector3(0.0f);
 

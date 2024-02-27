@@ -2,16 +2,16 @@
 
 struct NormalGeometryShaderInput
 {
-    float4 posModel : SV_POSITION;
-    float3 normalWorld : NORMAL;
+    float4 ModelPosition : SV_POSITION;
+    float3 ModelNormal : NORMAL;
 };
 
 NormalGeometryShaderInput main(VertexShaderInput input)
 {
     NormalGeometryShaderInput output;
 
-    output.posModel = float4(input.posModel, 1.0f);
-    output.normalWorld = input.normalModel;
+    output.ModelPosition = float4(input.ModelPosition, 1.0f);
+    output.ModelNormal = input.ModelNormal;
 
     return output;
 }

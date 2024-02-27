@@ -2,24 +2,24 @@
 
 #define PI 3.141592f
 
-Texture3D<float> densityTex : register(t6); // t5 부터 시작
-Texture3D<float> lightingTex : register(t7);
-Texture3D<float> temperatureTex : register(t8);
+Texture3D<float> g_DensityTex : register(t7); // t5 부터 시작
+Texture3D<float> g_LightingTex : register(t8);
+Texture3D<float> g_TemperatureTex : register(t9);
 
 cbuffer Consts : register(b3) // b3 주의
 {
-    float3 uvwOffset; // 미사용
-    float lightAbsorptionCoeff = 5.0f;
-    float3 lightDir = float3(0.0f, 1.0f, 0.0f);
-    float densityAbsorption = 10.0f;
-    float3 lightColor = float3(1.0f, 1.0f, 1.0f) * 40.0f;
-    float aniso = 0.3f;
+    float3 g_UVWOffset; // 미사용
+    float g_LightAbsorptionCoeff = 5.0f;
+    float3 g_LightDir = float3(0.0f, 1.0f, 0.0f);
+    float g_DensityAbsorption = 10.0f;
+    float3 g_LightColor = float3(1.0f, 1.0f, 1.0f) * 40.0f;
+    float g_Aniso = 0.3f;
 }
 
 // 박스 가장자리 좌표로부터 3D 텍스춰 좌표 계산
-float3 GetUVW(float3 posModel)
+float3 GetUVW(float3 modelPos)
 {
-    return (posModel.xyz + 1.0f) * 0.5f;
+    return (modelPos.xyz + 1.0f) * 0.5f;
 }
 
 // https://wallisc.github.io/rendering/2020/05/02/Volumetric-Rendering-Part-2.html
@@ -77,8 +77,8 @@ float3 ToRGB(float kelvin)
 float4 main(PixelShaderInput input) : SV_TARGET
 {
     // 볼륨 박스 좌표계에서 카메라 위치 계산.
-    float3 eyeModel = mul(float4(eyeWorld, 1), worldInv).xyz; // 월드->모델 역변환
-    float3 dirModel = normalize(input.posModel - eyeModel);
+    float3 eyeModel = mul(float4(g_EyeWorld, 1), g_WorldInverse).xyz; // 월드->모델 역변환
+    float3 dirModel = normalize(input.ModelPosition - eyeModel);
     
     int numSteps = 128;
     float stepSize = 2.0f / float(numSteps); // 박스 길이가 2.0
@@ -88,7 +88,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
     // float3 lightColor = float3(1, 1, 1) * 40.0;
     
     float4 color = float4(0.0f, 0.0f, 0.0f, 1.0f); // visibility 1.0으로 시작
-    float3 posModel = input.posModel + dirModel * 1e-6; // 살짝 들어간 상태에서 시작
+    float3 posModel = input.ModelPosition + dirModel * 1e-6; // 살짝 들어간 상태에서 시작
 
     // 주의: color.a에 "투명도"로 사용하다가 마지막에 "불투명도"로 바꿔줌
     
@@ -113,7 +113,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
             }
         }
         
-        float density = densityTex.SampleLevel(linearClampSampler, uvw, 0).r;
+        float density = g_DensityTex.SampleLevel(g_LinearClampSampler, uvw, 0).r;
         // float lighting = lightingTex.SampleLevel(linearClampSampler, uvw, 0).r;
         float lighting = 1.0f; // 라이트맵이 없는 예제
         
@@ -131,11 +131,11 @@ float4 main(PixelShaderInput input) : SV_TARGET
         if (density.r > 1e-3)
         {
             float prevAlpha = color.a; // 알파값 임시 저장.
-            color.a *= BeerLambert(densityAbsorption * density.r, stepSize); // 빛을 흡수하는 비율을 곱함.
+            color.a *= BeerLambert(g_DensityAbsorption * density.r, stepSize); // 빛을 흡수하는 비율을 곱함.
             float absorptionFromMarch = prevAlpha - color.a; // 흡수된 빛의 양의 차이 계산.
             
-            color.rgb += absorptionFromMarch * volumeAlbedo * lightColor * density * lighting * 
-                         HenyeyGreensteinPhase(lightDir, dirModel, aniso); // 차이에 비례하도록 조명 계산.
+            color.rgb += absorptionFromMarch * volumeAlbedo * g_LightColor * density * lighting * 
+                         HenyeyGreensteinPhase(g_LightDir, dirModel, g_Aniso); // 차이에 비례하도록 조명 계산.
         }
         
         posModel += dirModel * stepSize;

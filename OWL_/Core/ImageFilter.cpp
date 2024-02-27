@@ -13,7 +13,7 @@ namespace Core
 	{
 		HRESULT hr = S_OK;
 
-		destroy();
+		Destroy();
 
 		m_pPixelShader = pPixelShader;
 
@@ -51,6 +51,15 @@ namespace Core
 		pContext->PSSetConstantBuffers(0, 1, &m_pConstBuffer);
 	}
 
+	void ImageFilter::Destroy()
+	{
+		m_pSRVs.clear();
+		m_pRTVs.clear();
+
+		m_pPixelShader = nullptr;
+		SAFE_RELEASE(m_pConstBuffer);
+	}
+
 	void ImageFilter::SetShaderResources(const std::vector<ID3D11ShaderResourceView*>& RESOURCES)
 	{
 		m_pSRVs.clear();
@@ -69,14 +78,5 @@ namespace Core
 		{
 			m_pRTVs[i] = TARGETS[i];
 		}
-	}
-
-	void ImageFilter::destroy()
-	{
-		m_pSRVs.clear();
-		m_pRTVs.clear();
-
-		m_pPixelShader = nullptr;
-		SAFE_RELEASE(m_pConstBuffer);
 	}
 }

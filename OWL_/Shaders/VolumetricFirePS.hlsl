@@ -3,21 +3,21 @@
 
 cbuffer BillboardContsts : register(b3)
 {
-    float widthWorld;
-    float3 dirWorld;
+    float g_WidthWorld;
+    float3 g_DirWorld;
 };
 
 struct BillboardPixelShaderInput
 {
-    float4 posProj : SV_POSITION;
-    float4 posWorld : POSITION0;
-    float4 center : POSITION1;
-    float2 texcoord : TEXCOORD;
-    uint primID : SV_PrimitiveID;
+    float4 ProjectedPosition : SV_POSITION;
+    float4 WorldPosition : POSITION0;
+    float4 Center : POSITION1;
+    float2 Texcoord : TEXCOORD;
+    uint PrimID : SV_PrimitiveID;
 };
 struct PixelShaderOutput
 {
-    float4 pixelColor : SV_Target0;
+    float4 PixelColor : SV_Target0;
 };
 
 // BRADY'S VOLUMETRIC FIRE
@@ -48,7 +48,7 @@ float FNoise(float3 p, float time)
 {
     float f = 0.0f;
     //p = p - float3(0.0, 0.0, 1.0) * time;
-    p = p + dirWorld * time; // 진행방향 (반대로) 꼬리 흐름 만들기
+    p = p + g_DirWorld * time; // 진행방향 (반대로) 꼬리 흐름 만들기
     p = p * 3.0f;
     f += 0.50000 * Noise(p);
     p = 2.0f * p;
@@ -87,7 +87,7 @@ float ModelFunc(in float3 p)
     //p = mul(float4(p, 0.0), quaternion_to_matrix(rotQuat));
 
     float sphere = length(p) - 0.8f; // 중심이 원점인 구
-    float res = sphere + FNoise(p * 1.5f, globalTime * 5.0f) * 0.4f;
+    float res = sphere + FNoise(p * 1.5f, g_GlobalTime * 5.0f) * 0.4f;
     //float res = sphere;
     
     //float res = sphere + fnoise(p * 1.5, 0 * 3.) * .4;
@@ -226,18 +226,18 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
 PixelShaderOutput main(BillboardPixelShaderInput input)
 {
-    float2 p = input.texcoord - 0.5f;
+    float2 p = input.Texcoord - 0.5f;
     p.xy = p.xy * 2.0f;
 
     //float3 ro = normalize(mul(float4(0, 0, 1, 0), invView).xyz) * 1.35;
     //float3 rd = normalize(mul(float4(p.x, p.y, 0, 0), invView).xyz - ro);
-    float3 posLocal = (input.posWorld.xyz - input.center.xyz) * 10.0; // 쉐이더토이 원본 효과와 스케일 맞춰주기
-    float3 eyeLocal = (eyeWorld - input.center.xyz) * 10.0;
+    float3 posLocal = (input.WorldPosition.xyz - input.Center.xyz) * 10.0; // 쉐이더토이 원본 효과와 스케일 맞춰주기
+    float3 eyeLocal = (g_EyeWorld - input.Center.xyz) * 10.0;
     float3 rd = normalize(posLocal - eyeLocal);
     float3 ro = posLocal - rd * 1.35;
     
-    float4 rotQuat1 = FromToRotation(float3(0.0f, 0.0f, 1.0f), dirWorld);
-    float4 rotQuat2 = FromToRotation(dirWorld, float3(0.0f, 0.0f, 1.0f));
+    float4 rotQuat1 = FromToRotation(float3(0.0f, 0.0f, 1.0f), g_DirWorld);
+    float4 rotQuat2 = FromToRotation(g_DirWorld, float3(0.0f, 0.0f, 1.0f));
     rd = mul(float4(rd, 0.0f), QuaternionToMatrix(rotQuat1)).xyz;
     ro = mul(float4(ro, 0.0f), QuaternionToMatrix(rotQuat1)).xyz;
     rd.z *= 0.5f;
@@ -256,7 +256,7 @@ PixelShaderOutput main(BillboardPixelShaderInput input)
     float3 col = (dist > 0.0f ? Volume(ro + rd * dist, rd, ld) : float3(0.0f, 0.0f, 0.0f));
     
     PixelShaderOutput output;
-    output.pixelColor = float4(col, dot(float3(1.0f, 1.0f, 1.0f), col) * 1.3f);
+    output.PixelColor = float4(col, dot(float3(1.0f, 1.0f, 1.0f), col) * 1.3f);
     //output.pixelColor.a = 1.0; // 테스트용
 
     return output;
