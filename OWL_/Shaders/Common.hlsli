@@ -46,8 +46,8 @@ struct Light
     float HaloStrength;
 
     matrix ViewProjection[6];
-    matrix Projections[3];
-    matrix InverseProjections[3];
+    matrix Projections[4];
+    matrix InverseProjections[4];
 };
 
 // °ø¿ë Constants

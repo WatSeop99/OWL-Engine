@@ -66,8 +66,8 @@ namespace Core
 		float HaloStrength = 0.0f;
 
 		Matrix ViewProjections[6]; // spot은 1개만. point는 전부 사용. 추후 directional은 3개 사용할 수도..
-		Matrix Projections[3];
-		Matrix InverseProjections[3];
+		Matrix Projections[4];
+		Matrix InverseProjections[4];
 	};
 	ALIGN(16) struct LightConstants
 	{

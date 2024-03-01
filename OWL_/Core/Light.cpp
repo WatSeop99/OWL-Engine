@@ -20,15 +20,28 @@ namespace Core
 	void Light::Initialize(ID3D11Device* pDevice)
 	{
 		Destroy();
-		if (Property.LightType & LIGHT_POINT)
+
+		switch (Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
+		{
+		case LIGHT_DIRECTIONAL:
+		{
+			m_LightViewCamera.SetFarZ(500.0f);
+			m_ShadowMap.SetShadowWidth(2560);
+			m_ShadowMap.SetShadowHeight(2560);
+		}
+			break;
+
+		case LIGHT_POINT:
 		{
 			m_LightViewCamera.SetProjectionFovAngleY(90.0f);
 		}
-		/*else if (Property.LightType & LIGHT_DIRECTIONAL)
-		{
-			m_LightViewCamera.SetProjectionFovAngleY(45.0f);
-			m_LightViewCamera.SetFarZ(100.0f);
-		}*/
+			break;
+
+		case LIGHT_SPOT:
+		default:
+			break;
+		}
+
 		m_ShadowMap.Initialize(pDevice, Property.LightType);
 	}
 
@@ -66,10 +79,10 @@ namespace Core
 			{
 			case LIGHT_DIRECTIONAL:
 			{
-				ConstantsBuffer<GlobalConstants>* const pShadowCubeConstants = m_ShadowMap.GetAddressOfShadowConstantBuffers();
-				for (int i = 0; i < 3; ++i)
+				ConstantsBuffer<GlobalConstants>* const pShadowConstants = m_ShadowMap.GetAddressOfShadowConstantBuffers();
+				for (int i = 0; i < 4; ++i)
 				{
-					ConstantsBuffer<GlobalConstants>* const pConstant = &pShadowCubeConstants[i];
+					ConstantsBuffer<GlobalConstants>* const pConstant = &pShadowConstants[i];
 					Property.ViewProjections[i] = pConstant->CPU.ViewProjection;
 					Property.Projections[i] = pConstant->CPU.Projection;
 					Property.InverseProjections[i] = pConstant->CPU.InverseProjection;

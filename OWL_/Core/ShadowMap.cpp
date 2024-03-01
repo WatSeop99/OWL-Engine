@@ -88,7 +88,7 @@ namespace Core
 			dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
 			dsvDesc.Flags = 0;
 			dsvDesc.Texture2DArray.FirstArraySlice = 0;
-			dsvDesc.Texture2DArray.ArraySize = 3;
+			dsvDesc.Texture2DArray.ArraySize = 4;
 			dsvDesc.Texture2DArray.MipSlice = 0;
 			hr = pDevice->CreateDepthStencilView(m_DirectionalLightShadowBuffer.pTexture, &dsvDesc, &(m_DirectionalLightShadowBuffer.pDSV));
 			BREAK_IF_FAILED(hr);
@@ -98,7 +98,7 @@ namespace Core
 			srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
 			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
 			srvDesc.Texture2DArray.FirstArraySlice = 0;
-			srvDesc.Texture2DArray.ArraySize = 3;
+			srvDesc.Texture2DArray.ArraySize = 4;
 			srvDesc.Texture2DArray.MipLevels = 1;
 			srvDesc.Texture2DArray.MostDetailedMip = 0;
 			hr = pDevice->CreateShaderResourceView(m_DirectionalLightShadowBuffer.pTexture, &srvDesc, &(m_DirectionalLightShadowBuffer.pSRV));
@@ -130,7 +130,7 @@ namespace Core
 			Matrix lightSectionProjection;
 			Vector3 lightSectionPosition;
 
-			for (int i = 0; i < 3; ++i)
+			for (int i = 0; i < 4; ++i)
 			{
 				calculateCascadeLightViewProjection(&lightSectionPosition, &lightSectionView, &lightSectionProjection, camView, camProjection, PROPERTY.Direction, i);
 
@@ -213,19 +213,43 @@ namespace Core
 
 	void ShadowMap::Render(ID3D11DeviceContext* pContext, std::vector<Geometry::Model*>& pBasicList, Geometry::Model* pMirror)
 	{
-		if (m_LightType & LIGHT_POINT)
-		{
-			D3D11_VIEWPORT pViewports[6] =
-			{
-				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
-				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
-				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
-				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
-				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
-				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
-			};
-			pContext->RSSetViewports(6, pViewports);
+		setShadowViewport(pContext);
 
+		switch (m_LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
+		{
+		case LIGHT_DIRECTIONAL:
+		{
+			pContext->ClearDepthStencilView(m_DirectionalLightShadowBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
+			pContext->OMSetRenderTargets(0, nullptr, m_DirectionalLightShadowBuffer.pDSV);
+			pContext->GSSetConstantBuffers(0, 1, &(m_ShadowConstantsBufferForGS.pGPU));
+
+			pContext->VSSetShader(Graphics::g_pDepthOnlyCascadeVS, nullptr, 0);
+			pContext->PSSetShader(Graphics::g_pDepthOnlyCascadePS, nullptr, 0);
+			pContext->HSSetShader(nullptr, nullptr, 0);
+			pContext->DSSetShader(nullptr, nullptr, 0);
+			pContext->GSSetShader(Graphics::g_pDepthOnlyCascadeGS, nullptr, 0);
+			pContext->CSSetShader(nullptr, nullptr, 0);
+			pContext->IASetInputLayout(Graphics::g_pSkyboxIL);
+			pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+			for (size_t i = 0, size = pBasicList.size(); i < size; ++i)
+			{
+				Geometry::Model* const pCurModel = pBasicList[i];
+				if (pCurModel->bCastShadow && pCurModel->bIsVisible)
+				{
+					pCurModel->Render(pContext);
+				}
+			}
+
+			if (pMirror && pMirror->bCastShadow)
+			{
+				pMirror->Render(pContext);
+			}
+		}
+			break;
+
+		case LIGHT_POINT:
+		{
 			pContext->ClearDepthStencilView(m_PointLightShadowBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 			pContext->OMSetRenderTargets(0, nullptr, m_PointLightShadowBuffer.pDSV);
 			pContext->GSSetConstantBuffers(0, 1, &(m_ShadowConstantsBufferForGS.pGPU));
@@ -253,10 +277,10 @@ namespace Core
 				pMirror->Render(pContext);
 			}
 		}
-		else if (m_LightType & LIGHT_SPOT)
-		{
-			setShadowViewport(pContext);
+			break;
 
+		case LIGHT_SPOT:
+		{
 			pContext->ClearDepthStencilView(m_SpotLightShadowBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 			pContext->OMSetRenderTargets(0, nullptr, m_SpotLightShadowBuffer.pDSV);
 			pContext->VSSetConstantBuffers(0, 1, &(m_pShadowConstantsBuffers[0].pGPU));
@@ -278,42 +302,10 @@ namespace Core
 				pMirror->Render(pContext);
 			}
 		}
-		else
-		{
-			D3D11_VIEWPORT pViewports[3] =
-			{
-				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
-				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
-				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
-			};
-			pContext->RSSetViewports(3, pViewports);
+			break;
 
-			pContext->ClearDepthStencilView(m_DirectionalLightShadowBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
-			pContext->OMSetRenderTargets(0, nullptr, m_DirectionalLightShadowBuffer.pDSV);
-			pContext->GSSetConstantBuffers(0, 1, &(m_ShadowConstantsBufferForGS.pGPU));
-
-			pContext->VSSetShader(Graphics::g_pDepthOnlyCascadeVS, nullptr, 0);
-			pContext->PSSetShader(Graphics::g_pDepthOnlyCascadePS, nullptr, 0);
-			pContext->HSSetShader(nullptr, nullptr, 0);
-			pContext->DSSetShader(nullptr, nullptr, 0);
-			pContext->GSSetShader(Graphics::g_pDepthOnlyCascadeGS, nullptr, 0);
-			pContext->CSSetShader(nullptr, nullptr, 0);
-			pContext->IASetInputLayout(Graphics::g_pSkyboxIL);
-			pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-			for (size_t i = 0, size = pBasicList.size(); i < size; ++i)
-			{
-				Geometry::Model* const pCurModel = pBasicList[i];
-				if (pCurModel->bCastShadow && pCurModel->bIsVisible)
-				{
-					pCurModel->Render(pContext);
-				}
-			}
-
-			if (pMirror && pMirror->bCastShadow)
-			{
-				pMirror->Render(pContext);
-			}
+		default:
+			break;
 		}
 	}
 
@@ -346,20 +338,63 @@ namespace Core
 
 	void ShadowMap::setShadowViewport(ID3D11DeviceContext* pContext)
 	{
-		D3D11_VIEWPORT shadowViewport = { 0, };
-		shadowViewport.TopLeftX = 0;
-		shadowViewport.TopLeftY = 0;
-		shadowViewport.Width = (float)m_ShadowWidth;
-		shadowViewport.Height = (float)m_ShadowHeight;
-		shadowViewport.MinDepth = 0.0f;
-		shadowViewport.MaxDepth = 1.0f;
+		switch (m_LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
+		{
+		case LIGHT_DIRECTIONAL:
+		{
+			D3D11_VIEWPORT pViewports[4] =
+			{
+				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
+				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
+				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
+				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
+			};
+			pContext->RSSetViewports(4, pViewports);
+		}
+			break;
 
-		pContext->RSSetViewports(1, &shadowViewport);
+		case LIGHT_POINT:
+		{
+			D3D11_VIEWPORT pViewports[6] =
+			{
+				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
+				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
+				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
+				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
+				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
+				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
+			};
+			pContext->RSSetViewports(6, pViewports);
+		}
+			break;
+
+		case LIGHT_SPOT:
+		{
+			D3D11_VIEWPORT shadowViewport = { 0, };
+			shadowViewport.TopLeftX = 0;
+			shadowViewport.TopLeftY = 0;
+			shadowViewport.Width = (float)m_ShadowWidth;
+			shadowViewport.Height = (float)m_ShadowHeight;
+			shadowViewport.MinDepth = 0.0f;
+			shadowViewport.MaxDepth = 1.0f;
+
+			pContext->RSSetViewports(1, &shadowViewport);
+		}
+			break;
+
+		default:
+			break;
+		}
 	}
 
 	void ShadowMap::calculateCascadeLightViewProjection(Vector3* pPosition, Matrix* pView, Matrix* pProjection, const Matrix& VIEW, const Matrix& PROJECTION, const Vector3& DIR, int cascadeIndex)
 	{
-		static const float s_CASCADE_Zs[4] = { 0.0f, 0.2f, 0.4f, 1.0f }; // cascadeIndex를 통해 선택.
+		_ASSERT(pPosition != nullptr);
+		_ASSERT(pView != nullptr);
+		_ASSERT(pProjection != nullptr);
+
+		static const float s_CASCADE_Zs[5] = { 0.0f, 0.02f, 0.18f, 0.48f, 1.0f }; // cascadeIndex를 통해 선택.
+		// static const float s_CASCADE_Zs[5] = { 0.0f, 0.2f, 0.4f, 0.6f, 1.0f }; // cascadeIndex를 통해 선택.
 		Matrix inverseViewProjection = (VIEW * PROJECTION).Invert();
 		Vector3 frustumCorners[8] =
 		{
@@ -385,7 +420,6 @@ namespace Core
 			frustumCorners[i] = frustumCorners[i] + nearCornerRay;
 
 			frustumCenter += frustumCorners[i] + frustumCorners[i + 4];
-
 		}
 		frustumCenter /= 8.0f;
 
@@ -402,6 +436,6 @@ namespace Core
 
 		*pPosition = frustumCenter - DIR * fabs(frustumMin.z);
 		*pView = DirectX::XMMatrixLookAtLH(*pPosition, frustumCenter, Vector3(0.0f, 1.0f, 0.0f));
-		*pProjection = DirectX::XMMatrixOrthographicOffCenterLH(frustumMin.x, frustumMax.x, frustumMin.y, frustumMax.y, 0.1f, cascadeExtents.z);
+		*pProjection = DirectX::XMMatrixOrthographicOffCenterLH(frustumMin.x, frustumMax.x, frustumMin.y, frustumMax.y, 0.001f, cascadeExtents.z);
 	}
 }

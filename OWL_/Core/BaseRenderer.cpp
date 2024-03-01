@@ -27,6 +27,7 @@ namespace Core
 	{
 		g_pAppBase = this;
 		m_Camera.SetAspectRatio(GetAspectRatio());
+		m_Camera.SetFarZ(500.0f);
 
 		m_Scene.SetScreenWidth(m_ScreenWidth);
 		m_Scene.SetScreenHeight(m_ScreenHeight);

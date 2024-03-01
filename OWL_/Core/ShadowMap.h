@@ -49,7 +49,7 @@ namespace Core
 		Graphics::Texture2D m_SpotLightShadowBuffer;
 		Graphics::Texture2D m_PointLightShadowBuffer;
 		Graphics::Texture2D m_DirectionalLightShadowBuffer;
-		ConstantsBuffer<GlobalConstants> m_pShadowConstantsBuffers[6]; // spot, point, direc => 0, 6, 3개씩 사용.
+		ConstantsBuffer<GlobalConstants> m_pShadowConstantsBuffers[6]; // spot, point, direc => 0, 6, 4개씩 사용.
 		ConstantsBuffer<ShadowConstants> m_ShadowConstantsBufferForGS; // 2개 이상의 view 행렬을 사용하는 광원을 위한  geometry용 상수버퍼.
 	};
 }

@@ -9,10 +9,10 @@ struct PixelShaderInput
     uint RTIndex : SV_RenderTargetArrayIndex;
 };
 
-[maxvertexcount(9)]
+[maxvertexcount(12)]
 void main(triangle float4 InPos[3] : SV_POSITION, inout TriangleStream<PixelShaderInput> OutStream)
 {
-    for (int cascadeIndex = 0; cascadeIndex < 3; ++cascadeIndex)
+    for (int cascadeIndex = 0; cascadeIndex < 4; ++cascadeIndex)
     {
         PixelShaderInput output;
         output.RTIndex = cascadeIndex;

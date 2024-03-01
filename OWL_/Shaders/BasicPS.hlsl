@@ -326,101 +326,91 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
     float shadowFactor = 1.0f;
 
     if (light.Type & LIGHT_SHADOW)
-    {   
-        // Project posWorld to light screen.  
-        float4 lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[0]);
-        lightScreen.xyz /= lightScreen.w;
-        
-        // 카메라(광원)에서 볼 때의 텍스춰 좌표 계산. ([-1, 1], [-1, 1]) ==> ([0, 1], [0, 1])
-        float2 lightTexcoord = float2(lightScreen.x, -lightScreen.y);
-        lightTexcoord += 1.0f;
-        lightTexcoord *= 0.5f;
-        
-        float radiusScale = 0.5f; // 광원의 반지름을 키웠을 때 깨지는 것 방지.
-        shadowFactor = PCSS(lightTexcoord, lightScreen.z - 0.001f, shadowMapIndex, light.InverseProjections[0], light.Radius * radiusScale);
-    }
-
-    float3 radiance = light.Radiance * spotFator * att * shadowFactor;
-    return radiance;
-}
-
-float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, float3 normalWorld)
-{
-    // Directional light.
-    float3 lightVec = (light.Type & LIGHT_DIRECTIONAL ? -light.Direction : representativePoint - posWorld);
-    float lightDist = length(lightVec);
-    lightVec /= lightDist;
-
-    // Spot light.
-    float spotFator = (light.Type & LIGHT_SPOT ? pow(max(-dot(lightVec, light.Direction), 0.0f), light.SpotPower) : 1.0f);
-        
-    // Distance attenuation.
-    float att = saturate((light.FallOffEnd - lightDist) / (light.FallOffEnd - light.FallOffStart));
-
-    // Shadow map.
-    float shadowFactor = 1.0f;
-
-    if (light.Type & LIGHT_SHADOW)
     {
-        if (light.Type & LIGHT_POINT)
+        switch (light.Type & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
         {
-            const float3 VIEW_DIRs[6] =
+            case LIGHT_DIRECTIONAL:
             {
-                float3(1.0f, 0.0f, 0.0f), // right
-			    float3(-1.0f, 0.0f, 0.0f), // left
-			    float3(0.0f, 1.0f, 0.0f), // up
-			    float3(0.0f, -1.0f, 0.0f), // down
-			    float3(0.0f, 0.0f, 1.0f), // front
-			    float3(0.0f, 0.0f, -1.0f) // back 
-            };
-            int index = 0;
-            float maxDotProduct = -2.0f;
-            float3 lightToPos = normalize(posWorld - light.Position);
-            for (int i = 0; i < 6; ++i)
-            {
-                float curDot = dot(lightToPos, VIEW_DIRs[i]);
-                if (maxDotProduct < curDot)
+                int index = -1;
+                float4 lightScreen = float4(0.0f, 0.0f, 0.0f, 0.0f);
+                float2 lightTexcoord = float2(0.0f, 0.0f);
+                for (int i = 0; i < 4; ++i)
                 {
-                    maxDotProduct = curDot;
-                    index = i;
+                    lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[i]);
+                    lightScreen.xyz /= lightScreen.w;
+                
+                    lightTexcoord = float2(lightScreen.x, -lightScreen.y);
+                    lightTexcoord += 1.0f;
+                    lightTexcoord *= 0.5f;
+                
+                    float depth = g_CascadeShadowMap.SampleLevel(g_ShadowPointSampler, float3(lightTexcoord, i), 0.0f);
+                    if (depth <= lightScreen.z - 0.005f || depth >= lightScreen.z + 0.005f)
+                    {
+                        index = i;
+                        break;
+                    }
+                }
+                
+                if (index != -1)
+                {
+                    float radiusScale = 0.5f;
+                    shadowFactor = PCSS(lightTexcoord, lightScreen.z - 0.001f, index, light.InverseProjections[index], light.Radius * radiusScale, true);
                 }
             }
-        
-            float4 lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[index]);
-            lightScreen.xyz /= lightScreen.w;
-        
-            float3 lightTexcoord = lightToPos;
-        
-            float radiusScale = 0.5f;
-            shadowFactor = PCSS(lightTexcoord, lightScreen.z - 0.001f, light.InverseProjections[0], light.Radius * radiusScale);
-        }
-        else if (light.Type & LIGHT_DIRECTIONAL)
-        {
-            int index = -1;
-            float4 lightScreen = float4(0.0f, 0.0f, 0.0f, 0.0f);
-            float2 lightTexcoord = float2(0.0f, 0.0f);
-            for (int i = 0; i < 3; ++i)
+                break;
+            
+            case LIGHT_POINT:
             {
-                lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[i]);
+                const float3 VIEW_DIRs[6] =
+                {
+                    float3(1.0f, 0.0f, 0.0f), // right
+			        float3(-1.0f, 0.0f, 0.0f), // left
+			        float3(0.0f, 1.0f, 0.0f), // up
+			        float3(0.0f, -1.0f, 0.0f), // down
+			        float3(0.0f, 0.0f, 1.0f), // front
+			        float3(0.0f, 0.0f, -1.0f) // back 
+                };
+                int index = 0;
+                float maxDotProduct = -2.0f;
+                float3 lightToPos = normalize(posWorld - light.Position);
+                for (int i = 0; i < 6; ++i)
+                {
+                    float curDot = dot(lightToPos, VIEW_DIRs[i]);
+                    if (maxDotProduct < curDot)
+                    {
+                        maxDotProduct = curDot;
+                        index = i;
+                    }
+                }
+        
+                float4 lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[index]);
                 lightScreen.xyz /= lightScreen.w;
-                
-                lightTexcoord = float2(lightScreen.x, -lightScreen.y);
+        
+                float3 lightTexcoord = lightToPos;
+        
+                float radiusScale = 0.5f;
+                shadowFactor = PCSS(lightTexcoord, lightScreen.z - 0.001f, light.InverseProjections[0], light.Radius * radiusScale);
+            }
+                break;
+            
+            case LIGHT_SPOT:
+            {
+                // Project posWorld to light screen.  
+                float4 lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[0]);
+                lightScreen.xyz /= lightScreen.w;
+        
+                // 카메라(광원)에서 볼 때의 텍스춰 좌표 계산. ([-1, 1], [-1, 1]) ==> ([0, 1], [0, 1])
+                float2 lightTexcoord = float2(lightScreen.x, -lightScreen.y);
                 lightTexcoord += 1.0f;
                 lightTexcoord *= 0.5f;
-                
-                float depth = g_CascadeShadowMap.SampleLevel(g_ShadowPointSampler, float3(lightTexcoord, i), 0.0f);
-                if (depth <= lightScreen.z)
-                {
-                    index = i;
-                    break;
-                }
+        
+                float radiusScale = 0.5f; // 광원의 반지름을 키웠을 때 깨지는 것 방지.
+                shadowFactor = PCSS(lightTexcoord, lightScreen.z - 0.001f, shadowMapIndex, light.InverseProjections[0], light.Radius * radiusScale);
             }
+                break;
             
-            if (index != -1)
-            {
-                float radiusScale = 0.5f;
-                shadowFactor = PCSS(lightTexcoord, lightScreen.z - 0.001f, index, light.InverseProjections[index], light.Radius * radiusScale, true);
-            }
+            default:
+                break;
         }
     }
 
@@ -480,18 +470,7 @@ PixelShaderOutput main(PixelShaderInput input)
             float3 specularBRDF = (F * D * G) / max(1e-5, 4.0f * NdotI * NdotO);
 
             float3 radiance = float3(0.0f, 0.0f, 0.0f);
-            if (lights[i].Type & LIGHT_POINT)
-            {
-                radiance = LightRadiance(lights[i], representativePoint, input.WorldPosition, normalWorld);
-            }
-            else if (lights[i].Type & LIGHT_SPOT)
-            {
-                radiance = LightRadiance(lights[i], representativePoint, input.WorldPosition, normalWorld, i);
-            }
-            else
-            {
-                radiance = LightRadiance(lights[i], representativePoint, input.WorldPosition, normalWorld);
-            }
+            radiance = LightRadiance(lights[i], representativePoint, input.WorldPosition, normalWorld, i);
             
             // 오류 임시 수정 (radiance가 (0,0,0)일 경우, directLighting += ... 인데도 0 벡터가 되어버림.
             if (abs(dot(radiance, float3(1.0f, 1.0f, 1.0f))) > 1e-5)

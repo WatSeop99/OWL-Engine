@@ -40,6 +40,7 @@ namespace Graphics
 	HRESULT CreateInstanceBuffer(ID3D11Device* pDevice, const std::vector<INSTANCE>& INSTANCES, ID3D11Buffer** ppInstanceBuffer)
 	{
 		_ASSERT(pDevice != nullptr);
+		_ASSERT(ppInstanceBuffer != nullptr);
 		_ASSERT((*ppInstanceBuffer) == nullptr);
 
 		HRESULT hr = S_OK;
@@ -63,6 +64,7 @@ namespace Graphics
 	{
 		_ASSERT((sizeof(CONSTANT) % 16) == 0); // Constant Buffer size must be 16-byte aligned.
 		_ASSERT(pDevice != nullptr);
+		_ASSERT(ppConstantBuffer != nullptr);
 		_ASSERT((*ppConstantBuffer) == nullptr);
 
 		HRESULT hr = S_OK;

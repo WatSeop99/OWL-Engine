@@ -26,7 +26,7 @@ namespace Core
 			pLights[0].Property.SpotPower = 3.0f;
 			pLights[0].Property.LightType = LIGHT_POINT | LIGHT_SHADOW;
 			pLights[0].Property.Radius = 0.04f;
-			pLights[0].Property.LightType = LIGHT_OFF;
+			// pLights[0].Property.LightType = LIGHT_OFF;
 
 			// 조명 1.
 			pLights[1].Property.Radiance = Vector3(3.0f);
@@ -37,11 +37,11 @@ namespace Core
 			pLights[1].Property.Direction.Normalize();
 			pLights[1].Property.LightType = LIGHT_SPOT | LIGHT_SHADOW;
 			pLights[1].Property.Radius = 0.02f;
-			pLights[1].Property.LightType = LIGHT_OFF;
+			// pLights[1].Property.LightType = LIGHT_OFF;
 
 			// 조명 2.
-			pLights[2].Property.Radiance = Vector3(3.0f);
-			pLights[2].Property.Position = Vector3(20.0f, 20.0f, 10.0f);
+			pLights[2].Property.Radiance = Vector3(4.0f);
+			pLights[2].Property.Position = Vector3(5.0f, 5.0f, 5.0f);
 			pLights[2].Property.Direction = Vector3(-1.0f, -1.0f, -1.0f);
 			pLights[2].Property.Direction.Normalize();
 			pLights[2].Property.LightType = LIGHT_DIRECTIONAL | LIGHT_SHADOW;
@@ -74,8 +74,8 @@ namespace Core
 
 				pRenderObjects.push_back(m_ppLightSpheres[i]); // 리스트에 등록.
 			}
-			m_ppLightSpheres[0]->bIsVisible = false;
-			m_ppLightSpheres[1]->bIsVisible = false;
+			// m_ppLightSpheres[0]->bIsVisible = false;
+			// m_ppLightSpheres[1]->bIsVisible = false;
 			// m_ppLightSpheres[2]->bIsVisible = false;
 		}
 
@@ -115,7 +115,7 @@ namespace Core
 		// 광원마다 shadow map 설정.
 		for (size_t i = 0, size = pLights.size(); i < size; ++i)
 		{
-			pLights[i].SetShadowSize(1280, 1280); // 사이즈 변경 가능.
+			// pLights[i].SetShadowSize(1280, 1280); // 사이즈 변경 가능.
 			pLights[i].Initialize(pDevice);
 		}
 
