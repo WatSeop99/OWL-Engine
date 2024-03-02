@@ -10,7 +10,7 @@ namespace Core
 		LoadScene(pDevice);
 
 		createBuffers(pDevice);
-		m_GBuffer.bIsEnabled = false;
+		m_GBuffer.bIsEnabled = true;
 		m_GBuffer.Initialize(pDevice);
 
 		pLights.resize(MAX_LIGHTS);
@@ -172,7 +172,6 @@ namespace Core
 		UINT numCommonSRVs = _countof(ppCommonSRVs);
 		pContext->PSSetShaderResources(10, numCommonSRVs, ppCommonSRVs);
 
-
 		renderDepthOnly(pContext);
 		renderShadowMaps(pContext);
 
@@ -181,21 +180,9 @@ namespace Core
 			// 다시 렌더링 해상도로 되돌리기.
 			setScreenViewport(pContext);
 
-			m_GBuffer.PrepareRender(pContext);
-
-			// 그림자맵들도 공용 텍스춰들 이후에 추가.
-			// 주의: 마지막 shadowDSV를 RenderTarget에서 해제한 후 설정.
-			ID3D11ShaderResourceView* ppShadowSRVs[MAX_LIGHTS] = { nullptr, };
-			for (size_t i = 0, size = pLights.size(); i < size; ++i)
-			{
-				ShadowMap& curShadowMap = pLights[i].GetShadowMap();
-				Graphics::Texture2D& curShadowBuffer = curShadowMap.GetSpotLightShadowBuffer();
-				ppShadowSRVs[i] = curShadowBuffer.pSRV;
-			}
-			pContext->PSSetShaderResources(15, MAX_LIGHTS, ppShadowSRVs);
 			setGlobalConstants(pContext, &(m_GlobalConstants.pGPU), 0);
-			setGlobalConstants(pContext, &(m_LightConstants.pGPU), 1);
 
+			m_GBuffer.PrepareRender(pContext, m_pDefaultDSV);
 			setPipelineState(pContext, Graphics::g_GBufferPSO);
 			for (size_t i = 0, size = pRenderObjects.size(); i < size; ++i)
 			{
@@ -206,25 +193,59 @@ namespace Core
 
 			m_GBuffer.AfterRender(pContext);
 
+			// 그림자맵들도 공용 텍스춰들 이후에 추가.
+			// 주의: 마지막 shadowDSV를 RenderTarget에서 해제한 후 설정.
+			ID3D11ShaderResourceView* ppShadowSRVs[MAX_LIGHTS] = { nullptr, };
+			UINT pointLightIndex = -1;
+			UINT directionalLightIndex = -1;
+			for (size_t i = 0, size = pLights.size(); i < size; ++i)
+			{
+				ShadowMap& curShadowMap = pLights[i].GetShadowMap();
+				switch (pLights[i].Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
+				{
+				case LIGHT_DIRECTIONAL:
+					directionalLightIndex = (UINT)i;
+					break;
+
+				case LIGHT_POINT:
+					pointLightIndex = (UINT)i;
+					break;
+
+				case LIGHT_SPOT:
+				{
+					Graphics::Texture2D& curShadowBuffer = curShadowMap.GetSpotLightShadowBuffer();
+					ppShadowSRVs[i] = curShadowBuffer.pSRV;
+				}
+					break;
+
+				default:
+					break;
+				}
+			}
+			pContext->PSSetShaderResources(15, (UINT)pLights.size(), ppShadowSRVs);
+
+			if (pointLightIndex != -1)
+			{
+				ShadowMap& curShadowMap = pLights[pointLightIndex].GetShadowMap();
+				Graphics::Texture2D& curShadowCubeBuffer = curShadowMap.GetPointLightShadowBuffer();
+				pContext->PSSetShaderResources(20, 1, &(curShadowCubeBuffer.pSRV));
+			}
+			if (directionalLightIndex != -1)
+			{
+				ShadowMap& curShadowMap = pLights[directionalLightIndex].GetShadowMap();
+				Graphics::Texture2D& curShadowCascadeBuffer = curShadowMap.GetDirectionalLightShadowBuffer();
+				pContext->PSSetShaderResources(25, 1, &(curShadowCascadeBuffer.pSRV));
+			}
+
+			setGlobalConstants(pContext, &(m_LightConstants.pGPU), 1);
+
 			const float CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-			pContext->ClearRenderTargetView(m_ResolvedBuffer.pRTV, CLEAR_COLOR);
+			pContext->ClearRenderTargetView(m_FloatBuffer.pRTV, CLEAR_COLOR);
 			pContext->ClearDepthStencilView(m_pDefaultDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-			pContext->OMSetRenderTargets(1, &(m_ResolvedBuffer.pRTV), m_pDefaultDSV);
+			pContext->OMSetRenderTargets(1, &(m_FloatBuffer.pRTV), m_pDefaultDSV);
 
-			// 스카이박스 그리기.
-			// 최적화를 하고 싶다면 투명한 물체들만 따로 마지막에 그리면 됨.
-			setPipelineState(pContext, bDrawAsWire ? Graphics::g_SkyboxWirePSO : Graphics::g_SkyboxSolidPSO);
-			m_pSkybox->Render(pContext);
-
-			renderMirror(pContext);
-
-			pContext->ClearRenderTargetView(m_GBuffer.FinalBuffer.pRTV, CLEAR_COLOR);
-			// pContext->ClearDepthStencilView(m_pDefaultDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-			pContext->OMSetRenderTargets(1, &(m_GBuffer.FinalBuffer.pRTV), nullptr);
-
-			ID3D11ShaderResourceView* ppSRVs[6] = { m_ResolvedBuffer.pSRV, m_GBuffer.AlbedoBuffer.pSRV, m_GBuffer.NormalBuffer.pSRV, m_GBuffer.PositionBuffer.pSRV, m_GBuffer.EmissionBuffer.pSRV, m_GBuffer.ExtraBuffer.pSRV };
-			UINT numSRVs = _countof(ppSRVs);
-			pContext->PSSetShaderResources(0, numSRVs, ppSRVs);
+			ID3D11ShaderResourceView* ppSRVs[5] = { m_GBuffer.AlbedoBuffer.pSRV, m_GBuffer.NormalBuffer.pSRV, m_GBuffer.PositionBuffer.pSRV, m_GBuffer.EmissionBuffer.pSRV, m_GBuffer.ExtraBuffer.pSRV };
+			pContext->PSSetShaderResources(0, 5, ppSRVs);
 
 			setPipelineState(pContext, Graphics::g_DeferredRenderingPSO);
 
@@ -233,8 +254,17 @@ namespace Core
 			pContext->IASetVertexBuffers(0, 1, &(m_pScreenMesh->pVertexBuffer), &stride, &offset);
 			pContext->IASetIndexBuffer(m_pScreenMesh->pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 			pContext->DrawIndexed(m_pScreenMesh->IndexCount, 0, 0);
+			
+			pContext->OMSetRenderTargets(1, &(m_FloatBuffer.pRTV), m_GBuffer.DepthBuffer.pDSV);
 
-			for (size_t i = 0, size = pRenderObjects.size(); i < size; ++i)
+			// 스카이박스 그리기.
+			// 최적화를 하고 싶다면 투명한 물체들만 따로 마지막에 그리면 됨.
+			setPipelineState(pContext, bDrawAsWire ? Graphics::g_SkyboxWirePSO : Graphics::g_SkyboxSolidPSO);
+			m_pSkybox->Render(pContext);
+
+			renderMirror(pContext);
+
+			/*for (size_t i = 0, size = pRenderObjects.size(); i < size; ++i)
 			{
 				Geometry::Model* pCurModel = pRenderObjects[i];
 				if (pCurModel->bDrawNormals)
@@ -252,7 +282,9 @@ namespace Core
 					setPipelineState(pContext, Graphics::g_BoundingBoxPSO);
 					pCurModel->RenderWireBoundingSphere(pContext);
 				}
-			}
+			}*/
+
+			
 		}
 		else
 		{
@@ -481,18 +513,26 @@ namespace Core
 		for (size_t i = 0, size = pLights.size(); i < size; ++i)
 		{
 			ShadowMap& curShadowMap = pLights[i].GetShadowMap();
-			if (pLights[i].Property.LightType & LIGHT_POINT)
+
+			switch (pLights[i].Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
 			{
+			case LIGHT_DIRECTIONAL:
+				directionalLightIndex = (UINT)i;
+				break;
+
+			case LIGHT_POINT:
 				pointLightIndex = (UINT)i;
-			}
-			else if (pLights[i].Property.LightType & LIGHT_SPOT)
+				break;
+
+			case LIGHT_SPOT:
 			{
 				Graphics::Texture2D& curShadowBuffer = curShadowMap.GetSpotLightShadowBuffer();
 				ppShadowSRVs[i] = curShadowBuffer.pSRV;
 			}
-			else
-			{
-				directionalLightIndex = (UINT)i;
+				break;
+
+			default:
+				break;
 			}
 		}
 		pContext->PSSetShaderResources(15, (UINT)pLights.size(), ppShadowSRVs);

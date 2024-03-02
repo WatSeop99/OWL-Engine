@@ -61,7 +61,7 @@ namespace Graphics
     void GBuffer::Update(ID3D11DeviceContext* pContext)
     { }
 
-    void GBuffer::PrepareRender(ID3D11DeviceContext* pContext)
+    void GBuffer::PrepareRender(ID3D11DeviceContext* pContext, ID3D11DepthStencilView* pDSV)
     {
         _ASSERT(pContext != nullptr);
 
@@ -73,7 +73,9 @@ namespace Graphics
         pContext->ClearRenderTargetView(EmissionBuffer.pRTV, CLEAR_COLOR);
         pContext->ClearRenderTargetView(ExtraBuffer.pRTV, CLEAR_COLOR);
         pContext->ClearDepthStencilView(DepthBuffer.pDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+        // pContext->ClearDepthStencilView(pDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
         pContext->OMSetRenderTargets(5, ppRTVs, DepthBuffer.pDSV);
+        // pContext->OMSetRenderTargets(5, ppRTVs, pDSV);
     }
 
     void GBuffer::AfterRender(ID3D11DeviceContext* pContext)

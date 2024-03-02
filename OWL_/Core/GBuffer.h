@@ -14,7 +14,7 @@ namespace Graphics
 
 		void Update(ID3D11DeviceContext* pContext); // 추후 GUI 업데이트.
 
-		void PrepareRender(ID3D11DeviceContext* pContext);
+		void PrepareRender(ID3D11DeviceContext* pContext, ID3D11DepthStencilView* pDSV);
 		void AfterRender(ID3D11DeviceContext* pContext);
 
 		inline void SetScreenWidth(const UINT WIDTH) { m_ScreenWidth = WIDTH; }

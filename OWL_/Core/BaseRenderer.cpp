@@ -166,20 +166,6 @@ namespace Core
 		m_PostProcessor.Update(m_pContext4);
 	}
 
-	//void BaseRenderer::RenderGBuffer()
-	//{
-	//	// Render obeject
-	//	
-
-	//	// Render Terrain
-	//	// Render Foliage
-	//}
-
-	//void BaseRenderer::RenderLights()
-	//{
-
-	//}
-
 	void BaseRenderer::RenderGUI()
 	{
 		// Example의 Render()에서 RT 설정을 해주지 않았을 경우에도
@@ -197,16 +183,6 @@ namespace Core
 		m_Scene.Render(m_pContext4);
 		m_PostProcessor.Render(m_pContext4);
 		RenderGUI(); // 추후 editor/game 모드를 설정하여 따로 렌더링하도록 구상.
-
-		////////////////////// deferred shading //////////////////
-		// Culling();
-		//RenderDepthOnly();
-		//RenderGBuffer();
-		//RenderShadowMaps();
-		//RenderLights(); // local illumination.
-		//RenderMirror();
-		//m_PostProcessor.Render(m_pContext4);
-		//RenderGUI();
 	}
 
 	void BaseRenderer::OnMouseMove(int mouseX, int mouseY)
@@ -673,7 +649,7 @@ namespace Core
 			//swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
 			swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_UNORDERED_ACCESS;
 			swapChainDesc.BufferCount = 2;
-			if (m_bUseMSAA && m_NumQualityLevels > 0)
+			/*if (m_bUseMSAA && m_NumQualityLevels > 0)
 			{
 				swapChainDesc.SampleDesc.Count = 4;
 				swapChainDesc.SampleDesc.Quality = m_NumQualityLevels - 1;
@@ -682,7 +658,9 @@ namespace Core
 			{
 				swapChainDesc.SampleDesc.Count = 1;
 				swapChainDesc.SampleDesc.Quality = 0;
-			}
+			}*/
+			swapChainDesc.SampleDesc.Count = 1;
+			swapChainDesc.SampleDesc.Quality = 0;
 			swapChainDesc.Scaling = DXGI_SCALING_NONE;
 			swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 			swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
