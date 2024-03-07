@@ -392,34 +392,40 @@ namespace Core
 		_ASSERT(pPosition != nullptr);
 		_ASSERT(pView != nullptr);
 		_ASSERT(pProjection != nullptr);
-
-		static const float s_CASCADE_Zs[5] = { 0.0f, 0.02f, 0.18f, 0.48f, 1.0f }; // cascadeIndex를 통해 선택.
-		// static const float s_CASCADE_Zs[5] = { 0.0f, 0.2f, 0.4f, 0.6f, 1.0f }; // cascadeIndex를 통해 선택.
-		Matrix inverseViewProjection = (VIEW * PROJECTION).Invert();
-		Vector3 frustumCorners[8] =
-		{
-			Vector3::Transform(Vector3(-1.0f, -1.0f, 0.0f), inverseViewProjection),
-			Vector3::Transform(Vector3(-1.0f, 1.0f, 0.0f), inverseViewProjection),
-			Vector3::Transform(Vector3(1.0f, 1.0f, 0.0f), inverseViewProjection),
-			Vector3::Transform(Vector3(1.0f, -1.0f, 0.0f), inverseViewProjection),
-			Vector3::Transform(Vector3(-1.0f, -1.0f, 1.0f), inverseViewProjection),
-			Vector3::Transform(Vector3(-1.0f, 1.0f, 1.0f), inverseViewProjection),
-			Vector3::Transform(Vector3(1.0f, 1.0f, 1.0f), inverseViewProjection),
-			Vector3::Transform(Vector3(1.0f, -1.0f, 1.0f), inverseViewProjection),
-		};
+		
+		static const float s_FRUSTUM_Zs[5] = { 0.01f, 10.0f, 40.0f, 80.0f, 500.0f }; // 고정 값들로 우선 설정.
+		Matrix inverseView = VIEW.Invert();
 		Vector3 frustumCenter(0.0f);
 		float boundingSphereRadius = 0.0f;
+		
+		float fov = 45.0f;
+		float aspectRatio = 1270.0f / 720.0f;
+		float nearZ = s_FRUSTUM_Zs[0];
+		float farZ = s_FRUSTUM_Zs[4];
+		float tanHalfVFov = tanf(DirectX::XMConvertToRadians(fov * 0.5f)); // 수직 시야각.
+		float tanHalfHFov = tanHalfVFov * aspectRatio; // 수평 시야각.
 
-		for (int i = 0; i < 4; ++i)
+		float xn = s_FRUSTUM_Zs[cascadeIndex] * tanHalfHFov;
+		float xf = s_FRUSTUM_Zs[cascadeIndex + 1] * tanHalfHFov;
+		float yn = s_FRUSTUM_Zs[cascadeIndex] * tanHalfVFov;
+		float yf = s_FRUSTUM_Zs[cascadeIndex + 1] * tanHalfVFov;
+
+		Vector3 frustumCorners[8] =
 		{
-			Vector3 cornerRay = frustumCorners[i + 4] - frustumCorners[i];
-			Vector3 nearCornerRay = cornerRay * s_CASCADE_Zs[cascadeIndex];
-			Vector3 farCornerRay = cornerRay * s_CASCADE_Zs[cascadeIndex + 1];
+			Vector3(xn, yn, s_FRUSTUM_Zs[cascadeIndex]),
+			Vector3(-xn, yn, s_FRUSTUM_Zs[cascadeIndex]),
+			Vector3(xn, -yn, s_FRUSTUM_Zs[cascadeIndex]),
+			Vector3(-xn, -yn, s_FRUSTUM_Zs[cascadeIndex]),
+			Vector3(xf, yf, s_FRUSTUM_Zs[cascadeIndex + 1]),
+			Vector3(-xf, yf, s_FRUSTUM_Zs[cascadeIndex + 1]),
+			Vector3(xf, -yf, s_FRUSTUM_Zs[cascadeIndex + 1]),
+			Vector3(-xf, -yf, s_FRUSTUM_Zs[cascadeIndex + 1]),
+		};
 
-			frustumCorners[i + 4] = frustumCorners[i] + farCornerRay;
-			frustumCorners[i] = frustumCorners[i] + nearCornerRay;
-
-			frustumCenter += frustumCorners[i] + frustumCorners[i + 4];
+		for (int i = 0; i < 8; ++i)
+		{
+			frustumCorners[i] = Vector3::Transform(frustumCorners[i], inverseView);
+			frustumCenter += frustumCorners[i];
 		}
 		frustumCenter /= 8.0f;
 

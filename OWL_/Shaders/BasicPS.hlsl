@@ -338,6 +338,10 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
                 {
                     lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[i]);
                     lightScreen.xyz /= lightScreen.w;
+                    if (lightScreen.z > 1.0f)
+                    {
+                        continue;
+                    }
                 
                     lightTexcoord = float2(lightScreen.x, -lightScreen.y);
                     lightTexcoord += 1.0f;
