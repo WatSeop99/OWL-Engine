@@ -248,8 +248,8 @@ namespace Core
 					// 기존 버퍼 초기화.
 					destroyBuffersForRendering();
 					m_pSwapChain4->ResizeBuffers(0,                  // 현재 개수 유지.
-												(UINT)m_ScreenWidth, // 해상도 변경.
-												(UINT)m_ScreenHeight,
+												m_ScreenWidth,		 // 해상도 변경.
+												m_ScreenHeight,
 												DXGI_FORMAT_UNKNOWN, // 현재 포맷 유지.
 												0);
 

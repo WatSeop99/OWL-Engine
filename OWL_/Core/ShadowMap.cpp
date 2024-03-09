@@ -223,26 +223,28 @@ namespace Core
 			pContext->OMSetRenderTargets(0, nullptr, m_DirectionalLightShadowBuffer.pDSV);
 			pContext->GSSetConstantBuffers(0, 1, &(m_ShadowConstantsBufferForGS.pGPU));
 
-			pContext->VSSetShader(Graphics::g_pDepthOnlyCascadeVS, nullptr, 0);
+			/*pContext->VSSetShader(Graphics::g_pDepthOnlyCascadeVS, nullptr, 0);
 			pContext->PSSetShader(Graphics::g_pDepthOnlyCascadePS, nullptr, 0);
 			pContext->HSSetShader(nullptr, nullptr, 0);
 			pContext->DSSetShader(nullptr, nullptr, 0);
 			pContext->GSSetShader(Graphics::g_pDepthOnlyCascadeGS, nullptr, 0);
 			pContext->CSSetShader(nullptr, nullptr, 0);
 			pContext->IASetInputLayout(Graphics::g_pSkyboxIL);
-			pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);*/
 
 			for (size_t i = 0, size = pBasicList.size(); i < size; ++i)
 			{
 				Geometry::Model* const pCurModel = pBasicList[i];
 				if (pCurModel->bCastShadow && pCurModel->bIsVisible)
 				{
+					setPipelineState(pContext, pCurModel->GetDepthOnlyCascadePSO());
 					pCurModel->Render(pContext);
 				}
 			}
 
 			if (pMirror && pMirror->bCastShadow)
 			{
+				setPipelineState(pContext, Graphics::g_DepthOnlyCascadePSO);
 				pMirror->Render(pContext);
 			}
 		}
@@ -254,26 +256,28 @@ namespace Core
 			pContext->OMSetRenderTargets(0, nullptr, m_PointLightShadowBuffer.pDSV);
 			pContext->GSSetConstantBuffers(0, 1, &(m_ShadowConstantsBufferForGS.pGPU));
 
-			pContext->VSSetShader(Graphics::g_pDepthOnlyCubeVS, nullptr, 0);
+			/*pContext->VSSetShader(Graphics::g_pDepthOnlyCubeVS, nullptr, 0);
 			pContext->PSSetShader(Graphics::g_pDepthOnlyCubePS, nullptr, 0);
 			pContext->HSSetShader(nullptr, nullptr, 0);
 			pContext->DSSetShader(nullptr, nullptr, 0);
 			pContext->GSSetShader(Graphics::g_pDepthOnlyCubeGS, nullptr, 0);
 			pContext->CSSetShader(nullptr, nullptr, 0);
 			pContext->IASetInputLayout(Graphics::g_pSkyboxIL);
-			pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);*/
 
 			for (size_t i = 0, size = pBasicList.size(); i < size; ++i)
 			{
 				Geometry::Model* const pCurModel = pBasicList[i];
 				if (pCurModel->bCastShadow && pCurModel->bIsVisible)
 				{
+					setPipelineState(pContext, pCurModel->GetDepthOnlyCubePSO());
 					pCurModel->Render(pContext);
 				}
 			}
 
 			if (pMirror && pMirror->bCastShadow)
 			{
+				setPipelineState(pContext, Graphics::g_DepthOnlyCubePSO);
 				pMirror->Render(pContext);
 			}
 		}

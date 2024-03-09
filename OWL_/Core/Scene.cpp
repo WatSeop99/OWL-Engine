@@ -107,8 +107,7 @@ namespace Core
 			m_MirrorPlane = DirectX::SimpleMath::Plane(position, Vector3(0.0f, 1.0f, 0.0f));
 			m_pMirror = m_pGround; // 바닥에 거울처럼 반사 구현.
 		}
-
-		// 
+ 
 		m_GlobalConstants.CPU.StrengthIBL = 0.1f;
 		// m_GlobalConstants.CPU.StrengthIBL = 1.0f;
 
@@ -175,7 +174,7 @@ namespace Core
 		renderDepthOnly(pContext);
 		renderShadowMaps(pContext);
 
-		if (m_GBuffer.bIsEnabled) // deferred rendering => 추후 수정해야함. 동작 안함.
+		if (m_GBuffer.bIsEnabled)
 		{
 			// 다시 렌더링 해상도로 되돌리기.
 			setScreenViewport(pContext);
@@ -187,7 +186,7 @@ namespace Core
 			for (size_t i = 0, size = pRenderObjects.size(); i < size; ++i)
 			{
 				Geometry::Model* pCurModel = pRenderObjects[i];
-				// setPipelineState(pContext, pCurModel->GetPSO(bDrawAsWire));
+				setPipelineState(pContext, pCurModel->GetGBufferPSO(bDrawAsWire));
 				pCurModel->Render(pContext);
 			}
 
@@ -262,9 +261,7 @@ namespace Core
 			setPipelineState(pContext, bDrawAsWire ? Graphics::g_SkyboxWirePSO : Graphics::g_SkyboxSolidPSO);
 			m_pSkybox->Render(pContext);
 
-			renderMirror(pContext);
-
-			/*for (size_t i = 0, size = pRenderObjects.size(); i < size; ++i)
+			for (size_t i = 0, size = pRenderObjects.size(); i < size; ++i)
 			{
 				Geometry::Model* pCurModel = pRenderObjects[i];
 				if (pCurModel->bDrawNormals)
@@ -282,15 +279,14 @@ namespace Core
 					setPipelineState(pContext, Graphics::g_BoundingBoxPSO);
 					pCurModel->RenderWireBoundingSphere(pContext);
 				}
-			}*/
-
-			
+			}
 		}
 		else
 		{
 			renderOpaqueObjects(pContext);
-			renderMirror(pContext);
 		}
+
+		renderMirror(pContext);
 	}
 
 	void Scene::Destroy()
@@ -490,8 +486,6 @@ namespace Core
 		{
 			pLights[i].RenderShadowMap(pContext, pRenderObjects, m_pMirror);
 		}
-
-		// pContext->OMSetRenderTargets(0, nullptr, nullptr);
 	}
 
 	void Scene::renderOpaqueObjects(ID3D11DeviceContext* pContext)

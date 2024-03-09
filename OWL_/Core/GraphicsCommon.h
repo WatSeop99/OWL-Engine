@@ -43,6 +43,10 @@ namespace Graphics
 	extern ID3D11VertexShader* g_pNormalVS;
 	extern ID3D11VertexShader* g_pDepthOnlyVS;
 	extern ID3D11VertexShader* g_pDepthOnlySkinnedVS;
+	extern ID3D11VertexShader* g_pDepthOnlyCubeVS;
+	extern ID3D11VertexShader* g_pDepthOnlyCubeSkinnedVS;
+	extern ID3D11VertexShader* g_pDepthOnlyCascadeVS;
+	extern ID3D11VertexShader* g_pDepthOnlyCascadeSkinnedVS;
 	extern ID3D11VertexShader* g_pGrassVS;
 	extern ID3D11VertexShader* g_pBillboardVS;
 	extern ID3D11VertexShader* g_pGBufferVS;
@@ -54,6 +58,8 @@ namespace Graphics
 	extern ID3D11PixelShader* g_pBloomUpPS;
 	extern ID3D11PixelShader* g_pNormalPS;
 	extern ID3D11PixelShader* g_pDepthOnlyPS;
+	extern ID3D11PixelShader* g_pDepthOnlyCubePS;
+	extern ID3D11PixelShader* g_pDepthOnlyCascadePS;
 	extern ID3D11PixelShader* g_pPostEffectsPS;
 	extern ID3D11PixelShader* g_pVolumeSmokePS;
 	extern ID3D11PixelShader* g_pGrassPS;
@@ -64,13 +70,8 @@ namespace Graphics
 	extern ID3D11PixelShader* g_pDeferredLightingPS;
 	extern ID3D11GeometryShader* g_pNormalGS;
 	extern ID3D11GeometryShader* g_pBillboardGS;
-
-	extern ID3D11VertexShader* g_pDepthOnlyCubeVS;
-	extern ID3D11VertexShader* g_pDepthOnlyCascadeVS;
 	extern ID3D11GeometryShader* g_pDepthOnlyCubeGS;
 	extern ID3D11GeometryShader* g_pDepthOnlyCascadeGS;
-	extern ID3D11PixelShader* g_pDepthOnlyCubePS;
-	extern ID3D11PixelShader* g_pDepthOnlyCascadePS;
 
 	// Input Layouts
 	extern ID3D11InputLayout* g_pBasicIL;
@@ -105,6 +106,10 @@ namespace Graphics
 	extern Graphics::GraphicsPSO g_NormalsPSO;
 	extern Graphics::GraphicsPSO g_DepthOnlyPSO;
 	extern Graphics::GraphicsPSO g_DepthOnlySkinnedPSO;
+	extern Graphics::GraphicsPSO g_DepthOnlyCubePSO;
+	extern Graphics::GraphicsPSO g_DepthOnlyCubeSkinnedPSO;
+	extern Graphics::GraphicsPSO g_DepthOnlyCascadePSO;
+	extern Graphics::GraphicsPSO g_DepthOnlyCascadeSkinnedPSO;
 	extern Graphics::GraphicsPSO g_PostEffectsPSO;
 	extern Graphics::GraphicsPSO g_PostProcessingPSO;
 	extern Graphics::GraphicsPSO g_BoundingBoxPSO;
@@ -112,7 +117,9 @@ namespace Graphics
 	extern Graphics::GraphicsPSO g_GrassWirePSO;
 	extern Graphics::GraphicsPSO g_OceanPSO;
 	extern Graphics::GraphicsPSO g_GBufferPSO;
-	extern Graphics::GraphicsPSO g_GBufferSkinnedPSO;;
+	extern Graphics::GraphicsPSO g_GBufferWirePSO;
+	extern Graphics::GraphicsPSO g_GBufferSkinnedPSO;
+	extern Graphics::GraphicsPSO g_GBufferSKinnedWirePSO;
 	extern Graphics::GraphicsPSO g_DeferredRenderingPSO;
 
 	// 주의: 초기화가 느려서 필요한 경우에만 초기화.

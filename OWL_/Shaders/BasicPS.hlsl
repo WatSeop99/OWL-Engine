@@ -16,6 +16,15 @@ struct PixelShaderOutput
     float4 PixelColor : SV_TARGET0;
 };
 
+#define NEAR_PLANE 0.01f
+#define FAR_PLANE 50.0f
+// #define LIGHT_WORLD_RADIUS 0.001f
+#define LIGHT_FRUSTUM_WIDTH 0.34641f // <- 계산해서 찾은 값
+// #define LIGHT_FRUSTUM_WIDTH 0.2f // <- 계산해서 찾은 값
+
+// Assuming that LIGHT_FRUSTUM_WIDTH == LIGHT_FRUSTUM_HEIGHT
+// #define LIGHT_RADIUS_UV (LIGHT_WORLD_RADIUS / LIGHT_FRUSTUM_WIDTH)
+
 static const float3 F_DIELECTRIC = 0.04f; // 비금속(Dielectric) 재질의 F0.
 
 float3 SchlickFresnel(float3 F0, float NdotH)
@@ -117,51 +126,40 @@ float N2V(float ndcDepth, matrix invProj)
     return pointView.z / pointView.w;
 }
 
-#define NEAR_PLANE 0.01f
-#define FAR_PLANE 50.0f
-// #define LIGHT_WORLD_RADIUS 0.001f
-#define LIGHT_FRUSTUM_WIDTH 0.34641f // <- 계산해서 찾은 값
-// #define LIGHT_FRUSTUM_WIDTH 0.2f // <- 계산해서 찾은 값
-
-// Assuming that LIGHT_FRUSTUM_WIDTH == LIGHT_FRUSTUM_HEIGHT
-// #define LIGHT_RADIUS_UV (LIGHT_WORLD_RADIUS / LIGHT_FRUSTUM_WIDTH)
-
-float PCF_Filter(float2 uv, float zReceiverNdc, float filterRadiusUV, int shadowMapIndex)
+float PCFFilterSpotLight(int shadowMapIndex, float2 uv, float zReceiverNDC, float filterRadiusUV)
 {
     float sum = 0.0f;
     for (int i = 0; i < 64; ++i)
     {
         float2 offset = diskSamples64[i] * filterRadiusUV;
-        sum += g_ShadowMaps[shadowMapIndex].SampleCmpLevelZero(g_ShadowCompareSampler, uv + offset, zReceiverNdc);
+        sum += g_ShadowMaps[shadowMapIndex].SampleCmpLevelZero(g_ShadowCompareSampler, uv + offset, zReceiverNDC);
     }
     return sum / 64.0f;
 }
 
-float PCF_Filter(float2 uv, float zReceiverNdc, float filterRadiusUV, int shadowMapIndex, bool bCascade)
+float PCFFilterDirectionalLight(int shadowMapIndex, float2 uv, float zReceiverNDC, float filterRadiusUV)
 {
     float sum = 0.0f;
     for (int i = 0; i < 64; ++i)
     {
         float2 offset = diskSamples64[i] * filterRadiusUV;
-        sum += g_CascadeShadowMap.SampleCmpLevelZero(g_ShadowCompareSampler, float3(uv + offset, shadowMapIndex), zReceiverNdc);
+        sum += g_CascadeShadowMap.SampleCmpLevelZero(g_ShadowCompareSampler, float3(uv + offset, shadowMapIndex), zReceiverNDC);
     }
     return sum / 64.0f;
 }
 
-float PCF_Filter(float3 uvw, float zReceiverNdc, float filterRadiusUV)
+float PCFFilterPointLight(float3 uvw, float zReceiverNDC, float filterRadiusUV)
 {
     float sum = 0.0f;
     for (int i = 0; i < 64; ++i)
     {
         float3 offset = float3(diskSamples64[i], 0.0f) * filterRadiusUV;
-        sum += g_PointLightShadowMap.SampleCmpLevelZero(g_ShadowCompareSampler, uvw + offset, zReceiverNdc);
+        sum += g_PointLightShadowMap.SampleCmpLevelZero(g_ShadowCompareSampler, uvw + offset, zReceiverNDC);
     }
     return sum / 64.0f;
 }
 
-// void Func(out float a) <- c++의 void Func(float& a) 처럼 출력값 저장 가능
-
-void FindBlocker(out float avgBlockerDepthView, out float numBlockers, float2 uv, float zReceiverView, int shadowMapIndex, matrix invProj, float lightRadiusWorld)
+void FindBlockerInSpotLight(out float avgBlockerDepthView, out float numBlockers, int shadowMapIndex, float2 uv, float zReceiverView, matrix inverseProjection, float lightRadiusWorld)
 {
     float lightRadiusUV = lightRadiusWorld / LIGHT_FRUSTUM_WIDTH;
     float searchRadius = lightRadiusUV * (zReceiverView - NEAR_PLANE) / zReceiverView;
@@ -171,7 +169,7 @@ void FindBlocker(out float avgBlockerDepthView, out float numBlockers, float2 uv
     for (int i = 0; i < 64; ++i)
     {
         float shadowMapDepth = g_ShadowMaps[shadowMapIndex].SampleLevel(g_ShadowPointSampler, float2(uv + diskSamples64[i] * searchRadius), 0.0f).r;
-        shadowMapDepth = N2V(shadowMapDepth, invProj);
+        shadowMapDepth = N2V(shadowMapDepth, inverseProjection);
         
         if (shadowMapDepth < zReceiverView)
         {
@@ -183,7 +181,7 @@ void FindBlocker(out float avgBlockerDepthView, out float numBlockers, float2 uv
     avgBlockerDepthView = blockerSum / numBlockers;
 }
 
-void FindBlocker(out float avgBlockerDepthView, out float numBlockers, float2 uv, float zReceiverView, int shadowMapIndex, matrix invProj, float lightRadiusWorld, bool bCasacde)
+void FindBlockerInDirectionalLight(out float avgBlockerDepthView, out float numBlockers, float2 uv, float zReceiverView, int shadowMapIndex, matrix invProj, float lightRadiusWorld)
 {
     float lightRadiusUV = lightRadiusWorld / LIGHT_FRUSTUM_WIDTH;
     float searchRadius = lightRadiusUV * (zReceiverView - NEAR_PLANE) / zReceiverView;
@@ -205,7 +203,7 @@ void FindBlocker(out float avgBlockerDepthView, out float numBlockers, float2 uv
     avgBlockerDepthView = blockerSum / numBlockers;
 }
 
-void FindBlocker(out float avgBlockerDepthView, out float numBlockers, float3 uvw, float zReceiverView, matrix invProj, float lightRadiusWorld)
+void FindBlockerInPointLight(out float avgBlockerDepthView, out float numBlockers, float3 uvw, float zReceiverView, matrix invProj, float lightRadiusWorld)
 {
     float lightRadiusUV = lightRadiusWorld / LIGHT_FRUSTUM_WIDTH;
     float searchRadius = lightRadiusUV * (zReceiverView - NEAR_PLANE) / zReceiverView;
@@ -227,16 +225,16 @@ void FindBlocker(out float avgBlockerDepthView, out float numBlockers, float3 uv
     avgBlockerDepthView = blockerSum / numBlockers;
 }
 
-float PCSS(float2 uv, float zReceiverNdc, int shadowMapIndex, matrix invProj, float lightRadiusWorld)
+float PCSSForSpotLight(int shadowMapIndex, float2 uv, float zReceiverNDC, matrix inverseProjection, float lightRadiusWorld)
 {
     float lightRadiusUV = lightRadiusWorld / LIGHT_FRUSTUM_WIDTH;
-    float zReceiverView = N2V(zReceiverNdc, invProj);
+    float zReceiverView = N2V(zReceiverNDC, inverseProjection);
     
     // STEP 1: blocker search.
     float avgBlockerDepthView = 0;
     float numBlockers = 0;
 
-    FindBlocker(avgBlockerDepthView, numBlockers, uv, zReceiverView, shadowMapIndex, invProj, lightRadiusWorld);
+    FindBlockerInSpotLight(avgBlockerDepthView, numBlockers, shadowMapIndex, uv, zReceiverView, inverseProjection, lightRadiusWorld);
 
     if (numBlockers < 1)
     {
@@ -250,20 +248,20 @@ float PCSS(float2 uv, float zReceiverNdc, int shadowMapIndex, matrix invProj, fl
         float filterRadiusUV = penumbraRatio * lightRadiusUV * NEAR_PLANE / zReceiverView;
 
         // STEP 3: filtering.
-        return PCF_Filter(uv, zReceiverNdc, filterRadiusUV, shadowMapIndex);
+        return PCFFilterSpotLight(shadowMapIndex, uv, zReceiverNDC, filterRadiusUV);
     }
 }
 
-float PCSS(float2 uv, float zReceiverNdc, int shadowMapIndex, matrix invProj, float lightRadiusWorld, bool bCascade)
+float PCSSForDirectionalLight(int shadowMapIndex, float2 uv, float zReceiverNDC, matrix inverseProjection, float lightRadiusWorld)
 {
     float lightRadiusUV = lightRadiusWorld / LIGHT_FRUSTUM_WIDTH;
-    float zReceiverView = N2V(zReceiverNdc, invProj);
+    float zReceiverView = N2V(zReceiverNDC, inverseProjection);
     
     // STEP 1: blocker search.
     float avgBlockerDepthView = 0;
     float numBlockers = 0;
 
-    FindBlocker(avgBlockerDepthView, numBlockers, uv, zReceiverView, shadowMapIndex, invProj, lightRadiusWorld, true);
+    FindBlockerInDirectionalLight(avgBlockerDepthView, numBlockers, uv, zReceiverView, shadowMapIndex, inverseProjection, lightRadiusWorld);
 
     if (numBlockers < 1)
     {
@@ -277,21 +275,21 @@ float PCSS(float2 uv, float zReceiverNdc, int shadowMapIndex, matrix invProj, fl
         float filterRadiusUV = penumbraRatio * lightRadiusUV * NEAR_PLANE / zReceiverView;
 
         // STEP 3: filtering.
-        return PCF_Filter(uv, zReceiverNdc, filterRadiusUV, shadowMapIndex, true);
+        return PCFFilterDirectionalLight(shadowMapIndex, uv, zReceiverNDC, filterRadiusUV);
     }
 }
 
-float PCSS(float3 uvw, float zReceiverNdc, matrix invProj, float lightRadiusWorld)
+float PCSSForPointLight(float3 uvw, float zReceiverNDC, matrix inverseProjection, float lightRadiusWorld)
 {
     float lightRadiusUV = lightRadiusWorld / LIGHT_FRUSTUM_WIDTH;
-    float zReceiverView = N2V(zReceiverNdc, invProj);
+    float zReceiverView = N2V(zReceiverNDC, inverseProjection);
     // float zReceiverView = length(uvw);
     
     // STEP 1: blocker search.
     float avgBlockerDepthView = 0;
     float numBlockers = 0;
 
-    FindBlocker(avgBlockerDepthView, numBlockers, uvw, zReceiverView, invProj, lightRadiusWorld);
+    FindBlockerInPointLight(avgBlockerDepthView, numBlockers, uvw, zReceiverView, inverseProjection, lightRadiusWorld);
 
     if (numBlockers < 1)
     {
@@ -305,11 +303,11 @@ float PCSS(float3 uvw, float zReceiverNdc, matrix invProj, float lightRadiusWorl
         float filterRadiusUV = penumbraRatio * lightRadiusUV * NEAR_PLANE / zReceiverView;
 
         // STEP 3: filtering.
-        return PCF_Filter(uvw, zReceiverNdc, filterRadiusUV);
+        return PCFFilterPointLight(uvw, zReceiverNDC, filterRadiusUV);
     }
 }
 
-float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, float3 normalWorld, int shadowMapIndex)
+float3 LightRadiance(Light light, int shadowMapIndex, float3 representativePoint, float3 posWorld, float3 normalWorld)
 {
     // Directional light.
     float3 lightVec = (light.Type & LIGHT_DIRECTIONAL ? -light.Direction : representativePoint - posWorld); // light.position - posWorld;
@@ -327,90 +325,91 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
 
     if (light.Type & LIGHT_SHADOW)
     {
+        float3 lightTexcoord = float3(0.0f, 0.0f, 0.0f);
+        float radiusScale = 0.5f; // 광원의 반지름을 키웠을 때 깨지는 것 방지.
+        
         switch (light.Type & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
         {
             case LIGHT_DIRECTIONAL:
-            {
-                int index = -1;
-                float4 lightScreen = float4(0.0f, 0.0f, 0.0f, 0.0f);
-                float2 lightTexcoord = float2(0.0f, 0.0f);
-                for (int i = 0; i < 4; ++i)
                 {
-                    lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[i]);
-                    lightScreen.xyz /= lightScreen.w;
-                    if (lightScreen.z > 1.0f)
+                    int index = -1;
+                    float4 lightScreen = float4(0.0f, 0.0f, 0.0f, 0.0f);
+                    
+                    for (int i = 0; i < 4; ++i)
                     {
-                        continue;
+                        lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[i]);
+                        lightScreen.xyz /= lightScreen.w;
+                        if (lightScreen.z > 1.0f)
+                        {
+                            continue;
+                        }
+                    
+                        lightTexcoord.xy = float2(lightScreen.x, -lightScreen.y);
+                        lightTexcoord.xy += 1.0f;
+                        lightTexcoord.xy *= 0.5f;
+                    
+                        float depth = g_CascadeShadowMap.SampleLevel(g_ShadowPointSampler, float3(lightTexcoord.xy, i), 0.0f);
+                        if (depth <= lightScreen.z - 0.005f || depth >= lightScreen.z + 0.005f)
+                        {
+                            index = i;
+                            break;
+                        }
                     }
-                
-                    lightTexcoord = float2(lightScreen.x, -lightScreen.y);
-                    lightTexcoord += 1.0f;
-                    lightTexcoord *= 0.5f;
-                
-                    float depth = g_CascadeShadowMap.SampleLevel(g_ShadowPointSampler, float3(lightTexcoord, i), 0.0f);
-                    if (depth <= lightScreen.z - 0.005f || depth >= lightScreen.z + 0.005f)
+                    
+                    if (index != -1)
                     {
-                        index = i;
-                        break;
+                        shadowFactor = PCSSForDirectionalLight(index, lightTexcoord.xy, lightScreen.z - 0.001f, light.InverseProjections[index], light.Radius * radiusScale);
                     }
                 }
-                
-                if (index != -1)
-                {
-                    float radiusScale = 0.5f;
-                    shadowFactor = PCSS(lightTexcoord, lightScreen.z - 0.001f, index, light.InverseProjections[index], light.Radius * radiusScale, true);
-                }
-            }
                 break;
             
             case LIGHT_POINT:
-            {
-                const float3 VIEW_DIRs[6] =
                 {
-                    float3(1.0f, 0.0f, 0.0f), // right
-			        float3(-1.0f, 0.0f, 0.0f), // left
-			        float3(0.0f, 1.0f, 0.0f), // up
-			        float3(0.0f, -1.0f, 0.0f), // down
-			        float3(0.0f, 0.0f, 1.0f), // front
-			        float3(0.0f, 0.0f, -1.0f) // back 
-                };
-                int index = 0;
-                float maxDotProduct = -2.0f;
-                float3 lightToPos = normalize(posWorld - light.Position);
-                for (int i = 0; i < 6; ++i)
-                {
-                    float curDot = dot(lightToPos, VIEW_DIRs[i]);
-                    if (maxDotProduct < curDot)
+                    const float3 VIEW_DIRs[6] =
                     {
-                        maxDotProduct = curDot;
-                        index = i;
+                        float3(1.0f, 0.0f, 0.0f),  // right
+			            float3(-1.0f, 0.0f, 0.0f), // left
+			            float3(0.0f, 1.0f, 0.0f),  // up
+			            float3(0.0f, -1.0f, 0.0f), // down
+			            float3(0.0f, 0.0f, 1.0f),  // front
+			            float3(0.0f, 0.0f, -1.0f)  // back 
+                    };
+                    int index = 0;
+                    float maxDotProduct = -2.0f;
+                    float3 lightToPos = normalize(posWorld - light.Position);
+                    
+                    for (int i = 0; i < 6; ++i)
+                    {
+                        float curDot = dot(lightToPos, VIEW_DIRs[i]);
+                        if (maxDotProduct < curDot)
+                        {
+                            maxDotProduct = curDot;
+                            index = i;
+                        }
                     }
+        
+                    float4 lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[index]);
+                    lightScreen.xyz /= lightScreen.w;
+        
+                    lightTexcoord = lightToPos;
+        
+                    shadowFactor = PCSSForPointLight(lightTexcoord, lightScreen.z - 0.001f, light.InverseProjections[0], light.Radius * radiusScale);
                 }
-        
-                float4 lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[index]);
-                lightScreen.xyz /= lightScreen.w;
-        
-                float3 lightTexcoord = lightToPos;
-        
-                float radiusScale = 0.5f;
-                shadowFactor = PCSS(lightTexcoord, lightScreen.z - 0.001f, light.InverseProjections[0], light.Radius * radiusScale);
-            }
                 break;
             
             case LIGHT_SPOT:
-            {
-                // Project posWorld to light screen.  
-                float4 lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[0]);
-                lightScreen.xyz /= lightScreen.w;
+                {
+                    // Project posWorld to light screen.  
+                    float4 lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[0]);
+                    lightScreen.xyz /= lightScreen.w;
         
-                // 카메라(광원)에서 볼 때의 텍스춰 좌표 계산. ([-1, 1], [-1, 1]) ==> ([0, 1], [0, 1])
-                float2 lightTexcoord = float2(lightScreen.x, -lightScreen.y);
-                lightTexcoord += 1.0f;
-                lightTexcoord *= 0.5f;
-        
-                float radiusScale = 0.5f; // 광원의 반지름을 키웠을 때 깨지는 것 방지.
-                shadowFactor = PCSS(lightTexcoord, lightScreen.z - 0.001f, shadowMapIndex, light.InverseProjections[0], light.Radius * radiusScale);
-            }
+                    // 카메라(광원)에서 볼 때의 텍스춰 좌표 계산. ([-1, 1], [-1, 1]) ==> ([0, 1], [0, 1])
+                    lightTexcoord.xy = float2(lightScreen.x, -lightScreen.y);
+                    lightTexcoord.xy += 1.0f;
+                    lightTexcoord.xy *= 0.5f;
+       
+                    shadowFactor = PCSSForSpotLight(shadowMapIndex, lightTexcoord.xy, lightScreen.z - 0.001f, light.InverseProjections[0], light.Radius * radiusScale);
+                }
                 break;
             
             default:
@@ -437,50 +436,52 @@ PixelShaderOutput main(PixelShaderInput input)
 
     float3 ambientLighting = AmbientLightingByIBL(albedo.rgb, normalWorld, pixelToEye, ao, metallic, roughness) * g_StrengthIBL;
     float3 directLighting = float3(0.0f, 0.0f, 0.0f);
-
+    
     [unroll] // warning X3550: sampler array index must be a literal expression, forcing loop to unroll
     for (int i = 0; i < MAX_LIGHTS; ++i)
     {
-        if (lights[i].Type)
+        if (lights[i].Type & LIGHT_OFF)
         {
-            float3 L = lights[i].Position - input.WorldPosition; // 렌더링 지점에서 광원 중심으로의 벡터.
-            float3 r = normalize(reflect(g_EyeWorld - input.WorldPosition, normalWorld)); // 시점의 반사벡터.
-            float3 centerToRay = dot(L, r) * r - L; // 광원 중심에서 반사벡터 r로의 벡터.
-            float3 representativePoint = L + centerToRay * clamp(lights[i].Radius / length(centerToRay), 0.0f, 1.0f); // 볼륨이 커진 광원과 빛 계산 시 사용하는 광원의 대표 점.
-            representativePoint += input.WorldPosition; // world space로 변환을 위해 input.posWorld를 더해줌. 위에서 계산한 벡터들은 input.posWorld를 원점으로 하는 좌표계에서 정의됨.
-            float3 lightVec = representativePoint - input.WorldPosition;
-
-            //float3 lightVec = lights[i].Position - input.WorldPosition;
-            float lightDist = length(lightVec);
-            lightVec /= lightDist;
-            float3 halfway = normalize(pixelToEye + lightVec);
+            continue;
+        }
         
-            float NdotI = max(0.0f, dot(normalWorld, lightVec));
-            float NdotH = max(0.0f, dot(normalWorld, halfway));
-            float NdotO = max(0.0f, dot(normalWorld, pixelToEye));
+        float3 L = lights[i].Position - input.WorldPosition; // 렌더링 지점에서 광원 중심으로의 벡터.
+        float3 r = normalize(reflect(g_EyeWorld - input.WorldPosition, normalWorld)); // 시점의 반사벡터.
+        float3 centerToRay = dot(L, r) * r - L; // 광원 중심에서 반사벡터 r로의 벡터.
+        float3 representativePoint = L + centerToRay * clamp(lights[i].Radius / length(centerToRay), 0.0f, 1.0f); // 볼륨이 커진 광원과 빛 계산 시 사용하는 광원의 대표 점.
+        representativePoint += input.WorldPosition; // world space로 변환을 위해 input.posWorld를 더해줌. 위에서 계산한 벡터들은 input.posWorld를 원점으로 하는 좌표계에서 정의됨.
+        float3 lightVec = representativePoint - input.WorldPosition;
+
+        //float3 lightVec = lights[i].Position - input.WorldPosition;
+        float lightDist = length(lightVec);
+        lightVec /= lightDist;
+        float3 halfway = normalize(pixelToEye + lightVec);
         
-            const float3 F_DIELECTRIC = 0.04; // 비금속(Dielectric) 재질의 F0
-            float3 F0 = lerp(F_DIELECTRIC, albedo.rgb, metallic);
-            float3 F = SchlickFresnel(F0, max(0.0f, dot(halfway, pixelToEye)));
-            float3 kd = lerp(float3(1, 1, 1) - F, float3(0, 0, 0), metallic);
-            float3 diffuseBRDF = kd * albedo.rgb;
+        float NdotI = max(0.0f, dot(normalWorld, lightVec));
+        float NdotH = max(0.0f, dot(normalWorld, halfway));
+        float NdotO = max(0.0f, dot(normalWorld, pixelToEye));
+        
+        const float3 F_DIELECTRIC = 0.04f; // 비금속(Dielectric) 재질의 F0
+        float3 F0 = lerp(F_DIELECTRIC, albedo.rgb, metallic);
+        float3 F = SchlickFresnel(F0, max(0.0f, dot(halfway, pixelToEye)));
+        float3 kd = lerp(float3(1, 1, 1) - F, float3(0, 0, 0), metallic);
+        float3 diffuseBRDF = kd * albedo.rgb;
 
-            // Sphere Normalization
-            float alpha = roughness * roughness;
-            float alphaPrime = saturate(alpha + lights[i].Radius / (2.0f * lightDist));
+       // Sphere Normalization
+        float alpha = roughness * roughness;
+        float alphaPrime = saturate(alpha + lights[i].Radius / (2.0f * lightDist));
 
-            float D = NdfGGX(NdotH, roughness, alphaPrime);
-            float3 G = SchlickGGX(NdotI, NdotO, roughness);
-            float3 specularBRDF = (F * D * G) / max(1e-5, 4.0f * NdotI * NdotO);
+        float D = NdfGGX(NdotH, roughness, alphaPrime);
+        float3 G = SchlickGGX(NdotI, NdotO, roughness);
+        float3 specularBRDF = (F * D * G) / max(1e-5, 4.0f * NdotI * NdotO);
 
-            float3 radiance = float3(0.0f, 0.0f, 0.0f);
-            radiance = LightRadiance(lights[i], representativePoint, input.WorldPosition, normalWorld, i);
+        float3 radiance = float3(0.0f, 0.0f, 0.0f);
+        radiance = LightRadiance(lights[i], i, representativePoint, input.WorldPosition, normalWorld);
             
-            // 오류 임시 수정 (radiance가 (0,0,0)일 경우, directLighting += ... 인데도 0 벡터가 되어버림.
-            if (abs(dot(radiance, float3(1.0f, 1.0f, 1.0f))) > 1e-5)
-            {
-                directLighting += (diffuseBRDF + specularBRDF) * radiance * NdotI;
-            }
+        // 오류 임시 수정 (radiance가 (0,0,0)일 경우, directLighting += ... 인데도 0 벡터가 되어버림.
+        if (abs(dot(radiance, float3(1.0f, 1.0f, 1.0f))) > 1e-5)
+        {
+            directLighting += (diffuseBRDF + specularBRDF) * radiance * NdotI;
         }
     }
     

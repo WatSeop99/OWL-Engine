@@ -31,7 +31,7 @@ namespace Geometry
 		};
 
 		std::string Name;					 // Name of this animation clip.
-		std::vector<std::vector<Key>> pKeys; // m_key[boneIdx][frameIdx].
+		std::vector<std::vector<Key>> pKeys; // pKeys[boneIDX][frameIDX].
 		int NumChannels;					 // Number of bones.
 		int NumKeys;						 // Number of frames of this animation clip.
 		double Duration;					 // Duration of animation in ticks.

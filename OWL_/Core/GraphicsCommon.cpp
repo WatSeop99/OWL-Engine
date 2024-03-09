@@ -69,7 +69,9 @@ namespace Graphics
 	ID3D11GeometryShader* g_pBillboardGS = nullptr;
 
 	ID3D11VertexShader* g_pDepthOnlyCubeVS = nullptr;
+	ID3D11VertexShader* g_pDepthOnlyCubeSkinnedVS = nullptr;
 	ID3D11VertexShader* g_pDepthOnlyCascadeVS = nullptr;
+	ID3D11VertexShader* g_pDepthOnlyCascadeSkinnedVS = nullptr;
 	ID3D11GeometryShader* g_pDepthOnlyCubeGS = nullptr;
 	ID3D11GeometryShader* g_pDepthOnlyCascadeGS = nullptr;
 	ID3D11PixelShader* g_pDepthOnlyCubePS = nullptr;
@@ -103,6 +105,10 @@ namespace Graphics
 	Graphics::GraphicsPSO g_NormalsPSO;
 	Graphics::GraphicsPSO g_DepthOnlyPSO;
 	Graphics::GraphicsPSO g_DepthOnlySkinnedPSO;
+	Graphics::GraphicsPSO g_DepthOnlyCubePSO;
+	Graphics::GraphicsPSO g_DepthOnlyCubeSkinnedPSO;
+	Graphics::GraphicsPSO g_DepthOnlyCascadePSO;
+	Graphics::GraphicsPSO g_DepthOnlyCascadeSkinnedPSO;
 	Graphics::GraphicsPSO g_PostEffectsPSO;
 	Graphics::GraphicsPSO g_PostProcessingPSO;
 	Graphics::GraphicsPSO g_BoundingBoxPSO;
@@ -110,7 +116,9 @@ namespace Graphics
 	Graphics::GraphicsPSO g_GrassWirePSO;
 	Graphics::GraphicsPSO g_OceanPSO;
 	Graphics::GraphicsPSO g_GBufferPSO;
+	Graphics::GraphicsPSO g_GBufferWirePSO;
 	Graphics::GraphicsPSO g_GBufferSkinnedPSO;
+	Graphics::GraphicsPSO g_GBufferSKinnedWirePSO;
 	Graphics::GraphicsPSO g_DeferredRenderingPSO;
 
 	// 주의: 초기화가 느려서 필요한 경우에만 초기화
@@ -562,8 +570,14 @@ void Graphics::InitShaders(ID3D11Device* pDevice)
 	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthOnlyCubeVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
 													&g_pDepthOnlyCubeVS, &g_pSkyboxIL);
 	BREAK_IF_FAILED(hr);
+	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthOnlyCubeVS.hlsl", pSKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO,
+													&g_pDepthOnlyCubeSkinnedVS, &g_pSkinnedIL);
+	BREAK_IF_FAILED(hr);
 	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthOnlyCascadeVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
 													&g_pDepthOnlyCascadeVS, &g_pSkyboxIL);
+	BREAK_IF_FAILED(hr);
+	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthONlyCascadeVS.hlsl", pSKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO,
+													&g_pDepthOnlyCascadeSkinnedVS, &g_pSkinnedIL);
 	BREAK_IF_FAILED(hr);
 	hr = Graphics::CreateGeometryShader(pDevice, L"./Shaders/DepthOnlyCubeGS.hlsl", &g_pDepthOnlyCubeGS);
 	BREAK_IF_FAILED(hr);
@@ -668,9 +682,32 @@ void Graphics::InitPipelineStates(ID3D11Device* pDevice)
 	g_DepthOnlyPSO.pVertexShader = g_pDepthOnlyVS;
 	g_DepthOnlyPSO.pPixelShader = g_pDepthOnlyPS;
 
+	// g_DepthOnlySkinnedPSO
 	g_DepthOnlySkinnedPSO = g_DepthOnlyPSO;
 	g_DepthOnlySkinnedPSO.pVertexShader = g_pDepthOnlySkinnedVS;
 	g_DepthOnlySkinnedPSO.pInputLayout = g_pSkinnedIL;
+
+	// g_DepthOnlyCubePSO
+	g_DepthOnlyCubePSO = g_DepthOnlyPSO;
+	g_DepthOnlyCubePSO.pVertexShader = g_pDepthOnlyCubeVS;
+	g_DepthOnlyCubePSO.pGeometryShader = g_pDepthOnlyCubeGS;
+	g_DepthOnlyCubePSO.pPixelShader = g_pDepthOnlyCubePS;
+
+	// g_DepthOnlyCubeSkinnedPSO
+	g_DepthOnlyCubeSkinnedPSO = g_DepthOnlyCubePSO;
+	g_DepthOnlyCubeSkinnedPSO.pVertexShader = g_pDepthOnlyCubeSkinnedVS;
+	g_DepthOnlyCubeSkinnedPSO.pInputLayout = g_pSkinnedIL;
+
+	// g_DepthOnlyCascadePSO
+	g_DepthOnlyCascadePSO = g_DepthOnlyPSO;
+	g_DepthOnlyCascadePSO.pVertexShader = g_pDepthOnlyCascadeVS;
+	g_DepthOnlyCascadePSO.pGeometryShader = g_pDepthOnlyCascadeGS;
+	g_DepthOnlyCascadePSO.pPixelShader = g_pDepthOnlyCascadePS;
+
+	// g_DepthOnlyCascadeSkinnedPSO
+	g_DepthOnlyCascadeSkinnedPSO = g_DepthOnlyCascadePSO;
+	g_DepthOnlyCascadeSkinnedPSO.pVertexShader = g_pDepthOnlyCascadeSkinnedVS;
+	g_DepthOnlyCascadeSkinnedPSO.pInputLayout = g_pSkinnedIL;
 
 	// g_PostEffectsPSO
 	g_PostEffectsPSO.pVertexShader = g_pSamplingVS;
@@ -712,15 +749,24 @@ void Graphics::InitPipelineStates(ID3D11Device* pDevice)
 	g_GBufferPSO.pVertexShader = g_pGBufferVS;
 	g_GBufferPSO.pPixelShader = g_pGBufferPS;
 
+	// g_GBufferWirePSO
+	g_GBufferWirePSO = g_GBufferPSO;
+	g_GBufferWirePSO.pRasterizerState = g_pWireRS;
+
 	// g_GBufferSkinnedPSO
 	g_GBufferSkinnedPSO = g_GBufferPSO;
 	g_GBufferSkinnedPSO.pVertexShader = g_pGBufferSkinnedVS;
 	g_GBufferSkinnedPSO.pInputLayout = g_pSkinnedIL;
 
+	// g_GBufferSKinnedWirePSO
+	g_GBufferSKinnedWirePSO = g_GBufferSkinnedPSO;
+	g_GBufferSkinnedPSO.pRasterizerState = g_pWireRS;
+
 	// g_DeferredRenderingPSO
 	g_DeferredRenderingPSO = g_PostProcessingPSO;
 	g_DeferredRenderingPSO.pPixelShader = g_pDeferredLightingPS;
 	g_DeferredRenderingPSO.pRasterizerState = g_pSolidRS;
+
 }
 
 // 주의: 초기화가 느려서 필요한 경우에만 초기화하는 쉐이더
@@ -813,7 +859,9 @@ void Graphics::DestroyCommonStates()
 	SAFE_RELEASE(g_pBillboardIL);
 
 	SAFE_RELEASE(g_pDepthOnlyCubeVS);
+	SAFE_RELEASE(g_pDepthOnlyCubeSkinnedVS);
 	SAFE_RELEASE(g_pDepthOnlyCascadeVS);
+	SAFE_RELEASE(g_pDepthOnlyCascadeSkinnedVS);
 	SAFE_RELEASE(g_pDepthOnlyCubeGS);
 	SAFE_RELEASE(g_pDepthOnlyCascadeGS);
 	SAFE_RELEASE(g_pDepthOnlyCubePS);

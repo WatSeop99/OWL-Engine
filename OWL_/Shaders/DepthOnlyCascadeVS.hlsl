@@ -4,24 +4,24 @@ float4 main(VertexShaderInput input) : SV_POSITION
 {
 #ifdef SKINNED
     float weights[8];
-    weights[0] = input.boneWeights0.x;
-    weights[1] = input.boneWeights0.y;
-    weights[2] = input.boneWeights0.z;
-    weights[3] = input.boneWeights0.w;
-    weights[4] = input.boneWeights1.x;
-    weights[5] = input.boneWeights1.y;
-    weights[6] = input.boneWeights1.z;
-    weights[7] = input.boneWeights1.w;
+    weights[0] = input.BoneWeights0.x;
+    weights[1] = input.BoneWeights0.y;
+    weights[2] = input.BoneWeights0.z;
+    weights[3] = input.BoneWeights0.w;
+    weights[4] = input.BoneWeights1.x;
+    weights[5] = input.BoneWeights1.y;
+    weights[6] = input.BoneWeights1.z;
+    weights[7] = input.BoneWeights1.w;
     
     uint indices[8];
-    indices[0] = input.boneIndices0.x;
-    indices[1] = input.boneIndices0.y;
-    indices[2] = input.boneIndices0.z;
-    indices[3] = input.boneIndices0.w;
-    indices[4] = input.boneIndices1.x;
-    indices[5] = input.boneIndices1.y;
-    indices[6] = input.boneIndices1.z;
-    indices[7] = input.boneIndices1.w;
+    indices[0] = input.BoneIndices0.x;
+    indices[1] = input.BoneIndices0.y;
+    indices[2] = input.BoneIndices0.z;
+    indices[3] = input.BoneIndices0.w;
+    indices[4] = input.BoneIndices1.x;
+    indices[5] = input.BoneIndices1.y;
+    indices[6] = input.BoneIndices1.z;
+    indices[7] = input.BoneIndices1.w;
 
     float3 modelPos = float3(0.0f, 0.0f, 0.0f);
     

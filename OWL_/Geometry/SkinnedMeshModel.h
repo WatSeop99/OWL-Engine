@@ -20,7 +20,10 @@ namespace Geometry
 		void Render(ID3D11DeviceContext* pContext) override;
 
 		inline Graphics::GraphicsPSO& GetPSO(const bool bWIRED) override { return (bWIRED ? Graphics::g_SkinnedWirePSO : Graphics::g_SkinnedSolidPSO); }
+		inline Graphics::GraphicsPSO& GetGBufferPSO(const bool bWIRED) override { return (bWIRED ? Graphics::g_GBufferSKinnedWirePSO : Graphics::g_GBufferSkinnedPSO); }
 		inline Graphics::GraphicsPSO& GetDepthOnlyPSO() override { return Graphics::g_DepthOnlySkinnedPSO; }
+		inline Graphics::GraphicsPSO& GetDepthOnlyCubePSO() override { return Graphics::g_DepthOnlyCubeSkinnedPSO; }
+		inline Graphics::GraphicsPSO& GetDepthOnlyCascadePSO() override { return Graphics::g_DepthOnlyCascadeSkinnedPSO; }
 		inline Graphics::GraphicsPSO& GetReflectPSO(const bool bWIRED) override { return (bWIRED ? Graphics::g_ReflectSkinnedWirePSO : Graphics::g_ReflectSkinnedSolidPSO); }
 
 	public:

@@ -35,7 +35,10 @@ namespace Geometry
 		virtual void RenderWireBoundingSphere(ID3D11DeviceContext* pContext);
 
 		virtual inline Graphics::GraphicsPSO& GetPSO(const bool bWIRED) { return (bWIRED ? Graphics::g_DefaultWirePSO : Graphics::g_DefaultSolidPSO); }
+		virtual inline Graphics::GraphicsPSO& GetGBufferPSO(const bool bWIRED) { return (bWIRED ? Graphics::g_GBufferSkinnedPSO : Graphics::g_GBufferPSO); }
 		virtual inline Graphics::GraphicsPSO& GetDepthOnlyPSO() { return Graphics::g_DepthOnlyPSO; }
+		virtual inline Graphics::GraphicsPSO& GetDepthOnlyCubePSO() { return Graphics::g_DepthOnlyCubePSO; }
+		virtual inline Graphics::GraphicsPSO& GetDepthOnlyCascadePSO() { return Graphics::g_DepthOnlyCascadePSO; }
 		virtual inline Graphics::GraphicsPSO& GetReflectPSO(const bool bWIRED) { return (bWIRED ? Graphics::g_ReflectWirePSO : Graphics::g_ReflectSolidPSO); }
 
 	protected:

@@ -55,7 +55,7 @@ void DebugApp2::InitScene()
 			}
 		}
 
-		Vector3 center(0.0f, 0.5f, 2.0f);
+		Vector3 center(0.0f, 0.0f, 2.0f);
 		m_pCharacter = New Geometry::SkinnedMeshModel(m_pDevice5, m_pContext4, meshInfos, aniData);
 		for (size_t i = 0, size = m_pCharacter->pMeshes.size(); i < size; ++i)
 		{
@@ -211,9 +211,9 @@ void DebugApp2::Update(float deltaTime)
 	// 4: dance
 	static int s_State = 0;
 
-	// 주의: s_FrameCount = 0;
-
-	if (s_State == 0) // 정지 상태.
+	switch (s_State)
+	{
+	case 0:
 	{
 		if (Core::BaseRenderer::m_pbKeyPressed[VK_UP])
 		{
@@ -227,7 +227,9 @@ void DebugApp2::Update(float deltaTime)
 			s_FrameCount = 0; // 상태 변화 없이 반복.
 		}
 	}
-	else if (s_State == 1)
+		break;
+
+	case 1:
 	{
 		if (s_FrameCount == m_pCharacter->m_AnimData.pClips[s_State].pKeys[0].size())
 		{
@@ -235,7 +237,9 @@ void DebugApp2::Update(float deltaTime)
 			s_FrameCount = 0;
 		}
 	}
-	else if (s_State == 2)
+		break;
+
+	case 2:
 	{
 		if (Core::BaseRenderer::m_pbKeyPressed[VK_RIGHT])
 		{
@@ -259,21 +263,31 @@ void DebugApp2::Update(float deltaTime)
 			s_FrameCount = 0;
 		}
 	}
-	else if (s_State == 3)
+		break;
+
+	case 3:
 	{
 		if (s_FrameCount == m_pCharacter->m_AnimData.pClips[s_State].pKeys[0].size())
 		{
-			s_State = 4;
+			// s_State = 4;
+			s_State = 0;
 			s_FrameCount = 0;
 		}
 	}
-	else if (s_State == 4)
+		break;
+
+	case 4:
 	{
 		if (s_FrameCount == m_pCharacter->m_AnimData.pClips[s_State].pKeys[0].size())
 		{
 			s_State = 0;
 			s_FrameCount = 0;
 		}
+	}
+		break;
+
+	default:
+		break;
 	}
 
 	m_pCharacter->UpdateAnimation(m_pContext4, s_State, s_FrameCount);

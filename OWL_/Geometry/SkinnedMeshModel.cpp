@@ -19,6 +19,7 @@ namespace Geometry
 	void SkinnedMeshModel::InitMeshBuffers(ID3D11Device* pDevice, const MeshInfo& MESH_DATA, Mesh* pNewMesh)
 	{
 		HRESULT hr = S_OK;
+
 		hr = Graphics::CreateVertexBuffer(pDevice, MESH_DATA.SkinnedVertices, &(pNewMesh->pVertexBuffer));
 		BREAK_IF_FAILED(hr);
 
@@ -57,7 +58,6 @@ namespace Geometry
 		{
 			m_BoneTransforms.CPU[i] = m_AnimData.Get(clipID, i, frame).Transpose();
 		}
-
 		m_BoneTransforms.Upload(pContext);
 	}
 
