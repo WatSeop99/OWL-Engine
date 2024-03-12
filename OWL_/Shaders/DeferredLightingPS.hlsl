@@ -325,6 +325,7 @@ float3 LightRadiance(Light light, int shadowMapIndex, float3 representativePoint
 
     if (light.Type & LIGHT_SHADOW)
     {
+        float4 lightScreen = float4(0.0f, 0.0f, 0.0f, 0.0f);
         float3 lightTexcoord = float3(0.0f, 0.0f, 0.0f);
         float radiusScale = 0.5f; // 광원의 반지름을 키웠을 때 깨지는 것 방지.
         
@@ -333,7 +334,6 @@ float3 LightRadiance(Light light, int shadowMapIndex, float3 representativePoint
             case LIGHT_DIRECTIONAL:
                 {
                     int index = -1;
-                    float4 lightScreen = float4(0.0f, 0.0f, 0.0f, 0.0f);
                     
                     for (int i = 0; i < 4; ++i)
                     {
@@ -388,7 +388,7 @@ float3 LightRadiance(Light light, int shadowMapIndex, float3 representativePoint
                         }
                     }
         
-                    float4 lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[index]);
+                    lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[index]);
                     lightScreen.xyz /= lightScreen.w;
         
                     lightTexcoord = lightToPos;
@@ -400,7 +400,7 @@ float3 LightRadiance(Light light, int shadowMapIndex, float3 representativePoint
             case LIGHT_SPOT:
                 {
                     // Project posWorld to light screen.  
-                    float4 lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[0]);
+                    lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[0]);
                     lightScreen.xyz /= lightScreen.w;
         
                     // 카메라(광원)에서 볼 때의 텍스춰 좌표 계산. ([-1, 1], [-1, 1]) ==> ([0, 1], [0, 1])
@@ -434,7 +434,7 @@ PixelShaderOutput main(SamplingPixelShaderInput input)
     float roughness = g_ExtraTex.Sample(g_LinearWrapSampler, input.Texcoord).y;
     float ao = g_ExtraTex.Sample(g_LinearWrapSampler, input.Texcoord).z;
     float height = g_ExtraTex.Sample(g_LinearWrapSampler, input.Texcoord).w;
-    if (albedo.a == 0.0f) // Tree leaves. 투명한 부분의 픽셀은 그리지 않음.
+    if (albedo.a - 0.5f == 0.0f) // Tree leaves. 투명한 부분의 픽셀은 그리지 않음.
     {
         return output;
     }
@@ -466,7 +466,7 @@ PixelShaderOutput main(SamplingPixelShaderInput input)
         
             float3 F0 = lerp(F_DIELECTRIC, albedo.rgb, metallic);
             float3 F = SchlickFresnel(F0, max(0.0f, dot(halfway, pixelToEye)));
-            float3 kd = lerp(float3(1, 1, 1) - F, float3(0, 0, 0), metallic);
+            float3 kd = lerp(float3(1.0f, 1.0f, 1.0f) - F, float3(0.0f, 0.0f, 0.0f), metallic);
             float3 diffuseBRDF = kd * albedo.rgb;
 
             // Sphere Normalization

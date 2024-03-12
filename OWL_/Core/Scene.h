@@ -37,7 +37,7 @@ namespace Core
 		void Render(ID3D11DeviceContext* pContext);
 
 		void Destroy();
-		void ResetDepthBuffers(ID3D11Device* pDevice, const bool bUSE_MSAA = false, const UINT NUM_QUALITY_LEVELS = 0);
+		void ResetBuffers(ID3D11Device* pDevice, const bool bUSE_MSAA = false, const UINT NUM_QUALITY_LEVELS = 0);
 
 		inline void SetScreenWidth(const UINT WIDTH) { m_ScreenWidth = WIDTH; m_GBuffer.SetScreenWidth(WIDTH); }
 		inline void SetScreenHeight(const UINT HEIGHT) { m_ScreenHeight = HEIGHT; m_GBuffer.SetScreenHeight(HEIGHT); }
@@ -67,6 +67,9 @@ namespace Core
 		void renderDepthOnly(ID3D11DeviceContext* pContext);
 		void renderShadowMaps(ID3D11DeviceContext* pContext);
 		void renderOpaqueObjects(ID3D11DeviceContext* pContext);
+		void renderGBuffer(ID3D11DeviceContext* pContext);
+		void renderDeferredLighting(ID3D11DeviceContext* pContext);
+		void renderOptions(ID3D11DeviceContext* pContext);
 		void renderMirror(ID3D11DeviceContext* pContext);
 
 		void setPipelineState(ID3D11DeviceContext* pContext, const Graphics::GraphicsPSO& PSO);

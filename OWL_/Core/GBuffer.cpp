@@ -12,7 +12,7 @@ namespace Graphics
         desc.Width = m_ScreenWidth;
         desc.Height = m_ScreenHeight;
         desc.MipLevels = desc.ArraySize = 1;
-        desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        desc.Format = DXGI_FORMAT_R16G16B16A16_UNORM;
         desc.SampleDesc.Count = 1;
         desc.Usage = D3D11_USAGE_DEFAULT;
         desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
@@ -28,12 +28,11 @@ namespace Graphics
         hr = CreateTexture2D(pDevice, desc, &(PositionBuffer.pTexture), &(PositionBuffer.pRTV), &(PositionBuffer.pSRV), &(PositionBuffer.pDSV), &(PositionBuffer.pUAV));
         BREAK_IF_FAILED(hr);
 
-        desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        desc.Format = DXGI_FORMAT_R16G16B16A16_UNORM;
         hr = CreateTexture2D(pDevice, desc, &(EmissionBuffer.pTexture), &(EmissionBuffer.pRTV), &(EmissionBuffer.pSRV), &(EmissionBuffer.pDSV), &(EmissionBuffer.pUAV));
         BREAK_IF_FAILED(hr);
 
-        // desc.Format = DXGI_FORMAT_R32_UINT;
-        desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+       desc.Format = DXGI_FORMAT_R16G16B16A16_UNORM;
         hr = CreateTexture2D(pDevice, desc, &(ExtraBuffer.pTexture), &(ExtraBuffer.pRTV), &(ExtraBuffer.pSRV), &(ExtraBuffer.pDSV), &(ExtraBuffer.pUAV));
         BREAK_IF_FAILED(hr);
 
@@ -82,5 +81,15 @@ namespace Graphics
     {
         ID3D11RenderTargetView* ppRTVs[5] = { nullptr, };
         pContext->OMSetRenderTargets(5, ppRTVs, nullptr);
+    }
+
+    void GBuffer::Destroy()
+    {
+        AlbedoBuffer.Destroy();
+        NormalBuffer.Destroy();
+        PositionBuffer.Destroy();
+        DepthBuffer.Destroy();
+        EmissionBuffer.Destroy();
+        ExtraBuffer.Destroy();
     }
 }

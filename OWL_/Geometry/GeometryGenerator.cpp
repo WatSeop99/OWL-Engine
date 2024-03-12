@@ -95,6 +95,7 @@ namespace Geometry
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d9/texture-coordinates
 
 		_ASSERT(pDst);
+
 		pDst->Vertices.resize(4);
 
 		pDst->Vertices[0].Position = Vector3(-1.0f, 1.0f, 0.0f) * SCALE;

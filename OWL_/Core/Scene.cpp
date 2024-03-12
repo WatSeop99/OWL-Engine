@@ -10,7 +10,7 @@ namespace Core
 		LoadScene(pDevice);
 
 		createBuffers(pDevice);
-		m_GBuffer.bIsEnabled = true;
+		m_GBuffer.bIsEnabled = false;
 		m_GBuffer.Initialize(pDevice);
 
 		pLights.resize(MAX_LIGHTS);
@@ -176,116 +176,15 @@ namespace Core
 
 		if (m_GBuffer.bIsEnabled)
 		{
-			// 다시 렌더링 해상도로 되돌리기.
-			setScreenViewport(pContext);
-
-			setGlobalConstants(pContext, &(m_GlobalConstants.pGPU), 0);
-
-			m_GBuffer.PrepareRender(pContext, m_pDefaultDSV);
-			setPipelineState(pContext, Graphics::g_GBufferPSO);
-			for (size_t i = 0, size = pRenderObjects.size(); i < size; ++i)
-			{
-				Geometry::Model* pCurModel = pRenderObjects[i];
-				setPipelineState(pContext, pCurModel->GetGBufferPSO(bDrawAsWire));
-				pCurModel->Render(pContext);
-			}
-
-			m_GBuffer.AfterRender(pContext);
-
-			// 그림자맵들도 공용 텍스춰들 이후에 추가.
-			// 주의: 마지막 shadowDSV를 RenderTarget에서 해제한 후 설정.
-			ID3D11ShaderResourceView* ppShadowSRVs[MAX_LIGHTS] = { nullptr, };
-			UINT pointLightIndex = -1;
-			UINT directionalLightIndex = -1;
-			for (size_t i = 0, size = pLights.size(); i < size; ++i)
-			{
-				ShadowMap& curShadowMap = pLights[i].GetShadowMap();
-				switch (pLights[i].Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
-				{
-				case LIGHT_DIRECTIONAL:
-					directionalLightIndex = (UINT)i;
-					break;
-
-				case LIGHT_POINT:
-					pointLightIndex = (UINT)i;
-					break;
-
-				case LIGHT_SPOT:
-				{
-					Graphics::Texture2D& curShadowBuffer = curShadowMap.GetSpotLightShadowBuffer();
-					ppShadowSRVs[i] = curShadowBuffer.pSRV;
-				}
-					break;
-
-				default:
-					break;
-				}
-			}
-			pContext->PSSetShaderResources(15, (UINT)pLights.size(), ppShadowSRVs);
-
-			if (pointLightIndex != -1)
-			{
-				ShadowMap& curShadowMap = pLights[pointLightIndex].GetShadowMap();
-				Graphics::Texture2D& curShadowCubeBuffer = curShadowMap.GetPointLightShadowBuffer();
-				pContext->PSSetShaderResources(20, 1, &(curShadowCubeBuffer.pSRV));
-			}
-			if (directionalLightIndex != -1)
-			{
-				ShadowMap& curShadowMap = pLights[directionalLightIndex].GetShadowMap();
-				Graphics::Texture2D& curShadowCascadeBuffer = curShadowMap.GetDirectionalLightShadowBuffer();
-				pContext->PSSetShaderResources(25, 1, &(curShadowCascadeBuffer.pSRV));
-			}
-
-			setGlobalConstants(pContext, &(m_LightConstants.pGPU), 1);
-
-			const float CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-			pContext->ClearRenderTargetView(m_FloatBuffer.pRTV, CLEAR_COLOR);
-			pContext->ClearDepthStencilView(m_pDefaultDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-			pContext->OMSetRenderTargets(1, &(m_FloatBuffer.pRTV), m_pDefaultDSV);
-
-			ID3D11ShaderResourceView* ppSRVs[5] = { m_GBuffer.AlbedoBuffer.pSRV, m_GBuffer.NormalBuffer.pSRV, m_GBuffer.PositionBuffer.pSRV, m_GBuffer.EmissionBuffer.pSRV, m_GBuffer.ExtraBuffer.pSRV };
-			pContext->PSSetShaderResources(0, 5, ppSRVs);
-
-			setPipelineState(pContext, Graphics::g_DeferredRenderingPSO);
-
-			UINT stride = sizeof(Geometry::Vertex);
-			UINT offset = 0;
-			pContext->IASetVertexBuffers(0, 1, &(m_pScreenMesh->pVertexBuffer), &stride, &offset);
-			pContext->IASetIndexBuffer(m_pScreenMesh->pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-			pContext->DrawIndexed(m_pScreenMesh->IndexCount, 0, 0);
-			
-			pContext->OMSetRenderTargets(1, &(m_FloatBuffer.pRTV), m_GBuffer.DepthBuffer.pDSV);
-
-			// 스카이박스 그리기.
-			// 최적화를 하고 싶다면 투명한 물체들만 따로 마지막에 그리면 됨.
-			setPipelineState(pContext, bDrawAsWire ? Graphics::g_SkyboxWirePSO : Graphics::g_SkyboxSolidPSO);
-			m_pSkybox->Render(pContext);
-
-			for (size_t i = 0, size = pRenderObjects.size(); i < size; ++i)
-			{
-				Geometry::Model* pCurModel = pRenderObjects[i];
-				if (pCurModel->bDrawNormals)
-				{
-					setPipelineState(pContext, Graphics::g_NormalsPSO);
-					pCurModel->RenderNormals(pContext);
-				}
-				if (bDrawOBB)
-				{
-					setPipelineState(pContext, Graphics::g_BoundingBoxPSO);
-					pCurModel->RenderWireBoundingBox(pContext);
-				}
-				if (bDrawBS)
-				{
-					setPipelineState(pContext, Graphics::g_BoundingBoxPSO);
-					pCurModel->RenderWireBoundingSphere(pContext);
-				}
-			}
+			renderGBuffer(pContext);
+			renderDeferredLighting(pContext);
 		}
 		else
 		{
 			renderOpaqueObjects(pContext);
 		}
 
+		renderOptions(pContext);
 		renderMirror(pContext);
 	}
 
@@ -327,10 +226,18 @@ namespace Core
 		pRenderObjects.clear();
 	}
 
-	void Scene::ResetDepthBuffers(ID3D11Device* pDevice, const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVELS)
+	void Scene::ResetBuffers(ID3D11Device* pDevice, const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVELS)
 	{
 		SAFE_RELEASE(m_pDefaultDSV);
 		m_DepthOnlyBuffer.Destroy();
+		
+		if (m_GBuffer.bIsEnabled)
+		{
+			m_GBuffer.Destroy();
+			m_GBuffer.SetScreenWidth(m_ScreenWidth);
+			m_GBuffer.SetScreenHeight(m_ScreenHeight);
+			m_GBuffer.Initialize(pDevice);
+		}
 
 		createDepthBuffers(pDevice, bUSE_MSAA, NUM_QUALITY_LEVELS);
 	}
@@ -558,7 +465,100 @@ namespace Core
 			setPipelineState(pContext, pCurModel->GetPSO(bDrawAsWire));
 			pCurModel->Render(pContext);
 		}
+	}
 
+	void Scene::renderGBuffer(ID3D11DeviceContext* pContext)
+	{
+		// 다시 렌더링 해상도로 되돌리기.
+		setScreenViewport(pContext);
+
+		setGlobalConstants(pContext, &(m_GlobalConstants.pGPU), 0);
+
+		m_GBuffer.PrepareRender(pContext, m_pDefaultDSV);
+
+		for (size_t i = 0, size = pRenderObjects.size(); i < size; ++i)
+		{
+			Geometry::Model* pCurModel = pRenderObjects[i];
+			setPipelineState(pContext, pCurModel->GetGBufferPSO(bDrawAsWire));
+			pCurModel->Render(pContext);
+		}
+
+		m_GBuffer.AfterRender(pContext);
+	}
+
+	void Scene::renderDeferredLighting(ID3D11DeviceContext * pContext)
+	{
+		// 그림자맵들도 공용 텍스춰들 이후에 추가.
+		ID3D11ShaderResourceView* ppShadowSRVs[MAX_LIGHTS] = { nullptr, };
+		UINT pointLightIndex = -1;
+		UINT directionalLightIndex = -1;
+		for (size_t i = 0, size = pLights.size(); i < size; ++i)
+		{
+			ShadowMap& curShadowMap = pLights[i].GetShadowMap();
+			switch (pLights[i].Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
+			{
+			case LIGHT_DIRECTIONAL:
+				directionalLightIndex = (UINT)i;
+				break;
+
+			case LIGHT_POINT:
+				pointLightIndex = (UINT)i;
+				break;
+
+			case LIGHT_SPOT:
+			{
+				Graphics::Texture2D& curShadowBuffer = curShadowMap.GetSpotLightShadowBuffer();
+				ppShadowSRVs[i] = curShadowBuffer.pSRV;
+			}
+			break;
+
+			default:
+				break;
+			}
+		}
+		pContext->PSSetShaderResources(15, (UINT)pLights.size(), ppShadowSRVs);
+
+		if (pointLightIndex != -1)
+		{
+			ShadowMap& curShadowMap = pLights[pointLightIndex].GetShadowMap();
+			Graphics::Texture2D& curShadowCubeBuffer = curShadowMap.GetPointLightShadowBuffer();
+			pContext->PSSetShaderResources(20, 1, &(curShadowCubeBuffer.pSRV));
+		}
+		if (directionalLightIndex != -1)
+		{
+			ShadowMap& curShadowMap = pLights[directionalLightIndex].GetShadowMap();
+			Graphics::Texture2D& curShadowCascadeBuffer = curShadowMap.GetDirectionalLightShadowBuffer();
+			pContext->PSSetShaderResources(25, 1, &(curShadowCascadeBuffer.pSRV));
+		}
+
+		setGlobalConstants(pContext, &(m_LightConstants.pGPU), 1);
+
+		const float CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		pContext->ClearRenderTargetView(m_FloatBuffer.pRTV, CLEAR_COLOR);
+		pContext->ClearDepthStencilView(m_pDefaultDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+		pContext->OMSetRenderTargets(1, &(m_FloatBuffer.pRTV), m_pDefaultDSV);
+
+		ID3D11ShaderResourceView* ppSRVs[5] = { m_GBuffer.AlbedoBuffer.pSRV, m_GBuffer.NormalBuffer.pSRV, m_GBuffer.PositionBuffer.pSRV, m_GBuffer.EmissionBuffer.pSRV, m_GBuffer.ExtraBuffer.pSRV };
+		pContext->PSSetShaderResources(0, 5, ppSRVs);
+
+		setPipelineState(pContext, Graphics::g_DeferredRenderingPSO);
+
+		UINT stride = sizeof(Geometry::Vertex);
+		UINT offset = 0;
+		pContext->IASetVertexBuffers(0, 1, &(m_pScreenMesh->pVertexBuffer), &stride, &offset);
+		pContext->IASetIndexBuffer(m_pScreenMesh->pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		pContext->DrawIndexed(m_pScreenMesh->IndexCount, 0, 0);
+
+		pContext->OMSetRenderTargets(1, &(m_FloatBuffer.pRTV), m_GBuffer.DepthBuffer.pDSV);
+
+		// 스카이박스 그리기.
+		setPipelineState(pContext, bDrawAsWire ? Graphics::g_SkyboxWirePSO : Graphics::g_SkyboxSolidPSO);
+		m_pSkybox->Render(pContext);
+
+	}
+
+	void Scene::renderOptions(ID3D11DeviceContext* pContext)
+	{
 		for (size_t i = 0, size = pRenderObjects.size(); i < size; ++i)
 		{
 			Geometry::Model* pCurModel = pRenderObjects[i];

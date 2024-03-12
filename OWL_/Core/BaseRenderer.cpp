@@ -120,7 +120,7 @@ namespace Core
 	void BaseRenderer::InitScene()
 	{
 		m_Scene.Initialize(m_pDevice5, m_pContext4);
-		m_Scene.ResetDepthBuffers(m_pDevice5, m_bUseMSAA, m_NumQualityLevels);
+		m_Scene.ResetBuffers(m_pDevice5, m_bUseMSAA, m_NumQualityLevels);
 
 		// 커서 표시 (Main sphere와의 충돌이 감지되면 월드 공간에 작게 그려지는 구).
 		{
@@ -257,7 +257,7 @@ namespace Core
 					createBuffers();
 					m_Scene.SetScreenWidth(m_ScreenWidth);
 					m_Scene.SetScreenHeight(m_ScreenHeight);
-					m_Scene.ResetDepthBuffers(m_pDevice5, m_bUseMSAA, m_NumQualityLevels);
+					m_Scene.ResetBuffers(m_pDevice5, m_bUseMSAA, m_NumQualityLevels);
 					setMainViewport();
 					m_Camera.SetAspectRatio(GetAspectRatio());
 					m_PostProcessor.Initialize(m_pDevice5, m_pContext4,

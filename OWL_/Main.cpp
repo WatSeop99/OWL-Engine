@@ -32,7 +32,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
-	Core::BaseRenderer* app = New DebugApp2();
+	Core::BaseRenderer* app = New DebugApp();
 	app->Initialize();
 	app->Run();
 
