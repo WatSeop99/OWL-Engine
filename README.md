@@ -30,6 +30,30 @@
 <img src="./screenshots/3.gif">
 <img src="./screenshots/4.gif">
 
+## Installation
+
+개발환경 : visual studio 2022
+
+본 프로젝트는 외부 라이브러리와 데이터 에셋 추가로 구동할 수 있음.
+
+### vcpkg 설정
+
+- vcpkg install assimp:x64-windows
+- vcpkg install directxtk:x64-windows
+- vcpkg install directxtex[openexr]:x64-windows
+- vcpkg install directxmath:x64-windows
+- vcpkg install fp16:x64-windows
+- vcpkg install imgui[dx11-binding,win32-binding]:x64-windows
+- vcpkg install directxmesh:x64-windows
+- vcpkg install physx:x64-windows
+- vcpkg integrate install // visual studio 통합을 위함.
+
+### 데이터 에셋
+
+데이터 에셋 다운링크 : https://drive.google.com/file/d/1foTfZ61gJ1ugPdttivN6QYb8ZUUoskB5/view?usp=drive_link
+
+압축 해제 후, 프로젝트 폴더 OWL\_ 안에 복사.
+
 ## TODO
 
 - Occclusion Culling을 위한 사전 & 본 작업.
