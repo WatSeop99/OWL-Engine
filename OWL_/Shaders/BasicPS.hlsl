@@ -349,7 +349,7 @@ float3 LightRadiance(Light light, int shadowMapIndex, float3 representativePoint
                         lightTexcoord.xy += 1.0f;
                         lightTexcoord.xy *= 0.5f;
                     
-                        float depth = g_CascadeShadowMap.SampleLevel(g_ShadowPointSampler, float3(lightTexcoord.xy, i), 0.0f);
+                        float depth = g_CascadeShadowMap.SampleLevel(g_ShadowPointSampler, float3(lightTexcoord.xy, i), 0.0f).r;
                         if (depth <= lightScreen.z - 0.005f || depth >= lightScreen.z + 0.005f)
                         {
                             index = i;
