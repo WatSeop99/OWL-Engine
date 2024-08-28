@@ -21,7 +21,7 @@ public:
 
 public:
 	PostProcessor() = default;
-	~PostProcessor() { Destroy(); }
+	~PostProcessor() { Cleanup(); }
 
 	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS);
 
@@ -29,7 +29,7 @@ public:
 
 	void Render(ID3D11DeviceContext* pContext);
 
-	void Destroy();
+	void Cleanup();
 
 protected:
 	void createPostBackBuffers(ID3D11Device* pDevice);

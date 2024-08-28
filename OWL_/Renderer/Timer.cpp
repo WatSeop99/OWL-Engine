@@ -3,17 +3,13 @@
 #include "Timer.h"
 
 
-Timer::Timer(ID3D11Device* pDevice) :
-	ElapsedTimeCPU(0.0f),
-	ElapsedTimeGPU(0.0f),
-	m_bMeasureGPU(false)
+Timer::Timer(ID3D11Device* pDevice)
 {
-	_ASSERT(pDevice != nullptr);
+	_ASSERT(pDevice);
 
 	HRESULT hr = S_OK;
 
-	D3D11_QUERY_DESC desc;
-	ZeroMemory(&desc, sizeof(desc));
+	D3D11_QUERY_DESC desc = {};
 	desc.Query = D3D11_QUERY_TIMESTAMP;
 	desc.MiscFlags = 0;
 	hr = pDevice->CreateQuery(&desc, &m_pStartQuery);
@@ -32,7 +28,7 @@ Timer::Timer(ID3D11Device* pDevice) :
 
 void Timer::Start(ID3D11DeviceContext* pContext, bool bMeasureGPU)
 {
-	_ASSERT(pContext != nullptr);
+	_ASSERT(pContext);
 
 	m_bMeasureGPU = bMeasureGPU;
 
@@ -50,7 +46,7 @@ void Timer::Start(ID3D11DeviceContext* pContext, bool bMeasureGPU)
 
 void Timer::End(ID3D11DeviceContext* pContext)
 {
-	_ASSERT(pContext != nullptr);
+	_ASSERT(pContext);
 
 	if (m_bMeasureGPU)
 	{
@@ -104,7 +100,7 @@ void Timer::End(ID3D11DeviceContext* pContext)
 	OutputDebugStringA(" milliSec\n");
 }
 
-void Timer::destroy()
+void Timer::Cleanup()
 {
 	SAFE_RELEASE(m_pDisjointQuery);
 	SAFE_RELEASE(m_pStopQuery);

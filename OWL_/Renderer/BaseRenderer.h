@@ -71,7 +71,7 @@ protected:
 	UINT m_ScreenWidth = 1280;
 	UINT m_ScreenHeight = 720;
 	HWND m_hMainWindow = nullptr;
-	bool m_bUseMSAA = false;
+	bool m_bUseMSAA = true;
 	UINT m_NumQualityLevels = 0;
 
 	D3D_FEATURE_LEVEL m_FeatureLevel;

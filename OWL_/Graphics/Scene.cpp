@@ -2,7 +2,6 @@
 #include "../Geometry/GeometryGenerator.h"
 #include "Scene.h"
 
-
 void Scene::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 {
 	Destroy();
@@ -10,7 +9,10 @@ void Scene::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 
 	createBuffers(pDevice);
 	m_GBuffer.bIsEnabled = false;
-	m_GBuffer.Initialize(pDevice);
+	if (m_GBuffer.bIsEnabled)
+	{
+		m_GBuffer.Initialize(pDevice);
+	}
 
 	pLights.resize(MAX_LIGHTS);
 	m_ppLightSpheres.resize(MAX_LIGHTS);
@@ -285,7 +287,7 @@ void Scene::createDepthBuffers(ID3D11Device* pDevice, const bool bUSE_MSAA, cons
 	HRESULT hr = S_OK;
 
 	// depth buffers.
-	D3D11_TEXTURE2D_DESC desc = { 0, };
+	D3D11_TEXTURE2D_DESC desc = {};
 	desc.Width = m_ScreenWidth;
 	desc.Height = m_ScreenHeight;
 	desc.MipLevels = 1;
@@ -310,7 +312,16 @@ void Scene::createDepthBuffers(ID3D11Device* pDevice, const bool bUSE_MSAA, cons
 	hr = pDevice->CreateTexture2D(&desc, nullptr, &pDepthStencilBuffer);
 	BREAK_IF_FAILED(hr);
 
-	hr = pDevice->CreateDepthStencilView(pDepthStencilBuffer, nullptr, &m_pDefaultDSV);
+	if (!m_GBuffer.bIsEnabled && bUSE_MSAA && NUM_QUALITY_LEVELS > 0)
+	{
+		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+		hr = pDevice->CreateDepthStencilView(pDepthStencilBuffer, &dsvDesc, &m_pDefaultDSV);
+	}
+	else
+	{
+		hr = pDevice->CreateDepthStencilView(pDepthStencilBuffer, nullptr, &m_pDefaultDSV);
+	}
 	RELEASE(pDepthStencilBuffer);
 	BREAK_IF_FAILED(hr);
 

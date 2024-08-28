@@ -5,21 +5,19 @@
 #include "../Geometry/Model.h"
 #include "ShadowMap.h"
 
-
 class Light
 {
 public:
 	Light(UINT width = 1280, UINT height = 1280);
-	~Light() { Destroy(); }
+	~Light() { Cleanup(); }
 
 	void Initialize(ID3D11Device* pDevice);
 
 	void Update(ID3D11DeviceContext* pContext, float deltaTime, Camera& mainCamera);
 
 	void RenderShadowMap(ID3D11DeviceContext* pContext, std::vector<Model*>& pBasicList, Model* pMirror);
-	void Render(ID3D11DeviceContext* pContext, std::vector<Model*>& pBasicList, Model* pMirror);
 
-	void Destroy();
+	void Cleanup();
 
 	inline ShadowMap& GetShadowMap() { return m_ShadowMap; }
 	inline ShadowMap* GetAddressOfShadowMap() { return &m_ShadowMap; }
@@ -29,8 +27,8 @@ public:
 	inline void SetShadowSize(const UINT WIDTH, const UINT HEIGHT) { m_ShadowMap.SetShadowWidth(WIDTH); m_ShadowMap.SetShadowHeight(HEIGHT); }
 
 public:
-	bool bRotated;
-	bool bVisible;
+	bool bRotated = false;
+	bool bVisible = true;
 	LightProperty Property;
 
 private:

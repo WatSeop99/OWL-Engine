@@ -2,23 +2,22 @@
 
 #include <chrono>
 
-
 class Timer
 {
 public:
-	Timer() : ElapsedTimeCPU(0.0f), ElapsedTimeGPU(0.0f), m_bMeasureGPU(false) {}
+	Timer() = default;
 	Timer(ID3D11Device* pDevice);
-	~Timer() { destroy(); }
+	~Timer() { Cleanup(); }
 
 	void Start(ID3D11DeviceContext* pContext, bool bMeasureGPU);
+	
 	void End(ID3D11DeviceContext* pContext);
 
-protected:
-	void destroy();
+	void Cleanup();
 
 public:
-	double ElapsedTimeCPU;
-	double ElapsedTimeGPU;
+	double ElapsedTimeCPU = 0.0f;
+	double ElapsedTimeGPU = 0.0f;
 
 protected:
 	ID3D11Query* m_pStartQuery = nullptr;
@@ -27,5 +26,5 @@ protected:
 
 	std::chrono::steady_clock::time_point m_StartTimeCPU;
 
-	bool m_bMeasureGPU;
+	bool m_bMeasureGPU = false;
 };

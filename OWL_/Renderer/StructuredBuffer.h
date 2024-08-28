@@ -22,7 +22,7 @@ public:
 	{
 		HRESULT hr = S_OK;
 
-		// Destroy();
+		// Cleanup();
 		_ASSERT(pGPU == nullptr);
 		_ASSERT(pStaging == nullptr);
 		_ASSERT(pSRV == nullptr);

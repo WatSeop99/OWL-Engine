@@ -10,9 +10,10 @@
 
 void PostProcessor::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS)
 {
-	HRESULT hr = S_OK;
+	_ASSERT(pDevice);
+	_ASSERT(pContext);
 
-	Destroy();
+	HRESULT hr = S_OK;
 
 	m_ScreenWidth = WIDTH;
 	m_ScreenHeight = HEIGHT;
@@ -99,7 +100,8 @@ void PostProcessor::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCont
 
 void PostProcessor::Update(ID3D11DeviceContext* pContext)
 {
-	_ASSERT(m_pPostEffectsConstsGPU != nullptr);
+	_ASSERT(pContext);
+	_ASSERT(m_pPostEffectsConstsGPU);
 
 	if (PostEffectsUpdateFlag > 0)
 	{
@@ -116,6 +118,8 @@ void PostProcessor::Update(ID3D11DeviceContext* pContext)
 
 void PostProcessor::Render(ID3D11DeviceContext* pContext)
 {
+	_ASSERT(pContext);
+
 	// Resolve MSAA texture.
 	pContext->ResolveSubresource(m_pResolvedBuffer, 0, m_pFloatBuffer, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
 
@@ -130,7 +134,7 @@ void PostProcessor::Render(ID3D11DeviceContext* pContext)
 	renderPostProcessing(pContext);
 }
 
-void PostProcessor::Destroy()
+void PostProcessor::Cleanup()
 {
 	m_pGlobalConstsGPU = nullptr;
 	m_pBackBuffer = nullptr;
@@ -142,7 +146,7 @@ void PostProcessor::Destroy()
 	m_pPrevSRV = nullptr;
 	m_pDepthOnlySRV = nullptr;
 
-	for (size_t i = 0, size = m_pBloomSRVs.size(); i < size; ++i)
+	for (UINT64 i = 0, size = m_pBloomSRVs.size(); i < size; ++i)
 	{
 		RELEASE(m_pBloomSRVs[i]);
 		RELEASE(m_pBloomRTVs[i]);
@@ -151,6 +155,8 @@ void PostProcessor::Destroy()
 	m_pBloomRTVs.clear();
 	m_pBloomDownFilters.clear();
 	m_pBloomUpFilters.clear();
+
+	CombineFilter.Cleanup();
 
 	SAFE_RELEASE(m_pPostEffectsConstsGPU);
 

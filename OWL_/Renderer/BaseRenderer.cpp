@@ -647,7 +647,7 @@ LB_EXIT:
 		swapChainDesc.Format = DXGI_FORMAT_R10G10B10A2_UNORM;
 		//swapChainDesc.BufferDesc.RefreshRate.Numerator = m_uiRefreshRate;
 		//swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
-		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_UNORDERED_ACCESS;
+		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT | DXGI_USAGE_UNORDERED_ACCESS;
 		swapChainDesc.BufferCount = 2;
 		/*if (m_bUseMSAA && m_NumQualityLevels > 0)
 		{
@@ -725,7 +725,7 @@ void BaseRenderer::createBuffers()
 	BREAK_IF_FAILED(hr);
 
 	// 이전 프레임 저장용.
-	D3D11_TEXTURE2D_DESC desc = { 0, };
+	D3D11_TEXTURE2D_DESC desc = {};
 	m_pBackBuffer->GetDesc(&desc);
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 	m_PrevBuffer.Initialize(m_pDevice5, desc);
@@ -757,6 +757,8 @@ void BaseRenderer::createBuffers()
 	desc.SampleDesc.Quality = 0;
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET | D3D11_BIND_UNORDERED_ACCESS;
 	m_ResolvedBuffer.Initialize(m_pDevice5, desc);
+
+	m_Scene.ResetBuffers(m_pDevice5, m_bUseMSAA, m_NumQualityLevels);
 }
 
 void BaseRenderer::setMainViewport()
@@ -790,4 +792,5 @@ void BaseRenderer::destroyBuffersForRendering()
 	m_PrevBuffer.Destroy();
 	m_FloatBuffer.Destroy();
 	m_ResolvedBuffer.Destroy();
+	m_PostProcessor.Cleanup();
 }

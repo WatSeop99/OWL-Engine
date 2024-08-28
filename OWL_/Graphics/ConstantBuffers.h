@@ -11,7 +11,6 @@
 #define LIGHT_SPOT 0x04
 #define LIGHT_SHADOW 0x10
 
-
 using DirectX::SimpleMath::Matrix;
 using DirectX::SimpleMath::Vector2;
 using DirectX::SimpleMath::Vector3;
@@ -34,7 +33,7 @@ ALIGN(16) struct MaterialConstants
 	Vector3 AlbedoFactor = Vector3(1.0f);
 	float RoughnessFactor = 1.0f;
 	float MetallicFactor = 1.0f;
-	Vector3 EmissionFactor = Vector3(0.0f);
+	Vector3 EmissionFactor;
 
 	// 여러 옵션들에 BOOL 플래그 하나만 사용할 수도 있음.
 	BOOL bUseAlbedoMap = FALSE;
@@ -116,10 +115,17 @@ ALIGN(16) struct VolumeConsts
 	float Aniso = 0.3f;
 };
 
-// bone 개수 제약을 없애기 위해 StructuredBuffer로 교체.
-// __declspec(align(256)) struct SkinnedConsts {
-//    Matrix BoneTransforms[52]; // bone 개수
-//};
+ALIGN(16) struct ImageFilterConstData
+{
+	float DX;
+	float DY;
+	float Threshold;
+	float Strength;
+	float Option1; // exposure in CombinePS.hlsl
+	float Option2; // gamma in CombinePS.hlsl
+	float Option3; // blur in CombinePS.hlsl
+	float Option4;
+};
 
 template <typename CONSTANTS>
 class ConstantsBuffer

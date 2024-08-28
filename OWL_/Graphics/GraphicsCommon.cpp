@@ -1,7 +1,6 @@
 #include "../Common.h"
 #include "GraphicsCommon.h"
 
-
 // Sampler States
 ID3D11SamplerState* g_pLinearWrapSS = nullptr;
 ID3D11SamplerState* g_pLinearClampSS = nullptr;
@@ -137,9 +136,11 @@ void InitCommonStates(ID3D11Device* pDevice)
 
 void InitSamplers(ID3D11Device* pDevice)
 {
+	_ASSERT(pDevice);
+
 	HRESULT hr = S_OK;
 
-	D3D11_SAMPLER_DESC sampDesc;
+	D3D11_SAMPLER_DESC sampDesc = {};
 	ZeroMemory(&sampDesc, sizeof(sampDesc));
 	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -227,10 +228,12 @@ void InitSamplers(ID3D11Device* pDevice)
 
 void InitRasterizerStates(ID3D11Device* pDevice)
 {
+	_ASSERT(pDevice);
+
 	HRESULT hr = S_OK;
 
 	// Rasterizer States
-	D3D11_RASTERIZER_DESC rasterDesc;
+	D3D11_RASTERIZER_DESC rasterDesc = {};
 	ZeroMemory(&rasterDesc, sizeof(D3D11_RASTERIZER_DESC));
 	rasterDesc.FillMode = D3D11_FILL_MODE::D3D11_FILL_SOLID;
 	rasterDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_BACK;
@@ -294,13 +297,15 @@ void InitRasterizerStates(ID3D11Device* pDevice)
 
 void InitBlendStates(ID3D11Device* pDevice)
 {
+	_ASSERT(pDevice);
+
 	// "이미 그려져있는 화면"과 어떻게 섞을지를 결정.
 	// Dest: 이미 그려져 있는 값들을 의미.
 	// Src: 픽셀 쉐이더가 계산한 값들을 의미. (여기서는 마지막 거울)
 
 	HRESULT hr = S_OK;
 
-	D3D11_BLEND_DESC mirrorBlendDesc;
+	D3D11_BLEND_DESC mirrorBlendDesc = {};
 	ZeroMemory(&mirrorBlendDesc, sizeof(mirrorBlendDesc));
 	mirrorBlendDesc.AlphaToCoverageEnable = TRUE;
 	mirrorBlendDesc.IndependentBlendEnable = FALSE;
@@ -318,7 +323,7 @@ void InitBlendStates(ID3D11Device* pDevice)
 	BREAK_IF_FAILED(hr);
 	SET_DEBUG_INFO_TO_OBJECT(g_pMirrorBS, "g_pMirrorBS");
 
-	D3D11_BLEND_DESC blendDesc;
+	D3D11_BLEND_DESC blendDesc = {};
 	ZeroMemory(&blendDesc, sizeof(blendDesc));
 	blendDesc.AlphaToCoverageEnable = TRUE;
 	blendDesc.IndependentBlendEnable = FALSE;
@@ -353,6 +358,8 @@ void InitBlendStates(ID3D11Device* pDevice)
 
 void InitDepthStencilStates(ID3D11Device* pDevice)
 {
+	_ASSERT(pDevice);
+
 	// D3D11_DEPTH_STENCIL_DESC 옵션 정리.
 	// https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ns-d3d11-d3d11_depth_stencil_desc
 	// StencilRead/WriteMask: 예) uint8 중 어떤 비트를 사용할지.
@@ -366,7 +373,7 @@ void InitDepthStencilStates(ID3D11Device* pDevice)
 	HRESULT hr = S_OK;
 
 	// m_drawDSS: 기본 DSS
-	D3D11_DEPTH_STENCIL_DESC dsDesc;
+	D3D11_DEPTH_STENCIL_DESC dsDesc = {};
 	ZeroMemory(&dsDesc, sizeof(dsDesc));
 	dsDesc.DepthEnable = TRUE;
 	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
@@ -423,6 +430,8 @@ void InitDepthStencilStates(ID3D11Device* pDevice)
 
 void InitShaders(ID3D11Device* pDevice)
 {
+	_ASSERT(pDevice);
+
 	HRESULT hr = S_OK;
 
 	// Shaders, InputLayouts
@@ -589,6 +598,8 @@ void InitShaders(ID3D11Device* pDevice)
 
 void InitPipelineStates(ID3D11Device* pDevice)
 {
+	_ASSERT(pDevice);
+
 	// g_DefaultSolidPSO;
 	g_DefaultSolidPSO.pVertexShader = g_pBasicVS;
 	g_DefaultSolidPSO.pInputLayout = g_pBasicIL;
@@ -770,6 +781,8 @@ void InitPipelineStates(ID3D11Device* pDevice)
 // 주의: 초기화가 느려서 필요한 경우에만 초기화하는 쉐이더
 void InitVolumeShaders(ID3D11Device* pDevice)
 {
+	_ASSERT(pDevice);
+
 	HRESULT hr = S_OK;
 	hr = CreatePixelShader(pDevice, L"VolumeSmokePS.hlsl", &g_pVolumeSmokePS);
 	BREAK_IF_FAILED(hr);

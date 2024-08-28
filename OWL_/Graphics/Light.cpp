@@ -2,10 +2,7 @@
 #include "Light.h"
 
 
-Light::Light(UINT width, UINT height) :
-	bRotated(false),
-	bVisible(false),
-	m_ShadowMap(width, height)
+Light::Light(UINT width, UINT height) : m_ShadowMap(width, height)
 {
 	m_LightViewCamera.bUseFirstPersonView = true;
 	m_LightViewCamera.SetAspectRatio((float)width / (float)height);
@@ -18,7 +15,7 @@ Light::Light(UINT width, UINT height) :
 
 void Light::Initialize(ID3D11Device* pDevice)
 {
-	Destroy();
+	_ASSERT(pDevice);
 
 	switch (Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
 	{
@@ -46,7 +43,9 @@ void Light::Initialize(ID3D11Device* pDevice)
 
 void Light::Update(ID3D11DeviceContext* pContext, float deltaTime, Camera& mainCamera)
 {
-	static Vector3 s_LightDev = Vector3(1.0f, 0.0f, 0.0f);
+	_ASSERT(pContext);
+
+	static Vector3 s_LightDev = Vector3::UnitX;
 	if (bRotated)
 	{
 		s_LightDev = Vector3::Transform(s_LightDev, Matrix::CreateRotationY(deltaTime * DirectX::XM_PI * 0.5f));
@@ -65,7 +64,7 @@ void Light::Update(ID3D11DeviceContext* pContext, float deltaTime, Camera& mainC
 		Vector3 up = m_LightViewCamera.GetUpDir();
 		if (fabs(up.Dot(Property.Direction) + 1.0f) < 1e-5)
 		{
-			up = Vector3(1.0f, 0.0f, 0.0f);
+			up = Vector3::UnitX;
 			m_LightViewCamera.SetUpDir(up);
 		}
 
@@ -137,12 +136,7 @@ void Light::RenderShadowMap(ID3D11DeviceContext* pContext, std::vector<Model*>& 
 	}
 }
 
-void Light::Render(ID3D11DeviceContext* pContext, std::vector<Model*>& pBasicList, Model* pMirror)
-{
-
-}
-
-void Light::Destroy()
+void Light::Cleanup()
 {
 	m_ShadowMap.Destroy();
 }
