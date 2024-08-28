@@ -15,7 +15,7 @@ public:
 	void PrepareRender(ID3D11DeviceContext* pContext, ID3D11DepthStencilView* pDSV);
 	void AfterRender(ID3D11DeviceContext* pContext);
 
-	void Destroy();
+	void Cleanup();
 
 	inline void SetScreenWidth(const UINT WIDTH) { m_ScreenWidth = WIDTH; }
 	inline void SetScreenHeight(const UINT HEIGHT) { m_ScreenHeight = HEIGHT; }

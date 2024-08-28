@@ -81,7 +81,7 @@ void GBuffer::AfterRender(ID3D11DeviceContext* pContext)
 	pContext->OMSetRenderTargets(5, ppRTVs, nullptr);
 }
 
-void GBuffer::Destroy()
+void GBuffer::Cleanup()
 {
 	AlbedoBuffer.Destroy();
 	NormalBuffer.Destroy();

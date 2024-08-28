@@ -5,14 +5,15 @@
 #include "../Geometry/Model.h"
 #include "ShadowMap.h"
 
-
 using DirectX::SimpleMath::Vector4;
 
 void ShadowMap::Initialize(ID3D11Device* pDevice, UINT lightType)
 {
+	_ASSERT(pDevice);
+
 	m_LightType = lightType;
 
-	D3D11_TEXTURE2D_DESC desc2D = { 0, };
+	D3D11_TEXTURE2D_DESC desc2D = {};
 	desc2D.Width = m_ShadowWidth;
 	desc2D.Height = m_ShadowHeight;
 	desc2D.MipLevels = 1;
@@ -29,7 +30,7 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, UINT lightType)
 	HRESULT hr = S_OK;
 	{
 		// https://www.gamedev.net/forums/topic/659535-cubemap-texture-as-depth-buffer-shadowmapping/5171722/
-		D3D11_TEXTURE2D_DESC cubeDesc = { 0, };
+		D3D11_TEXTURE2D_DESC cubeDesc = {};
 		cubeDesc.Width = m_ShadowWidth;
 		cubeDesc.Height = m_ShadowHeight;
 		cubeDesc.MipLevels = 1;
@@ -66,7 +67,7 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, UINT lightType)
 	}
 
 	{
-		D3D11_TEXTURE2D_DESC textureDesc = { 0, };
+		D3D11_TEXTURE2D_DESC textureDesc = {};
 		textureDesc.Width = m_ShadowWidth;
 		textureDesc.Height = m_ShadowHeight;
 		textureDesc.MipLevels = 1;
@@ -81,8 +82,7 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, UINT lightType)
 		hr = pDevice->CreateTexture2D(&textureDesc, nullptr, &(m_DirectionalLightShadowBuffer.pTexture));
 		BREAK_IF_FAILED(hr);
 
-		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-		ZeroMemory(&dsvDesc, sizeof(dsvDesc));
+		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
 		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
 		dsvDesc.Flags = 0;
@@ -92,8 +92,7 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, UINT lightType)
 		hr = pDevice->CreateDepthStencilView(m_DirectionalLightShadowBuffer.pTexture, &dsvDesc, &(m_DirectionalLightShadowBuffer.pDSV));
 		BREAK_IF_FAILED(hr);
 
-		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-		ZeroMemory(&srvDesc, sizeof(srvDesc));
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
 		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
 		srvDesc.Texture2DArray.FirstArraySlice = 0;
@@ -113,6 +112,8 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, UINT lightType)
 
 void ShadowMap::Update(ID3D11DeviceContext* pContext, const LightProperty& PROPERTY, Camera& lightCam, Camera& mainCamera)
 {
+	_ASSERT(pContext);
+
 	Matrix lightView;
 	Matrix lightProjection = lightCam.GetProjection();
 
@@ -153,7 +154,7 @@ void ShadowMap::Update(ID3D11DeviceContext* pContext, const LightProperty& PROPE
 		case LIGHT_POINT:
 		{
 			// https://stackoverflow.com/questions/59537726/directx-11-point-light-shadowing
-			static const Vector3 s_pVIEW_DIRs[6] = // cubemap view vector.
+			const Vector3 VIEW_DIRs[6] = // cubemap view vector.
 			{
 				Vector3(1.0f, 0.0f, 0.0f),	// right
 				Vector3(-1.0f, 0.0f, 0.0f), // left
@@ -162,7 +163,7 @@ void ShadowMap::Update(ID3D11DeviceContext* pContext, const LightProperty& PROPE
 				Vector3(0.0f, 0.0f, 1.0f),	// front
 				Vector3(0.0f, 0.0f, -1.0f)	// back
 			};
-			static const Vector3 s_pUP_DIRs[6] = // 위에서 정의한 view vector에 대한 up vector.
+			const Vector3 UP_DIRs[6] = // 위에서 정의한 view vector에 대한 up vector.
 			{
 				Vector3(0.0f, 1.0f, 0.0f),
 				Vector3(0.0f, 1.0f, 0.0f),
@@ -174,7 +175,7 @@ void ShadowMap::Update(ID3D11DeviceContext* pContext, const LightProperty& PROPE
 
 			for (int i = 0; i < 6; ++i)
 			{
-				lightView = DirectX::XMMatrixLookAtLH(PROPERTY.Position, PROPERTY.Position + s_pVIEW_DIRs[i], s_pUP_DIRs[i]);
+				lightView = DirectX::XMMatrixLookAtLH(PROPERTY.Position, PROPERTY.Position + VIEW_DIRs[i], UP_DIRs[i]);
 
 				m_pShadowConstantsBuffers[i].CPU.EyeWorld = PROPERTY.Position;
 				m_pShadowConstantsBuffers[i].CPU.View = lightView.Transpose();
@@ -290,7 +291,7 @@ void ShadowMap::Render(ID3D11DeviceContext* pContext, std::vector<Model*>& pBasi
 			pContext->PSSetConstantBuffers(0, 1, &(m_pShadowConstantsBuffers[0].pGPU));
 			pContext->GSSetConstantBuffers(0, 1, &(m_pShadowConstantsBuffers[0].pGPU));
 
-			for (size_t i = 0, size = pBasicList.size(); i < size; ++i)
+			for (UINT64 i = 0, size = pBasicList.size(); i < size; ++i)
 			{
 				Model* const pCurModel = pBasicList[i];
 				if (pCurModel->bCastShadow && pCurModel->bIsVisible)
@@ -312,20 +313,22 @@ void ShadowMap::Render(ID3D11DeviceContext* pContext, std::vector<Model*>& pBasi
 	}
 }
 
-void ShadowMap::Destroy()
+void ShadowMap::Cleanup()
 {
 	m_SpotLightShadowBuffer.Destroy();
 	m_PointLightShadowBuffer.Destroy();
 	m_DirectionalLightShadowBuffer.Destroy();
-	m_ShadowConstantsBufferForGS.Destroy();
+	m_ShadowConstantsBufferForGS.Cleanup();
 	for (int i = 0; i < 6; ++i)
 	{
-		m_pShadowConstantsBuffers[i].Destroy();
+		m_pShadowConstantsBuffers[i].Cleanup();
 	}
 }
 
 void ShadowMap::setPipelineState(ID3D11DeviceContext* pContext, const GraphicsPSO& PSO)
 {
+	_ASSERT(pContext);
+
 	pContext->VSSetShader(PSO.pVertexShader, nullptr, 0);
 	pContext->PSSetShader(PSO.pPixelShader, nullptr, 0);
 	pContext->HSSetShader(PSO.pHullShader, nullptr, 0);
@@ -341,11 +344,13 @@ void ShadowMap::setPipelineState(ID3D11DeviceContext* pContext, const GraphicsPS
 
 void ShadowMap::setShadowViewport(ID3D11DeviceContext* pContext)
 {
+	_ASSERT(pContext);
+
 	switch (m_LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
 	{
 		case LIGHT_DIRECTIONAL:
 		{
-			D3D11_VIEWPORT pViewports[4] =
+			const D3D11_VIEWPORT pViewports[4] =
 			{
 				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
 				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
@@ -358,7 +363,7 @@ void ShadowMap::setShadowViewport(ID3D11DeviceContext* pContext)
 
 		case LIGHT_POINT:
 		{
-			D3D11_VIEWPORT pViewports[6] =
+			const D3D11_VIEWPORT pViewports[6] =
 			{
 				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
 				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
@@ -396,33 +401,33 @@ void ShadowMap::calculateCascadeLightViewProjection(Vector3* pPosition, Matrix* 
 	_ASSERT(pView != nullptr);
 	_ASSERT(pProjection != nullptr);
 
-	static const float s_FRUSTUM_Zs[5] = { 0.01f, 10.0f, 40.0f, 80.0f, 500.0f }; // 고정 값들로 우선 설정.
+	const float FRUSTUM_Zs[5] = { 0.01f, 10.0f, 40.0f, 80.0f, 500.0f }; // 고정 값들로 우선 설정.
 	Matrix inverseView = VIEW.Invert();
 	Vector3 frustumCenter(0.0f);
 	float boundingSphereRadius = 0.0f;
 
 	float fov = 45.0f;
 	float aspectRatio = 1270.0f / 720.0f;
-	float nearZ = s_FRUSTUM_Zs[0];
-	float farZ = s_FRUSTUM_Zs[4];
+	float nearZ = FRUSTUM_Zs[0];
+	float farZ = FRUSTUM_Zs[4];
 	float tanHalfVFov = tanf(DirectX::XMConvertToRadians(fov * 0.5f)); // 수직 시야각.
 	float tanHalfHFov = tanHalfVFov * aspectRatio; // 수평 시야각.
 
-	float xn = s_FRUSTUM_Zs[cascadeIndex] * tanHalfHFov;
-	float xf = s_FRUSTUM_Zs[cascadeIndex + 1] * tanHalfHFov;
-	float yn = s_FRUSTUM_Zs[cascadeIndex] * tanHalfVFov;
-	float yf = s_FRUSTUM_Zs[cascadeIndex + 1] * tanHalfVFov;
+	float xn = FRUSTUM_Zs[cascadeIndex] * tanHalfHFov;
+	float xf = FRUSTUM_Zs[cascadeIndex + 1] * tanHalfHFov;
+	float yn = FRUSTUM_Zs[cascadeIndex] * tanHalfVFov;
+	float yf = FRUSTUM_Zs[cascadeIndex + 1] * tanHalfVFov;
 
 	Vector3 frustumCorners[8] =
 	{
-		Vector3(xn, yn, s_FRUSTUM_Zs[cascadeIndex]),
-		Vector3(-xn, yn, s_FRUSTUM_Zs[cascadeIndex]),
-		Vector3(xn, -yn, s_FRUSTUM_Zs[cascadeIndex]),
-		Vector3(-xn, -yn, s_FRUSTUM_Zs[cascadeIndex]),
-		Vector3(xf, yf, s_FRUSTUM_Zs[cascadeIndex + 1]),
-		Vector3(-xf, yf, s_FRUSTUM_Zs[cascadeIndex + 1]),
-		Vector3(xf, -yf, s_FRUSTUM_Zs[cascadeIndex + 1]),
-		Vector3(-xf, -yf, s_FRUSTUM_Zs[cascadeIndex + 1]),
+		Vector3(xn, yn, FRUSTUM_Zs[cascadeIndex]),
+		Vector3(-xn, yn, FRUSTUM_Zs[cascadeIndex]),
+		Vector3(xn, -yn, FRUSTUM_Zs[cascadeIndex]),
+		Vector3(-xn, -yn, FRUSTUM_Zs[cascadeIndex]),
+		Vector3(xf, yf, FRUSTUM_Zs[cascadeIndex + 1]),
+		Vector3(-xf, yf, FRUSTUM_Zs[cascadeIndex + 1]),
+		Vector3(xf, -yf, FRUSTUM_Zs[cascadeIndex + 1]),
+		Vector3(-xf, -yf, FRUSTUM_Zs[cascadeIndex + 1]),
 	};
 
 	for (int i = 0; i < 8; ++i)
@@ -435,7 +440,7 @@ void ShadowMap::calculateCascadeLightViewProjection(Vector3* pPosition, Matrix* 
 	for (int i = 0; i < 8; ++i)
 	{
 		float dist = (frustumCorners[i] - frustumCenter).Length();
-		boundingSphereRadius = std::max(boundingSphereRadius, dist);
+		boundingSphereRadius = Max(boundingSphereRadius, dist);
 	}
 	boundingSphereRadius = ceil(boundingSphereRadius * 16.0f) / 16.0f;
 
@@ -444,6 +449,6 @@ void ShadowMap::calculateCascadeLightViewProjection(Vector3* pPosition, Matrix* 
 	Vector3 cascadeExtents = frustumMax - frustumMin;
 
 	*pPosition = frustumCenter - DIR * fabs(frustumMin.z);
-	*pView = DirectX::XMMatrixLookAtLH(*pPosition, frustumCenter, Vector3(0.0f, 1.0f, 0.0f));
+	*pView = DirectX::XMMatrixLookAtLH(*pPosition, frustumCenter, Vector3::UnitY);
 	*pProjection = DirectX::XMMatrixOrthographicOffCenterLH(frustumMin.x, frustumMax.x, frustumMin.y, frustumMax.y, 0.001f, cascadeExtents.z);
 }

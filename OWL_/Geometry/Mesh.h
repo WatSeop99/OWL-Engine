@@ -48,8 +48,8 @@ public:
 			delete pMaterialBuffer;
 			pMaterialBuffer = nullptr;
 		}
-		MeshConstant.Destroy();
-		MaterialConstant.Destroy();
+		MeshConstant.Cleanup();
+		MaterialConstant.Cleanup();
 		SAFE_RELEASE(pVertexBuffer);
 		SAFE_RELEASE(pIndexBuffer);
 	}

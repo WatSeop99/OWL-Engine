@@ -31,14 +31,6 @@ public:
 	virtual void UpdateGUI();
 	virtual void Update(float deltaTime);
 
-	// virtual void RenderDepthOnly();
-	// virtual void RenderShadowMaps();
-	// virtual void RenderOpaqueObjects();
-	//
-	/*virtual void RenderGBuffer();
-	virtual void RenderLights();*/
-	//
-	// virtual void RenderMirror(); // forward shading 처리.
 	virtual void RenderGUI();
 	virtual void Render();
 
@@ -88,14 +80,6 @@ protected:
 
 	ID3D11Texture2D* m_pBackBuffer = nullptr;
 	ID3D11RenderTargetView* m_pBackBufferRTV = nullptr;
-
-	// Deferred shading을 위한 시험용 멤버변수.
-	////////////////////////////////////////////////////
-
-	/*GBuffer m_GBuffer;
-	LightManager m_LightManager;*/
-
-	////////////////////////////////////////////////////
 
 	// 삼각형 레스터화 -> float(MSAA) -> resolved(No MSAA)
 	// -> 후처리(블룸, 톤매핑) -> backBuffer(최종 SwapChain Present)

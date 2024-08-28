@@ -9,7 +9,6 @@
 // Vcpkg를 통해 IMGUI를 사용할 경우 빨간줄로 경고가 뜰 수 있음
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 using DirectX::BoundingSphere;

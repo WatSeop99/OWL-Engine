@@ -2,12 +2,11 @@
 
 #include "../Renderer/Texture2D.h"
 
-
 class ShadowMap
 {
 public:
 	ShadowMap(UINT width = 1280, UINT height = 1280) : m_ShadowWidth(width), m_ShadowHeight(height), m_LightType(LIGHT_OFF) {}
-	~ShadowMap() { Destroy(); }
+	~ShadowMap() { Cleanup(); }
 
 	void Initialize(ID3D11Device* pDevice, UINT lightType);
 
@@ -15,19 +14,14 @@ public:
 
 	void Render(ID3D11DeviceContext* pContext, std::vector<Model*>& pBasicList, Model* pMirror);
 
-	void Destroy();
+	void Cleanup();
 
 	inline UINT GetShadowWidth() { return m_ShadowWidth; }
 	inline UINT GetShadowHeight() { return m_ShadowHeight; }
 
-	inline Texture2D& GetSpotLightShadowBuffer() { return m_SpotLightShadowBuffer; }
-	inline Texture2D* GetAdressOfSpotLightShadowBuffer() { return &m_SpotLightShadowBuffer; }
-
-	inline Texture2D& GetPointLightShadowBuffer() { return m_PointLightShadowBuffer; }
-	inline Texture2D* GetAddressOfPointLightShadowBuffer() { return &m_PointLightShadowBuffer; }
-
-	inline Texture2D& GetDirectionalLightShadowBuffer() { return m_DirectionalLightShadowBuffer; }
-	inline Texture2D* GetAddressOfDirectionalLightShadowBuffer() { return &m_DirectionalLightShadowBuffer; }
+	inline Texture2D* GetSpotLightShadowBufferPtr() { return &m_SpotLightShadowBuffer; }
+	inline Texture2D* GetPointLightShadowBufferPtr() { return &m_PointLightShadowBuffer; }
+	inline Texture2D* GetDirectionalLightShadowBufferPtr() { return &m_DirectionalLightShadowBuffer; }
 
 	inline ConstantsBuffer<GlobalConstants>* GetAddressOfShadowConstantBuffers() { return m_pShadowConstantsBuffers; }
 
@@ -41,9 +35,9 @@ protected:
 	void calculateCascadeLightViewProjection(Vector3* pPosition, Matrix* pView, Matrix* pProjection, const Matrix& VIEW, const Matrix& PROJECTION, const Vector3& DIR, int cascadeIndex);
 
 private:
-	UINT m_ShadowWidth;
-	UINT m_ShadowHeight;
-	UINT m_LightType;
+	UINT m_ShadowWidth = 0;
+	UINT m_ShadowHeight = 0;
+	UINT m_LightType = LIGHT_OFF;
 
 	Texture2D m_SpotLightShadowBuffer;
 	Texture2D m_PointLightShadowBuffer;

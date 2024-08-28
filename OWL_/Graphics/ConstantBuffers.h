@@ -132,13 +132,13 @@ class ConstantsBuffer
 {
 public:
 	ConstantsBuffer() = default;
-	~ConstantsBuffer() { Destroy(); }
+	~ConstantsBuffer() { Cleanup(); }
 
 	void Initialize(ID3D11Device* pDevice)
 	{
 		HRESULT hr = S_OK;
 
-		Destroy();
+		Cleanup();
 
 		hr = CreateConstBuffer(pDevice, CPU, &pGPU);
 		BREAK_IF_FAILED(hr);
@@ -146,7 +146,7 @@ public:
 
 	void Upload(ID3D11DeviceContext* pContext) { UpdateBuffer(pContext, CPU, pGPU); }
 
-	void Destroy() { SAFE_RELEASE(pGPU); }
+	void Cleanup() { SAFE_RELEASE(pGPU); }
 
 public:
 	ID3D11Buffer* pGPU = nullptr;

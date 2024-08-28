@@ -138,5 +138,5 @@ void Light::RenderShadowMap(ID3D11DeviceContext* pContext, std::vector<Model*>& 
 
 void Light::Cleanup()
 {
-	m_ShadowMap.Destroy();
+	m_ShadowMap.Cleanup();
 }

@@ -32,6 +32,7 @@ void ImageFilter::UpdateConstantBuffers(ID3D11DeviceContext* pContext)
 
 void ImageFilter::Render(ID3D11DeviceContext* pContext) const
 {
+	_ASSERT(pContext);
 	_ASSERT(m_pSRVs.size() > 0);
 	_ASSERT(m_pRTVs.size() > 0);
 

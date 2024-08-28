@@ -238,7 +238,7 @@ void Scene::ResetBuffers(ID3D11Device* pDevice, const bool bUSE_MSAA, const UINT
 
 	if (m_GBuffer.bIsEnabled)
 	{
-		m_GBuffer.Destroy();
+		m_GBuffer.Cleanup();
 		m_GBuffer.SetScreenWidth(m_ScreenWidth);
 		m_GBuffer.SetScreenHeight(m_ScreenHeight);
 		m_GBuffer.Initialize(pDevice);
@@ -441,8 +441,8 @@ void Scene::renderOpaqueObjects(ID3D11DeviceContext* pContext)
 
 			case LIGHT_SPOT:
 			{
-				Texture2D& curShadowBuffer = curShadowMap.GetSpotLightShadowBuffer();
-				ppShadowSRVs[i] = curShadowBuffer.pSRV;
+				Texture2D* pCurShadowBuffer = curShadowMap.GetSpotLightShadowBufferPtr();
+				ppShadowSRVs[i] = pCurShadowBuffer->pSRV;
 			}
 			break;
 
@@ -455,14 +455,14 @@ void Scene::renderOpaqueObjects(ID3D11DeviceContext* pContext)
 	if (pointLightIndex != -1)
 	{
 		ShadowMap& curShadowMap = pLights[pointLightIndex].GetShadowMap();
-		Texture2D& curShadowCubeBuffer = curShadowMap.GetPointLightShadowBuffer();
-		pContext->PSSetShaderResources(20, 1, &(curShadowCubeBuffer.pSRV));
+		Texture2D* pCurShadowCubeBuffer = curShadowMap.GetPointLightShadowBufferPtr();
+		pContext->PSSetShaderResources(20, 1, &pCurShadowCubeBuffer->pSRV);
 	}
 	if (directionalLightIndex != -1)
 	{
 		ShadowMap& curShadowMap = pLights[directionalLightIndex].GetShadowMap();
-		Texture2D& curShadowCascadeBuffer = curShadowMap.GetDirectionalLightShadowBuffer();
-		pContext->PSSetShaderResources(25, 1, &(curShadowCascadeBuffer.pSRV));
+		Texture2D* pCurShadowCascadeBuffer = curShadowMap.GetDirectionalLightShadowBufferPtr();
+		pContext->PSSetShaderResources(25, 1, &pCurShadowCascadeBuffer->pSRV);
 	}
 
 	setGlobalConstants(pContext, &(m_GlobalConstants.pGPU), 0);
@@ -521,8 +521,8 @@ void Scene::renderDeferredLighting(ID3D11DeviceContext* pContext)
 
 			case LIGHT_SPOT:
 			{
-				Texture2D& curShadowBuffer = curShadowMap.GetSpotLightShadowBuffer();
-				ppShadowSRVs[i] = curShadowBuffer.pSRV;
+				Texture2D* pCurShadowBuffer = curShadowMap.GetSpotLightShadowBufferPtr();
+				ppShadowSRVs[i] = pCurShadowBuffer->pSRV;
 			}
 			break;
 
@@ -535,14 +535,14 @@ void Scene::renderDeferredLighting(ID3D11DeviceContext* pContext)
 	if (pointLightIndex != -1)
 	{
 		ShadowMap& curShadowMap = pLights[pointLightIndex].GetShadowMap();
-		Texture2D& curShadowCubeBuffer = curShadowMap.GetPointLightShadowBuffer();
-		pContext->PSSetShaderResources(20, 1, &(curShadowCubeBuffer.pSRV));
+		Texture2D* pCurShadowCubeBuffer = curShadowMap.GetPointLightShadowBufferPtr();
+		pContext->PSSetShaderResources(20, 1, &pCurShadowCubeBuffer->pSRV);
 	}
 	if (directionalLightIndex != -1)
 	{
 		ShadowMap& curShadowMap = pLights[directionalLightIndex].GetShadowMap();
-		Texture2D& curShadowCascadeBuffer = curShadowMap.GetDirectionalLightShadowBuffer();
-		pContext->PSSetShaderResources(25, 1, &(curShadowCascadeBuffer.pSRV));
+		Texture2D* pCurShadowCascadeBuffer = curShadowMap.GetDirectionalLightShadowBufferPtr();
+		pContext->PSSetShaderResources(25, 1, &pCurShadowCascadeBuffer->pSRV);
 	}
 
 	setGlobalConstants(pContext, &(m_LightConstants.pGPU), 1);
