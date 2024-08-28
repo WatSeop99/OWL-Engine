@@ -42,42 +42,37 @@ LB_RET:
 	return hr;
 }
 
-void Normalize(const Vector3 CENTER, const float LONGEST_LENGTH, std::vector<MeshInfo>& meshes, AnimationData& animData)
+void Normalize(const Vector3& CENTER, const float LONGEST_LENGTH, std::vector<MeshInfo>& meshes, AnimationData& animData)
 {
 	// 모델의 중심을 원점으로 옮기고 크기를 [-1,1]^3으로 스케일 -> 박스 형태로.
-	using namespace DirectX;
 
 	// Normalize vertices
-	Vector3 vmin(1000, 1000, 1000);
-	Vector3 vmax(-1000, -1000, -1000);
-	for (size_t i = 0, totalMesh = meshes.size(); i < totalMesh; ++i)
+	Vector3 vMin(1000.0f, 1000.0f, 1000.0f);
+	Vector3 vMax(-1000.0f, -1000.0f, -1000.0f);
+	for (UINT64 i = 0, totalMesh = meshes.size(); i < totalMesh; ++i)
 	{
 		MeshInfo& curMesh = meshes[i];
-		for (size_t j = 0, vertSize = curMesh.Vertices.size(); j < vertSize; ++j)
+		for (UINT64 j = 0, vertSize = curMesh.Vertices.size(); j < vertSize; ++j)
 		{
 			Vertex& v = curMesh.Vertices[j];
-			vmin.x = XMMin(vmin.x, v.Position.x);
-			vmin.y = XMMin(vmin.y, v.Position.y);
-			vmin.z = XMMin(vmin.z, v.Position.z);
-			vmax.x = XMMax(vmax.x, v.Position.x);
-			vmax.y = XMMax(vmax.y, v.Position.y);
-			vmax.z = XMMax(vmax.z, v.Position.z);
+			vMin = Min(vMin, v.Position);
+			vMax = Max(vMax, v.Position);
 		}
 	}
 
-	float dx = vmax.x - vmin.x, dy = vmax.y - vmin.y, dz = vmax.z - vmin.z;
-	float scale = LONGEST_LENGTH / XMMax(XMMax(dx, dy), dz);
-	Vector3 translation = -(vmin + vmax) * 0.5f + CENTER;
+	Vector3 delta = vMax - vMin;
+	float scale = LONGEST_LENGTH / DirectX::XMMax(DirectX::XMMax(delta.x, delta.y), delta.z);
+	Vector3 translation = -(vMin + vMax) * 0.5f + CENTER;
 
-	for (size_t i = 0, totalMesh = meshes.size(); i < totalMesh; ++i)
+	for (UINT64 i = 0, totalMesh = meshes.size(); i < totalMesh; ++i)
 	{
 		MeshInfo& curMesh = meshes[i];
-		for (size_t j = 0, vertSize = curMesh.Vertices.size(); j < vertSize; ++j)
+		for (UINT64 j = 0, vertSize = curMesh.Vertices.size(); j < vertSize; ++j)
 		{
 			Vertex& v = curMesh.Vertices[j];
 			v.Position = (v.Position + translation) * scale;
 		}
-		for (size_t j = 0, skinnedVertSize = curMesh.SkinnedVertices.size(); j < skinnedVertSize; ++j)
+		for (UINT64 j = 0, skinnedVertSize = curMesh.SkinnedVertices.size(); j < skinnedVertSize; ++j)
 		{
 			SkinnedVertex& v = curMesh.SkinnedVertices[j];
 			v.Position = (v.Position + translation) * scale;
@@ -97,25 +92,30 @@ void MakeSquare(MeshInfo* pDst, const float SCALE, const Vector2 TEX_SCALE)
 
 	pDst->Vertices.resize(4);
 
-	pDst->Vertices[0].Position = Vector3(-1.0f, 1.0f, 0.0f) * SCALE;
-	pDst->Vertices[0].Normal = Vector3(0.0f, 0.0f, -1.0f);
-	pDst->Vertices[0].Texcoord = Vector2(0.0f, 0.0f) * TEX_SCALE;
-	pDst->Vertices[0].Tangent = Vector3(1.0f, 0.0f, 0.0f);
+	Vertex& v0 = pDst->Vertices[0];
+	Vertex& v1 = pDst->Vertices[1];
+	Vertex& v2 = pDst->Vertices[2];
+	Vertex& v3 = pDst->Vertices[3];
 
-	pDst->Vertices[1].Position = Vector3(1.0f, 1.0f, 0.0f) * SCALE;
-	pDst->Vertices[1].Normal = Vector3(0.0f, 0.0f, -1.0f);
-	pDst->Vertices[1].Texcoord = Vector2(1.0f, 0.0f) * TEX_SCALE;
-	pDst->Vertices[1].Tangent = Vector3(1.0f, 0.0f, 0.0f);
+	v0.Position = Vector3(-1.0f, 1.0f, 0.0f) * SCALE;
+	v0.Normal = Vector3(0.0f, 0.0f, -1.0f);
+	v0.Texcoord = Vector2(0.0f, 0.0f) * TEX_SCALE;
+	v0.Tangent = Vector3(1.0f, 0.0f, 0.0f);
 
-	pDst->Vertices[2].Position = Vector3(1.0f, -1.0f, 0.0f) * SCALE;
-	pDst->Vertices[2].Normal = Vector3(0.0f, 0.0f, -1.0f);
-	pDst->Vertices[2].Texcoord = Vector2(1.0f, 1.0f) * TEX_SCALE;
-	pDst->Vertices[2].Tangent = Vector3(1.0f, 0.0f, 0.0f);
+	v1.Position = Vector3(1.0f, 1.0f, 0.0f) * SCALE;
+	v1.Normal = Vector3(0.0f, 0.0f, -1.0f);
+	v1.Texcoord = Vector2(1.0f, 0.0f) * TEX_SCALE;
+	v1.Tangent = Vector3(1.0f, 0.0f, 0.0f);
 
-	pDst->Vertices[3].Position = Vector3(-1.0f, -1.0f, 0.0f) * SCALE;
-	pDst->Vertices[3].Normal = Vector3(0.0f, 0.0f, -1.0f);
-	pDst->Vertices[3].Texcoord = Vector2(0.0f, 1.0f) * TEX_SCALE;
-	pDst->Vertices[3].Tangent = Vector3(1.0f, 0.0f, 0.0f);
+	v2.Position = Vector3(1.0f, -1.0f, 0.0f) * SCALE;
+	v2.Normal = Vector3(0.0f, 0.0f, -1.0f);
+	v2.Texcoord = Vector2(1.0f, 1.0f) * TEX_SCALE;
+	v2.Tangent = Vector3(1.0f, 0.0f, 0.0f);
+
+	v3.Position = Vector3(-1.0f, -1.0f, 0.0f) * SCALE;
+	v3.Normal = Vector3(0.0f, 0.0f, -1.0f);
+	v3.Texcoord = Vector2(0.0f, 1.0f) * TEX_SCALE;
+	v3.Tangent = Vector3(1.0f, 0.0f, 0.0f);
 
 	pDst->Indices = { 0, 1, 2, 0, 2, 3, };
 }
@@ -168,7 +168,7 @@ void MakeGrass(MeshInfo* pDst)
 
 	MakeSquareGrid(pDst, 1, 4);
 
-	for (size_t i = 0, size = pDst->Vertices.size(); i < size; ++i)
+	for (UINT64 i = 0, size = pDst->Vertices.size(); i < size; ++i)
 	{
 		Vertex& v = pDst->Vertices[i];
 
@@ -181,10 +181,9 @@ void MakeGrass(MeshInfo* pDst)
 
 	// 맨 위를 뾰족하게 만들기 위해 삼각형 하나와 정점 하나 삭제.
 	pDst->Indices.erase(pDst->Indices.begin(), pDst->Indices.begin() + 3);
-	for (size_t i = 0, size = pDst->Indices.size(); i < size; ++i)
+	for (UINT64 i = 0, size = pDst->Indices.size(); i < size; ++i)
 	{
-		uint32_t& index = pDst->Indices[i];
-		index -= 1;
+		pDst->Indices[i] -= 1;
 	}
 	pDst->Vertices.erase(pDst->Vertices.begin());
 	pDst->Vertices[0].Position.x = 0.0f;
@@ -198,106 +197,136 @@ void MakeBox(MeshInfo* pDst, const float SCALE)
 	pDst->Vertices.resize(24);
 
 	// 윗면
-	pDst->Vertices[0].Position = Vector3(-1.0f, 1.0f, -1.0f) * SCALE;
-	pDst->Vertices[0].Normal = Vector3(0.0f, 1.0f, 0.0f);
-	pDst->Vertices[0].Texcoord = Vector2(0.0f, 0.0f);
+	Vertex& v0 = pDst->Vertices[0];
+	Vertex& v1 = pDst->Vertices[1];
+	Vertex& v2 = pDst->Vertices[2];
+	Vertex& v3 = pDst->Vertices[3];
 
-	pDst->Vertices[1].Position = Vector3(-1.0f, 1.0f, 1.0f) * SCALE;
-	pDst->Vertices[1].Normal = Vector3(0.0f, 1.0f, 0.0f);
-	pDst->Vertices[1].Texcoord = Vector2(1.0f, 0.0f);
+	v0.Position = Vector3(-1.0f, 1.0f, -1.0f) * SCALE;
+	v0.Normal = Vector3(0.0f, 1.0f, 0.0f);
+	v0.Texcoord = Vector2(0.0f, 0.0f);
 
-	pDst->Vertices[2].Position = Vector3(1.0f, 1.0f, 1.0f) * SCALE;
-	pDst->Vertices[2].Normal = Vector3(0.0f, 1.0f, 0.0f);
-	pDst->Vertices[2].Texcoord = Vector2(1.0f, 1.0f);
+	v1.Position = Vector3(-1.0f, 1.0f, 1.0f) * SCALE;
+	v1.Normal = Vector3(0.0f, 1.0f, 0.0f);
+	v1.Texcoord = Vector2(1.0f, 0.0f);
 
-	pDst->Vertices[3].Position = Vector3(1.0f, 1.0f, -1.0f) * SCALE;
-	pDst->Vertices[3].Normal = Vector3(0.0f, 1.0f, 0.0f);
-	pDst->Vertices[3].Texcoord = Vector2(0.0f, 1.0f);
+	v2.Position = Vector3(1.0f, 1.0f, 1.0f) * SCALE;
+	v2.Normal = Vector3(0.0f, 1.0f, 0.0f);
+	v2.Texcoord = Vector2(1.0f, 1.0f);
+
+	v3.Position = Vector3(1.0f, 1.0f, -1.0f) * SCALE;
+	v3.Normal = Vector3(0.0f, 1.0f, 0.0f);
+	v3.Texcoord = Vector2(0.0f, 1.0f);
 
 	// 아랫면
-	pDst->Vertices[4].Position = Vector3(-1.0f, -1.0f, -1.0f) * SCALE;
-	pDst->Vertices[4].Normal = Vector3(0.0f, -1.0f, 0.0f);
-	pDst->Vertices[4].Texcoord = Vector2(0.0f, 0.0f);
+	Vertex& v4 = pDst->Vertices[4];
+	Vertex& v5 = pDst->Vertices[5];
+	Vertex& v6 = pDst->Vertices[6];
+	Vertex& v7 = pDst->Vertices[7];
 
-	pDst->Vertices[5].Position = Vector3(1.0f, -1.0f, -1.0f) * SCALE;
-	pDst->Vertices[5].Normal = Vector3(0.0f, -1.0f, 0.0f);
-	pDst->Vertices[5].Texcoord = Vector2(1.0f, 0.0f);
+	v4.Position = Vector3(-1.0f, -1.0f, -1.0f) * SCALE;
+	v4.Normal = Vector3(0.0f, -1.0f, 0.0f);
+	v4.Texcoord = Vector2(0.0f, 0.0f);
 
-	pDst->Vertices[6].Position = Vector3(1.0f, -1.0f, 1.0f) * SCALE;
-	pDst->Vertices[6].Normal = Vector3(0.0f, -1.0f, 0.0f);
-	pDst->Vertices[6].Texcoord = Vector2(1.0f, 1.0f);
+	v5.Position = Vector3(1.0f, -1.0f, -1.0f) * SCALE;
+	v5.Normal = Vector3(0.0f, -1.0f, 0.0f);
+	v5.Texcoord = Vector2(1.0f, 0.0f);
 
-	pDst->Vertices[7].Position = Vector3(-1.0f, -1.0f, 1.0f) * SCALE;
-	pDst->Vertices[7].Normal = Vector3(0.0f, -1.0f, 0.0f);
-	pDst->Vertices[7].Texcoord = Vector2(0.0f, 1.0f);
+	v6.Position = Vector3(1.0f, -1.0f, 1.0f) * SCALE;
+	v6.Normal = Vector3(0.0f, -1.0f, 0.0f);
+	v6.Texcoord = Vector2(1.0f, 1.0f);
+
+	v7.Position = Vector3(-1.0f, -1.0f, 1.0f) * SCALE;
+	v7.Normal = Vector3(0.0f, -1.0f, 0.0f);
+	v7.Texcoord = Vector2(0.0f, 1.0f);
 
 	// 앞면
-	pDst->Vertices[8].Position = Vector3(-1.0f, -1.0f, -1.0f) * SCALE;
-	pDst->Vertices[8].Normal = Vector3(0.0f, 0.0f, -1.0f);
-	pDst->Vertices[8].Texcoord = Vector2(0.0f, 0.0f);
+	Vertex& v8 = pDst->Vertices[8];
+	Vertex& v9 = pDst->Vertices[9];
+	Vertex& v10 = pDst->Vertices[10];
+	Vertex& v11 = pDst->Vertices[11];
 
-	pDst->Vertices[9].Position = Vector3(-1.0f, 1.0f, -1.0f) * SCALE;
-	pDst->Vertices[9].Normal = Vector3(0.0f, 0.0f, -1.0f);
-	pDst->Vertices[9].Texcoord = Vector2(1.0f, 0.0f);
+	v8.Position = Vector3(-1.0f, -1.0f, -1.0f) * SCALE;
+	v8.Normal = Vector3(0.0f, 0.0f, -1.0f);
+	v8.Texcoord = Vector2(0.0f, 0.0f);
 
-	pDst->Vertices[10].Position = Vector3(1.0f, 1.0f, -1.0f) * SCALE;
-	pDst->Vertices[10].Normal = Vector3(0.0f, 0.0f, -1.0f);
-	pDst->Vertices[10].Texcoord = Vector2(1.0f, 1.0f);
+	v9.Position = Vector3(-1.0f, 1.0f, -1.0f) * SCALE;
+	v9.Normal = Vector3(0.0f, 0.0f, -1.0f);
+	v9.Texcoord = Vector2(1.0f, 0.0f);
 
-	pDst->Vertices[11].Position = Vector3(1.0f, -1.0f, -1.0f) * SCALE;
-	pDst->Vertices[11].Normal = Vector3(0.0f, 0.0f, -1.0f);
-	pDst->Vertices[11].Texcoord = Vector2(0.0f, 1.0f);
+	v10.Position = Vector3(1.0f, 1.0f, -1.0f) * SCALE;
+	v10.Normal = Vector3(0.0f, 0.0f, -1.0f);
+	v10.Texcoord = Vector2(1.0f, 1.0f);
+
+	v11.Position = Vector3(1.0f, -1.0f, -1.0f) * SCALE;
+	v11.Normal = Vector3(0.0f, 0.0f, -1.0f);
+	v11.Texcoord = Vector2(0.0f, 1.0f);
 
 	// 뒷면
-	pDst->Vertices[12].Position = Vector3(-1.0f, -1.0f, 1.0f) * SCALE;
-	pDst->Vertices[12].Normal = Vector3(0.0f, 0.0f, 1.0f);
-	pDst->Vertices[12].Texcoord = Vector2(0.0f, 0.0f);
+	Vertex& v12 = pDst->Vertices[12];
+	Vertex& v13 = pDst->Vertices[13];
+	Vertex& v14 = pDst->Vertices[14];
+	Vertex& v15 = pDst->Vertices[15];
 
-	pDst->Vertices[13].Position = Vector3(1.0f, -1.0f, 1.0f) * SCALE;
-	pDst->Vertices[13].Normal = Vector3(0.0f, 0.0f, 1.0f);
-	pDst->Vertices[13].Texcoord = Vector2(1.0f, 0.0f);
+	v12.Position = Vector3(-1.0f, -1.0f, 1.0f) * SCALE;
+	v12.Normal = Vector3(0.0f, 0.0f, 1.0f);
+	v12.Texcoord = Vector2(0.0f, 0.0f);
 
-	pDst->Vertices[14].Position = Vector3(1.0f, 1.0f, 1.0f) * SCALE;
-	pDst->Vertices[14].Normal = Vector3(0.0f, 0.0f, 1.0f);
-	pDst->Vertices[14].Texcoord = Vector2(1.0f, 1.0f);
+	v13.Position = Vector3(1.0f, -1.0f, 1.0f) * SCALE;
+	v13.Normal = Vector3(0.0f, 0.0f, 1.0f);
+	v13.Texcoord = Vector2(1.0f, 0.0f);
 
-	pDst->Vertices[15].Position = Vector3(-1.0f, 1.0f, 1.0f) * SCALE;
-	pDst->Vertices[15].Normal = Vector3(0.0f, 0.0f, 1.0f);
-	pDst->Vertices[15].Texcoord = Vector2(0.0f, 1.0f);
+	v14.Position = Vector3(1.0f, 1.0f, 1.0f) * SCALE;
+	v14.Normal = Vector3(0.0f, 0.0f, 1.0f);
+	v14.Texcoord = Vector2(1.0f, 1.0f);
+
+	v15.Position = Vector3(-1.0f, 1.0f, 1.0f) * SCALE;
+	v15.Normal = Vector3(0.0f, 0.0f, 1.0f);
+	v15.Texcoord = Vector2(0.0f, 1.0f);
 
 	// 왼쪽
-	pDst->Vertices[16].Position = Vector3(-1.0f, -1.0f, 1.0f) * SCALE;
-	pDst->Vertices[16].Normal = Vector3(-1.0f, 0.0f, 0.0f);
-	pDst->Vertices[16].Texcoord = Vector2(0.0f, 0.0f);
+	Vertex& v16 = pDst->Vertices[16];
+	Vertex& v17 = pDst->Vertices[17];
+	Vertex& v18 = pDst->Vertices[18];
+	Vertex& v19 = pDst->Vertices[19];
 
-	pDst->Vertices[17].Position = Vector3(-1.0f, 1.0f, 1.0f) * SCALE;
-	pDst->Vertices[17].Normal = Vector3(-1.0f, 0.0f, 0.0f);
-	pDst->Vertices[17].Texcoord = Vector2(1.0f, 0.0f);
+	v16.Position = Vector3(-1.0f, -1.0f, 1.0f) * SCALE;
+	v16.Normal = Vector3(-1.0f, 0.0f, 0.0f);
+	v16.Texcoord = Vector2(0.0f, 0.0f);
 
-	pDst->Vertices[18].Position = Vector3(-1.0f, 1.0f, -1.0f) * SCALE;
-	pDst->Vertices[18].Normal = Vector3(-1.0f, 0.0f, 0.0f);
-	pDst->Vertices[18].Texcoord = Vector2(1.0f, 1.0f);
+	v17.Position = Vector3(-1.0f, 1.0f, 1.0f) * SCALE;
+	v17.Normal = Vector3(-1.0f, 0.0f, 0.0f);
+	v17.Texcoord = Vector2(1.0f, 0.0f);
 
-	pDst->Vertices[19].Position = Vector3(-1.0f, -1.0f, -1.0f) * SCALE;
-	pDst->Vertices[19].Normal = Vector3(-1.0f, 0.0f, 0.0f);
-	pDst->Vertices[19].Texcoord = Vector2(0.0f, 1.0f);
+	v18.Position = Vector3(-1.0f, 1.0f, -1.0f) * SCALE;
+	v18.Normal = Vector3(-1.0f, 0.0f, 0.0f);
+	v18.Texcoord = Vector2(1.0f, 1.0f);
+
+	v19.Position = Vector3(-1.0f, -1.0f, -1.0f) * SCALE;
+	v19.Normal = Vector3(-1.0f, 0.0f, 0.0f);
+	v19.Texcoord = Vector2(0.0f, 1.0f);
 
 	// 오른쪽
-	pDst->Vertices[20].Position = Vector3(1.0f, -1.0f, 1.0f) * SCALE;
-	pDst->Vertices[20].Normal = Vector3(1.0f, 0.0f, 0.0f);
-	pDst->Vertices[20].Texcoord = Vector2(0.0f, 0.0f);
+	Vertex& v20 = pDst->Vertices[20];
+	Vertex& v21 = pDst->Vertices[21];
+	Vertex& v22 = pDst->Vertices[22];
+	Vertex& v23 = pDst->Vertices[23];
 
-	pDst->Vertices[21].Position = Vector3(1.0f, -1.0f, -1.0f) * SCALE;
-	pDst->Vertices[21].Normal = Vector3(1.0f, 0.0f, 0.0f);
-	pDst->Vertices[21].Texcoord = Vector2(1.0f, 0.0f);
+	v20.Position = Vector3(1.0f, -1.0f, 1.0f) * SCALE;
+	v20.Normal = Vector3(1.0f, 0.0f, 0.0f);
+	v20.Texcoord = Vector2(0.0f, 0.0f);
 
-	pDst->Vertices[22].Position = Vector3(1.0f, 1.0f, -1.0f) * SCALE;
-	pDst->Vertices[22].Normal = Vector3(1.0f, 0.0f, 0.0f);
-	pDst->Vertices[22].Texcoord = Vector2(1.0f, 1.0f);
+	v21.Position = Vector3(1.0f, -1.0f, -1.0f) * SCALE;
+	v21.Normal = Vector3(1.0f, 0.0f, 0.0f);
+	v21.Texcoord = Vector2(1.0f, 0.0f);
 
-	pDst->Vertices[23].Position = Vector3(1.0f, 1.0f, 1.0f) * SCALE;
-	pDst->Vertices[23].Normal = Vector3(1.0f, 0.0f, 0.0f);
-	pDst->Vertices[23].Texcoord = Vector2(0.0f, 1.0f);
+	v22.Position = Vector3(1.0f, 1.0f, -1.0f) * SCALE;
+	v22.Normal = Vector3(1.0f, 0.0f, 0.0f);
+	v22.Texcoord = Vector2(1.0f, 1.0f);
+
+	v23.Position = Vector3(1.0f, 1.0f, 1.0f) * SCALE;
+	v23.Normal = Vector3(1.0f, 0.0f, 0.0f);
+	v23.Texcoord = Vector2(0.0f, 1.0f);
 
 	pDst->Indices =
 	{
@@ -310,7 +339,7 @@ void MakeBox(MeshInfo* pDst, const float SCALE)
 	};
 }
 
-void MakeWireBox(MeshInfo* pDst, const Vector3 CENTER, const Vector3 EXTENTS)
+void MakeWireBox(MeshInfo* pDst, const Vector3& CENTER, const Vector3& EXTENTS)
 {
 	// 상자를 와이어 프레임으로 그리는 용도.
 
@@ -319,46 +348,56 @@ void MakeWireBox(MeshInfo* pDst, const Vector3 CENTER, const Vector3 EXTENTS)
 	pDst->Vertices.resize(8);
 
 	// 앞면
-	pDst->Vertices[0].Position = CENTER + Vector3(-1.0f, -1.0f, -1.0f) * EXTENTS;
-	pDst->Vertices[0].Normal = pDst->Vertices[0].Position - CENTER;
-	pDst->Vertices[0].Normal.Normalize();
-	pDst->Vertices[0].Texcoord = Vector2(0.0f);
+	Vertex& v0 = pDst->Vertices[0];
+	Vertex& v1 = pDst->Vertices[1];
+	Vertex& v2 = pDst->Vertices[2];
+	Vertex& v3 = pDst->Vertices[3];
 
-	pDst->Vertices[1].Position = CENTER + Vector3(-1.0f, 1.0f, -1.0f) * EXTENTS;
-	pDst->Vertices[1].Normal = pDst->Vertices[1].Position - CENTER;
-	pDst->Vertices[1].Normal.Normalize();
-	pDst->Vertices[1].Texcoord = Vector2(0.0f);
+	v0.Position = CENTER + Vector3(-1.0f, -1.0f, -1.0f) * EXTENTS;
+	v0.Normal = pDst->Vertices[0].Position - CENTER;
+	v0.Normal.Normalize();
+	v0.Texcoord = Vector2(0.0f);
 
-	pDst->Vertices[2].Position = CENTER + Vector3(1.0f, 1.0f, -1.0f) * EXTENTS;
-	pDst->Vertices[2].Normal = pDst->Vertices[2].Position - CENTER;
-	pDst->Vertices[2].Normal.Normalize();
-	pDst->Vertices[2].Normal.Normalize();
+	v1.Position = CENTER + Vector3(-1.0f, 1.0f, -1.0f) * EXTENTS;
+	v1.Normal = pDst->Vertices[1].Position - CENTER;
+	v1.Normal.Normalize();
+	v1.Texcoord = Vector2(0.0f);
 
-	pDst->Vertices[3].Position = CENTER + Vector3(1.0f, -1.0f, -1.0f) * EXTENTS;
-	pDst->Vertices[3].Normal = pDst->Vertices[3].Position - CENTER;
-	pDst->Vertices[3].Normal.Normalize();
-	pDst->Vertices[3].Texcoord = Vector2(0.0f);
+	v2.Position = CENTER + Vector3(1.0f, 1.0f, -1.0f) * EXTENTS;
+	v2.Normal = pDst->Vertices[2].Position - CENTER;
+	v2.Normal.Normalize();
+	v2.Normal.Normalize();
+
+	v3.Position = CENTER + Vector3(1.0f, -1.0f, -1.0f) * EXTENTS;
+	v3.Normal = pDst->Vertices[3].Position - CENTER;
+	v3.Normal.Normalize();
+	v3.Texcoord = Vector2(0.0f);
 
 	// 뒷면
-	pDst->Vertices[4].Position = CENTER + Vector3(-1.0f, -1.0f, 1.0f) * EXTENTS;
-	pDst->Vertices[4].Normal = pDst->Vertices[4].Position - CENTER;
-	pDst->Vertices[4].Normal.Normalize();
-	pDst->Vertices[4].Texcoord = Vector2(0.0f);
+	Vertex& v4 = pDst->Vertices[4];
+	Vertex& v5 = pDst->Vertices[5];
+	Vertex& v6 = pDst->Vertices[6];
+	Vertex& v7 = pDst->Vertices[7];
 
-	pDst->Vertices[5].Position = CENTER + Vector3(-1.0f, 1.0f, 1.0f) * EXTENTS;
-	pDst->Vertices[5].Normal = pDst->Vertices[5].Position - CENTER;
-	pDst->Vertices[5].Normal.Normalize();
-	pDst->Vertices[5].Texcoord = Vector2(0.0f);
+	v4.Position = CENTER + Vector3(-1.0f, -1.0f, 1.0f) * EXTENTS;
+	v4.Normal = pDst->Vertices[4].Position - CENTER;
+	v4.Normal.Normalize();
+	v4.Texcoord = Vector2(0.0f);
 
-	pDst->Vertices[6].Position = CENTER + Vector3(1.0f, 1.0f, 1.0f) * EXTENTS;
-	pDst->Vertices[6].Normal = pDst->Vertices[6].Position - CENTER;
-	pDst->Vertices[6].Normal.Normalize();
-	pDst->Vertices[6].Texcoord = Vector2(0.0f);
+	v5.Position = CENTER + Vector3(-1.0f, 1.0f, 1.0f) * EXTENTS;
+	v5.Normal = pDst->Vertices[5].Position - CENTER;
+	v5.Normal.Normalize();
+	v5.Texcoord = Vector2(0.0f);
 
-	pDst->Vertices[7].Position = CENTER + Vector3(1.0f, -1.0f, 1.0f) * EXTENTS;
-	pDst->Vertices[7].Normal = pDst->Vertices[7].Position - CENTER;
-	pDst->Vertices[7].Normal.Normalize();
-	pDst->Vertices[7].Texcoord = Vector2(0.0f);
+	v6.Position = CENTER + Vector3(1.0f, 1.0f, 1.0f) * EXTENTS;
+	v6.Normal = pDst->Vertices[6].Position - CENTER;
+	v6.Normal.Normalize();
+	v6.Texcoord = Vector2(0.0f);
+
+	v7.Position = CENTER + Vector3(1.0f, -1.0f, 1.0f) * EXTENTS;
+	v7.Normal = pDst->Vertices[7].Position - CENTER;
+	v7.Normal.Normalize();
+	v7.Texcoord = Vector2(0.0f);
 
 	// Line list.
 	pDst->Indices =
@@ -369,112 +408,112 @@ void MakeWireBox(MeshInfo* pDst, const Vector3 CENTER, const Vector3 EXTENTS)
 	};
 }
 
-void MakeWireSphere(MeshInfo* pDst, const Vector3 CENTER, const float RADIUS)
+void MakeWireSphere(MeshInfo* pDst, const Vector3& CENTER, const float RADIUS)
 {
 	_ASSERT(pDst);
-
-	vector<Vertex>& vertices = pDst->Vertices;
-	vector<uint32_t>& indices = pDst->Indices;
-
-	const int NUM_POINTS = 30;
-	const float D_THETA = XM_2PI / (float)NUM_POINTS;
-
-	// XY plane
-	{
-		int offset = (int)(vertices.size());
-		Vector3 start(1.0f, 0.0f, 0.0f);
-		for (int i = 0; i < NUM_POINTS; ++i)
-		{
-			Vertex v;
-			v.Position = CENTER + Vector3::Transform(start, Matrix::CreateRotationZ(D_THETA * (float)i)) * RADIUS;
-			vertices.push_back(v);
-			indices.push_back(i + offset);
-			if (i != 0)
-			{
-				indices.push_back(i + offset);
-			}
-		}
-		indices.push_back(offset);
-	}
-
-	// YZ
-	{
-		int offset = (int)(vertices.size());
-		Vector3 start(0.0f, 1.0f, 0.0f);
-		for (int i = 0; i < NUM_POINTS; ++i)
-		{
-			Vertex v;
-			v.Position = CENTER + Vector3::Transform(start, Matrix::CreateRotationX(D_THETA * (float)i)) * RADIUS;
-			vertices.push_back(v);
-			indices.push_back(i + offset);
-			if (i != 0)
-			{
-				indices.push_back(i + offset);
-			}
-		}
-		indices.push_back(offset);
-	}
-
-	// XZ
-	{
-		int offset = (int)(vertices.size());
-		Vector3 start(1.0f, 0.0f, 0.0f);
-		for (int i = 0; i < NUM_POINTS; ++i)
-		{
-			Vertex v;
-			v.Position = CENTER + Vector3::Transform(start, Matrix::CreateRotationY(D_THETA * (float)i)) * RADIUS;
-			vertices.push_back(v);
-			indices.push_back(i + offset);
-			if (i != 0)
-			{
-				indices.push_back(i + offset);
-			}
-		}
-		indices.push_back(offset);
-	}
-}
-
-void MakeCylinder(MeshInfo* pDst, const float BOTTOM_RADIUS, const float TOP_RADIUS, float height, int numSlices)
-{
-	_ASSERT(pDst);
-
-	// Texture 좌표계때문에 (numSlices + 1) x 2 개의 버텍스 사용.
-
-	const float D_THETA = -XM_2PI / (float)numSlices;
 
 	std::vector<Vertex>& vertices = pDst->Vertices;
-	std::vector<uint32_t>& indices = pDst->Indices;
-	vertices.resize(numSlices * numSlices);
-	indices.reserve(numSlices * 6);
+	std::vector<UINT>& indices = pDst->Indices;
 
-	// 옆면의 바닥 버텍스들 (인덱스 0 이상 numSlices 미만).
-	for (int i = 0; i <= numSlices; ++i)
+	const int NUM_POINTS = 30;
+	const float D_THETA = DirectX::XM_2PI / (float)NUM_POINTS;
+
+	// XY plane
+	UINT offset = (UINT)(vertices.size());
+	Vector3 start = Vector3::UnitX;
+	for (int i = 0; i < NUM_POINTS; ++i)
+	{
+		Vertex v;
+		v.Position = CENTER + Vector3::Transform(start, Matrix::CreateRotationZ(D_THETA * (float)i)) * RADIUS;
+		vertices.push_back(v);
+		indices.push_back(i + offset);
+		if (i != 0)
+		{
+			indices.push_back(i + offset);
+		}
+	}
+	indices.push_back(offset);
+
+	// YZ
+	offset = (UINT)(vertices.size());
+	start = Vector3::UnitY;
+	for (int i = 0; i < NUM_POINTS; ++i)
+	{
+		Vertex v;
+		v.Position = CENTER + Vector3::Transform(start, Matrix::CreateRotationX(D_THETA * (float)i)) * RADIUS;
+		vertices.push_back(v);
+		indices.push_back(i + offset);
+		if (i != 0)
+		{
+			indices.push_back(i + offset);
+		}
+	}
+	indices.push_back(offset);
+
+	// XZ
+	offset = (UINT)(vertices.size());
+	start = Vector3::UnitX;
+	for (int i = 0; i < NUM_POINTS; ++i)
+	{
+		Vertex v;
+		v.Position = CENTER + Vector3::Transform(start, Matrix::CreateRotationY(D_THETA * (float)i)) * RADIUS;
+		vertices.push_back(v);
+		indices.push_back(i + offset);
+		if (i != 0)
+		{
+			indices.push_back(i + offset);
+		}
+	}
+	indices.push_back(offset);
+}
+
+void MakeCylinder(MeshInfo* pDst, const float BOTTOM_RADIUS, const float TOP_RADIUS, const float HEIGHT, const int NUM_SLICES)
+{
+	_ASSERT(pDst);
+
+	// Texture 좌표계때문에 (NUM_SLICES + 1) x 2 개의 버텍스 사용.
+
+	const float D_THETA = -XM_2PI / (float)NUM_SLICES;
+
+	std::vector<Vertex>& vertices = pDst->Vertices;
+	std::vector<UINT>& indices = pDst->Indices;
+	vertices.resize(NUM_SLICES * NUM_SLICES);
+	indices.reserve(NUM_SLICES * 6);
+
+	// 옆면의 바닥 버텍스들 (인덱스 0 이상 NUM_SLICES 미만).
+	for (int i = 0; i <= NUM_SLICES; ++i)
 	{
 		Vertex& v = vertices[i];
-		v.Position = Vector3::Transform(Vector3(BOTTOM_RADIUS, -0.5f * height, 0.0f), Matrix::CreateRotationY(D_THETA * (float)i));
-		v.Normal = v.Position - Vector3(0.0f, -0.5f * height, 0.0f);
+		
+		v.Position = Vector3::Transform(Vector3(BOTTOM_RADIUS, -0.5f * HEIGHT, 0.0f), Matrix::CreateRotationY(D_THETA * (float)i));
+		
+		v.Normal = v.Position - Vector3(0.0f, -0.5f * HEIGHT, 0.0f);
 		v.Normal.Normalize();
-		v.Texcoord = Vector2(float(i) / numSlices, 1.0f);
+		
+		v.Texcoord = Vector2(float(i) / NUM_SLICES, 1.0f);
 	}
 
-	// 옆면의 맨 위 버텍스들 (인덱스 numSlices 이상 2 * numSlices 미만).
-	for (int i = 0; i <= numSlices; ++i)
+	// 옆면의 맨 위 버텍스들 (인덱스 NUM_SLICES 이상 2 * NUM_SLICES 미만).
+	for (int i = 0; i <= NUM_SLICES; ++i)
 	{
-		Vertex& v = vertices[numSlices + i];
-		v.Position = Vector3::Transform(Vector3(TOP_RADIUS, 0.5f * height, 0.0f), Matrix::CreateRotationY(D_THETA * (float)i));
-		v.Normal = v.Position - Vector3(0.0f, 0.5f * height, 0.0f);
+		Vertex& v = vertices[NUM_SLICES + i];
+		
+		v.Position = Vector3::Transform(Vector3(TOP_RADIUS, 0.5f * HEIGHT, 0.0f), Matrix::CreateRotationY(D_THETA * (float)i));
+		
+		v.Normal = v.Position - Vector3(0.0f, 0.5f * HEIGHT, 0.0f);
 		v.Normal.Normalize();
-		v.Texcoord = Vector2((float)i / numSlices, 0.0f);
+		
+		v.Texcoord = Vector2((float)i / NUM_SLICES, 0.0f);
 	}
 
-	for (int i = 0; i < numSlices; ++i)
+	for (int i = 0; i < NUM_SLICES; ++i)
 	{
 		indices.push_back(i);
-		indices.push_back(i + numSlices + 1);
-		indices.push_back(i + 1 + numSlices + 1);
+		indices.push_back(i + NUM_SLICES + 1);
+		indices.push_back(i + 1 + NUM_SLICES + 1);
 
 		indices.push_back(i);
-		indices.push_back(i + 1 + numSlices + 1);
+		indices.push_back(i + 1 + NUM_SLICES + 1);
 		indices.push_back(i + 1);
 	}
 }
@@ -483,16 +522,16 @@ void MakeSphere(MeshInfo* pDst, const float RADIUS, const int NUM_SLICES, const 
 {
 	// 참고: OpenGL Sphere
 	// http://www.songho.ca/opengl/gl_sphere.html
-	// Texture 좌표계때문에 (numSlices + 1) 개의 버텍스 사용 (마지막에 닫아주는
+	// Texture 좌표계때문에 (NUM_SLICES + 1) 개의 버텍스 사용 (마지막에 닫아주는
 	// 버텍스가 중복) Stack은 y 위쪽 방향으로 쌓아가는 방식.
 
 	_ASSERT(pDst);
 
-	const float D_THETA = -XM_2PI / (float)NUM_SLICES;
-	const float D_PHI = -XM_PI / (float)NUM_STACKS;
+	const float D_THETA = -DirectX::XM_2PI / (float)NUM_SLICES;
+	const float D_PHI = -DirectX::XM_PI / (float)NUM_STACKS;
 
 	vector<Vertex>& vertices = pDst->Vertices;
-	vector<uint32_t>& indices = pDst->Indices;
+	vector<UINT>& indices = pDst->Indices;
 	vertices.resize((NUM_STACKS + 1) * (NUM_SLICES + 1));
 	indices.reserve(NUM_SLICES * NUM_STACKS * 6);
 
@@ -514,7 +553,7 @@ void MakeSphere(MeshInfo* pDst, const float RADIUS, const int NUM_SLICES, const 
 			v.Texcoord = Vector2(float(i) / NUM_SLICES, 1.0f - float(j) / NUM_STACKS) * TEX_SCALE;
 
 			// Texcoord가 위로 갈수록 증가.
-			Vector3 biTangent = Vector3(0.0f, 1.0f, 0.0f);
+			Vector3 biTangent = Vector3::UnitY;
 			Vector3 normalOrth = v.Normal - biTangent.Dot(v.Normal) * v.Normal;
 			normalOrth.Normalize();
 
@@ -554,14 +593,14 @@ void MakeTetrahedron(MeshInfo* pDst)
 	const float D = sqrt(3.0f) / 6.0f * A; // = x / 2
 	const float H = sqrt(6.0f) / 3.0f * A;
 
-	Vector3 points[] =
+	Vector3 points[4] =
 	{
 		{ 0.0f, X, 0.0f },
 		{ -0.5f * A, -D, 0.0f },
 		{ 0.5f * A, -D, 0.0f },
 		{ 0.0f, 0.0f, H }
 	};
-	Vector3 center = Vector3(0.0f);
+	Vector3 center;
 
 	for (int i = 0; i < 4; ++i)
 	{
@@ -596,7 +635,7 @@ void MakeIcosahedron(MeshInfo* pDst)
 
 	pDst->Vertices.resize(12);
 
-	Vector3 pos[] =
+	Vector3 pos[12] =
 	{
 		Vector3(-X, 0.0f, Z), Vector3(X, 0.0f, Z),   Vector3(-X, 0.0f, -Z),
 		Vector3(X, 0.0f, -Z), Vector3(0.0f, Z, X),   Vector3(0.0f, Z, -X),
@@ -629,8 +668,9 @@ void SubdivideToSphere(MeshInfo* pDst, const float RADIUS, MeshInfo& meshData)
 	_ASSERT(pDst);
 
 	// 원점이 중심이라고 가정.
-	for (auto& v : meshData.Vertices)
+	for (UINT64 i = 0, size = meshData.Vertices.size(); i < size; ++i)
 	{
+		Vertex& v = meshData.Vertices[i];
 		v.Position = v.Normal * RADIUS;
 	}
 
@@ -660,15 +700,16 @@ void SubdivideToSphere(MeshInfo* pDst, const float RADIUS, MeshInfo& meshData)
 	};
 
 	// 버텍스가 중복되는 구조로 구현.
-	const size_t TOTAL_INDICES = meshData.Indices.size();
-	uint32_t count = 0;
+	const UINT64 TOTAL_INDICES = meshData.Indices.size();
+	UINT count = 0;
 	pDst->Vertices.reserve(12 * TOTAL_INDICES);
 	pDst->Indices.reserve(12 * TOTAL_INDICES);
-	for (size_t i = 0; i < TOTAL_INDICES; i += 3)
+
+	for (UINT64 i = 0; i < TOTAL_INDICES; i += 3)
 	{
-		size_t i0 = meshData.Indices[i];
-		size_t i1 = meshData.Indices[i + 1];
-		size_t i2 = meshData.Indices[i + 2];
+		UINT i0 = meshData.Indices[i];
+		UINT i1 = meshData.Indices[i + 1];
+		UINT i2 = meshData.Indices[i + 2];
 
 		Vertex v0 = meshData.Vertices[i0];
 		Vertex v1 = meshData.Vertices[i1];
@@ -710,7 +751,7 @@ void SubdivideToSphere(MeshInfo* pDst, const float RADIUS, MeshInfo& meshData)
 		pDst->Vertices.push_back(v5);
 		pDst->Vertices.push_back(v2);
 
-		for (uint32_t j = 0; j < 12; ++j)
+		for (UINT j = 0; j < 12; ++j)
 		{
 			pDst->Indices.push_back(j + count);
 		}

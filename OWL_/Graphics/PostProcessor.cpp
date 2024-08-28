@@ -18,11 +18,11 @@ void PostProcessor::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCont
 	m_ScreenHeight = HEIGHT;
 
 	// 스크린 공간 설정.
-	MeshInfo meshInfo = INIT_MESH_INFO;
+	MeshInfo meshInfo;
 	MakeSquare(&meshInfo);
 
-	pMesh = (Mesh*)Malloc(sizeof(Mesh));
-	*pMesh = INIT_MESH;
+	pMesh = New Mesh;
+	pMesh->Initialize(pDevice);
 
 	hr = CreateVertexBuffer(pDevice, meshInfo.Vertices, &(pMesh->pVertexBuffer));
 	BREAK_IF_FAILED(hr);
@@ -160,7 +160,8 @@ void PostProcessor::Destroy()
 
 	if (pMesh)
 	{
-		ReleaseMesh(&pMesh);
+		delete pMesh;
+		pMesh = nullptr;
 	}
 }
 

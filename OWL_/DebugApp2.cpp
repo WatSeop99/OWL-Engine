@@ -56,7 +56,8 @@ void DebugApp2::InitScene()
 		}
 
 		Vector3 center(0.0f, 0.0f, 2.0f);
-		m_pCharacter = New SkinnedMeshModel(m_pDevice5, m_pContext4, meshInfos, aniData);
+		m_pCharacter = New SkinnedMeshModel;
+		m_pCharacter->Initialize(m_pDevice5, m_pContext4, meshInfos, aniData);
 		for (size_t i = 0, size = m_pCharacter->pMeshes.size(); i < size; ++i)
 		{
 			Mesh* pCurMesh = m_pCharacter->pMeshes[i];

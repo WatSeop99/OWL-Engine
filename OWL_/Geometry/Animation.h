@@ -17,13 +17,10 @@ struct AnimationClip
 		Key() = default;
 		~Key() = default;
 
-		inline Matrix GetTransform()
-		{
-			return (Matrix::CreateScale(Scale) * Matrix::CreateFromQuaternion(Rotation) * Matrix::CreateTranslation(Position));
-		}
+		Matrix GetTransform();
 
 	public:
-		Vector3 Position = Vector3(0.0f);
+		Vector3 Position;
 		Vector3 Scale = Vector3(1.0f);
 		Quaternion Rotation;
 	};
@@ -31,7 +28,6 @@ struct AnimationClip
 	std::string Name;					 // Name of this animation clip.
 	std::vector<std::vector<Key>> pKeys; // pKeys[boneIDX][frameIDX].
 	int NumChannels;					 // Number of bones.
-	int NumKeys;						 // Number of frames of this animation clip.
 	double Duration;					 // Duration of animation in ticks.
 	double TicksPerSec;					 // Frames per second.
 };
@@ -42,20 +38,20 @@ public:
 	AnimationData() = default;
 	~AnimationData() = default;
 
-	void Update(int clipID, int frame);
+	void Update(const int clipID, const int frame);
 
-	inline Matrix Get(int clipID, int boneID, int frame)
+	inline Matrix Get(const int CLIP_ID, const int BONE_ID, const int FRAME)
 	{
 		// DefaultTransform은 모델을 읽어들일때 GeometryGenerator::Normalize()에서 계산. 
-		// DefaultTransform.Invert() * OffsetMatrices[boneID]를 미리 계산해서 합치고 
+		// DefaultTransform.Invert() * OffsetMatrices[BONE_ID]를 미리 계산해서 합치고 
 		// DefaultTransform * RootTransform을 미리 계산해놓을 수 있음.
-		return (DefaultTransform.Invert() * pOffsetMatrices[boneID] * pBoneTransforms[boneID] * DefaultTransform);
+		return (DefaultTransform.Invert() * pOffsetMatrices[BONE_ID] * pBoneTransforms[BONE_ID] * DefaultTransform);
 	}
 
 public:
-	std::map<std::string, int32_t> BoneNameToID; // 뼈 이름과 인덱스 정수.
-	std::vector<std::string> pBoneIDToNames;	 // BoneNameToID의 ID 순서대로 뼈 이름 저장.
-	std::vector<int32_t> pBoneParents;			 // 부모 뼈의 인덱스.
+	std::map<std::string, int> BoneNameToID;	// 뼈 이름과 인덱스 정수.
+	std::vector<std::string> pBoneIDToNames;	// BoneNameToID의 ID 순서대로 뼈 이름 저장.
+	std::vector<int> pBoneParents;				// 부모 뼈의 인덱스.
 	std::vector<Matrix> pOffsetMatrices;
 	std::vector<Matrix> pBoneTransforms;
 	std::vector<AnimationClip> pClips;

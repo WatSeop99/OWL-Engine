@@ -8,15 +8,12 @@
 #include "Mesh.h"
 #include "MeshInfo.h"
 
-
 using DirectX::SimpleMath::Matrix;
 
 class Model
 {
 public:
 	Model() = default;
-	Model(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, std::wstring& basePath, std::wstring& fileName);
-	Model(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const std::vector<MeshInfo>& MESH_INFOS);
 	virtual ~Model() { destroy(); }
 
 	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, std::wstring& basePath, std::wstring& fileName);
@@ -44,8 +41,8 @@ protected:
 	void destroy();
 
 public:
-	Matrix World;   // Model(Object) To World 행렬.
-	Matrix WorldInverseTranspose; // InverseTranspose.
+	Matrix World;					// Model(Object) To World 행렬.
+	Matrix WorldInverseTranspose;	// InverseTranspose.
 
 	bool bDrawNormals = false;
 	bool bIsVisible = true;

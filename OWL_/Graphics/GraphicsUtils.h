@@ -1,10 +1,6 @@
 ﻿#pragma once
 
-HRESULT CreateVertexShaderAndInputLayout(ID3D11Device* pDevice, const wchar_t* pszFileName, const D3D11_INPUT_ELEMENT_DESC* pINPUT_ELEMENTS, const UINT ELEMENTS_SIZE, const D3D_SHADER_MACRO* pSHADER_MACROS,
-										 ID3D11VertexShader** ppVertexShader, ID3D11InputLayout** ppInputLayout);
-// ShaderMacros 사용할 때 예시
-// {D3D_SHADER_MACRO("SKINNED", "1"), D3D_SHADER_MACRO(NULL, NULL)};
-// 맨 뒤에 NULL, NULL 필수
+HRESULT CreateVertexShaderAndInputLayout(ID3D11Device* pDevice, const wchar_t* pszFileName, const D3D11_INPUT_ELEMENT_DESC* pINPUT_ELEMENTS, const UINT ELEMENTS_SIZE, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11VertexShader** ppVertexShader, ID3D11InputLayout** ppInputLayout);
 HRESULT CreateHullShader(ID3D11Device* pDevice, const wchar_t* pszFileName, ID3D11HullShader** ppHullShader);
 HRESULT CreateDomainShader(ID3D11Device* pDevice, const wchar_t* pszFileName, ID3D11DomainShader** ppDomainShader);
 HRESULT CreateGeometryShader(ID3D11Device* pDevice, const wchar_t* pszFileName, ID3D11GeometryShader** ppGeometryShader);
@@ -15,19 +11,19 @@ HRESULT CreateIndexBuffer(ID3D11Device* pDevice, const std::vector<uint32_t>& IN
 template <typename VERTEX>
 HRESULT CreateVertexBuffer(ID3D11Device* pDevice, const std::vector<VERTEX>& VERTICES, ID3D11Buffer** ppVertexBuffer)
 {
-	_ASSERT(pDevice != nullptr);
-	_ASSERT((*ppVertexBuffer) == nullptr);
+	_ASSERT(pDevice);
+	_ASSERT(!(*ppVertexBuffer));
 
 	HRESULT hr = S_OK;
 
-	D3D11_BUFFER_DESC bufferDesc = { 0, };
+	D3D11_BUFFER_DESC bufferDesc = {};
 	bufferDesc.ByteWidth = (UINT)(sizeof(VERTEX) * VERTICES.size());
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bufferDesc.CPUAccessFlags = 0; // 0은 CPU 접근이 필요없음을 나타냄.
 	bufferDesc.StructureByteStride = sizeof(VERTEX);
 
-	D3D11_SUBRESOURCE_DATA vertexBufferData = { 0, };
+	D3D11_SUBRESOURCE_DATA vertexBufferData = {};
 	vertexBufferData.pSysMem = VERTICES.data();
 
 	hr = pDevice->CreateBuffer(&bufferDesc, &vertexBufferData, ppVertexBuffer);
@@ -37,20 +33,20 @@ HRESULT CreateVertexBuffer(ID3D11Device* pDevice, const std::vector<VERTEX>& VER
 template <typename INSTANCE>
 HRESULT CreateInstanceBuffer(ID3D11Device* pDevice, const std::vector<INSTANCE>& INSTANCES, ID3D11Buffer** ppInstanceBuffer)
 {
-	_ASSERT(pDevice != nullptr);
-	_ASSERT(ppInstanceBuffer != nullptr);
-	_ASSERT((*ppInstanceBuffer) == nullptr);
+	_ASSERT(pDevice);
+	_ASSERT(ppInstanceBuffer);
+	_ASSERT(!(*ppInstanceBuffer));
 
 	HRESULT hr = S_OK;
 
-	D3D11_BUFFER_DESC bufferDesc = { 0, };
+	D3D11_BUFFER_DESC bufferDesc = {};
 	bufferDesc.ByteWidth = (UINT)(sizeof(INSTANCE) * INSTANCES.size());
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bufferDesc.CPUAccessFlags = 0;
 	bufferDesc.StructureByteStride = sizeof(INSTANCE);
 
-	D3D11_SUBRESOURCE_DATA instanceBufferData = { 0, };
+	D3D11_SUBRESOURCE_DATA instanceBufferData = {};
 	instanceBufferData.pSysMem = INSTANCES.data();
 
 	hr = pDevice->CreateBuffer(&bufferDesc, &instanceBufferData, ppInstanceBuffer);
@@ -61,22 +57,22 @@ template <typename CONSTANT>
 HRESULT CreateConstBuffer(ID3D11Device* pDevice, const CONSTANT& CONSTANT_BUFFER_DATA, ID3D11Buffer** ppConstantBuffer)
 {
 	_ASSERT((sizeof(CONSTANT) % 16) == 0); // Constant Buffer size must be 16-byte aligned.
-	_ASSERT(pDevice != nullptr);
-	_ASSERT(ppConstantBuffer != nullptr);
-	_ASSERT((*ppConstantBuffer) == nullptr);
+	_ASSERT(pDevice);
+	_ASSERT(ppConstantBuffer);
+	_ASSERT(!(*ppConstantBuffer));
 
 	HRESULT hr = S_OK;
 
-	D3D11_BUFFER_DESC bufferDesc = { 0, };
+	D3D11_BUFFER_DESC bufferDesc = {};
 	// 256byte 정렬. dx12에서는 이렇게 설정함. 
 	// 구조체에서 alignas(256)를 사용할 경우, debug new가 _align_malloc_dbg()를 호출하지 않는 문제가 발생. 
 	// 이를 방지하기 위해 상수버퍼 생성 시, 256byte로 정렬하여 생성.
-	bufferDesc.ByteWidth = (sizeof(CONSTANT_BUFFER_DATA) + (256 - 1)) & ~(256 - 1);
+	bufferDesc.ByteWidth = (sizeof(CONSTANT_BUFFER_DATA) + 255) & ~255;
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	bufferDesc.CPUAccessFlags = 0;
 
-	D3D11_SUBRESOURCE_DATA cosntantBufferData = { 0, };
+	D3D11_SUBRESOURCE_DATA cosntantBufferData = {};
 	cosntantBufferData.pSysMem = &CONSTANT_BUFFER_DATA;
 
 	hr = pDevice->CreateBuffer(&bufferDesc, &cosntantBufferData, ppConstantBuffer);
@@ -86,8 +82,8 @@ HRESULT CreateConstBuffer(ID3D11Device* pDevice, const CONSTANT& CONSTANT_BUFFER
 template <typename DATA>
 void UpdateBuffer(ID3D11DeviceContext* pContext, const std::vector<DATA>& BUFFER_DATA, ID3D11Buffer* pBuffer)
 {
-	_ASSERT(pContext != nullptr);
-	_ASSERT(pBuffer != nullptr);
+	_ASSERT(pContext);
+	_ASSERT(pBuffer);
 
 	pContext->UpdateSubresource(pBuffer, 0, nullptr, BUFFER_DATA.data(), 0, 0);
 }
@@ -95,8 +91,8 @@ void UpdateBuffer(ID3D11DeviceContext* pContext, const std::vector<DATA>& BUFFER
 template <typename DATA>
 void UpdateBuffer(ID3D11DeviceContext* pContext, const DATA& BUFFER_DATA, ID3D11Buffer* pBuffer)
 {
-	_ASSERT(pContext != nullptr);
-	_ASSERT(pBuffer != nullptr);
+	_ASSERT(pContext);
+	_ASSERT(pBuffer);
 
 	pContext->UpdateSubresource(pBuffer, 0, nullptr, &BUFFER_DATA, 0, 0);
 }

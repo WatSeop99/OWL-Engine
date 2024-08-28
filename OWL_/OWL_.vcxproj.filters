@@ -87,9 +87,6 @@
     <ClInclude Include="Geometry\Animation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Geometry\ModelInstance.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Geometry\ModelLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>

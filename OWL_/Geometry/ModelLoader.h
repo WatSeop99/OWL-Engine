@@ -1,31 +1,35 @@
 ﻿#pragma once
 
-#include <assimp/material.h>
 #include "Animation.h"
 #include "MeshInfo.h"
 
+struct aiNode;
+struct aiScene;
+struct aiMesh;
+struct aiMaterial;
+enum aiTextureType;
 
 class ModelLoader
 {
 public:
 	ModelLoader() = default;
-	~ModelLoader() { pMeshInfos.clear(); }
+	~ModelLoader() = default;
 
-	HRESULT Load(std::wstring& basePath, std::wstring& fileName, bool bRevertNormals_);
+	HRESULT Load(std::wstring& basePath, std::wstring& fileName, bool _bRevertNormals);
 	HRESULT LoadAnimation(std::wstring& basePath, std::wstring& fileName);
 
 protected:
-	void findDeformingBones(const struct aiScene* pSCENE);
-	const struct aiNode* findParent(const struct aiNode* pNODE);
+	void findDeformingBones(const aiScene* pSCENE);
+	const aiNode* findParent(const aiNode* pNODE);
 
-	void processNode(struct aiNode* pNode, const struct aiScene* pSCENE, Matrix& transform);
-	void processMesh(struct aiMesh* pMesh, const struct aiScene* pSCENE, MeshInfo* pMeshInfo);
+	void processNode(aiNode* pNode, const aiScene* pSCENE, Matrix& transform);
+	void processMesh(aiMesh* pMesh, const aiScene* pSCENE, MeshInfo* pMeshInfo);
 
-	void readAnimation(const struct aiScene* pSCENE);
-	HRESULT readTextureFileName(const struct aiScene* pSCENE, aiMaterial* pMaterial, aiTextureType type, std::wstring* pDst);
+	void readAnimation(const aiScene* pSCENE);
+	HRESULT readTextureFileName(const aiScene* pSCENE, aiMaterial* pMaterial, aiTextureType type, std::wstring* pDst);
 
 	void updateTangents();
-	void updateBoneIDs(struct aiNode* pNode, int* pCounter);
+	void updateBoneIDs(aiNode* pNode, int* pCounter);
 
 	void calculateTangentBitangent(const Vertex& V1, const Vertex& V2, const Vertex& V3, DirectX::XMFLOAT3* pTangent, DirectX::XMFLOAT3* pBitangent);
 

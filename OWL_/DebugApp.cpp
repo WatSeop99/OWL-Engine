@@ -50,7 +50,8 @@ void DebugApp::InitScene()
 		meshInfos[0].szRoughnessTextureFileName = path + L"/angel_armor_roughness.jpg";
 
 		Vector3 center(0.0f, -0.05f, 2.0f);
-		Model* newModel = New Model(m_pDevice5, m_pContext4, meshInfos);
+		Model* newModel = New Model;
+		newModel->Initialize(m_pDevice5, m_pContext4, meshInfos);
 		newModel->pMeshes[0]->MaterialConstants.CPU.bInvertNormalMapY = TRUE; // GLTF는 true로.
 		newModel->pMeshes[0]->MaterialConstants.CPU.AlbedoFactor = Vector3(1.0f);
 		newModel->pMeshes[0]->MaterialConstants.CPU.RoughnessFactor = 0.3f;
@@ -64,11 +65,12 @@ void DebugApp::InitScene()
 
 	// 추가 물체1.
 	{
-		MeshInfo meshInfo = INIT_MESH_INFO;
+		MeshInfo meshInfo;
 		MakeSphere(&meshInfo, 0.2f, 200, 200);
 
 		Vector3 center(0.5f, 0.5f, 2.0f);
-		Model* newModel = New Model(m_pDevice5, m_pContext4, { meshInfo });
+		Model* newModel = New Model;
+		newModel->Initialize(m_pDevice5, m_pContext4, { meshInfo });
 		newModel->UpdateWorld(Matrix::CreateTranslation(center));
 		for (size_t i = 0, size = newModel->pMeshes.size(); i < size; ++i)
 		{
@@ -87,11 +89,12 @@ void DebugApp::InitScene()
 
 	// 추가 물체2.
 	{
-		MeshInfo meshInfo = INIT_MESH_INFO;
+		MeshInfo meshInfo;
 		MakeBox(&meshInfo, 0.3f);
 
 		Vector3 center(0.0f, 0.5f, 2.5f);
-		Model* newModel = New Model(m_pDevice5, m_pContext4, { meshInfo });
+		Model* newModel = New Model;
+		newModel->Initialize(m_pDevice5, m_pContext4, { meshInfo });
 		newModel->UpdateWorld(Matrix::CreateTranslation(center));
 		for (size_t i = 0, size = newModel->pMeshes.size(); i < size; ++i)
 		{
@@ -110,11 +113,12 @@ void DebugApp::InitScene()
 
 	// 추가 물체3.
 	{
-		MeshInfo meshInfo = INIT_MESH_INFO;
+		MeshInfo meshInfo;
 		MakeSphere(&meshInfo, 0.2f, 200, 200);
 
 		Vector3 center(0.5f, 0.2f, -1.0f);
-		Model* newModel = New Model(m_pDevice5, m_pContext4, { meshInfo });
+		Model* newModel = New Model;
+		newModel->Initialize(m_pDevice5, m_pContext4, { meshInfo });
 		newModel->UpdateWorld(Matrix::CreateTranslation(center));
 		for (size_t i = 0, size = newModel->pMeshes.size(); i < size; ++i)
 		{

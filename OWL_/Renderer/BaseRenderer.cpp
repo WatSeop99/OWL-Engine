@@ -123,10 +123,11 @@ void BaseRenderer::InitScene()
 
 	// 커서 표시 (Main sphere와의 충돌이 감지되면 월드 공간에 작게 그려지는 구).
 	{
-		MeshInfo sphere = INIT_MESH_INFO;
+		MeshInfo sphere;
 		MakeSphere(&sphere, 0.01f, 10, 10);
 
-		m_pCursorSphere = New Model(m_pDevice5, m_pContext4, { sphere });
+		m_pCursorSphere = New Model;
+		m_pCursorSphere->Initialize(m_pDevice5, m_pContext4, { sphere });
 		m_pCursorSphere->bIsVisible = false; // 마우스가 눌렸을 때만 보임
 		m_pCursorSphere->bCastShadow = false; // 그림자 X
 		m_pCursorSphere->pMeshes[0]->MaterialConstants.CPU.AlbedoFactor = Vector3(0.0f);

@@ -1,27 +1,32 @@
 #include "../Common.h"
 #include "Animation.h"
 
-
-void AnimationData::Update(int clipID, int frame)
+Matrix AnimationClip::Key::GetTransform()
 {
-	AnimationClip& clip = pClips[clipID];
+	return (Matrix::CreateScale(Scale) * Matrix::CreateFromQuaternion(Rotation) * Matrix::CreateTranslation(Position));
+}
+
+
+void AnimationData::Update(const int CLIP_ID, const int FRAME)
+{
+	AnimationClip& clip = pClips[CLIP_ID];
 
 	for (size_t boneID = 0, totalTransformSize = pBoneTransforms.size(); boneID < totalTransformSize; ++boneID)
 	{
 		std::vector<AnimationClip::Key>& keys = clip.pKeys[boneID];
 		const size_t KEY_SIZE = keys.size();
 
-		// 주의: 모든 채널(뼈)이 frame 개수가 동일하진 않음.
+		// 주의: 모든 채널(뼈)이 FRAME 개수가 동일하진 않음.
 		const int PARENT_IDX = pBoneParents[boneID];
 		const Matrix PARENT_MATRIX = (PARENT_IDX >= 0 ? pBoneTransforms[PARENT_IDX] : AccumulatedRootTransform);
 
 		// keys.size()가 0일 경우에는 Identity 변환.
-		AnimationClip::Key key = (KEY_SIZE > 0 ? keys[frame % KEY_SIZE] : AnimationClip::Key());
+		AnimationClip::Key key = (KEY_SIZE > 0 ? keys[FRAME % KEY_SIZE] : AnimationClip::Key());
 
 		// Root일 경우.
 		if (PARENT_IDX < 0)
 		{
-			if (frame != 0)
+			if (FRAME != 0)
 			{
 				AccumulatedRootTransform = (Matrix::CreateTranslation(key.Position - PrevPos) * AccumulatedRootTransform); // root 뼈의 변환을 누적시킴.
 			}

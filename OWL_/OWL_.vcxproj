@@ -158,7 +158,6 @@
     <ClInclude Include="Geometry\Mesh.h" />
     <ClInclude Include="Geometry\MeshInfo.h" />
     <ClInclude Include="Geometry\Model.h" />
-    <ClInclude Include="Geometry\ModelInstance.h" />
     <ClInclude Include="Geometry\ModelLoader.h" />
     <ClInclude Include="Graphics\PostProcessor.h" />
     <ClInclude Include="Geometry\SkinnedMeshModel.h" />

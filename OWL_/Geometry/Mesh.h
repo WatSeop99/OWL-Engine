@@ -19,50 +19,51 @@ struct Material
 	Texture3D Density;
 	Texture3D Lighting;
 };
-
-struct Mesh
+class Mesh
 {
+public:
+	Mesh() = default;
+	~Mesh() { Cleanup(); };
+
+	void Initialize(ID3D11Device* pDevice)
+	{
+		_ASSERT(pDevice);
+
+		pMaterialBuffer = New Material;
+		*pMaterialBuffer = { Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture3D(), Texture3D() };
+		
+		MeshConstants.Initialize(pDevice);
+		MaterialConstants.Initialize(pDevice);
+	}
+
+	void Cleanup()
+	{
+		VertexCount = 0;
+		IndexCount = 0;
+		Stride = 0;
+		Offset = 0;
+
+		if (pMaterialBuffer)
+		{
+			delete pMaterialBuffer;
+			pMaterialBuffer = nullptr;
+		}
+		MeshConstants.Destroy();
+		MaterialConstants.Destroy();
+		SAFE_RELEASE(pVertexBuffer);
+		SAFE_RELEASE(pIndexBuffer);
+	}
+
+public:
 	ID3D11Buffer* pVertexBuffer = nullptr;
 	ID3D11Buffer* pIndexBuffer = nullptr;
 	Material* pMaterialBuffer = nullptr;
 
-	UINT VertexCount;
-	UINT IndexCount;
-	UINT Stride;
-	UINT Offset;
-
 	ConstantsBuffer<MeshConstants> MeshConstants;
 	ConstantsBuffer<MaterialConstants> MaterialConstants;
+
+	UINT VertexCount = 0;
+	UINT IndexCount = 0;
+	UINT Stride = 0;
+	UINT Offset = 0;
 };
-
-#define INIT_MESH																					   \
-	{																								   \
-		nullptr, nullptr, nullptr,																	   \
-		0, 0, 0, 0,																					   \
-		ConstantsBuffer<MeshConstants>(), ConstantsBuffer<MaterialConstants>() \
-	}
-
-#define INIT_MATERIAL																																					 \
-	{																																									 \
-		Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), \
-		Texture3D(), Texture3D()																													 \
-	}
-
-static void ReleaseMesh(Mesh** ppMesh)
-{
-	_ASSERT(*ppMesh);
-
-	if ((*ppMesh)->pMaterialBuffer != nullptr)
-	{
-		delete (*ppMesh)->pMaterialBuffer;
-		(*ppMesh)->pMaterialBuffer = nullptr;
-	}
-	SAFE_RELEASE((*ppMesh)->pVertexBuffer);
-	SAFE_RELEASE((*ppMesh)->pIndexBuffer);
-
-	(*ppMesh)->MeshConstants.Destroy();
-	(*ppMesh)->MaterialConstants.Destroy();
-
-	free(*ppMesh);
-	*ppMesh = nullptr;
-}

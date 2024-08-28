@@ -52,10 +52,11 @@ void Scene::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	{
 		for (int i = 0; i < MAX_LIGHTS; ++i)
 		{
-			MeshInfo sphere = INIT_MESH_INFO;
+			MeshInfo sphere;
 			MakeSphere(&sphere, 1.0f, 20, 20);
 
-			m_ppLightSpheres[i] = New Model(pDevice, pContext, { sphere });
+			m_ppLightSpheres[i] = New Model;
+			m_ppLightSpheres[i]->Initialize(pDevice, pContext, { sphere });
 			m_ppLightSpheres[i]->UpdateWorld(Matrix::CreateTranslation(pLights[i].Property.Position));
 			m_ppLightSpheres[i]->pMeshes[0]->MaterialConstants.CPU.AlbedoFactor = Vector3(0.0f);
 			m_ppLightSpheres[i]->pMeshes[0]->MaterialConstants.CPU.EmissionFactor = Vector3(1.0f, 1.0f, 0.0f);
@@ -81,7 +82,7 @@ void Scene::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	// 바닥(거울).
 	{
 		// https://freepbr.com/materials/stringy-marble-pbr/
-		MeshInfo mesh = INIT_MESH_INFO;
+		MeshInfo mesh;
 		MakeSquare(&mesh, 10.0f);
 
 		std::wstring path = L"./Assets/Textures/PBR/stringy-marble-ue/";
@@ -92,7 +93,8 @@ void Scene::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 		mesh.szNormalTextureFileName = path + L"stringy_marble_Normal-dx.png";
 		mesh.szRoughnessTextureFileName = path + L"stringy_marble_Roughness.png";
 
-		m_pGround = New Model(pDevice, pContext, { mesh });
+		m_pGround = New Model;
+		m_pGround->Initialize(pDevice, pContext, { mesh });
 		m_pGround->pMeshes[0]->MaterialConstants.CPU.AlbedoFactor = Vector3(0.7f);
 		m_pGround->pMeshes[0]->MaterialConstants.CPU.EmissionFactor = Vector3(0.0f);
 		m_pGround->pMeshes[0]->MaterialConstants.CPU.MetallicFactor = 0.5f;
@@ -118,24 +120,25 @@ void Scene::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	}
 
 	// 환경 박스 초기화.
-	MeshInfo skyboxMeshInfo = INIT_MESH_INFO;
+	MeshInfo skyboxMeshInfo;
 	MakeBox(&skyboxMeshInfo, 40.0f);
 
 	std::reverse(skyboxMeshInfo.Indices.begin(), skyboxMeshInfo.Indices.end());
-	m_pSkybox = New Model(pDevice, pContext, { skyboxMeshInfo });
+	m_pSkybox = New Model;
+	m_pSkybox->Initialize(pDevice, pContext, { skyboxMeshInfo });
 	m_pSkybox->Name = "SkyBox";
 
 	// deferred rendering을 위한 스크린 공간 생성.
-	MeshInfo meshInfo = INIT_MESH_INFO;
+	MeshInfo meshInfo;
 	MakeSquare(&meshInfo);
 
-	m_pScreenMesh = (Mesh*)Malloc(sizeof(Mesh));
-	*m_pScreenMesh = INIT_MESH;
+	m_pScreenMesh = New Mesh;
+	m_pScreenMesh->Initialize(pDevice);
 
 	HRESULT hr = CreateVertexBuffer(pDevice, meshInfo.Vertices, &(m_pScreenMesh->pVertexBuffer));
 	BREAK_IF_FAILED(hr);
 
-	m_pScreenMesh->IndexCount = (UINT)(meshInfo.Indices.size());
+	m_pScreenMesh->IndexCount = (UINT)meshInfo.Indices.size();
 	hr = CreateIndexBuffer(pDevice, meshInfo.Indices, &(m_pScreenMesh->pIndexBuffer));
 	BREAK_IF_FAILED(hr);
 }
@@ -193,12 +196,12 @@ void Scene::Destroy()
 
 	m_pMirror = nullptr;
 	m_ppLightSpheres.clear();
-	if (m_pGround != nullptr)
+	if (m_pGround)
 	{
 		delete m_pGround;
 		m_pGround = nullptr;
 	}
-	if (m_pSkybox != nullptr)
+	if (m_pSkybox)
 	{
 		delete m_pSkybox;
 		m_pSkybox = nullptr;
@@ -211,13 +214,14 @@ void Scene::Destroy()
 
 	SAFE_RELEASE(m_pDefaultDSV);
 
-	if (m_pScreenMesh != nullptr)
+	if (m_pScreenMesh)
 	{
-		ReleaseMesh(&m_pScreenMesh);
+		delete m_pScreenMesh;
+		m_pScreenMesh = nullptr;
 	}
 
 	pLights.clear();
-	for (size_t i = 0, size = pRenderObjects.size(); i < size; ++i)
+	for (UINT64 i = 0, size = pRenderObjects.size(); i < size; ++i)
 	{
 		delete pRenderObjects[i];
 		pRenderObjects[i] = nullptr;
