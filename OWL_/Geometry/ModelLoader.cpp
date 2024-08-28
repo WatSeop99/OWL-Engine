@@ -83,16 +83,16 @@ HRESULT ModelLoader::Load(std::wstring& basePath, std::wstring& fileName, bool _
 		int counter = 0;
 		updateBoneIDs(pSCENE->mRootNode, &counter);
 
-		// 업데이트 순서대로 뼈 이름 저장. (pBoneIDToNames)
+		// 업데이트 순서대로 뼈 이름 저장. (BoneIDToNames)
 		size_t totalBoneIDs = AnimData.BoneNameToID.size();
-		AnimData.pBoneIDToNames.resize(totalBoneIDs);
+		AnimData.BoneIDToNames.resize(totalBoneIDs);
 		for (auto iter = AnimData.BoneNameToID.begin(), endIter = AnimData.BoneNameToID.end(); iter != endIter; ++iter)
 		{
-			AnimData.pBoneIDToNames[iter->second] = iter->first;
+			AnimData.BoneIDToNames[iter->second] = iter->first;
 		}
 
 		// 각 뼈마다 부모 인덱스를 저장할 준비.
-		AnimData.pBoneParents.resize(totalBoneIDs, -1);
+		AnimData.BoneParents.resize(totalBoneIDs, -1);
 
 		Matrix tr; // Initial transformation.
 		processNode(pSCENE->mRootNode, pSCENE, tr);
@@ -200,7 +200,7 @@ void ModelLoader::processNode(aiNode* pNode, const aiScene* pSCENE, Matrix& tran
 		pPARENT)
 	{
 		const int BONE_ID = AnimData.BoneNameToID[pNode->mName.C_Str()];
-		AnimData.pBoneParents[BONE_ID] = AnimData.BoneNameToID[pPARENT->mName.C_Str()];
+		AnimData.BoneParents[BONE_ID] = AnimData.BoneNameToID[pPARENT->mName.C_Str()];
 	}
 
 	Matrix m(&pNode->mTransformation.a1);
@@ -334,8 +334,8 @@ void ModelLoader::processMesh(aiMesh* pMesh, const aiScene* pSCENE, MeshInfo* pM
 		std::vector<std::vector<float>> boneWeights(VERT_SIZE);
 		std::vector<std::vector<UINT8>> boneIndices(VERT_SIZE);
 
-		AnimData.pOffsetMatrices.resize(AnimData.BoneNameToID.size());
-		AnimData.pBoneTransforms.resize(AnimData.BoneNameToID.size());
+		AnimData.OffsetMatrices.resize(AnimData.BoneNameToID.size());
+		AnimData.BoneTransforms.resize(AnimData.BoneNameToID.size());
 
 		int count = 0;
 		for (UINT i = 0; i < pMesh->mNumBones; ++i)
@@ -343,7 +343,7 @@ void ModelLoader::processMesh(aiMesh* pMesh, const aiScene* pSCENE, MeshInfo* pM
 			const aiBone* pBONE = pMesh->mBones[i];
 			const int BONE_ID = AnimData.BoneNameToID[pBONE->mName.C_Str()];
 
-			AnimData.pOffsetMatrices[BONE_ID] = Matrix((float*)&pBONE->mOffsetMatrix).Transpose();
+			AnimData.OffsetMatrices[BONE_ID] = Matrix((float*)&pBONE->mOffsetMatrix).Transpose();
 
 			// 이 뼈가 영향을 주는 정점 개수.
 			for (UINT j = 0; j < pBONE->mNumWeights; ++j)
@@ -388,16 +388,16 @@ void ModelLoader::readAnimation(const aiScene* pSCENE)
 {
 	_ASSERT(pSCENE);
 
-	AnimData.pClips.resize(pSCENE->mNumAnimations);
+	AnimData.Clips.resize(pSCENE->mNumAnimations);
 
 	for (UINT i = 0; i < pSCENE->mNumAnimations; ++i)
 	{
-		AnimationClip& clip = AnimData.pClips[i];
+		AnimationClip& clip = AnimData.Clips[i];
 		const aiAnimation* pANIM = pSCENE->mAnimations[i];
 
 		clip.Duration = pANIM->mDuration;
 		clip.TicksPerSec = pANIM->mTicksPerSecond;
-		clip.pKeys.resize(AnimData.BoneNameToID.size());
+		clip.Keys.resize(AnimData.BoneNameToID.size());
 		clip.NumChannels = pANIM->mNumChannels;
 
 		for (UINT c = 0; c < pANIM->mNumChannels; ++c)
@@ -405,7 +405,7 @@ void ModelLoader::readAnimation(const aiScene* pSCENE)
 			// channel은 각 뼈들의 움직임이 channel로 제공됨을 의미.
 			const aiNodeAnim* pNODE_ANIM = pANIM->mChannels[c];
 			const int BONE_ID = AnimData.BoneNameToID[pNODE_ANIM->mNodeName.C_Str()];
-			clip.pKeys[BONE_ID].resize(pNODE_ANIM->mNumPositionKeys);
+			clip.Keys[BONE_ID].resize(pNODE_ANIM->mNumPositionKeys);
 
 			for (UINT k = 0; k < pNODE_ANIM->mNumPositionKeys; ++k)
 			{
@@ -413,7 +413,7 @@ void ModelLoader::readAnimation(const aiScene* pSCENE)
 				const aiQuaternion ROTATION = pNODE_ANIM->mRotationKeys[k].mValue;
 				const aiVector3D SCALE = pNODE_ANIM->mScalingKeys[k].mValue;
 
-				AnimationClip::Key& key = clip.pKeys[BONE_ID][k];
+				AnimationClip::Key& key = clip.Keys[BONE_ID][k];
 				key.Position = { POS.x, POS.y, POS.z };
 				key.Rotation = { ROTATION.x, ROTATION.y, ROTATION.z, ROTATION.w };
 				key.Scale = { SCALE.x, SCALE.y, SCALE.z };

@@ -32,8 +32,8 @@ public:
 		pMaterialBuffer = New Material;
 		*pMaterialBuffer = { Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture3D(), Texture3D() };
 		
-		MeshConstants.Initialize(pDevice);
-		MaterialConstants.Initialize(pDevice);
+		MeshConstant.Initialize(pDevice);
+		MaterialConstant.Initialize(pDevice);
 	}
 
 	void Cleanup()
@@ -48,8 +48,8 @@ public:
 			delete pMaterialBuffer;
 			pMaterialBuffer = nullptr;
 		}
-		MeshConstants.Destroy();
-		MaterialConstants.Destroy();
+		MeshConstant.Destroy();
+		MaterialConstant.Destroy();
 		SAFE_RELEASE(pVertexBuffer);
 		SAFE_RELEASE(pIndexBuffer);
 	}
@@ -59,8 +59,8 @@ public:
 	ID3D11Buffer* pIndexBuffer = nullptr;
 	Material* pMaterialBuffer = nullptr;
 
-	ConstantsBuffer<MeshConstants> MeshConstants;
-	ConstantsBuffer<MaterialConstants> MaterialConstants;
+	ConstantsBuffer<MeshConstants> MeshConstant;
+	ConstantsBuffer<MaterialConstants> MaterialConstant;
 
 	UINT VertexCount = 0;
 	UINT IndexCount = 0;

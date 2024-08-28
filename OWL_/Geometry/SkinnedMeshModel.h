@@ -4,7 +4,7 @@
 #include "../Renderer/StructuredBuffer.h"
 
 
-class SkinnedMeshModel : public Model
+class SkinnedMeshModel final : public Model
 {
 public:
 	SkinnedMeshModel() = default;
@@ -26,6 +26,6 @@ public:
 	inline GraphicsPSO& GetReflectPSO(const bool bWIRED) override { return (bWIRED ? g_ReflectSkinnedWirePSO : g_ReflectSkinnedSolidPSO); }
 
 public:
-	StructuredBuffer<Matrix> m_BoneTransforms;
-	AnimationData m_AnimData;
+	StructuredBuffer<Matrix> BoneTransforms;
+	AnimationData CharacterAnimaionData;
 };

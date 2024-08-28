@@ -45,25 +45,25 @@ void DebugApp2::InitScene()
 			ReadAnimationFromFile(tempData, path, name);
 			AnimationData& anim = std::get<1>(tempData);
 
-			if (aniData.pClips.empty())
+			if (aniData.Clips.empty())
 			{
 				aniData = anim;
 			}
 			else
 			{
-				aniData.pClips.push_back(anim.pClips[0]);
+				aniData.Clips.push_back(anim.Clips[0]);
 			}
 		}
 
 		Vector3 center(0.0f, 0.0f, 2.0f);
 		m_pCharacter = New SkinnedMeshModel;
 		m_pCharacter->Initialize(m_pDevice5, m_pContext4, meshInfos, aniData);
-		for (size_t i = 0, size = m_pCharacter->pMeshes.size(); i < size; ++i)
+		for (size_t i = 0, size = m_pCharacter->Meshes.size(); i < size; ++i)
 		{
-			Mesh* pCurMesh = m_pCharacter->pMeshes[i];
-			pCurMesh->MaterialConstants.CPU.AlbedoFactor = Vector3(1.0f);
-			pCurMesh->MaterialConstants.CPU.RoughnessFactor = 0.8f;
-			pCurMesh->MaterialConstants.CPU.MetallicFactor = 0.0f;
+			Mesh* pCurMesh = m_pCharacter->Meshes[i];
+			pCurMesh->MaterialConstant.CPU.AlbedoFactor = Vector3(1.0f);
+			pCurMesh->MaterialConstant.CPU.RoughnessFactor = 0.8f;
+			pCurMesh->MaterialConstant.CPU.MetallicFactor = 0.0f;
 		}
 		m_pCharacter->UpdateWorld(Matrix::CreateScale(1.0f) * Matrix::CreateTranslation(center));
 
@@ -145,8 +145,8 @@ void DebugApp2::UpdateGUI()
 		}
 
 		Model* pMirror = m_Scene.GetMirror();
-		ImGui::SliderFloat("Metallic", &(pMirror->pMeshes[0]->MaterialConstants.CPU.MetallicFactor), 0.0f, 1.0f);
-		ImGui::SliderFloat("Roughness", &(pMirror->pMeshes[0]->MaterialConstants.CPU.RoughnessFactor), 0.0f, 1.0f);
+		ImGui::SliderFloat("Metallic", &(pMirror->Meshes[0]->MaterialConstant.CPU.MetallicFactor), 0.0f, 1.0f);
+		ImGui::SliderFloat("Roughness", &(pMirror->Meshes[0]->MaterialConstant.CPU.RoughnessFactor), 0.0f, 1.0f);
 
 		ImGui::TreePop();
 	}
@@ -171,18 +171,18 @@ void DebugApp2::UpdateGUI()
 
 		if (m_pPickedModel != nullptr)
 		{
-			for (size_t i = 0, size = m_pPickedModel->pMeshes.size(); i < size; ++i)
+			for (size_t i = 0, size = m_pPickedModel->Meshes.size(); i < size; ++i)
 			{
-				flag += ImGui::SliderFloat("Metallic", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.MetallicFactor), 0.0f, 1.0f);
-				flag += ImGui::SliderFloat("Roughness", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.RoughnessFactor), 0.0f, 1.0f);
-				flag += ImGui::CheckboxFlags("AlbedoTexture", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseAlbedoMap), 1);
-				flag += ImGui::CheckboxFlags("EmissiveTexture", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseEmissiveMap), 1);
-				flag += ImGui::CheckboxFlags("Use NormalMapping", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseNormalMap), 1);
-				flag += ImGui::CheckboxFlags("Use AO", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseAOMap), 1);
-				flag += ImGui::CheckboxFlags("Use HeightMapping", &(m_pPickedModel->pMeshes[i]->MeshConstants.CPU.bUseHeightMap), 1);
-				flag += ImGui::SliderFloat("HeightScale", &(m_pPickedModel->pMeshes[i]->MeshConstants.CPU.HeightScale), 0.0f, 0.1f);
-				flag += ImGui::CheckboxFlags("Use MetallicMap", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseMetallicMap), 1);
-				flag += ImGui::CheckboxFlags("Use RoughnessMap", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseRoughnessMap), 1);
+				flag += ImGui::SliderFloat("Metallic", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.MetallicFactor), 0.0f, 1.0f);
+				flag += ImGui::SliderFloat("Roughness", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.RoughnessFactor), 0.0f, 1.0f);
+				flag += ImGui::CheckboxFlags("AlbedoTexture", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseAlbedoMap), 1);
+				flag += ImGui::CheckboxFlags("EmissiveTexture", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseEmissiveMap), 1);
+				flag += ImGui::CheckboxFlags("Use NormalMapping", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseNormalMap), 1);
+				flag += ImGui::CheckboxFlags("Use AO", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseAOMap), 1);
+				flag += ImGui::CheckboxFlags("Use HeightMapping", &(m_pPickedModel->Meshes[i]->MeshConstant.CPU.bUseHeightMap), 1);
+				flag += ImGui::SliderFloat("HeightScale", &(m_pPickedModel->Meshes[i]->MeshConstant.CPU.HeightScale), 0.0f, 0.1f);
+				flag += ImGui::CheckboxFlags("Use MetallicMap", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseMetallicMap), 1);
+				flag += ImGui::CheckboxFlags("Use RoughnessMap", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseRoughnessMap), 1);
 			}
 
 			if (flag)
@@ -222,7 +222,7 @@ void DebugApp2::Update(float deltaTime)
 			s_FrameCount = 0;
 		}
 		else if (s_FrameCount ==
-				 m_pCharacter->m_AnimData.pClips[s_State].pKeys[0].size() ||
+				 m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size() ||
 				 BaseRenderer::m_pbKeyPressed[VK_UP]) // 재생이 다 끝난다면.
 		{
 			s_FrameCount = 0; // 상태 변화 없이 반복.
@@ -232,7 +232,7 @@ void DebugApp2::Update(float deltaTime)
 
 	case 1:
 	{
-		if (s_FrameCount == m_pCharacter->m_AnimData.pClips[s_State].pKeys[0].size())
+		if (s_FrameCount == m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size())
 		{
 			s_State = 2;
 			s_FrameCount = 0;
@@ -244,17 +244,17 @@ void DebugApp2::Update(float deltaTime)
 	{
 		if (BaseRenderer::m_pbKeyPressed[VK_RIGHT])
 		{
-			m_pCharacter->m_AnimData.AccumulatedRootTransform =
+			m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform =
 				Matrix::CreateRotationY(DirectX::XM_PI * 60.0f / 180.0f * deltaTime) *
-				m_pCharacter->m_AnimData.AccumulatedRootTransform;
+				m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform;
 		}
 		if (BaseRenderer::m_pbKeyPressed[VK_LEFT])
 		{
-			m_pCharacter->m_AnimData.AccumulatedRootTransform =
+			m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform =
 				Matrix::CreateRotationY(-DirectX::XM_PI * 60.0f / 180.0f * deltaTime) *
-				m_pCharacter->m_AnimData.AccumulatedRootTransform;
+				m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform;
 		}
-		if (s_FrameCount == m_pCharacter->m_AnimData.pClips[s_State].pKeys[0].size())
+		if (s_FrameCount == m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size())
 		{
 			// 방향키를 누르고 있지 않으면 정지. (누르고 있으면 계속 걷기)
 			if (!BaseRenderer::m_pbKeyPressed[VK_UP])
@@ -268,7 +268,7 @@ void DebugApp2::Update(float deltaTime)
 
 	case 3:
 	{
-		if (s_FrameCount == m_pCharacter->m_AnimData.pClips[s_State].pKeys[0].size())
+		if (s_FrameCount == m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size())
 		{
 			// s_State = 4;
 			s_State = 0;
@@ -279,7 +279,7 @@ void DebugApp2::Update(float deltaTime)
 
 	case 4:
 	{
-		if (s_FrameCount == m_pCharacter->m_AnimData.pClips[s_State].pKeys[0].size())
+		if (s_FrameCount == m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size())
 		{
 			s_State = 0;
 			s_FrameCount = 0;

@@ -9,16 +9,16 @@ Matrix AnimationClip::Key::GetTransform()
 
 void AnimationData::Update(const int CLIP_ID, const int FRAME)
 {
-	AnimationClip& clip = pClips[CLIP_ID];
+	AnimationClip& clip = Clips[CLIP_ID];
 
-	for (size_t boneID = 0, totalTransformSize = pBoneTransforms.size(); boneID < totalTransformSize; ++boneID)
+	for (size_t boneID = 0, totalTransformSize = BoneTransforms.size(); boneID < totalTransformSize; ++boneID)
 	{
-		std::vector<AnimationClip::Key>& keys = clip.pKeys[boneID];
+		std::vector<AnimationClip::Key>& keys = clip.Keys[boneID];
 		const size_t KEY_SIZE = keys.size();
 
 		// 주의: 모든 채널(뼈)이 FRAME 개수가 동일하진 않음.
-		const int PARENT_IDX = pBoneParents[boneID];
-		const Matrix PARENT_MATRIX = (PARENT_IDX >= 0 ? pBoneTransforms[PARENT_IDX] : AccumulatedRootTransform);
+		const int PARENT_IDX = BoneParents[boneID];
+		const Matrix PARENT_MATRIX = (PARENT_IDX >= 0 ? BoneTransforms[PARENT_IDX] : AccumulatedRootTransform);
 
 		// keys.size()가 0일 경우에는 Identity 변환.
 		AnimationClip::Key key = (KEY_SIZE > 0 ? keys[FRAME % KEY_SIZE] : AnimationClip::Key());
@@ -45,6 +45,6 @@ void AnimationData::Update(const int CLIP_ID, const int FRAME)
 			key.Position = Vector3(0.0f); // 대신에 이동 취소.
 		}
 
-		pBoneTransforms[boneID] = key.GetTransform() * PARENT_MATRIX;
+		BoneTransforms[boneID] = key.GetTransform() * PARENT_MATRIX;
 	}
 }

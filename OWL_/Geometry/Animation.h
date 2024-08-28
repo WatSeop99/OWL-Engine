@@ -26,7 +26,7 @@ struct AnimationClip
 	};
 
 	std::string Name;					 // Name of this animation clip.
-	std::vector<std::vector<Key>> pKeys; // pKeys[boneIDX][frameIDX].
+	std::vector<std::vector<Key>> Keys; // Keys[boneIDX][frameIDX].
 	int NumChannels;					 // Number of bones.
 	double Duration;					 // Duration of animation in ticks.
 	double TicksPerSec;					 // Frames per second.
@@ -45,18 +45,18 @@ public:
 		// DefaultTransform은 모델을 읽어들일때 GeometryGenerator::Normalize()에서 계산. 
 		// DefaultTransform.Invert() * OffsetMatrices[BONE_ID]를 미리 계산해서 합치고 
 		// DefaultTransform * RootTransform을 미리 계산해놓을 수 있음.
-		return (DefaultTransform.Invert() * pOffsetMatrices[BONE_ID] * pBoneTransforms[BONE_ID] * DefaultTransform);
+		return (DefaultTransform.Invert() * OffsetMatrices[BONE_ID] * BoneTransforms[BONE_ID] * DefaultTransform);
 	}
 
 public:
 	std::map<std::string, int> BoneNameToID;	// 뼈 이름과 인덱스 정수.
-	std::vector<std::string> pBoneIDToNames;	// BoneNameToID의 ID 순서대로 뼈 이름 저장.
-	std::vector<int> pBoneParents;				// 부모 뼈의 인덱스.
-	std::vector<Matrix> pOffsetMatrices;
-	std::vector<Matrix> pBoneTransforms;
-	std::vector<AnimationClip> pClips;
+	std::vector<std::string> BoneIDToNames;	// BoneNameToID의 ID 순서대로 뼈 이름 저장.
+	std::vector<int> BoneParents;				// 부모 뼈의 인덱스.
+	std::vector<Matrix> OffsetMatrices;
+	std::vector<Matrix> BoneTransforms;
+	std::vector<AnimationClip> Clips;
 	Matrix DefaultTransform;
 	Matrix RootTransform;
 	Matrix AccumulatedRootTransform;
-	Vector3 PrevPos = Vector3(0.0f);
+	Vector3 PrevPos;
 };

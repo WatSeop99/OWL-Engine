@@ -31,36 +31,36 @@ void SkinnedMeshModel::InitAnimationData(ID3D11Device* pDevice, const AnimationD
 {
 	_ASSERT(pDevice);
 
-	if (ANIM_DATA.pClips.empty())
+	if (ANIM_DATA.Clips.empty())
 	{
 		return;
 	}
 
-	m_AnimData = ANIM_DATA;
+	CharacterAnimaionData = ANIM_DATA;
 
 	// 여기서는 AnimationClip이 SkinnedMesh라고 가정.
 	// 일반적으로 모든 Animation이 SkinnedMesh Animation은 아님.
-	m_BoneTransforms.CPU.resize(ANIM_DATA.pClips[0].pKeys.size()); // 뼈의 수.
+	BoneTransforms.CPU.resize(ANIM_DATA.Clips[0].Keys.size()); // 뼈의 수.
 
-	// 주의: 모든 pKeys()의 갯수가 동일하지 않을 수 있음.
-	for (UINT64 i = 0, size = ANIM_DATA.pClips[0].pKeys.size(); i < size; ++i)
+	// 주의: 모든 Keys()의 갯수가 동일하지 않을 수 있음.
+	for (UINT64 i = 0, size = ANIM_DATA.Clips[0].Keys.size(); i < size; ++i)
 	{
-		m_BoneTransforms.CPU[i] = Matrix();
+		BoneTransforms.CPU[i] = Matrix();
 	}
-	m_BoneTransforms.Initialize(pDevice);
+	BoneTransforms.Initialize(pDevice);
 }
 
 void SkinnedMeshModel::UpdateAnimation(ID3D11DeviceContext* pContext, const int CLIP_ID, const int FRAME)
 {
 	_ASSERT(pContext);
 
-	m_AnimData.Update(CLIP_ID, FRAME);
+	CharacterAnimaionData.Update(CLIP_ID, FRAME);
 
-	for (UINT64 i = 0, size = m_BoneTransforms.CPU.size(); i < size; ++i)
+	for (UINT64 i = 0, size = BoneTransforms.CPU.size(); i < size; ++i)
 	{
-		m_BoneTransforms.CPU[i] = m_AnimData.Get(CLIP_ID, i, FRAME).Transpose();
+		BoneTransforms.CPU[i] = CharacterAnimaionData.Get(CLIP_ID, i, FRAME).Transpose();
 	}
-	m_BoneTransforms.Upload(pContext);
+	BoneTransforms.Upload(pContext);
 }
 
 void SkinnedMeshModel::Render(ID3D11DeviceContext* pContext)
@@ -68,7 +68,7 @@ void SkinnedMeshModel::Render(ID3D11DeviceContext* pContext)
 	_ASSERT(pContext);
 
 	// ConstantsBuffer 대신 StructuredBuffer 사용.
-	pContext->VSSetShaderResources(9, 1, &(m_BoneTransforms.pSRV));
+	pContext->VSSetShaderResources(9, 1, &(BoneTransforms.pSRV));
 
 	// Skinned VS/PS는 GraphicsPSO를 통해 지정되므로, Model::Render() 같이 사용 가능.
 	// 이때, 전용 매크로를 사용해줘야 함.

@@ -52,10 +52,10 @@ void DebugApp::InitScene()
 		Vector3 center(0.0f, -0.05f, 2.0f);
 		Model* newModel = New Model;
 		newModel->Initialize(m_pDevice5, m_pContext4, meshInfos);
-		newModel->pMeshes[0]->MaterialConstants.CPU.bInvertNormalMapY = TRUE; // GLTF는 true로.
-		newModel->pMeshes[0]->MaterialConstants.CPU.AlbedoFactor = Vector3(1.0f);
-		newModel->pMeshes[0]->MaterialConstants.CPU.RoughnessFactor = 0.3f;
-		newModel->pMeshes[0]->MaterialConstants.CPU.MetallicFactor = 0.8f;
+		newModel->Meshes[0]->MaterialConstant.CPU.bInvertNormalMapY = TRUE; // GLTF는 true로.
+		newModel->Meshes[0]->MaterialConstant.CPU.AlbedoFactor = Vector3(1.0f);
+		newModel->Meshes[0]->MaterialConstant.CPU.RoughnessFactor = 0.3f;
+		newModel->Meshes[0]->MaterialConstant.CPU.MetallicFactor = 0.8f;
 		newModel->UpdateWorld(Matrix::CreateTranslation(center));
 		newModel->bIsPickable = true; // 마우스로 선택/이동 가능.
 		newModel->Name = "MainModel";
@@ -72,13 +72,13 @@ void DebugApp::InitScene()
 		Model* newModel = New Model;
 		newModel->Initialize(m_pDevice5, m_pContext4, { meshInfo });
 		newModel->UpdateWorld(Matrix::CreateTranslation(center));
-		for (size_t i = 0, size = newModel->pMeshes.size(); i < size; ++i)
+		for (size_t i = 0, size = newModel->Meshes.size(); i < size; ++i)
 		{
-			Mesh* pCurMesh = newModel->pMeshes[i];
-			pCurMesh->MaterialConstants.CPU.AlbedoFactor = Vector3(0.1f, 0.1f, 1.0f);
-			pCurMesh->MaterialConstants.CPU.EmissionFactor = Vector3(0.0f);
-			pCurMesh->MaterialConstants.CPU.MetallicFactor = 0.6f;
-			pCurMesh->MaterialConstants.CPU.RoughnessFactor = 0.2f;
+			Mesh* pCurMesh = newModel->Meshes[i];
+			pCurMesh->MaterialConstant.CPU.AlbedoFactor = Vector3(0.1f, 0.1f, 1.0f);
+			pCurMesh->MaterialConstant.CPU.EmissionFactor = Vector3(0.0f);
+			pCurMesh->MaterialConstant.CPU.MetallicFactor = 0.6f;
+			pCurMesh->MaterialConstant.CPU.RoughnessFactor = 0.2f;
 		}
 		newModel->UpdateConstantBuffers(m_pContext4);
 		newModel->bIsPickable = true; // 마우스로 선택/이동 가능.
@@ -96,13 +96,13 @@ void DebugApp::InitScene()
 		Model* newModel = New Model;
 		newModel->Initialize(m_pDevice5, m_pContext4, { meshInfo });
 		newModel->UpdateWorld(Matrix::CreateTranslation(center));
-		for (size_t i = 0, size = newModel->pMeshes.size(); i < size; ++i)
+		for (size_t i = 0, size = newModel->Meshes.size(); i < size; ++i)
 		{
-			Mesh* pCurMesh = newModel->pMeshes[i];
-			pCurMesh->MaterialConstants.CPU.AlbedoFactor = Vector3(1.0f, 0.2f, 0.2f);
-			pCurMesh->MaterialConstants.CPU.EmissionFactor = Vector3(0.0f);
-			pCurMesh->MaterialConstants.CPU.MetallicFactor = 0.9f;
-			pCurMesh->MaterialConstants.CPU.RoughnessFactor = 0.5f;
+			Mesh* pCurMesh = newModel->Meshes[i];
+			pCurMesh->MaterialConstant.CPU.AlbedoFactor = Vector3(1.0f, 0.2f, 0.2f);
+			pCurMesh->MaterialConstant.CPU.EmissionFactor = Vector3(0.0f);
+			pCurMesh->MaterialConstant.CPU.MetallicFactor = 0.9f;
+			pCurMesh->MaterialConstant.CPU.RoughnessFactor = 0.5f;
 		}
 		newModel->UpdateConstantBuffers(m_pContext4);
 		newModel->bIsPickable = true; // 마우스로 선택/이동 가능.
@@ -120,13 +120,13 @@ void DebugApp::InitScene()
 		Model* newModel = New Model;
 		newModel->Initialize(m_pDevice5, m_pContext4, { meshInfo });
 		newModel->UpdateWorld(Matrix::CreateTranslation(center));
-		for (size_t i = 0, size = newModel->pMeshes.size(); i < size; ++i)
+		for (size_t i = 0, size = newModel->Meshes.size(); i < size; ++i)
 		{
-			Mesh* pCurMesh = newModel->pMeshes[i];
-			pCurMesh->MaterialConstants.CPU.AlbedoFactor = Vector3(0.1f, 0.1f, 1.0f);
-			pCurMesh->MaterialConstants.CPU.EmissionFactor = Vector3(0.0f);
-			pCurMesh->MaterialConstants.CPU.MetallicFactor = 0.6f;
-			pCurMesh->MaterialConstants.CPU.RoughnessFactor = 0.2f;
+			Mesh* pCurMesh = newModel->Meshes[i];
+			pCurMesh->MaterialConstant.CPU.AlbedoFactor = Vector3(0.1f, 0.1f, 1.0f);
+			pCurMesh->MaterialConstant.CPU.EmissionFactor = Vector3(0.0f);
+			pCurMesh->MaterialConstant.CPU.MetallicFactor = 0.6f;
+			pCurMesh->MaterialConstant.CPU.RoughnessFactor = 0.2f;
 		}
 		newModel->UpdateConstantBuffers(m_pContext4);
 		newModel->bIsPickable = true; // 마우스로 선택/이동 가능.
@@ -220,8 +220,8 @@ void DebugApp::UpdateGUI()
 		}
 
 		Model* pMirror = m_Scene.GetMirror();
-		ImGui::SliderFloat("Metallic", &(pMirror->pMeshes[0]->MaterialConstants.CPU.MetallicFactor), 0.0f, 1.0f);
-		ImGui::SliderFloat("Roughness", &(pMirror->pMeshes[0]->MaterialConstants.CPU.RoughnessFactor), 0.0f, 1.0f);
+		ImGui::SliderFloat("Metallic", &(pMirror->Meshes[0]->MaterialConstant.CPU.MetallicFactor), 0.0f, 1.0f);
+		ImGui::SliderFloat("Roughness", &(pMirror->Meshes[0]->MaterialConstant.CPU.RoughnessFactor), 0.0f, 1.0f);
 
 		ImGui::TreePop();
 	}
@@ -245,18 +245,18 @@ void DebugApp::UpdateGUI()
 
 		if (m_pPickedModel)
 		{
-			for (size_t i = 0, size = m_pPickedModel->pMeshes.size(); i < size; ++i)
+			for (size_t i = 0, size = m_pPickedModel->Meshes.size(); i < size; ++i)
 			{
-				flag += ImGui::SliderFloat("Metallic", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.MetallicFactor), 0.0f, 1.0f);
-				flag += ImGui::SliderFloat("Roughness", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.RoughnessFactor), 0.0f, 1.0f);
-				flag += ImGui::CheckboxFlags("AlbedoTexture", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseAlbedoMap), TRUE);
-				flag += ImGui::CheckboxFlags("EmissiveTexture", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseEmissiveMap), TRUE);
-				flag += ImGui::CheckboxFlags("Use NormalMapping", &m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseNormalMap, TRUE);
-				flag += ImGui::CheckboxFlags("Use AO", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseAOMap), 1);
-				flag += ImGui::CheckboxFlags("Use HeightMapping", &(m_pPickedModel->pMeshes[i]->MeshConstants.CPU.bUseHeightMap), TRUE);
-				flag += ImGui::SliderFloat("HeightScale", &(m_pPickedModel->pMeshes[i]->MeshConstants.CPU.HeightScale), 0.0f, 0.1f);
-				flag += ImGui::CheckboxFlags("Use MetallicMap", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseMetallicMap), TRUE);
-				flag += ImGui::CheckboxFlags("Use RoughnessMap", &(m_pPickedModel->pMeshes[i]->MaterialConstants.CPU.bUseRoughnessMap), TRUE);
+				flag += ImGui::SliderFloat("Metallic", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.MetallicFactor), 0.0f, 1.0f);
+				flag += ImGui::SliderFloat("Roughness", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.RoughnessFactor), 0.0f, 1.0f);
+				flag += ImGui::CheckboxFlags("AlbedoTexture", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseAlbedoMap), TRUE);
+				flag += ImGui::CheckboxFlags("EmissiveTexture", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseEmissiveMap), TRUE);
+				flag += ImGui::CheckboxFlags("Use NormalMapping", &m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseNormalMap, TRUE);
+				flag += ImGui::CheckboxFlags("Use AO", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseAOMap), 1);
+				flag += ImGui::CheckboxFlags("Use HeightMapping", &(m_pPickedModel->Meshes[i]->MeshConstant.CPU.bUseHeightMap), TRUE);
+				flag += ImGui::SliderFloat("HeightScale", &(m_pPickedModel->Meshes[i]->MeshConstant.CPU.HeightScale), 0.0f, 0.1f);
+				flag += ImGui::CheckboxFlags("Use MetallicMap", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseMetallicMap), TRUE);
+				flag += ImGui::CheckboxFlags("Use RoughnessMap", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseRoughnessMap), TRUE);
 			}
 			if (flag)
 			{

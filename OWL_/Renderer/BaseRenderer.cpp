@@ -130,8 +130,8 @@ void BaseRenderer::InitScene()
 		m_pCursorSphere->Initialize(m_pDevice5, m_pContext4, { sphere });
 		m_pCursorSphere->bIsVisible = false; // 마우스가 눌렸을 때만 보임
 		m_pCursorSphere->bCastShadow = false; // 그림자 X
-		m_pCursorSphere->pMeshes[0]->MaterialConstants.CPU.AlbedoFactor = Vector3(0.0f);
-		m_pCursorSphere->pMeshes[0]->MaterialConstants.CPU.EmissionFactor = Vector3(0.0f, 1.0f, 0.0f);
+		m_pCursorSphere->Meshes[0]->MaterialConstant.CPU.AlbedoFactor = Vector3(0.0f);
+		m_pCursorSphere->Meshes[0]->MaterialConstant.CPU.EmissionFactor = Vector3(0.0f, 1.0f, 0.0f);
 
 		m_Scene.pRenderObjects.push_back(m_pCursorSphere); // 리스트에 등록.
 	}

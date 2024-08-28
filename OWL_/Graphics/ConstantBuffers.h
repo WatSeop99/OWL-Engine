@@ -118,7 +118,7 @@ ALIGN(16) struct VolumeConsts
 
 // bone 개수 제약을 없애기 위해 StructuredBuffer로 교체.
 // __declspec(align(256)) struct SkinnedConsts {
-//    Matrix pBoneTransforms[52]; // bone 개수
+//    Matrix BoneTransforms[52]; // bone 개수
 //};
 
 template <typename CONSTANTS>

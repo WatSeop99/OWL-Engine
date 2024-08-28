@@ -58,14 +58,14 @@ void Scene::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 			m_ppLightSpheres[i] = New Model;
 			m_ppLightSpheres[i]->Initialize(pDevice, pContext, { sphere });
 			m_ppLightSpheres[i]->UpdateWorld(Matrix::CreateTranslation(pLights[i].Property.Position));
-			m_ppLightSpheres[i]->pMeshes[0]->MaterialConstants.CPU.AlbedoFactor = Vector3(0.0f);
-			m_ppLightSpheres[i]->pMeshes[0]->MaterialConstants.CPU.EmissionFactor = Vector3(1.0f, 1.0f, 0.0f);
+			m_ppLightSpheres[i]->Meshes[0]->MaterialConstant.CPU.AlbedoFactor = Vector3(0.0f);
+			m_ppLightSpheres[i]->Meshes[0]->MaterialConstant.CPU.EmissionFactor = Vector3(1.0f, 1.0f, 0.0f);
 			m_ppLightSpheres[i]->bCastShadow = false; // 조명 표시 물체들은 그림자 X.
-			for (size_t j = 0, size = m_ppLightSpheres[i]->pMeshes.size(); j < size; ++j)
+			for (size_t j = 0, size = m_ppLightSpheres[i]->Meshes.size(); j < size; ++j)
 			{
-				Mesh* pCurMesh = m_ppLightSpheres[i]->pMeshes[j];
-				pCurMesh->MaterialConstants.CPU.AlbedoFactor = Vector3(0.0f);
-				pCurMesh->MaterialConstants.CPU.EmissionFactor = Vector3(1.0f, 1.0f, 0.0f);
+				Mesh* pCurMesh = m_ppLightSpheres[i]->Meshes[j];
+				pCurMesh->MaterialConstant.CPU.AlbedoFactor = Vector3(0.0f);
+				pCurMesh->MaterialConstant.CPU.EmissionFactor = Vector3(1.0f, 1.0f, 0.0f);
 			}
 
 			m_ppLightSpheres[i]->bIsVisible = true;
@@ -95,10 +95,10 @@ void Scene::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 
 		m_pGround = New Model;
 		m_pGround->Initialize(pDevice, pContext, { mesh });
-		m_pGround->pMeshes[0]->MaterialConstants.CPU.AlbedoFactor = Vector3(0.7f);
-		m_pGround->pMeshes[0]->MaterialConstants.CPU.EmissionFactor = Vector3(0.0f);
-		m_pGround->pMeshes[0]->MaterialConstants.CPU.MetallicFactor = 0.5f;
-		m_pGround->pMeshes[0]->MaterialConstants.CPU.RoughnessFactor = 0.3f;
+		m_pGround->Meshes[0]->MaterialConstant.CPU.AlbedoFactor = Vector3(0.7f);
+		m_pGround->Meshes[0]->MaterialConstant.CPU.EmissionFactor = Vector3(0.0f);
+		m_pGround->Meshes[0]->MaterialConstant.CPU.MetallicFactor = 0.5f;
+		m_pGround->Meshes[0]->MaterialConstant.CPU.RoughnessFactor = 0.3f;
 
 		// Vector3 position = Vector3(0.0f, -1.0f, 0.0f);
 		Vector3 position = Vector3(0.0f, -0.5f, 0.0f);

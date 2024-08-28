@@ -58,7 +58,7 @@ void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, con
 	HRESULT hr = S_OK;
 	struct _stat64 sourceFileStat;
 
-	pMeshes.reserve(MESH_INFOS.size());
+	Meshes.reserve(MESH_INFOS.size());
 	for (UINT64 i = 0, meshSize = MESH_INFOS.size(); i < meshSize; ++i)
 	{
 		const MeshInfo& MESH_DATA = MESH_INFOS[i];
@@ -67,7 +67,7 @@ void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, con
 		pNewMesh->Initialize(pDevice);
 		InitMeshBuffers(pDevice, MESH_DATA, pNewMesh);
 		
-		pNewMesh->MeshConstants.CPU.World = Matrix();
+		pNewMesh->MeshConstant.CPU.World = Matrix();
 
 		if (!MESH_DATA.szAlbedoTextureFileName.empty())
 		{
@@ -86,7 +86,7 @@ void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, con
 									   &pNewMesh->pMaterialBuffer->Albedo.pTexture, &pNewMesh->pMaterialBuffer->Albedo.pSRV);
 				}
 				BREAK_IF_FAILED(hr);
-				pNewMesh->MaterialConstants.CPU.bUseAlbedoMap = TRUE;
+				pNewMesh->MaterialConstant.CPU.bUseAlbedoMap = TRUE;
 			}
 			else
 			{
@@ -104,7 +104,7 @@ void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, con
 				hr = CreateTexture(pDevice, pContext, MESH_DATA.szEmissiveTextureFileName.c_str(), true,
 								   &pNewMesh->pMaterialBuffer->Emissive.pTexture, &pNewMesh->pMaterialBuffer->Emissive.pSRV);
 				BREAK_IF_FAILED(hr);
-				pNewMesh->MaterialConstants.CPU.bUseEmissiveMap = TRUE;
+				pNewMesh->MaterialConstant.CPU.bUseEmissiveMap = TRUE;
 			}
 			else
 			{
@@ -122,7 +122,7 @@ void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, con
 				hr = CreateTexture(pDevice, pContext, MESH_DATA.szNormalTextureFileName.c_str(), false,
 								   &pNewMesh->pMaterialBuffer->Normal.pTexture, &pNewMesh->pMaterialBuffer->Normal.pSRV);
 				BREAK_IF_FAILED(hr);
-				pNewMesh->MaterialConstants.CPU.bUseNormalMap = TRUE;
+				pNewMesh->MaterialConstant.CPU.bUseNormalMap = TRUE;
 			}
 			else
 			{
@@ -140,7 +140,7 @@ void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, con
 				hr = CreateTexture(pDevice, pContext, MESH_DATA.szHeightTextureFileName.c_str(), false,
 								   &pNewMesh->pMaterialBuffer->Height.pTexture, &pNewMesh->pMaterialBuffer->Height.pSRV);
 				BREAK_IF_FAILED(hr);
-				pNewMesh->MeshConstants.CPU.bUseHeightMap = TRUE;
+				pNewMesh->MeshConstant.CPU.bUseHeightMap = TRUE;
 			}
 			else
 			{
@@ -158,7 +158,7 @@ void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, con
 				hr = CreateTexture(pDevice, pContext, MESH_DATA.szAOTextureFileName.c_str(), false,
 								   &pNewMesh->pMaterialBuffer->AmbientOcclusion.pTexture, &pNewMesh->pMaterialBuffer->AmbientOcclusion.pSRV);
 				BREAK_IF_FAILED(hr);
-				pNewMesh->MaterialConstants.CPU.bUseAOMap = TRUE;
+				pNewMesh->MaterialConstant.CPU.bUseAOMap = TRUE;
 			}
 			else
 			{
@@ -176,7 +176,7 @@ void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, con
 				hr = CreateTexture(pDevice, pContext, MESH_DATA.szMetallicTextureFileName.c_str(), false,
 								   &pNewMesh->pMaterialBuffer->Metallic.pTexture, &pNewMesh->pMaterialBuffer->Metallic.pSRV);
 				BREAK_IF_FAILED(hr);
-				pNewMesh->MaterialConstants.CPU.bUseMetallicMap = TRUE;
+				pNewMesh->MaterialConstant.CPU.bUseMetallicMap = TRUE;
 			}
 			else
 			{
@@ -194,7 +194,7 @@ void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, con
 				hr = CreateTexture(pDevice, pContext, MESH_DATA.szRoughnessTextureFileName.c_str(), false,
 								   &pNewMesh->pMaterialBuffer->Roughness.pTexture, &pNewMesh->pMaterialBuffer->Roughness.pSRV);
 				BREAK_IF_FAILED(hr);
-				pNewMesh->MaterialConstants.CPU.bUseRoughnessMap = TRUE;
+				pNewMesh->MaterialConstant.CPU.bUseRoughnessMap = TRUE;
 			}
 			else
 			{
@@ -204,7 +204,7 @@ void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, con
 			}
 		}
 
-		pMeshes.push_back(pNewMesh);
+		Meshes.push_back(pNewMesh);
 	}
 
 	// Bounding box ÃÊ±âÈ­.
@@ -221,7 +221,7 @@ void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, con
 		m_pBoundingBoxMesh = New Mesh;
 		m_pBoundingBoxMesh->Initialize(pDevice);
 
-		m_pBoundingBoxMesh->MeshConstants.CPU.World = Matrix();
+		m_pBoundingBoxMesh->MeshConstant.CPU.World = Matrix();
 
 		hr = CreateVertexBuffer(pDevice, meshData.Vertices, &m_pBoundingBoxMesh->pVertexBuffer);
 		BREAK_IF_FAILED(hr);
@@ -255,7 +255,7 @@ void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, con
 		m_pBoundingSphereMesh = New Mesh;
 		m_pBoundingSphereMesh->Initialize(pDevice);
 
-		m_pBoundingSphereMesh->MeshConstants.CPU.World = Matrix();
+		m_pBoundingSphereMesh->MeshConstant.CPU.World = Matrix();
 
 		hr = CreateVertexBuffer(pDevice, meshData.Vertices, &(m_pBoundingSphereMesh->pVertexBuffer));
 		BREAK_IF_FAILED(hr);
@@ -302,15 +302,15 @@ void Model::UpdateConstantBuffers(ID3D11DeviceContext* pContext)
 		return;
 	}
 
-	for (UINT64 i = 0, size = pMeshes.size(); i < size; ++i)
+	for (UINT64 i = 0, size = Meshes.size(); i < size; ++i)
 	{
-		Mesh* pCurMesh = pMeshes[i];
-		pCurMesh->MeshConstants.Upload(pContext);
-		pCurMesh->MaterialConstants.Upload(pContext);
+		Mesh* pCurMesh = Meshes[i];
+		pCurMesh->MeshConstant.Upload(pContext);
+		pCurMesh->MaterialConstant.Upload(pContext);
 	}
 
-	m_pBoundingBoxMesh->MeshConstants.Upload(pContext);
-	m_pBoundingSphereMesh->MeshConstants.Upload(pContext);
+	m_pBoundingBoxMesh->MeshConstant.Upload(pContext);
+	m_pBoundingSphereMesh->MeshConstant.Upload(pContext);
 }
 
 void Model::UpdateWorld(const Matrix& WORLD)
@@ -326,19 +326,19 @@ void Model::UpdateWorld(const Matrix& WORLD)
 	BoundingSphere.Center = World.Translation();
 	BoundingBox.Center = BoundingSphere.Center;
 
-	m_pBoundingBoxMesh->MeshConstants.CPU.World = World.Transpose();
-	m_pBoundingBoxMesh->MeshConstants.CPU.WorldInverseTranspose = WorldInverseTranspose.Transpose();
-	m_pBoundingBoxMesh->MeshConstants.CPU.WorldInverse = WorldInverseTranspose;
-	m_pBoundingSphereMesh->MeshConstants.CPU.World = m_pBoundingBoxMesh->MeshConstants.CPU.World;
-	m_pBoundingSphereMesh->MeshConstants.CPU.WorldInverseTranspose = m_pBoundingBoxMesh->MeshConstants.CPU.WorldInverseTranspose;
-	m_pBoundingSphereMesh->MeshConstants.CPU.WorldInverse = m_pBoundingBoxMesh->MeshConstants.CPU.WorldInverse;
+	m_pBoundingBoxMesh->MeshConstant.CPU.World = World.Transpose();
+	m_pBoundingBoxMesh->MeshConstant.CPU.WorldInverseTranspose = WorldInverseTranspose.Transpose();
+	m_pBoundingBoxMesh->MeshConstant.CPU.WorldInverse = WorldInverseTranspose;
+	m_pBoundingSphereMesh->MeshConstant.CPU.World = m_pBoundingBoxMesh->MeshConstant.CPU.World;
+	m_pBoundingSphereMesh->MeshConstant.CPU.WorldInverseTranspose = m_pBoundingBoxMesh->MeshConstant.CPU.WorldInverseTranspose;
+	m_pBoundingSphereMesh->MeshConstant.CPU.WorldInverse = m_pBoundingBoxMesh->MeshConstant.CPU.WorldInverse;
 
-	for (UINT64 i = 0, size = pMeshes.size(); i < size; ++i)
+	for (UINT64 i = 0, size = Meshes.size(); i < size; ++i)
 	{
-		Mesh* pCurMesh = pMeshes[i];
-		pCurMesh->MeshConstants.CPU.World = WORLD.Transpose();
-		pCurMesh->MeshConstants.CPU.WorldInverseTranspose = WorldInverseTranspose.Transpose();
-		pCurMesh->MeshConstants.CPU.WorldInverse = WorldInverseTranspose;
+		Mesh* pCurMesh = Meshes[i];
+		pCurMesh->MeshConstant.CPU.World = WORLD.Transpose();
+		pCurMesh->MeshConstant.CPU.WorldInverseTranspose = WorldInverseTranspose.Transpose();
+		pCurMesh->MeshConstant.CPU.WorldInverse = WorldInverseTranspose;
 	}
 }
 
@@ -358,11 +358,11 @@ void Model::Render(ID3D11DeviceContext* pContext)
 		return;
 	}
 
-	for (UINT64 i = 0, size = pMeshes.size(); i < size; ++i)
+	for (UINT64 i = 0, size = Meshes.size(); i < size; ++i)
 	{
-		Mesh* const pCurMesh = pMeshes[i];
+		Mesh* const pCurMesh = Meshes[i];
 
-		ID3D11Buffer* ppConstantBuffers[] = { pCurMesh->MeshConstants.pGPU, pCurMesh->MaterialConstants.pGPU };
+		ID3D11Buffer* ppConstantBuffers[] = { pCurMesh->MeshConstant.pGPU, pCurMesh->MaterialConstant.pGPU };
 		UINT numConstantBuffers = _countof(ppConstantBuffers);
 		pContext->VSSetConstantBuffers(2, numConstantBuffers, ppConstantBuffers);
 		pContext->VSSetShaderResources(6, 1, &(pCurMesh->pMaterialBuffer->Height.pSRV));
@@ -406,11 +406,11 @@ void Model::RenderNormals(ID3D11DeviceContext* pContext)
 {
 	_ASSERT(pContext);
 
-	for (UINT64 i = 0, size = pMeshes.size(); i < size; ++i)
+	for (UINT64 i = 0, size = Meshes.size(); i < size; ++i)
 	{
-		Mesh* const pCurMesh = pMeshes[i];
+		Mesh* const pCurMesh = Meshes[i];
 
-		ID3D11Buffer* ppConstantsBuffers[] = { pCurMesh->MeshConstants.pGPU, pCurMesh->MaterialConstants.pGPU };
+		ID3D11Buffer* ppConstantsBuffers[] = { pCurMesh->MeshConstant.pGPU, pCurMesh->MaterialConstant.pGPU };
 		UINT numConstantsBuffers = _countof(ppConstantsBuffers);
 		pContext->GSSetConstantBuffers(2, numConstantsBuffers, ppConstantsBuffers);
 		pContext->IASetVertexBuffers(0, 1, &pCurMesh->pVertexBuffer, &pCurMesh->Stride, &pCurMesh->Offset);
@@ -422,7 +422,7 @@ void Model::RenderWireBoundingBox(ID3D11DeviceContext* pContext)
 {
 	_ASSERT(pContext);
 
-	ID3D11Buffer* ppConstantsBuffers[] = { m_pBoundingBoxMesh->MeshConstants.pGPU, m_pBoundingBoxMesh->MaterialConstants.pGPU };
+	ID3D11Buffer* ppConstantsBuffers[] = { m_pBoundingBoxMesh->MeshConstant.pGPU, m_pBoundingBoxMesh->MaterialConstant.pGPU };
 	UINT numConstantsBuffers = _countof(ppConstantsBuffers);
 	pContext->VSSetConstantBuffers(2, numConstantsBuffers, ppConstantsBuffers);
 	pContext->IASetVertexBuffers(0, 1, &m_pBoundingBoxMesh->pVertexBuffer, &m_pBoundingBoxMesh->Stride, &m_pBoundingBoxMesh->Offset);
@@ -434,7 +434,7 @@ void Model::RenderWireBoundingSphere(ID3D11DeviceContext* pContext)
 {
 	_ASSERT(pContext);
 
-	ID3D11Buffer* ppConstantsBuffers[] = { m_pBoundingSphereMesh->MeshConstants.pGPU, m_pBoundingSphereMesh->MaterialConstants.pGPU };
+	ID3D11Buffer* ppConstantsBuffers[] = { m_pBoundingSphereMesh->MeshConstant.pGPU, m_pBoundingSphereMesh->MaterialConstant.pGPU };
 	UINT numConstantBuffers = _countof(ppConstantsBuffers);
 	pContext->VSSetConstantBuffers(2, numConstantBuffers, ppConstantsBuffers);
 	pContext->IASetVertexBuffers(0, 1, &m_pBoundingSphereMesh->pVertexBuffer, &m_pBoundingSphereMesh->Stride, &m_pBoundingSphereMesh->Offset);
@@ -442,7 +442,7 @@ void Model::RenderWireBoundingSphere(ID3D11DeviceContext* pContext)
 	pContext->DrawIndexed(m_pBoundingSphereMesh->IndexCount, 0, 0);
 }
 
-void Model::destroy()
+void Model::Cleanup()
 {
 	if (m_pBoundingSphereMesh)
 	{
@@ -455,10 +455,10 @@ void Model::destroy()
 		m_pBoundingBoxMesh = nullptr;
 	}
 
-	for (size_t i = 0, size = pMeshes.size(); i < size; ++i)
+	for (UINT64 i = 0, size = Meshes.size(); i < size; ++i)
 	{
-		delete pMeshes[i];
-		pMeshes[i] = nullptr;
+		delete Meshes[i];
+		Meshes[i] = nullptr;
 	}
-	pMeshes.clear();
+	Meshes.clear();
 }
