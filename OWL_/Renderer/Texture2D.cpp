@@ -1,5 +1,5 @@
 #include "../Common.h"
-#include "GraphicsUtils.h"
+#include "../Graphics/GraphicsUtils.h"
 #include "Texture2D.h"
 
 

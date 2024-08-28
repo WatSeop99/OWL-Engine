@@ -132,42 +132,42 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Core\GBuffer.h">
+    <ClInclude Include="Renderer\GBuffer.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="Core\Light.h" />
-    <ClInclude Include="Core\Scene.h">
+    <ClInclude Include="Graphics\Light.h" />
+    <ClInclude Include="Graphics\Scene.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="Core\ShadowMap.h" />
+    <ClInclude Include="Graphics\ShadowMap.h" />
     <ClInclude Include="DebugApp2.h" />
     <ClInclude Include="Geometry\Animation.h" />
-    <ClInclude Include="Core\BaseRenderer.h" />
-    <ClInclude Include="Core\StagingBuffer.h" />
-    <ClInclude Include="Core\Camera.h" />
+    <ClInclude Include="Renderer\BaseRenderer.h" />
+    <ClInclude Include="Renderer\StagingBuffer.h" />
+    <ClInclude Include="Graphics\Camera.h" />
     <ClInclude Include="Common.h" />
-    <ClInclude Include="Core\ConstantBuffers.h" />
-    <ClInclude Include="Core\GraphicsUtils.h" />
+    <ClInclude Include="Graphics\ConstantBuffers.h" />
+    <ClInclude Include="Graphics\GraphicsUtils.h" />
     <ClInclude Include="DebugApp.h" />
     <ClInclude Include="Geometry\GeometryGenerator.h" />
-    <ClInclude Include="Core\GraphicsCommon.h" />
-    <ClInclude Include="Core\PipelineState.h" />
-    <ClInclude Include="Core\ImageFilter.h" />
+    <ClInclude Include="Graphics\GraphicsCommon.h" />
+    <ClInclude Include="Renderer\PipelineState.h" />
+    <ClInclude Include="Graphics\ImageFilter.h" />
     <ClInclude Include="Geometry\Mesh.h" />
     <ClInclude Include="Geometry\MeshInfo.h" />
     <ClInclude Include="Geometry\Model.h" />
     <ClInclude Include="Geometry\ModelInstance.h" />
     <ClInclude Include="Geometry\ModelLoader.h" />
-    <ClInclude Include="Core\PostProcessor.h" />
+    <ClInclude Include="Graphics\PostProcessor.h" />
     <ClInclude Include="Geometry\SkinnedMeshModel.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="Core\StructuredBuffer.h" />
+    <ClInclude Include="Renderer\StructuredBuffer.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="Core\Texture2D.h" />
-    <ClInclude Include="Core\Texture3D.h" />
-    <ClInclude Include="Core\Timer.h" />
+    <ClInclude Include="Renderer\Texture2D.h" />
+    <ClInclude Include="Renderer\Texture3D.h" />
+    <ClInclude Include="Renderer\Timer.h" />
     <ClInclude Include="Util\Util.h" />
     <ClInclude Include="Geometry\Vertex.h" />
   </ItemGroup>
@@ -179,34 +179,34 @@
     <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Core\BaseRenderer.cpp" />
-    <ClCompile Include="Core\Camera.cpp" />
-    <ClCompile Include="Core\GBuffer.cpp">
+    <ClCompile Include="Renderer\BaseRenderer.cpp" />
+    <ClCompile Include="Graphics\Camera.cpp" />
+    <ClCompile Include="Renderer\GBuffer.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="Core\GraphicsUtils.cpp" />
-    <ClCompile Include="Core\Light.cpp" />
-    <ClCompile Include="Core\Scene.cpp">
+    <ClCompile Include="Graphics\GraphicsUtils.cpp" />
+    <ClCompile Include="Graphics\Light.cpp" />
+    <ClCompile Include="Graphics\Scene.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="Core\ShadowMap.cpp" />
-    <ClCompile Include="Core\Texture3D.cpp" />
-    <ClCompile Include="Core\Timer.cpp" />
+    <ClCompile Include="Graphics\ShadowMap.cpp" />
+    <ClCompile Include="Renderer\Texture3D.cpp" />
+    <ClCompile Include="Renderer\Timer.cpp" />
     <ClCompile Include="DebugApp.cpp" />
     <ClCompile Include="Geometry\Animation.cpp" />
     <ClCompile Include="DebugApp2.cpp" />
     <ClCompile Include="Geometry\GeometryGenerator.cpp" />
-    <ClCompile Include="Core\GraphicsCommon.cpp" />
-    <ClCompile Include="Core\PipelineState.cpp" />
-    <ClCompile Include="Core\ImageFilter.cpp" />
+    <ClCompile Include="Graphics\GraphicsCommon.cpp" />
+    <ClCompile Include="Renderer\PipelineState.cpp" />
+    <ClCompile Include="Graphics\ImageFilter.cpp" />
     <ClCompile Include="Geometry\SkinnedMeshModel.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Geometry\Model.cpp" />
     <ClCompile Include="Geometry\ModelLoader.cpp" />
-    <ClCompile Include="Core\PostProcessor.cpp" />
-    <ClCompile Include="Core\Texture2D.cpp" />
+    <ClCompile Include="Graphics\PostProcessor.cpp" />
+    <ClCompile Include="Renderer\Texture2D.cpp" />
     <ClCompile Include="Util\Util.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/BaseRenderer.h"
+#include "Renderer/BaseRenderer.h"
 #include "Geometry/Model.h"
 #include "Geometry/SkinnedMeshModel.h"
 

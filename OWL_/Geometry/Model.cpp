@@ -1,6 +1,6 @@
 #include "../Common.h"
 #include "GeometryGenerator.h"
-#include "../Core/GraphicsUtils.h"
+#include "../Graphics/GraphicsUtils.h"
 #include "Model.h"
 
 DirectX::BoundingBox GetBoundingBox(const std::vector<Vertex>& VERTICES)

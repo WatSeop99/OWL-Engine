@@ -1,8 +1,5 @@
 #pragma once
 
-
-using DirectX::SimpleMath::Vector4;
-
 class ImageFilter
 {
 public:

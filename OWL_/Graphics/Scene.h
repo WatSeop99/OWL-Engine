@@ -2,7 +2,7 @@
 
 #include "Camera.h"
 #include "ConstantBuffers.h"
-#include "GBuffer.h"
+#include "../Renderer/GBuffer.h"
 #include "Light.h"
 #include "../Geometry/Model.h"
 

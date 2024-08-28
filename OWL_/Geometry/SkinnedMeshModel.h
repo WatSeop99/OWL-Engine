@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Model.h"
-#include "../Core/StructuredBuffer.h"
+#include "../Renderer/StructuredBuffer.h"
 
 
 class SkinnedMeshModel : public Model

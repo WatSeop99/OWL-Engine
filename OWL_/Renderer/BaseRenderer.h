@@ -1,11 +1,11 @@
 ﻿#pragma once
 
-#include "Camera.h"
-#include "GraphicsCommon.h"
+#include "../Graphics/Camera.h"
+#include "../Graphics/GraphicsCommon.h"
 #include "../Geometry/MeshInfo.h"
 #include "../Geometry/Model.h"
-#include "PostProcessor.h"
-#include "Scene.h"
+#include "../Graphics/PostProcessor.h"
+#include "../Graphics/Scene.h"
 #include "Timer.h"
 
 

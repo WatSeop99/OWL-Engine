@@ -3,8 +3,8 @@
 // https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Model/Model.h
 
 #include "Animation.h"
-#include "../Core/ConstantBuffers.h"
-#include "../Core/GraphicsCommon.h"
+#include "../Graphics/ConstantBuffers.h"
+#include "../Graphics/GraphicsCommon.h"
 #include "Mesh.h"
 #include "MeshInfo.h"
 

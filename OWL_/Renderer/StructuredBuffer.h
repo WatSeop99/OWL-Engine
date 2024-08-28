@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Common.h"
-#include "GraphicsUtils.h"
+#include "../Graphics/GraphicsUtils.h"
 
 
 using std::vector;

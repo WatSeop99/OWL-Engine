@@ -21,31 +21,31 @@
     <ClInclude Include="Util\Util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\BaseRenderer.h">
+    <ClInclude Include="Renderer\BaseRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\StagingBuffer.h">
+    <ClInclude Include="Renderer\StagingBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Camera.h">
+    <ClInclude Include="Graphics\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\ConstantBuffers.h">
+    <ClInclude Include="Graphics\ConstantBuffers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\GraphicsUtils.h">
+    <ClInclude Include="Graphics\GraphicsUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Geometry\GeometryGenerator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\GraphicsCommon.h">
+    <ClInclude Include="Graphics\GraphicsCommon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\PipelineState.h">
+    <ClInclude Include="Renderer\PipelineState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\ImageFilter.h">
+    <ClInclude Include="Graphics\ImageFilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Geometry\Mesh.h">
@@ -57,19 +57,19 @@
     <ClInclude Include="Geometry\Model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\PostProcessor.h">
+    <ClInclude Include="Graphics\PostProcessor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\StructuredBuffer.h">
+    <ClInclude Include="Renderer\StructuredBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Texture2D.h">
+    <ClInclude Include="Renderer\Texture2D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Texture3D.h">
+    <ClInclude Include="Renderer\Texture3D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Timer.h">
+    <ClInclude Include="Renderer\Timer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Geometry\Vertex.h">
@@ -99,16 +99,16 @@
     <ClInclude Include="Geometry\SkinnedMeshModel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\GBuffer.h">
+    <ClInclude Include="Renderer\GBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Scene.h">
+    <ClInclude Include="Graphics\Scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\ShadowMap.h">
+    <ClInclude Include="Graphics\ShadowMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Light.h">
+    <ClInclude Include="Graphics\Light.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -132,31 +132,31 @@
     <ClCompile Include="Util\Util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\BaseRenderer.cpp">
+    <ClCompile Include="Renderer\BaseRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Camera.cpp">
+    <ClCompile Include="Graphics\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\GraphicsUtils.cpp">
+    <ClCompile Include="Graphics\GraphicsUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Geometry\GeometryGenerator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\GraphicsCommon.cpp">
+    <ClCompile Include="Graphics\GraphicsCommon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\PipelineState.cpp">
+    <ClCompile Include="Renderer\PipelineState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\ImageFilter.cpp">
+    <ClCompile Include="Graphics\ImageFilter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Geometry\Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\PostProcessor.cpp">
+    <ClCompile Include="Graphics\PostProcessor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DebugApp.cpp">
@@ -165,10 +165,10 @@
     <ClCompile Include="Geometry\ModelLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Texture2D.cpp">
+    <ClCompile Include="Renderer\Texture2D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Texture3D.cpp">
+    <ClCompile Include="Renderer\Texture3D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Geometry\Animation.cpp">
@@ -180,19 +180,19 @@
     <ClCompile Include="DebugApp2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\GBuffer.cpp">
+    <ClCompile Include="Renderer\GBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Scene.cpp">
+    <ClCompile Include="Graphics\Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Timer.cpp">
+    <ClCompile Include="Renderer\Timer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\ShadowMap.cpp">
+    <ClCompile Include="Graphics\ShadowMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Light.cpp">
+    <ClCompile Include="Graphics\Light.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

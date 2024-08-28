@@ -1,8 +1,8 @@
 ﻿#pragma once
 
 #include "../Common.h"
-#include "../Core/Texture2D.h"
-#include "../Core/Texture3D.h"
+#include "../Renderer/Texture2D.h"
+#include "../Renderer/Texture3D.h"
 
 struct Material
 {

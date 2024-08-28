@@ -3,7 +3,7 @@
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
 #include "Geometry/GeometryGenerator.h"
-#include "Core/GraphicsUtils.h"
+#include "Graphics/GraphicsUtils.h"
 #include "DebugApp.h"
 
 using namespace std;

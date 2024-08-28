@@ -1,5 +1,5 @@
 #include "../Common.h"
-#include "GraphicsUtils.h"
+#include "../Graphics/GraphicsUtils.h"
 #include "GBuffer.h"
 
 void GBuffer::Initialize(ID3D11Device* pDevice)

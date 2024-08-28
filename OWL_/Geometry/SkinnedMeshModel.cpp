@@ -1,6 +1,6 @@
 #include "../Common.h"
-#include "../Core/GraphicsCommon.h"
-#include "../Core/GraphicsUtils.h"
+#include "../Graphics/GraphicsCommon.h"
+#include "../Graphics/GraphicsUtils.h"
 #include "SkinnedMeshModel.h"
 
 
