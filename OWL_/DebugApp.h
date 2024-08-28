@@ -7,7 +7,7 @@
 using DirectX::BoundingSphere;
 using DirectX::SimpleMath::Vector3;
 
-class DebugApp : public Core::BaseRenderer
+class DebugApp : public BaseRenderer
 {
 public:
 	DebugApp();
@@ -22,7 +22,7 @@ public:
 	void Render() override;
 
 protected:
-	Geometry::Model* m_pGround = nullptr;
+	Model* m_pGround = nullptr;
 };
 
 

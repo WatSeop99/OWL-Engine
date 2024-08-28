@@ -1,133 +1,131 @@
 #include "../Common.h"
 #include "GraphicsCommon.h"
 
-namespace Graphics
-{
-	// Sampler States
-	ID3D11SamplerState* g_pLinearWrapSS = nullptr;
-	ID3D11SamplerState* g_pLinearClampSS = nullptr;
-	ID3D11SamplerState* g_pPointClampSS = nullptr;
-	ID3D11SamplerState* g_pShadowPointSS = nullptr;
-	ID3D11SamplerState* g_pShadowLinearSS = nullptr;
-	ID3D11SamplerState* g_pShadowCompareSS = nullptr;
-	ID3D11SamplerState* g_pPointWrapSS = nullptr;
-	ID3D11SamplerState* g_pLinearMirrorSS = nullptr;
-	std::vector<ID3D11SamplerState*> g_ppSamplerStates;
 
-	// Rasterizer States
-	ID3D11RasterizerState* g_pSolidRS = nullptr; // front only
-	ID3D11RasterizerState* g_pSolidCcwRS = nullptr;
-	ID3D11RasterizerState* g_pWireRS = nullptr;
-	ID3D11RasterizerState* g_pWireCcwRS = nullptr;
-	ID3D11RasterizerState* g_pPostProcessingRS = nullptr;
-	ID3D11RasterizerState* g_pSolidBothRS = nullptr; // front and back
-	ID3D11RasterizerState* g_pWireBothRS = nullptr;
-	ID3D11RasterizerState* g_pSolidBothCcwRS = nullptr;
-	ID3D11RasterizerState* g_pWireBothCcwRS = nullptr;
+// Sampler States
+ID3D11SamplerState* g_pLinearWrapSS = nullptr;
+ID3D11SamplerState* g_pLinearClampSS = nullptr;
+ID3D11SamplerState* g_pPointClampSS = nullptr;
+ID3D11SamplerState* g_pShadowPointSS = nullptr;
+ID3D11SamplerState* g_pShadowLinearSS = nullptr;
+ID3D11SamplerState* g_pShadowCompareSS = nullptr;
+ID3D11SamplerState* g_pPointWrapSS = nullptr;
+ID3D11SamplerState* g_pLinearMirrorSS = nullptr;
+std::vector<ID3D11SamplerState*> g_ppSamplerStates;
 
-	// Depth Stencil States
-	ID3D11DepthStencilState* g_pDrawDSS = nullptr;       // 일반적으로 그리기
-	ID3D11DepthStencilState* g_pMaskDSS = nullptr;       // 스텐실버퍼에 표시
-	ID3D11DepthStencilState* g_pDrawMaskedDSS = nullptr; // 스텐실 표시된 곳만
+// Rasterizer States
+ID3D11RasterizerState* g_pSolidRS = nullptr; // front only
+ID3D11RasterizerState* g_pSolidCcwRS = nullptr;
+ID3D11RasterizerState* g_pWireRS = nullptr;
+ID3D11RasterizerState* g_pWireCcwRS = nullptr;
+ID3D11RasterizerState* g_pPostProcessingRS = nullptr;
+ID3D11RasterizerState* g_pSolidBothRS = nullptr; // front and back
+ID3D11RasterizerState* g_pWireBothRS = nullptr;
+ID3D11RasterizerState* g_pSolidBothCcwRS = nullptr;
+ID3D11RasterizerState* g_pWireBothCcwRS = nullptr;
 
-	// Blend States
-	ID3D11BlendState* g_pMirrorBS = nullptr;
-	ID3D11BlendState* g_pAccumulateBS = nullptr;
-	ID3D11BlendState* g_pAlphaBS = nullptr;
+// Depth Stencil States
+ID3D11DepthStencilState* g_pDrawDSS = nullptr;       // 일반적으로 그리기
+ID3D11DepthStencilState* g_pMaskDSS = nullptr;       // 스텐실버퍼에 표시
+ID3D11DepthStencilState* g_pDrawMaskedDSS = nullptr; // 스텐실 표시된 곳만
 
-	// Shaders
-	ID3D11VertexShader* g_pBasicVS = nullptr;
-	ID3D11VertexShader* g_pSkinnedVS = nullptr;
-	ID3D11VertexShader* g_pSkyboxVS = nullptr;
-	ID3D11VertexShader* g_pSamplingVS = nullptr;
-	ID3D11VertexShader* g_pNormalVS = nullptr;
-	ID3D11VertexShader* g_pDepthOnlyVS = nullptr;
-	ID3D11VertexShader* g_pDepthOnlySkinnedVS = nullptr;
-	ID3D11VertexShader* g_pGrassVS = nullptr;
-	ID3D11VertexShader* g_pBillboardVS = nullptr;
-	ID3D11VertexShader* g_pGBufferVS = nullptr;
-	ID3D11VertexShader* g_pGBufferSkinnedVS = nullptr;
+// Blend States
+ID3D11BlendState* g_pMirrorBS = nullptr;
+ID3D11BlendState* g_pAccumulateBS = nullptr;
+ID3D11BlendState* g_pAlphaBS = nullptr;
 
-	ID3D11PixelShader* g_pBasicPS = nullptr;
-	ID3D11PixelShader* g_pSkyboxPS = nullptr;
-	ID3D11PixelShader* g_pCombinePS = nullptr;
-	ID3D11PixelShader* g_pBloomDownPS = nullptr;
-	ID3D11PixelShader* g_pBloomUpPS = nullptr;
-	ID3D11PixelShader* g_pNormalPS = nullptr;
-	ID3D11PixelShader* g_pDepthOnlyPS = nullptr;
-	ID3D11PixelShader* g_pPostEffectsPS = nullptr;
-	ID3D11PixelShader* g_pVolumeSmokePS = nullptr;
-	ID3D11PixelShader* g_pColorPS = nullptr;
-	ID3D11PixelShader* g_pGrassPS = nullptr;
-	ID3D11PixelShader* g_pOceanPS = nullptr;
-	ID3D11PixelShader* g_pVolumetricFirePS = nullptr;
-	ID3D11PixelShader* g_pExplosionPS = nullptr;
-	ID3D11PixelShader* g_pGBufferPS = nullptr;
-	ID3D11PixelShader* g_pDeferredLightingPS = nullptr;
+// Shaders
+ID3D11VertexShader* g_pBasicVS = nullptr;
+ID3D11VertexShader* g_pSkinnedVS = nullptr;
+ID3D11VertexShader* g_pSkyboxVS = nullptr;
+ID3D11VertexShader* g_pSamplingVS = nullptr;
+ID3D11VertexShader* g_pNormalVS = nullptr;
+ID3D11VertexShader* g_pDepthOnlyVS = nullptr;
+ID3D11VertexShader* g_pDepthOnlySkinnedVS = nullptr;
+ID3D11VertexShader* g_pGrassVS = nullptr;
+ID3D11VertexShader* g_pBillboardVS = nullptr;
+ID3D11VertexShader* g_pGBufferVS = nullptr;
+ID3D11VertexShader* g_pGBufferSkinnedVS = nullptr;
 
-	ID3D11GeometryShader* g_pNormalGS = nullptr;
-	ID3D11GeometryShader* g_pBillboardGS = nullptr;
+ID3D11PixelShader* g_pBasicPS = nullptr;
+ID3D11PixelShader* g_pSkyboxPS = nullptr;
+ID3D11PixelShader* g_pCombinePS = nullptr;
+ID3D11PixelShader* g_pBloomDownPS = nullptr;
+ID3D11PixelShader* g_pBloomUpPS = nullptr;
+ID3D11PixelShader* g_pNormalPS = nullptr;
+ID3D11PixelShader* g_pDepthOnlyPS = nullptr;
+ID3D11PixelShader* g_pPostEffectsPS = nullptr;
+ID3D11PixelShader* g_pVolumeSmokePS = nullptr;
+ID3D11PixelShader* g_pColorPS = nullptr;
+ID3D11PixelShader* g_pGrassPS = nullptr;
+ID3D11PixelShader* g_pOceanPS = nullptr;
+ID3D11PixelShader* g_pVolumetricFirePS = nullptr;
+ID3D11PixelShader* g_pExplosionPS = nullptr;
+ID3D11PixelShader* g_pGBufferPS = nullptr;
+ID3D11PixelShader* g_pDeferredLightingPS = nullptr;
 
-	ID3D11VertexShader* g_pDepthOnlyCubeVS = nullptr;
-	ID3D11VertexShader* g_pDepthOnlyCubeSkinnedVS = nullptr;
-	ID3D11VertexShader* g_pDepthOnlyCascadeVS = nullptr;
-	ID3D11VertexShader* g_pDepthOnlyCascadeSkinnedVS = nullptr;
-	ID3D11GeometryShader* g_pDepthOnlyCubeGS = nullptr;
-	ID3D11GeometryShader* g_pDepthOnlyCascadeGS = nullptr;
-	ID3D11PixelShader* g_pDepthOnlyCubePS = nullptr;
-	ID3D11PixelShader* g_pDepthOnlyCascadePS = nullptr;
+ID3D11GeometryShader* g_pNormalGS = nullptr;
+ID3D11GeometryShader* g_pBillboardGS = nullptr;
 
-	// Input Layouts
-	ID3D11InputLayout* g_pBasicIL = nullptr;
-	ID3D11InputLayout* g_pSkinnedIL = nullptr;
-	ID3D11InputLayout* g_pSamplingIL = nullptr;
-	ID3D11InputLayout* g_pSkyboxIL = nullptr;
-	ID3D11InputLayout* g_pPostProcessingIL = nullptr;
-	ID3D11InputLayout* g_pGrassIL = nullptr;     // PER_INSTANCE 사용
-	ID3D11InputLayout* g_pBillboardIL = nullptr; // PER_INSTANCE 사용
+ID3D11VertexShader* g_pDepthOnlyCubeVS = nullptr;
+ID3D11VertexShader* g_pDepthOnlyCubeSkinnedVS = nullptr;
+ID3D11VertexShader* g_pDepthOnlyCascadeVS = nullptr;
+ID3D11VertexShader* g_pDepthOnlyCascadeSkinnedVS = nullptr;
+ID3D11GeometryShader* g_pDepthOnlyCubeGS = nullptr;
+ID3D11GeometryShader* g_pDepthOnlyCascadeGS = nullptr;
+ID3D11PixelShader* g_pDepthOnlyCubePS = nullptr;
+ID3D11PixelShader* g_pDepthOnlyCascadePS = nullptr;
 
-	// Graphics Pipeline States
-	Graphics::GraphicsPSO g_DefaultSolidPSO;
-	Graphics::GraphicsPSO g_SkinnedSolidPSO;
-	Graphics::GraphicsPSO g_DefaultWirePSO;
-	Graphics::GraphicsPSO g_SkinnedWirePSO;
-	Graphics::GraphicsPSO g_StencilMaskPSO;
-	Graphics::GraphicsPSO g_ReflectSolidPSO;
-	Graphics::GraphicsPSO g_ReflectSkinnedSolidPSO;
-	Graphics::GraphicsPSO g_ReflectWirePSO;
-	Graphics::GraphicsPSO g_ReflectSkinnedWirePSO;
-	Graphics::GraphicsPSO g_MirrorBlendSolidPSO;
-	Graphics::GraphicsPSO g_MirrorBlendWirePSO;
-	Graphics::GraphicsPSO g_SkyboxSolidPSO;
-	Graphics::GraphicsPSO g_SkyboxWirePSO;
-	Graphics::GraphicsPSO g_ReflectSkyboxSolidPSO;
-	Graphics::GraphicsPSO g_ReflectSkyboxWirePSO;
-	Graphics::GraphicsPSO g_NormalsPSO;
-	Graphics::GraphicsPSO g_DepthOnlyPSO;
-	Graphics::GraphicsPSO g_DepthOnlySkinnedPSO;
-	Graphics::GraphicsPSO g_DepthOnlyCubePSO;
-	Graphics::GraphicsPSO g_DepthOnlyCubeSkinnedPSO;
-	Graphics::GraphicsPSO g_DepthOnlyCascadePSO;
-	Graphics::GraphicsPSO g_DepthOnlyCascadeSkinnedPSO;
-	Graphics::GraphicsPSO g_PostEffectsPSO;
-	Graphics::GraphicsPSO g_PostProcessingPSO;
-	Graphics::GraphicsPSO g_BoundingBoxPSO;
-	Graphics::GraphicsPSO g_GrassSolidPSO;
-	Graphics::GraphicsPSO g_GrassWirePSO;
-	Graphics::GraphicsPSO g_OceanPSO;
-	Graphics::GraphicsPSO g_GBufferPSO;
-	Graphics::GraphicsPSO g_GBufferWirePSO;
-	Graphics::GraphicsPSO g_GBufferSkinnedPSO;
-	Graphics::GraphicsPSO g_GBufferSKinnedWirePSO;
-	Graphics::GraphicsPSO g_DeferredRenderingPSO;
+// Input Layouts
+ID3D11InputLayout* g_pBasicIL = nullptr;
+ID3D11InputLayout* g_pSkinnedIL = nullptr;
+ID3D11InputLayout* g_pSamplingIL = nullptr;
+ID3D11InputLayout* g_pSkyboxIL = nullptr;
+ID3D11InputLayout* g_pPostProcessingIL = nullptr;
+ID3D11InputLayout* g_pGrassIL = nullptr;     // PER_INSTANCE 사용
+ID3D11InputLayout* g_pBillboardIL = nullptr; // PER_INSTANCE 사용
 
-	// 주의: 초기화가 느려서 필요한 경우에만 초기화
-	Graphics::GraphicsPSO g_VolumeSmokePSO;
+// Graphics Pipeline States
+GraphicsPSO g_DefaultSolidPSO;
+GraphicsPSO g_SkinnedSolidPSO;
+GraphicsPSO g_DefaultWirePSO;
+GraphicsPSO g_SkinnedWirePSO;
+GraphicsPSO g_StencilMaskPSO;
+GraphicsPSO g_ReflectSolidPSO;
+GraphicsPSO g_ReflectSkinnedSolidPSO;
+GraphicsPSO g_ReflectWirePSO;
+GraphicsPSO g_ReflectSkinnedWirePSO;
+GraphicsPSO g_MirrorBlendSolidPSO;
+GraphicsPSO g_MirrorBlendWirePSO;
+GraphicsPSO g_SkyboxSolidPSO;
+GraphicsPSO g_SkyboxWirePSO;
+GraphicsPSO g_ReflectSkyboxSolidPSO;
+GraphicsPSO g_ReflectSkyboxWirePSO;
+GraphicsPSO g_NormalsPSO;
+GraphicsPSO g_DepthOnlyPSO;
+GraphicsPSO g_DepthOnlySkinnedPSO;
+GraphicsPSO g_DepthOnlyCubePSO;
+GraphicsPSO g_DepthOnlyCubeSkinnedPSO;
+GraphicsPSO g_DepthOnlyCascadePSO;
+GraphicsPSO g_DepthOnlyCascadeSkinnedPSO;
+GraphicsPSO g_PostEffectsPSO;
+GraphicsPSO g_PostProcessingPSO;
+GraphicsPSO g_BoundingBoxPSO;
+GraphicsPSO g_GrassSolidPSO;
+GraphicsPSO g_GrassWirePSO;
+GraphicsPSO g_OceanPSO;
+GraphicsPSO g_GBufferPSO;
+GraphicsPSO g_GBufferWirePSO;
+GraphicsPSO g_GBufferSkinnedPSO;
+GraphicsPSO g_GBufferSKinnedWirePSO;
+GraphicsPSO g_DeferredRenderingPSO;
 
-	// Compute Pipeline States
-}
+// 주의: 초기화가 느려서 필요한 경우에만 초기화
+GraphicsPSO g_VolumeSmokePSO;
 
-void Graphics::InitCommonStates(ID3D11Device* pDevice)
+// Compute Pipeline States
+
+void InitCommonStates(ID3D11Device* pDevice)
 {
 	InitShaders(pDevice);
 	InitSamplers(pDevice);
@@ -137,7 +135,7 @@ void Graphics::InitCommonStates(ID3D11Device* pDevice)
 	InitPipelineStates(pDevice);
 }
 
-void Graphics::InitSamplers(ID3D11Device* pDevice)
+void InitSamplers(ID3D11Device* pDevice)
 {
 	HRESULT hr = S_OK;
 
@@ -227,7 +225,7 @@ void Graphics::InitSamplers(ID3D11Device* pDevice)
 	g_ppSamplerStates.push_back(g_pPointClampSS);    // s7
 }
 
-void Graphics::InitRasterizerStates(ID3D11Device* pDevice)
+void InitRasterizerStates(ID3D11Device* pDevice)
 {
 	HRESULT hr = S_OK;
 
@@ -294,7 +292,7 @@ void Graphics::InitRasterizerStates(ID3D11Device* pDevice)
 	SET_DEBUG_INFO_TO_OBJECT(g_pPostProcessingRS, "g_pPostProcessingRS");
 }
 
-void Graphics::InitBlendStates(ID3D11Device* pDevice)
+void InitBlendStates(ID3D11Device* pDevice)
 {
 	// "이미 그려져있는 화면"과 어떻게 섞을지를 결정.
 	// Dest: 이미 그려져 있는 값들을 의미.
@@ -353,7 +351,7 @@ void Graphics::InitBlendStates(ID3D11Device* pDevice)
 	SET_DEBUG_INFO_TO_OBJECT(g_pAlphaBS, "g_pAlphaBS");
 }
 
-void Graphics::InitDepthStencilStates(ID3D11Device* pDevice)
+void InitDepthStencilStates(ID3D11Device* pDevice)
 {
 	// D3D11_DEPTH_STENCIL_DESC 옵션 정리.
 	// https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ns-d3d11-d3d11_depth_stencil_desc
@@ -423,12 +421,12 @@ void Graphics::InitDepthStencilStates(ID3D11Device* pDevice)
 	SET_DEBUG_INFO_TO_OBJECT(g_pDrawMaskedDSS, "g_pDrawMaskedDSS");
 }
 
-void Graphics::InitShaders(ID3D11Device* pDevice)
+void InitShaders(ID3D11Device* pDevice)
 {
 	HRESULT hr = S_OK;
 
 	// Shaders, InputLayouts
-	const D3D11_INPUT_ELEMENT_DESC pBASIC_IEs[]  =
+	const D3D11_INPUT_ELEMENT_DESC pBASIC_IEs[] =
 	{
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
@@ -452,7 +450,7 @@ void Graphics::InitShaders(ID3D11Device* pDevice)
 		{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 4 * 3, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 4 * 3 + 4 * 3, D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
-	const D3D11_INPUT_ELEMENT_DESC pSKYBOX_IEs[]  =
+	const D3D11_INPUT_ELEMENT_DESC pSKYBOX_IEs[] =
 	{
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
@@ -487,109 +485,109 @@ void Graphics::InitShaders(ID3D11Device* pDevice)
 	UINT numGrassIEs = _countof(pGRASS_IEs);
 	UINT numBillboardIEs = _countof(pBILLBOARD_IEs);
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/BasicVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
-													&g_pBasicVS, &g_pBasicIL);
+	hr = CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/BasicVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
+										  &g_pBasicVS, &g_pBasicIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/BasicVS.hlsl", pSKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO,
-													&g_pSkinnedVS, &g_pSkinnedIL);
+	hr = CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/BasicVS.hlsl", pSKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO,
+										  &g_pSkinnedVS, &g_pSkinnedIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/NormalVS.hlsl", pBASIC_IEs,numBasicIEs, nullptr,
-													&g_pNormalVS, &g_pBasicIL);
+	hr = CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/NormalVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
+										  &g_pNormalVS, &g_pBasicIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/SamplingVS.hlsl", pSAMPLING_IEs, numSamplingIEs, nullptr,
-													&g_pSamplingVS, &g_pSamplingIL);
+	hr = CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/SamplingVS.hlsl", pSAMPLING_IEs, numSamplingIEs, nullptr,
+										  &g_pSamplingVS, &g_pSamplingIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/SkyboxVS.hlsl", pSKYBOX_IEs, numSkyboxIEs, nullptr,
-													&g_pSkyboxVS, &g_pSkyboxIL);
+	hr = CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/SkyboxVS.hlsl", pSKYBOX_IEs, numSkyboxIEs, nullptr,
+										  &g_pSkyboxVS, &g_pSkyboxIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthOnlyVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
-													&g_pDepthOnlyVS, &g_pSkyboxIL);
+	hr = CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthOnlyVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
+										  &g_pDepthOnlyVS, &g_pSkyboxIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthOnlyVS.hlsl", pSKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO,
-													&g_pDepthOnlySkinnedVS, &g_pSkinnedIL);
+	hr = CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthOnlyVS.hlsl", pSKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO,
+										  &g_pDepthOnlySkinnedVS, &g_pSkinnedIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/GrassVS.hlsl", pGRASS_IEs, numGrassIEs, nullptr,
-													&g_pGrassVS, &g_pGrassIL);
+	hr = CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/GrassVS.hlsl", pGRASS_IEs, numGrassIEs, nullptr,
+										  &g_pGrassVS, &g_pGrassIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/BillboardVS.hlsl", pBILLBOARD_IEs, numBillboardIEs, nullptr,
-													&g_pBillboardVS, &g_pBillboardIL);
+	hr = CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/BillboardVS.hlsl", pBILLBOARD_IEs, numBillboardIEs, nullptr,
+										  &g_pBillboardVS, &g_pBillboardIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/GBufferVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
-													&g_pGBufferVS, &g_pBasicIL);
+	hr = CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/GBufferVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
+										  &g_pGBufferVS, &g_pBasicIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/GBufferVS.hlsl", pSKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO,
-													&g_pGBufferSkinnedVS, &g_pSkinnedIL);
+	hr = CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/GBufferVS.hlsl", pSKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO,
+										  &g_pGBufferSkinnedVS, &g_pSkinnedIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/BasicPS.hlsl", &g_pBasicPS);
+	hr = CreatePixelShader(pDevice, L"./Shaders/BasicPS.hlsl", &g_pBasicPS);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/NormalPS.hlsl", &g_pNormalPS);
+	hr = CreatePixelShader(pDevice, L"./Shaders/NormalPS.hlsl", &g_pNormalPS);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/SkyboxPS.hlsl", &g_pSkyboxPS);
+	hr = CreatePixelShader(pDevice, L"./Shaders/SkyboxPS.hlsl", &g_pSkyboxPS);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/CombinePS.hlsl", &g_pCombinePS);
+	hr = CreatePixelShader(pDevice, L"./Shaders/CombinePS.hlsl", &g_pCombinePS);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/BloomDownPS.hlsl", &g_pBloomDownPS);
+	hr = CreatePixelShader(pDevice, L"./Shaders/BloomDownPS.hlsl", &g_pBloomDownPS);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/BloomUpPS.hlsl", &g_pBloomUpPS);
+	hr = CreatePixelShader(pDevice, L"./Shaders/BloomUpPS.hlsl", &g_pBloomUpPS);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/DepthOnlyPS.hlsl", &g_pDepthOnlyPS);
+	hr = CreatePixelShader(pDevice, L"./Shaders/DepthOnlyPS.hlsl", &g_pDepthOnlyPS);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/PostEffectPS.hlsl", &g_pPostEffectsPS);
+	hr = CreatePixelShader(pDevice, L"./Shaders/PostEffectPS.hlsl", &g_pPostEffectsPS);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/ColorPS.hlsl", &g_pColorPS);
+	hr = CreatePixelShader(pDevice, L"./Shaders/ColorPS.hlsl", &g_pColorPS);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/GrassPS.hlsl", &g_pGrassPS);
+	hr = CreatePixelShader(pDevice, L"./Shaders/GrassPS.hlsl", &g_pGrassPS);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/OceanPS.hlsl", &g_pOceanPS);
+	hr = CreatePixelShader(pDevice, L"./Shaders/OceanPS.hlsl", &g_pOceanPS);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/ExplosionPS.hlsl", &g_pExplosionPS);
+	hr = CreatePixelShader(pDevice, L"./Shaders/ExplosionPS.hlsl", &g_pExplosionPS);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/VolumetricFirePS.hlsl", &g_pVolumetricFirePS);
+	hr = CreatePixelShader(pDevice, L"./Shaders/VolumetricFirePS.hlsl", &g_pVolumetricFirePS);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/GBufferPS.hlsl", &g_pGBufferPS);
+	hr = CreatePixelShader(pDevice, L"./Shaders/GBufferPS.hlsl", &g_pGBufferPS);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/DeferredLightingPS.hlsl", &g_pDeferredLightingPS);
-	BREAK_IF_FAILED(hr);
-
-	hr = Graphics::CreateGeometryShader(pDevice, L"./Shaders/NormalGS.hlsl", &g_pNormalGS);
-	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreateGeometryShader(pDevice, L"./Shaders/BillboardGS.hlsl", &g_pBillboardGS);
+	hr = CreatePixelShader(pDevice, L"./Shaders/DeferredLightingPS.hlsl", &g_pDeferredLightingPS);
 	BREAK_IF_FAILED(hr);
 
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthOnlyCubeVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
-													&g_pDepthOnlyCubeVS, &g_pSkyboxIL);
+	hr = CreateGeometryShader(pDevice, L"./Shaders/NormalGS.hlsl", &g_pNormalGS);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthOnlyCubeVS.hlsl", pSKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO,
-													&g_pDepthOnlyCubeSkinnedVS, &g_pSkinnedIL);
+	hr = CreateGeometryShader(pDevice, L"./Shaders/BillboardGS.hlsl", &g_pBillboardGS);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthOnlyCascadeVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
-													&g_pDepthOnlyCascadeVS, &g_pSkyboxIL);
+
+	hr = CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthOnlyCubeVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
+										  &g_pDepthOnlyCubeVS, &g_pSkyboxIL);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthONlyCascadeVS.hlsl", pSKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO,
-													&g_pDepthOnlyCascadeSkinnedVS, &g_pSkinnedIL);
+	hr = CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthOnlyCubeVS.hlsl", pSKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO,
+										  &g_pDepthOnlyCubeSkinnedVS, &g_pSkinnedIL);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreateGeometryShader(pDevice, L"./Shaders/DepthOnlyCubeGS.hlsl", &g_pDepthOnlyCubeGS);
+	hr = CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthOnlyCascadeVS.hlsl", pBASIC_IEs, numBasicIEs, nullptr,
+										  &g_pDepthOnlyCascadeVS, &g_pSkyboxIL);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreateGeometryShader(pDevice, L"./Shaders/DepthOnlyCascadeGS.hlsl", &g_pDepthOnlyCascadeGS);
+	hr = CreateVertexShaderAndInputLayout(pDevice, L"./Shaders/DepthONlyCascadeVS.hlsl", pSKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO,
+										  &g_pDepthOnlyCascadeSkinnedVS, &g_pSkinnedIL);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/DepthOnlyCubePS.hlsl", &g_pDepthOnlyCubePS);
+	hr = CreateGeometryShader(pDevice, L"./Shaders/DepthOnlyCubeGS.hlsl", &g_pDepthOnlyCubeGS);
 	BREAK_IF_FAILED(hr);
-	hr = Graphics::CreatePixelShader(pDevice, L"./Shaders/DepthOnlyCascadePS.hlsl", &g_pDepthOnlyCascadePS);
+	hr = CreateGeometryShader(pDevice, L"./Shaders/DepthOnlyCascadeGS.hlsl", &g_pDepthOnlyCascadeGS);
+	BREAK_IF_FAILED(hr);
+	hr = CreatePixelShader(pDevice, L"./Shaders/DepthOnlyCubePS.hlsl", &g_pDepthOnlyCubePS);
+	BREAK_IF_FAILED(hr);
+	hr = CreatePixelShader(pDevice, L"./Shaders/DepthOnlyCascadePS.hlsl", &g_pDepthOnlyCascadePS);
 	BREAK_IF_FAILED(hr);
 }
 
-void Graphics::InitPipelineStates(ID3D11Device* pDevice)
+void InitPipelineStates(ID3D11Device* pDevice)
 {
 	// g_DefaultSolidPSO;
 	g_DefaultSolidPSO.pVertexShader = g_pBasicVS;
@@ -770,10 +768,10 @@ void Graphics::InitPipelineStates(ID3D11Device* pDevice)
 }
 
 // 주의: 초기화가 느려서 필요한 경우에만 초기화하는 쉐이더
-void Graphics::InitVolumeShaders(ID3D11Device* pDevice)
+void InitVolumeShaders(ID3D11Device* pDevice)
 {
 	HRESULT hr = S_OK;
-	hr = Graphics::CreatePixelShader(pDevice, L"VolumeSmokePS.hlsl", &g_pVolumeSmokePS);
+	hr = CreatePixelShader(pDevice, L"VolumeSmokePS.hlsl", &g_pVolumeSmokePS);
 	BREAK_IF_FAILED(hr);
 
 	// g_VolumeSmokePSO
@@ -782,7 +780,7 @@ void Graphics::InitVolumeShaders(ID3D11Device* pDevice)
 	g_VolumeSmokePSO.pPixelShader = g_pVolumeSmokePS;
 }
 
-void Graphics::DestroyCommonStates()
+void DestroyCommonStates()
 {
 	// Sampler States
 	g_ppSamplerStates.clear();

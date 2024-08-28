@@ -1,82 +1,81 @@
 #include "../Common.h"
 #include "Light.h"
 
-namespace Core
+
+Light::Light(UINT width, UINT height) :
+	bRotated(false),
+	bVisible(false),
+	m_ShadowMap(width, height)
 {
-	Light::Light(UINT width, UINT height) :
-		bRotated(false),
-		bVisible(false),
-		m_ShadowMap(width, height)
-	{
-		m_LightViewCamera.bUseFirstPersonView = true;
-		m_LightViewCamera.SetAspectRatio((float)width / (float)height);
-		m_LightViewCamera.SetEyePos(Property.Position);
-		m_LightViewCamera.SetViewDir(Property.Direction);
-		m_LightViewCamera.SetProjectionFovAngleY(120.0f);
-		m_LightViewCamera.SetNearZ(0.1f);
-		m_LightViewCamera.SetFarZ(50.0f);
-	}
+	m_LightViewCamera.bUseFirstPersonView = true;
+	m_LightViewCamera.SetAspectRatio((float)width / (float)height);
+	m_LightViewCamera.SetEyePos(Property.Position);
+	m_LightViewCamera.SetViewDir(Property.Direction);
+	m_LightViewCamera.SetProjectionFovAngleY(120.0f);
+	m_LightViewCamera.SetNearZ(0.1f);
+	m_LightViewCamera.SetFarZ(50.0f);
+}
 
-	void Light::Initialize(ID3D11Device* pDevice)
-	{
-		Destroy();
+void Light::Initialize(ID3D11Device* pDevice)
+{
+	Destroy();
 
-		switch (Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
-		{
+	switch (Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
+	{
 		case LIGHT_DIRECTIONAL:
 		{
 			m_LightViewCamera.SetFarZ(500.0f);
 			m_ShadowMap.SetShadowWidth(2560);
 			m_ShadowMap.SetShadowHeight(2560);
 		}
-			break;
+		break;
 
 		case LIGHT_POINT:
 		{
 			m_LightViewCamera.SetProjectionFovAngleY(90.0f);
 		}
-			break;
+		break;
 
 		case LIGHT_SPOT:
 		default:
 			break;
-		}
-
-		m_ShadowMap.Initialize(pDevice, Property.LightType);
 	}
 
-	void Light::Update(ID3D11DeviceContext* pContext, float deltaTime, Camera& mainCamera)
+	m_ShadowMap.Initialize(pDevice, Property.LightType);
+}
+
+void Light::Update(ID3D11DeviceContext* pContext, float deltaTime, Camera& mainCamera)
+{
+	static Vector3 s_LightDev = Vector3(1.0f, 0.0f, 0.0f);
+	if (bRotated)
 	{
-		static Vector3 s_LightDev = Vector3(1.0f, 0.0f, 0.0f);
-		if (bRotated)
+		s_LightDev = Vector3::Transform(s_LightDev, Matrix::CreateRotationY(deltaTime * DirectX::XM_PI * 0.5f));
+
+		Vector3 focusPosition = Vector3(0.0f, -0.5f, 1.7f);
+		Property.Position = Vector3(0.0f, 1.1f, 2.0f) + s_LightDev;
+		Property.Direction = focusPosition - Property.Position;
+	}
+
+	Property.Direction.Normalize();
+	m_LightViewCamera.SetEyePos(Property.Position);
+	m_LightViewCamera.SetViewDir(Property.Direction);
+
+	if (Property.LightType & LIGHT_SHADOW)
+	{
+		Vector3 up = m_LightViewCamera.GetUpDir();
+		if (fabs(up.Dot(Property.Direction) + 1.0f) < 1e-5)
 		{
-			s_LightDev = Vector3::Transform(s_LightDev, Matrix::CreateRotationY(deltaTime * DirectX::XM_PI * 0.5f));
-		
-			Vector3 focusPosition = Vector3(0.0f, -0.5f, 1.7f);
-			Property.Position = Vector3(0.0f, 1.1f, 2.0f) + s_LightDev;
-			Property.Direction = focusPosition - Property.Position;
+			up = Vector3(1.0f, 0.0f, 0.0f);
+			m_LightViewCamera.SetUpDir(up);
 		}
 
-		Property.Direction.Normalize();
-		m_LightViewCamera.SetEyePos(Property.Position);
-		m_LightViewCamera.SetViewDir(Property.Direction);
+		// 그림자 맵 생성시 필요.
+		Matrix lightView = DirectX::XMMatrixLookAtLH(Property.Position, Property.Position + Property.Direction, up); // 카메라를 이용하면 pitch, yaw를 고려하게됨. 이를 방지하기 위함.
+		Matrix lightProjection = m_LightViewCamera.GetProjection();
+		m_ShadowMap.Update(pContext, Property, m_LightViewCamera, mainCamera);
 
-		if (Property.LightType & LIGHT_SHADOW)
+		switch (Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
 		{
-			Vector3 up = m_LightViewCamera.GetUpDir();
-			if (fabs(up.Dot(Property.Direction) + 1.0f) < 1e-5)
-			{
-				up = Vector3(1.0f, 0.0f, 0.0f);
-				m_LightViewCamera.SetUpDir(up);
-			}
-
-			// 그림자 맵 생성시 필요.
-			Matrix lightView = DirectX::XMMatrixLookAtLH(Property.Position, Property.Position + Property.Direction, up); // 카메라를 이용하면 pitch, yaw를 고려하게됨. 이를 방지하기 위함.
-			Matrix lightProjection = m_LightViewCamera.GetProjection();
-			m_ShadowMap.Update(pContext, Property, m_LightViewCamera, mainCamera);
-
-			switch (Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
-			{
 			case LIGHT_DIRECTIONAL:
 			{
 				ConstantsBuffer<GlobalConstants>* const pShadowConstants = m_ShadowMap.GetAddressOfShadowConstantBuffers();
@@ -88,7 +87,7 @@ namespace Core
 					Property.InverseProjections[i] = pConstant->CPU.InverseProjection;
 				}
 			}
-				break;
+			break;
 
 			case LIGHT_POINT:
 			{
@@ -101,7 +100,7 @@ namespace Core
 				Property.Projections[0] = lightProjection.Transpose();
 				Property.InverseProjections[0] = lightProjection.Invert().Transpose();
 			}
-				break;
+			break;
 
 			case LIGHT_SPOT:
 			{
@@ -111,40 +110,39 @@ namespace Core
 				Property.Projections[0] = lightProjection.Transpose();
 				Property.InverseProjections[0] = lightProjection.Invert().Transpose();
 			}
-				break;
+			break;
 
 			default:
 				break;
-			}
-
-			// LIGHT_FRUSTUM_WIDTH 확인
-			/*DirectX::SimpleMath::Vector4 eye(0.0f, 0.0f, 0.0f, 1.0f);
-			DirectX::SimpleMath::Vector4 xLeft(-1.0f, -1.0f, 0.0f, 1.0f);
-			DirectX::SimpleMath::Vector4 xRight(1.0f, 1.0f, 0.0f, 1.0f);
-			eye = DirectX::SimpleMath::Vector4::Transform(eye, lightProjection);
-			xLeft = DirectX::SimpleMath::Vector4::Transform(xLeft, lightProjection.Invert());
-			xRight = DirectX::SimpleMath::Vector4::Transform(xRight, lightProjection.Invert());
-			xLeft /= xLeft.w;
-			xRight /= xRight.w;
-			std::cout << "LIGHT_FRUSTUM_WIDTH = " << xRight.x - xLeft.x << std::endl;*/
 		}
-	}
 
-	void Light::RenderShadowMap(ID3D11DeviceContext* pContext, std::vector<Geometry::Model*>& pBasicList, Geometry::Model* pMirror)
-	{
-		if (Property.LightType & LIGHT_SHADOW)
-		{
-			m_ShadowMap.Render(pContext, pBasicList, pMirror);
-		}
+		// LIGHT_FRUSTUM_WIDTH 확인
+		/*DirectX::SimpleMath::Vector4 eye(0.0f, 0.0f, 0.0f, 1.0f);
+		DirectX::SimpleMath::Vector4 xLeft(-1.0f, -1.0f, 0.0f, 1.0f);
+		DirectX::SimpleMath::Vector4 xRight(1.0f, 1.0f, 0.0f, 1.0f);
+		eye = DirectX::SimpleMath::Vector4::Transform(eye, lightProjection);
+		xLeft = DirectX::SimpleMath::Vector4::Transform(xLeft, lightProjection.Invert());
+		xRight = DirectX::SimpleMath::Vector4::Transform(xRight, lightProjection.Invert());
+		xLeft /= xLeft.w;
+		xRight /= xRight.w;
+		std::cout << "LIGHT_FRUSTUM_WIDTH = " << xRight.x - xLeft.x << std::endl;*/
 	}
+}
 
-	void Light::Render(ID3D11DeviceContext* pContext, std::vector<Geometry::Model*>& pBasicList, Geometry::Model* pMirror)
+void Light::RenderShadowMap(ID3D11DeviceContext* pContext, std::vector<Model*>& pBasicList, Model* pMirror)
+{
+	if (Property.LightType & LIGHT_SHADOW)
 	{
-		
+		m_ShadowMap.Render(pContext, pBasicList, pMirror);
 	}
+}
 
-	void Light::Destroy()
-	{
-		m_ShadowMap.Destroy();
-	}
+void Light::Render(ID3D11DeviceContext* pContext, std::vector<Model*>& pBasicList, Model* pMirror)
+{
+
+}
+
+void Light::Destroy()
+{
+	m_ShadowMap.Destroy();
 }

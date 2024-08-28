@@ -4,7 +4,7 @@
 #include <string>
 #include "Util.h"
 
-std::wstring Utility::UTF8ToWideString(const std::string& str)
+std::wstring UTF8ToWideString(const std::string& str)
 {
     wchar_t wstr[MAX_PATH];
     if (!MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, str.c_str(), -1, wstr, MAX_PATH))
@@ -14,7 +14,7 @@ std::wstring Utility::UTF8ToWideString(const std::string& str)
     return wstr;
 }
 
-std::string Utility::WideStringToUTF8(const std::wstring& wstr)
+std::string WideStringToUTF8(const std::wstring& wstr)
 {
     char str[MAX_PATH];
     if (!WideCharToMultiByte(CP_ACP, MB_PRECOMPOSED, wstr.c_str(), -1, str, MAX_PATH, nullptr, nullptr))
@@ -24,7 +24,7 @@ std::string Utility::WideStringToUTF8(const std::wstring& wstr)
     return str;
 }
 
-std::string Utility::ToLower(const std::string& str)
+std::string ToLower(const std::string& str)
 {
     std::string lower_case = str;
     std::locale loc;
@@ -35,7 +35,7 @@ std::string Utility::ToLower(const std::string& str)
     return lower_case;
 }
 
-std::wstring Utility::ToLower(const std::wstring& str)
+std::wstring ToLower(const std::wstring& str)
 {
     std::wstring lower_case = str;
     std::locale loc;
@@ -46,7 +46,7 @@ std::wstring Utility::ToLower(const std::wstring& str)
     return lower_case;
 }
 
-std::string Utility::GetBasePath(const std::string& filePath)
+std::string GetBasePath(const std::string& filePath)
 {
     size_t lastSlash;
     if ((lastSlash = filePath.rfind('/')) != std::string::npos)
@@ -63,7 +63,7 @@ std::string Utility::GetBasePath(const std::string& filePath)
     }
 }
 
-std::wstring Utility::GetBasePath(const std::wstring& filePath)
+std::wstring GetBasePath(const std::wstring& filePath)
 {
     size_t lastSlash;
     if ((lastSlash = filePath.rfind(L'/')) != std::wstring::npos)
@@ -80,7 +80,7 @@ std::wstring Utility::GetBasePath(const std::wstring& filePath)
     }
 }
 
-std::string Utility::RemoveBasePath(const std::string& filePath)
+std::string RemoveBasePath(const std::string& filePath)
 {
     size_t lastSlash;
     if ((lastSlash = filePath.rfind('/')) != std::string::npos)
@@ -97,7 +97,7 @@ std::string Utility::RemoveBasePath(const std::string& filePath)
     }
 }
 
-std::wstring Utility::RemoveBasePath(const std::wstring& filePath)
+std::wstring RemoveBasePath(const std::wstring& filePath)
 {
     size_t lastSlash;
     if ((lastSlash = filePath.rfind(L'/')) != std::string::npos)
@@ -114,7 +114,7 @@ std::wstring Utility::RemoveBasePath(const std::wstring& filePath)
     }
 }
 
-std::string Utility::GetFileExtension(const std::string& filePath)
+std::string GetFileExtension(const std::string& filePath)
 {
     std::string fileName = RemoveBasePath(filePath);
     size_t extOffset = fileName.rfind('.');
@@ -126,7 +126,7 @@ std::string Utility::GetFileExtension(const std::string& filePath)
     return fileName.substr(extOffset + 1);
 }
 
-std::wstring Utility::GetFileExtension(const std::wstring& filePath)
+std::wstring GetFileExtension(const std::wstring& filePath)
 {
     std::wstring fileName = RemoveBasePath(filePath);
     size_t extOffset = fileName.rfind(L'.');
@@ -138,12 +138,55 @@ std::wstring Utility::GetFileExtension(const std::wstring& filePath)
     return fileName.substr(extOffset + 1);
 }
 
-std::string Utility::RemoveExtension(const std::string& filePath)
+std::string RemoveExtension(const std::string& filePath)
 {
     return filePath.substr(0, filePath.rfind("."));
 }
 
-std::wstring Utility::RemoveExtension(const std::wstring& filePath)
+std::wstring RemoveExtension(const std::wstring& filePath)
 {
     return filePath.substr(0, filePath.rfind(L"."));
+}
+
+int Min(const int X, const int Y)
+{
+    return (X < Y ? X : Y);
+}
+
+float Min(const float X, const float Y)
+{
+    return (X < Y ? X : Y);
+}
+
+Vector3 Min(const Vector3& V1, const Vector3& V2)
+{
+    DirectX::XMVECTOR v1 = DirectX::XMLoadFloat3(&V1);
+    DirectX::XMVECTOR v2 = DirectX::XMLoadFloat3(&V2);
+    DirectX::XMVECTOR ret = DirectX::XMVectorMin(v1, v2);
+
+    return Vector3(ret);
+}
+
+int Max(const int X, const int Y)
+{
+    return (X > Y ? X : Y);
+}
+
+float Max(const float X, const float Y)
+{
+    return (X > Y ? X : Y);
+}
+
+Vector3 Max(const Vector3& V1, const Vector3& V2)
+{
+    DirectX::XMVECTOR v1 = DirectX::XMLoadFloat3(&V1);
+    DirectX::XMVECTOR v2 = DirectX::XMLoadFloat3(&V2);
+    DirectX::XMVECTOR ret = DirectX::XMVectorMax(v1, v2);
+
+    return Vector3(ret);
+}
+
+float Clamp(const float VAL, const float LOWER, const float UPPER)
+{
+    return Min(Max(VAL, LOWER), UPPER);
 }

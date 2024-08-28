@@ -10,7 +10,7 @@ using namespace std;
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
-DebugApp::DebugApp() : Core::BaseRenderer() { }
+DebugApp::DebugApp() : BaseRenderer() { }
 
 DebugApp::~DebugApp()
 {
@@ -23,9 +23,9 @@ DebugApp::~DebugApp()
 
 void DebugApp::InitScene()
 {
-	Core::BaseRenderer::m_Camera.Reset(Vector3(-0.112852f, 0.307729f, -0.542159f), 0.0589047f, 0.14399f);
+	BaseRenderer::m_Camera.Reset(Vector3(-0.112852f, 0.307729f, -0.542159f), 0.0589047f, 0.14399f);
 
-	Core::BaseRenderer::InitScene();
+	BaseRenderer::InitScene();
 
 	// Main Object.
 	{
@@ -41,8 +41,8 @@ void DebugApp::InitScene()
 
 		std::wstring path = L"./Assets/Characters/armored-female-future-soldier/";
 		std::wstring fileName = L"angel_armor.fbx";
-		std::vector<Geometry::MeshInfo> meshInfos;
-		Geometry::ReadFromFile(meshInfos, path, fileName);
+		std::vector<MeshInfo> meshInfos;
+		ReadFromFile(meshInfos, path, fileName);
 		meshInfos[0].szAlbedoTextureFileName = path + L"/angel_armor_albedo.jpg";
 		meshInfos[0].szEmissiveTextureFileName = path + L"/angel_armor_e.jpg";
 		meshInfos[0].szMetallicTextureFileName = path + L"/angel_armor_metalness.jpg";
@@ -50,7 +50,7 @@ void DebugApp::InitScene()
 		meshInfos[0].szRoughnessTextureFileName = path + L"/angel_armor_roughness.jpg";
 
 		Vector3 center(0.0f, -0.05f, 2.0f);
-		Geometry::Model* newModel = New Geometry::Model(m_pDevice5, m_pContext4, meshInfos);
+		Model* newModel = New Model(m_pDevice5, m_pContext4, meshInfos);
 		newModel->pMeshes[0]->MaterialConstants.CPU.bInvertNormalMapY = TRUE; // GLTF는 true로.
 		newModel->pMeshes[0]->MaterialConstants.CPU.AlbedoFactor = Vector3(1.0f);
 		newModel->pMeshes[0]->MaterialConstants.CPU.RoughnessFactor = 0.3f;
@@ -64,15 +64,15 @@ void DebugApp::InitScene()
 
 	// 추가 물체1.
 	{
-		Geometry::MeshInfo meshInfo = INIT_MESH_INFO;
-		Geometry::MakeSphere(&meshInfo, 0.2f, 200, 200);
+		MeshInfo meshInfo = INIT_MESH_INFO;
+		MakeSphere(&meshInfo, 0.2f, 200, 200);
 
 		Vector3 center(0.5f, 0.5f, 2.0f);
-		Geometry::Model* newModel = New Geometry::Model(m_pDevice5, m_pContext4, { meshInfo });
+		Model* newModel = New Model(m_pDevice5, m_pContext4, { meshInfo });
 		newModel->UpdateWorld(Matrix::CreateTranslation(center));
 		for (size_t i = 0, size = newModel->pMeshes.size(); i < size; ++i)
 		{
-			Geometry::Mesh* pCurMesh = newModel->pMeshes[i];
+			Mesh* pCurMesh = newModel->pMeshes[i];
 			pCurMesh->MaterialConstants.CPU.AlbedoFactor = Vector3(0.1f, 0.1f, 1.0f);
 			pCurMesh->MaterialConstants.CPU.EmissionFactor = Vector3(0.0f);
 			pCurMesh->MaterialConstants.CPU.MetallicFactor = 0.6f;
@@ -87,15 +87,15 @@ void DebugApp::InitScene()
 
 	// 추가 물체2.
 	{
-		Geometry::MeshInfo meshInfo = INIT_MESH_INFO;
-		Geometry::MakeBox(&meshInfo, 0.3f);
+		MeshInfo meshInfo = INIT_MESH_INFO;
+		MakeBox(&meshInfo, 0.3f);
 
 		Vector3 center(0.0f, 0.5f, 2.5f);
-		Geometry::Model* newModel = New Geometry::Model(m_pDevice5, m_pContext4, { meshInfo });
+		Model* newModel = New Model(m_pDevice5, m_pContext4, { meshInfo });
 		newModel->UpdateWorld(Matrix::CreateTranslation(center));
 		for (size_t i = 0, size = newModel->pMeshes.size(); i < size; ++i)
 		{
-			Geometry::Mesh* pCurMesh = newModel->pMeshes[i];
+			Mesh* pCurMesh = newModel->pMeshes[i];
 			pCurMesh->MaterialConstants.CPU.AlbedoFactor = Vector3(1.0f, 0.2f, 0.2f);
 			pCurMesh->MaterialConstants.CPU.EmissionFactor = Vector3(0.0f);
 			pCurMesh->MaterialConstants.CPU.MetallicFactor = 0.9f;
@@ -110,15 +110,15 @@ void DebugApp::InitScene()
 
 	// 추가 물체3.
 	{
-		Geometry::MeshInfo meshInfo = INIT_MESH_INFO;
-		Geometry::MakeSphere(&meshInfo, 0.2f, 200, 200);
+		MeshInfo meshInfo = INIT_MESH_INFO;
+		MakeSphere(&meshInfo, 0.2f, 200, 200);
 
 		Vector3 center(0.5f, 0.2f, -1.0f);
-		Geometry::Model* newModel = New Geometry::Model(m_pDevice5, m_pContext4, { meshInfo });
+		Model* newModel = New Model(m_pDevice5, m_pContext4, { meshInfo });
 		newModel->UpdateWorld(Matrix::CreateTranslation(center));
 		for (size_t i = 0, size = newModel->pMeshes.size(); i < size; ++i)
 		{
-			Geometry::Mesh* pCurMesh = newModel->pMeshes[i];
+			Mesh* pCurMesh = newModel->pMeshes[i];
 			pCurMesh->MaterialConstants.CPU.AlbedoFactor = Vector3(0.1f, 0.1f, 1.0f);
 			pCurMesh->MaterialConstants.CPU.EmissionFactor = Vector3(0.0f);
 			pCurMesh->MaterialConstants.CPU.MetallicFactor = 0.6f;
@@ -136,7 +136,7 @@ void DebugApp::Render()
 {
 	m_pTimer->Start(m_pContext4, true);
 
-	Core::BaseRenderer::Render();
+	BaseRenderer::Render();
 
 	OutputDebugStringA("Rendering time ==> ");
 	m_pTimer->End(m_pContext4);
@@ -145,7 +145,7 @@ void DebugApp::Render()
 void DebugApp::UpdateGUI()
 {
 	BaseRenderer::UpdateGUI();
-	Core::GlobalConstants& globalConstsCPU = m_Scene.GetGlobalConstantsCPU();
+	GlobalConstants& globalConstsCPU = m_Scene.GetGlobalConstantsCPU();
 
 	ImGui::SetNextItemOpen(false, ImGuiCond_Once);
 	if (ImGui::TreeNode("General"))
@@ -208,14 +208,14 @@ void DebugApp::UpdateGUI()
 		const float blendColor[4] = { m_Scene.MirrorAlpha, m_Scene.MirrorAlpha, m_Scene.MirrorAlpha, 1.0f };
 		if (m_Scene.bDrawAsWire)
 		{
-			Graphics::g_MirrorBlendWirePSO.SetBlendFactor(blendColor);
+			g_MirrorBlendWirePSO.SetBlendFactor(blendColor);
 		}
 		else
 		{
-			Graphics::g_MirrorBlendSolidPSO.SetBlendFactor(blendColor);
+			g_MirrorBlendSolidPSO.SetBlendFactor(blendColor);
 		}
 
-		Geometry::Model* pMirror = m_Scene.GetMirror();
+		Model* pMirror = m_Scene.GetMirror();
 		ImGui::SliderFloat("Metallic", &(pMirror->pMeshes[0]->MaterialConstants.CPU.MetallicFactor), 0.0f, 1.0f);
 		ImGui::SliderFloat("Roughness", &(pMirror->pMeshes[0]->MaterialConstants.CPU.RoughnessFactor), 0.0f, 1.0f);
 

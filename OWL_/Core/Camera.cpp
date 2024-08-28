@@ -1,117 +1,114 @@
 ﻿#include "../Common.h"
 #include "Camera.h"
 
-namespace Core
+using namespace DirectX;
+
+void Camera::UpdateViewDir()
 {
-	using namespace DirectX;
+	// 이동할 때 기준이 되는 정면/오른쪽 방향 계산.
+	m_ViewDirection = Vector3::Transform(Vector3(0.0f, 0.0f, 1.0f), Matrix::CreateRotationY(m_Yaw));
+	m_RightDirection = m_UpDirection.Cross(m_ViewDirection);
+}
 
-	void Camera::UpdateViewDir()
+void Camera::UpdateKeyboard(const float DELTA_TIME, bool const bKEY_PRESSED[256])
+{
+	if (bUseFirstPersonView)
 	{
-		// 이동할 때 기준이 되는 정면/오른쪽 방향 계산.
-		m_ViewDirection = Vector3::Transform(Vector3(0.0f, 0.0f, 1.0f), Matrix::CreateRotationY(m_Yaw));
-		m_RightDirection = m_UpDirection.Cross(m_ViewDirection);
-	}
-
-	void Camera::UpdateKeyboard(const float DELTA_TIME, bool const bKEY_PRESSED[256])
-	{
-		if (bUseFirstPersonView)
+		if (bKEY_PRESSED['W'])
 		{
-			if (bKEY_PRESSED['W'])
-			{
-				MoveForward(DELTA_TIME);
-			}
-			if (bKEY_PRESSED['S'])
-			{
-				MoveForward(-DELTA_TIME);
-			}
-			if (bKEY_PRESSED['D'])
-			{
-				MoveRight(DELTA_TIME);
-			}
-			if (bKEY_PRESSED['A'])
-			{
-				MoveRight(-DELTA_TIME);
-			}
-			if (bKEY_PRESSED['E'])
-			{
-				MoveUp(DELTA_TIME);
-			}
-			if (bKEY_PRESSED['Q'])
-			{
-				MoveUp(-DELTA_TIME);
-			}
+			MoveForward(DELTA_TIME);
+		}
+		if (bKEY_PRESSED['S'])
+		{
+			MoveForward(-DELTA_TIME);
+		}
+		if (bKEY_PRESSED['D'])
+		{
+			MoveRight(DELTA_TIME);
+		}
+		if (bKEY_PRESSED['A'])
+		{
+			MoveRight(-DELTA_TIME);
+		}
+		if (bKEY_PRESSED['E'])
+		{
+			MoveUp(DELTA_TIME);
+		}
+		if (bKEY_PRESSED['Q'])
+		{
+			MoveUp(-DELTA_TIME);
 		}
 	}
+}
 
-	void Camera::UpdateMouse(float mouseNDCX, float mouseNDCY)
+void Camera::UpdateMouse(float mouseNDCX, float mouseNDCY)
+{
+	if (bUseFirstPersonView)
 	{
-		if (bUseFirstPersonView)
-		{
-			// 얼마나 회전할지 계산.
-			m_Yaw = mouseNDCX * DirectX::XM_2PI;       // 좌우 360도.
-			m_Pitch = -mouseNDCY * DirectX::XM_PIDIV2; // 위 아래 90도.
-			UpdateViewDir();
-		}
+		// 얼마나 회전할지 계산.
+		m_Yaw = mouseNDCX * DirectX::XM_2PI;       // 좌우 360도.
+		m_Pitch = -mouseNDCY * DirectX::XM_PIDIV2; // 위 아래 90도.
+		UpdateViewDir();
 	}
+}
 
-	void Camera::MoveForward(float deltaTime)
-	{
-		// 이동후의_위치 = 현재_위치 + 이동방향 * 속도 * 시간차이.
-		m_Position += m_ViewDirection * m_Speed * deltaTime;
-	}
+void Camera::MoveForward(float deltaTime)
+{
+	// 이동후의_위치 = 현재_위치 + 이동방향 * 속도 * 시간차이.
+	m_Position += m_ViewDirection * m_Speed * deltaTime;
+}
 
-	void Camera::MoveUp(float deltaTime)
-	{
-		// 이동후의_위치 = 현재_위치 + 이동방향 * 속도 * 시간차이.
-		m_Position += m_UpDirection * m_Speed * deltaTime;
-	}
+void Camera::MoveUp(float deltaTime)
+{
+	// 이동후의_위치 = 현재_위치 + 이동방향 * 속도 * 시간차이.
+	m_Position += m_UpDirection * m_Speed * deltaTime;
+}
 
-	void Camera::MoveRight(float deltaTime) 
-	{ 
-		// 이동후의_위치 = 현재_위치 + 이동방향 * 속도 * 시간차이.
-		m_Position += m_RightDirection * m_Speed * deltaTime;
-	}
+void Camera::MoveRight(float deltaTime)
+{
+	// 이동후의_위치 = 현재_위치 + 이동방향 * 속도 * 시간차이.
+	m_Position += m_RightDirection * m_Speed * deltaTime;
+}
 
-	void Camera::PrintView()
-	{
-		char str[256] = { 0, };
+void Camera::PrintView()
+{
+	char str[256] = { 0, };
 
-		OutputDebugStringA("Current View settings: \n");
+	OutputDebugStringA("Current View settings: \n");
 
-		OutputDebugStringA("Vector3 m_Position = Vector3(");
-		sprintf(str, "%f", m_Position.x);
-		OutputDebugStringA(str);
-		OutputDebugStringA("f, ");
-		sprintf(str, "%f", m_Position.y);
-		OutputDebugStringA(str);
-		OutputDebugStringA("f, ");
-		sprintf(str, "%f", m_Position.z);
-		OutputDebugStringA(str);
-		OutputDebugStringA("f);\n");
+	OutputDebugStringA("Vector3 m_Position = Vector3(");
+	sprintf(str, "%f", m_Position.x);
+	OutputDebugStringA(str);
+	OutputDebugStringA("f, ");
+	sprintf(str, "%f", m_Position.y);
+	OutputDebugStringA(str);
+	OutputDebugStringA("f, ");
+	sprintf(str, "%f", m_Position.z);
+	OutputDebugStringA(str);
+	OutputDebugStringA("f);\n");
 
-		OutputDebugStringA("float m_yaw = ");
-		sprintf(str, "%f", m_Yaw);
-		OutputDebugStringA(str);
-		OutputDebugStringA("f, m_pitch = ");
-		sprintf(str, "%f", m_Pitch);
-		OutputDebugStringA(str);
-		OutputDebugStringA("f;\n");
+	OutputDebugStringA("float m_yaw = ");
+	sprintf(str, "%f", m_Yaw);
+	OutputDebugStringA(str);
+	OutputDebugStringA("f, m_pitch = ");
+	sprintf(str, "%f", m_Pitch);
+	OutputDebugStringA(str);
+	OutputDebugStringA("f;\n");
 
-		OutputDebugStringA("BaseRenderer::m_Camera.Reset(Vector3(");
-		sprintf(str, "%f", m_Position.x);
-		OutputDebugStringA(str);
-		OutputDebugStringA("f, ");
-		sprintf(str, "%f", m_Position.y);
-		OutputDebugStringA(str);
-		OutputDebugStringA("f, ");
-		sprintf(str, "%f", m_Position.z);
-		OutputDebugStringA(str);
-		OutputDebugStringA("f), ");
-		sprintf(str, "%f", m_Yaw);
-		OutputDebugStringA(str);
-		OutputDebugStringA("f, ");
-		sprintf(str, "%f", m_Pitch);
-		OutputDebugStringA(str);
-		OutputDebugStringA("f);\n");
-	}
+	OutputDebugStringA("BaseRenderer::m_Camera.Reset(Vector3(");
+	sprintf(str, "%f", m_Position.x);
+	OutputDebugStringA(str);
+	OutputDebugStringA("f, ");
+	sprintf(str, "%f", m_Position.y);
+	OutputDebugStringA(str);
+	OutputDebugStringA("f, ");
+	sprintf(str, "%f", m_Position.z);
+	OutputDebugStringA(str);
+	OutputDebugStringA("f), ");
+	sprintf(str, "%f", m_Yaw);
+	OutputDebugStringA(str);
+	OutputDebugStringA("f, ");
+	sprintf(str, "%f", m_Pitch);
+	OutputDebugStringA(str);
+	OutputDebugStringA("f);\n");
 }

@@ -2,8 +2,7 @@
 #include "GraphicsUtils.h"
 #include "ImageFilter.h"
 
-namespace Core
-{
+
 	ImageFilter::ImageFilter(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID3D11PixelShader* pPixelShader, int width, int height)
 	{
 		Initialize(pDevice, pContext, pPixelShader, width, height);
@@ -28,14 +27,14 @@ namespace Core
 		ConstantsData.DX = 1.0f / width;
 		ConstantsData.DY = 1.0f / height;
 
-		hr = Graphics::CreateConstBuffer(pDevice, ConstantsData, &m_pConstBuffer);
+		hr = CreateConstBuffer(pDevice, ConstantsData, &m_pConstBuffer);
 		BREAK_IF_FAILED(hr);
 		SET_DEBUG_INFO_TO_OBJECT(m_pConstBuffer, "ImageFilter::m_pConstBuffer");
 	}
 
 	void ImageFilter::UpdateConstantBuffers(ID3D11DeviceContext* pContext)
 	{
-		Graphics::UpdateBuffer(pContext, ConstantsData, m_pConstBuffer);
+		UpdateBuffer(pContext, ConstantsData, m_pConstBuffer);
 	}
 
 	void ImageFilter::Render(ID3D11DeviceContext* pContext) const
@@ -79,4 +78,3 @@ namespace Core
 			m_pRTVs[i] = TARGETS[i];
 		}
 	}
-}

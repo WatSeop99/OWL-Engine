@@ -18,9 +18,9 @@ DebugApp2::~DebugApp2()
 
 void DebugApp2::InitScene()
 {
-	Core::BaseRenderer::m_Camera.Reset(Vector3(3.74966f, 5.03645f, -2.54918f), -0.819048f, 0.741502f);
+	BaseRenderer::m_Camera.Reset(Vector3(3.74966f, 5.03645f, -2.54918f), -0.819048f, 0.741502f);
 
-	Core::BaseRenderer::InitScene();
+	BaseRenderer::InitScene();
 
 	// Main Object.
 	{
@@ -31,19 +31,19 @@ void DebugApp2::InitScene()
 			L"CatwalkWalkForward.fbx", L"CatwalkWalkStop.fbx",
 			L"BreakdanceFreezeVar2.fbx"
 		};
-		Geometry::AnimationData aniData;
+		AnimationData aniData;
 
 		std::wstring filename = L"character.fbx";
-		std::tuple<std::vector<Geometry::MeshInfo>, Geometry::AnimationData> data;
-		Geometry::ReadAnimationFromFile(data, path, filename);
-		std::vector<Geometry::MeshInfo>& meshInfos = std::get<0>(data);
+		std::tuple<std::vector<MeshInfo>, AnimationData> data;
+		ReadAnimationFromFile(data, path, filename);
+		std::vector<MeshInfo>& meshInfos = std::get<0>(data);
 
 		for (size_t i = 0, size = clipNames.size(); i < size; ++i)
 		{
 			std::wstring& name = clipNames[i];
-			std::tuple<std::vector<Geometry::MeshInfo>, Geometry::AnimationData> tempData;
-			Geometry::ReadAnimationFromFile(tempData, path, name);
-			Geometry::AnimationData& anim = std::get<1>(tempData);
+			std::tuple<std::vector<MeshInfo>, AnimationData> tempData;
+			ReadAnimationFromFile(tempData, path, name);
+			AnimationData& anim = std::get<1>(tempData);
 
 			if (aniData.pClips.empty())
 			{
@@ -56,10 +56,10 @@ void DebugApp2::InitScene()
 		}
 
 		Vector3 center(0.0f, 0.0f, 2.0f);
-		m_pCharacter = New Geometry::SkinnedMeshModel(m_pDevice5, m_pContext4, meshInfos, aniData);
+		m_pCharacter = New SkinnedMeshModel(m_pDevice5, m_pContext4, meshInfos, aniData);
 		for (size_t i = 0, size = m_pCharacter->pMeshes.size(); i < size; ++i)
 		{
-			Geometry::Mesh* pCurMesh = m_pCharacter->pMeshes[i];
+			Mesh* pCurMesh = m_pCharacter->pMeshes[i];
 			pCurMesh->MaterialConstants.CPU.AlbedoFactor = Vector3(1.0f);
 			pCurMesh->MaterialConstants.CPU.RoughnessFactor = 0.8f;
 			pCurMesh->MaterialConstants.CPU.MetallicFactor = 0.0f;
@@ -74,7 +74,7 @@ void DebugApp2::InitScene()
 void DebugApp2::UpdateGUI()
 {
 	BaseRenderer::UpdateGUI();
-	Core::GlobalConstants& globalConstsCPU = m_Scene.GetGlobalConstantsCPU();
+	GlobalConstants& globalConstsCPU = m_Scene.GetGlobalConstantsCPU();
 
 	ImGui::SetNextItemOpen(false, ImGuiCond_Once);
 	if (ImGui::TreeNode("General"))
@@ -85,8 +85,8 @@ void DebugApp2::UpdateGUI()
 		ImGui::Checkbox("DrawBSphere", &(m_Scene.bDrawBS));
 		if (ImGui::Checkbox("MSAA ON", &m_bUseMSAA))
 		{
-			Core::BaseRenderer::destroyBuffersForRendering();
-			Core::BaseRenderer::createBuffers();
+			BaseRenderer::destroyBuffersForRendering();
+			BaseRenderer::createBuffers();
 			m_PostProcessor.Initialize(m_pDevice5, m_pContext4,
 									   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, m_FloatBuffer.pTexture, m_ResolvedBuffer.pTexture, m_PrevBuffer.pTexture, m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV() },
 									   m_ScreenWidth, m_ScreenHeight, 4);
@@ -136,14 +136,14 @@ void DebugApp2::UpdateGUI()
 		const float BLEND_COLOR[4] = { m_Scene.MirrorAlpha, m_Scene.MirrorAlpha, m_Scene.MirrorAlpha, 1.0f };
 		if (m_Scene.bDrawAsWire)
 		{
-			Graphics::g_MirrorBlendWirePSO.SetBlendFactor(BLEND_COLOR);
+			g_MirrorBlendWirePSO.SetBlendFactor(BLEND_COLOR);
 		}
 		else
 		{
-			Graphics::g_MirrorBlendSolidPSO.SetBlendFactor(BLEND_COLOR);
+			g_MirrorBlendSolidPSO.SetBlendFactor(BLEND_COLOR);
 		}
 
-		Geometry::Model* pMirror = m_Scene.GetMirror();
+		Model* pMirror = m_Scene.GetMirror();
 		ImGui::SliderFloat("Metallic", &(pMirror->pMeshes[0]->MaterialConstants.CPU.MetallicFactor), 0.0f, 1.0f);
 		ImGui::SliderFloat("Roughness", &(pMirror->pMeshes[0]->MaterialConstants.CPU.RoughnessFactor), 0.0f, 1.0f);
 
@@ -199,7 +199,7 @@ void DebugApp2::UpdateGUI()
 
 void DebugApp2::Update(float deltaTime)
 {
-	Core::BaseRenderer::Update(deltaTime);
+	BaseRenderer::Update(deltaTime);
 
 	static int s_FrameCount = 0;
 
@@ -215,14 +215,14 @@ void DebugApp2::Update(float deltaTime)
 	{
 	case 0:
 	{
-		if (Core::BaseRenderer::m_pbKeyPressed[VK_UP])
+		if (BaseRenderer::m_pbKeyPressed[VK_UP])
 		{
 			s_State = 1;
 			s_FrameCount = 0;
 		}
 		else if (s_FrameCount ==
 				 m_pCharacter->m_AnimData.pClips[s_State].pKeys[0].size() ||
-				 Core::BaseRenderer::m_pbKeyPressed[VK_UP]) // 재생이 다 끝난다면.
+				 BaseRenderer::m_pbKeyPressed[VK_UP]) // 재생이 다 끝난다면.
 		{
 			s_FrameCount = 0; // 상태 변화 없이 반복.
 		}
@@ -241,13 +241,13 @@ void DebugApp2::Update(float deltaTime)
 
 	case 2:
 	{
-		if (Core::BaseRenderer::m_pbKeyPressed[VK_RIGHT])
+		if (BaseRenderer::m_pbKeyPressed[VK_RIGHT])
 		{
 			m_pCharacter->m_AnimData.AccumulatedRootTransform =
 				Matrix::CreateRotationY(DirectX::XM_PI * 60.0f / 180.0f * deltaTime) *
 				m_pCharacter->m_AnimData.AccumulatedRootTransform;
 		}
-		if (Core::BaseRenderer::m_pbKeyPressed[VK_LEFT])
+		if (BaseRenderer::m_pbKeyPressed[VK_LEFT])
 		{
 			m_pCharacter->m_AnimData.AccumulatedRootTransform =
 				Matrix::CreateRotationY(-DirectX::XM_PI * 60.0f / 180.0f * deltaTime) *
@@ -256,7 +256,7 @@ void DebugApp2::Update(float deltaTime)
 		if (s_FrameCount == m_pCharacter->m_AnimData.pClips[s_State].pKeys[0].size())
 		{
 			// 방향키를 누르고 있지 않으면 정지. (누르고 있으면 계속 걷기)
-			if (!Core::BaseRenderer::m_pbKeyPressed[VK_UP])
+			if (!BaseRenderer::m_pbKeyPressed[VK_UP])
 			{
 				s_State = 3;
 			}
@@ -299,7 +299,7 @@ void DebugApp2::Render()
 {
 	m_pTimer->Start(m_pContext4, true);
 
-	Core::BaseRenderer::Render();
+	BaseRenderer::Render();
 
 	OutputDebugStringA("Rendering time ==> ");
 	m_pTimer->End(m_pContext4);

@@ -5,23 +5,21 @@
 #include <vector>
 #include "Vertex.h"
 
-namespace Geometry
+
+struct MeshInfo
 {
-	struct MeshInfo
-	{
-		std::vector<Vertex> Vertices;
-		std::vector<SkinnedVertex> SkinnedVertices;
-		std::vector<uint32_t> Indices;
-		std::wstring szAlbedoTextureFileName;
-		std::wstring szEmissiveTextureFileName;
-		std::wstring szNormalTextureFileName;
-		std::wstring szHeightTextureFileName;
-		std::wstring szAOTextureFileName; // Ambient Occlusion
-		std::wstring szMetallicTextureFileName;
-		std::wstring szRoughnessTextureFileName;
-		std::wstring szOpacityTextureFileName;
-	};
-}
+	std::vector<Vertex> Vertices;
+	std::vector<SkinnedVertex> SkinnedVertices;
+	std::vector<uint32_t> Indices;
+	std::wstring szAlbedoTextureFileName;
+	std::wstring szEmissiveTextureFileName;
+	std::wstring szNormalTextureFileName;
+	std::wstring szHeightTextureFileName;
+	std::wstring szAOTextureFileName; // Ambient Occlusion
+	std::wstring szMetallicTextureFileName;
+	std::wstring szRoughnessTextureFileName;
+	std::wstring szOpacityTextureFileName;
+};
 
 #define INIT_MESH_INFO							 \
 	{											 \
@@ -29,7 +27,7 @@ namespace Geometry
 		L"",  L"", L"", L"", L"", L"", L"", L"", \
 	}
 
-static void ReleaseMeshInfo(Geometry::MeshInfo** ppMeshInfo)
+static void ReleaseMeshInfo(MeshInfo** ppMeshInfo)
 {
 	_ASSERT(*ppMeshInfo);
 

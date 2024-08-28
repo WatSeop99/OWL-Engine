@@ -4,54 +4,51 @@
 #include "../Core/Texture2D.h"
 #include "../Core/Texture3D.h"
 
-namespace Geometry
+struct Material
 {
-	struct Material
-	{
-		// 2D textures.
-		Graphics::Texture2D Albedo;
-		Graphics::Texture2D Emissive;
-		Graphics::Texture2D Normal;
-		Graphics::Texture2D Height;
-		Graphics::Texture2D AmbientOcclusion;
-		Graphics::Texture2D Metallic;
-		Graphics::Texture2D Roughness;
+	// 2D textures.
+	Texture2D Albedo;
+	Texture2D Emissive;
+	Texture2D Normal;
+	Texture2D Height;
+	Texture2D AmbientOcclusion;
+	Texture2D Metallic;
+	Texture2D Roughness;
 
-		// 3D textures.
-		Graphics::Texture3D Density;
-		Graphics::Texture3D Lighting;
-	};
+	// 3D textures.
+	Texture3D Density;
+	Texture3D Lighting;
+};
 
-	struct Mesh
-	{
-		ID3D11Buffer* pVertexBuffer = nullptr;
-		ID3D11Buffer* pIndexBuffer = nullptr;
-		Material* pMaterialBuffer = nullptr;
+struct Mesh
+{
+	ID3D11Buffer* pVertexBuffer = nullptr;
+	ID3D11Buffer* pIndexBuffer = nullptr;
+	Material* pMaterialBuffer = nullptr;
 
-		UINT VertexCount;
-		UINT IndexCount;
-		UINT Stride;
-		UINT Offset;
+	UINT VertexCount;
+	UINT IndexCount;
+	UINT Stride;
+	UINT Offset;
 
-		Core::ConstantsBuffer<Core::MeshConstants> MeshConstants;
-		Core::ConstantsBuffer<Core::MaterialConstants> MaterialConstants;
-	};
-}
+	ConstantsBuffer<MeshConstants> MeshConstants;
+	ConstantsBuffer<MaterialConstants> MaterialConstants;
+};
 
 #define INIT_MESH																					   \
 	{																								   \
 		nullptr, nullptr, nullptr,																	   \
 		0, 0, 0, 0,																					   \
-		Core::ConstantsBuffer<Core::MeshConstants>(), Core::ConstantsBuffer<Core::MaterialConstants>() \
+		ConstantsBuffer<MeshConstants>(), ConstantsBuffer<MaterialConstants>() \
 	}
 
 #define INIT_MATERIAL																																					 \
 	{																																									 \
-		Graphics::Texture2D(), Graphics::Texture2D(), Graphics::Texture2D(), Graphics::Texture2D(), Graphics::Texture2D(), Graphics::Texture2D(), Graphics::Texture2D(), \
-		Graphics::Texture3D(), Graphics::Texture3D()																													 \
+		Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), \
+		Texture3D(), Texture3D()																													 \
 	}
 
-static void ReleaseMesh(Geometry::Mesh** ppMesh)
+static void ReleaseMesh(Mesh** ppMesh)
 {
 	_ASSERT(*ppMesh);
 

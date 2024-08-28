@@ -4,10 +4,10 @@
 #include "Geometry/Model.h"
 #include "Geometry/SkinnedMeshModel.h"
 
-class DebugApp2 : public Core::BaseRenderer
+class DebugApp2 : public BaseRenderer
 {
 public:
-	DebugApp2() : Core::BaseRenderer() { }
+	DebugApp2() : BaseRenderer() { }
 	~DebugApp2();
 
 	void InitScene() override;
@@ -19,6 +19,6 @@ public:
 	void Render() override;
 
 private:
-	Geometry::Model* m_pGround = nullptr;
-	Geometry::SkinnedMeshModel* m_pCharacter = nullptr;
+	Model* m_pGround = nullptr;
+	SkinnedMeshModel* m_pCharacter = nullptr;
 };
