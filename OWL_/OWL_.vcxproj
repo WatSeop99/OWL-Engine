@@ -149,7 +149,7 @@
     <ClInclude Include="Renderer\StagingBuffer.h" />
     <ClInclude Include="Graphics\Camera.h" />
     <ClInclude Include="Common.h" />
-    <ClInclude Include="Graphics\ConstantBuffers.h" />
+    <ClInclude Include="Graphics\ConstantDataType.h" />
     <ClInclude Include="Graphics\GraphicsUtils.h" />
     <ClInclude Include="DebugApp.h" />
     <ClInclude Include="Geometry\GeometryGenerator.h" />

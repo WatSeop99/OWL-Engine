@@ -1,5 +1,5 @@
 #include "../Common.h"
-#include "../Graphics/ConstantBuffers.h"
+#include "../Graphics/ConstantDataType.h"
 #include "../Geometry/GeometryGenerator.h"
 #include "../Graphics/GraphicsCommon.h"
 #include "../Graphics/GraphicsUtils.h"
@@ -89,9 +89,11 @@ void PostProcessor::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCont
 	CombineFilter.Initialize(pDevice, pContext, g_pCombinePS, WIDTH, HEIGHT);
 	CombineFilter.SetShaderResources({ m_pPostEffectsSRV, m_pBloomSRVs[0], m_pPrevSRV }); // resource[1]은 모션 블러를 위한 이전 프레임 결과.
 	CombineFilter.SetRenderTargets({ m_pBackBufferRTV });
-	CombineFilter.ConstantsData.Strength = 0.0f; // bloom strength.
-	CombineFilter.ConstantsData.Option1 = 1.0f;  // exposure.
-	CombineFilter.ConstantsData.Option2 = 2.2f;  // gamma.
+	
+	ImageFilterConstData* pCombineFilterConstData = (ImageFilterConstData*)CombineFilter.GetConstantBufferPtr()->pSystemMem;
+	pCombineFilterConstData->Strength = 0.0f;	// bloom strength.
+	pCombineFilterConstData->Option1 = 1.0f;	// exposure.
+	pCombineFilterConstData->Option2 = 2.2f;	// gamma.
 
 	// 주의: float render target에서는 gamma correction 하지 않음. (gamma = 1.0)
 	UpdateBuffer(pContext, PostEffectsConstsCPU, m_pPostEffectsConstsGPU);
@@ -254,7 +256,8 @@ void PostProcessor::renderPostProcessing(ID3D11DeviceContext* pContext)
 	pContext->PSSetSamplers(0, 1, &g_pLinearClampSS);
 
 	// 블룸이 필요한 경우에만 계산.
-	if (CombineFilter.ConstantsData.Strength > 0.0f)
+	ImageFilterConstData* pCombineFilterConstData = (ImageFilterConstData*)CombineFilter.GetConstantBufferPtr()->pSystemMem;
+	if (pCombineFilterConstData->Strength > 0.0f)
 	{
 		for (UINT64 i = 0, size = m_pBloomDownFilters.size(); i < size; ++i)
 		{

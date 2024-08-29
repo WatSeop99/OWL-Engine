@@ -1,5 +1,6 @@
 #include "../Common.h"
-#include "ConstantBuffers.h"
+#include "ConstantDataType.h"
+#include "../Renderer/ConstantBuffer.h"
 #include "GraphicsUtils.h"
 #include "ImageFilter.h"
 
@@ -17,17 +18,18 @@ void ImageFilter::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContex
 	m_Viewport.MinDepth = 0.0f;
 	m_Viewport.MaxDepth = 1.0f;
 
-	ConstantsData.DX = 1.0f / width;
-	ConstantsData.DY = 1.0f / height;
+	ImageFilterConstData initialData;
+	m_ConstantBuffer.Initialize(pDevice, pContext, sizeof(ImageFilterConstData), &initialData);
 
-	hr = CreateConstBuffer(pDevice, ConstantsData, &m_pConstBuffer);
-	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(m_pConstBuffer, "ImageFilter::m_pConstBuffer");
+	ImageFilterConstData* pConstData = (ImageFilterConstData*)m_ConstantBuffer.pSystemMem;
+	pConstData->DX = 1.0f / (float)width;
+	pConstData->DY = 1.0f / (float)height;
 }
 
 void ImageFilter::UpdateConstantBuffers(ID3D11DeviceContext* pContext)
 {
-	UpdateBuffer(pContext, ConstantsData, m_pConstBuffer);
+	_ASSERT(pContext);
+	m_ConstantBuffer.Upload();
 }
 
 void ImageFilter::Render(ID3D11DeviceContext* pContext) const
@@ -41,7 +43,7 @@ void ImageFilter::Render(ID3D11DeviceContext* pContext) const
 
 	pContext->PSSetShader(m_pPixelShader, 0, 0);
 	pContext->PSSetShaderResources(0, (UINT)m_pSRVs.size(), m_pSRVs.data());
-	pContext->PSSetConstantBuffers(0, 1, &m_pConstBuffer);
+	pContext->PSSetConstantBuffers(0, 1, &m_ConstantBuffer.pBuffer);
 }
 
 void ImageFilter::Cleanup()
@@ -50,7 +52,6 @@ void ImageFilter::Cleanup()
 	m_pRTVs.clear();
 
 	m_pPixelShader = nullptr;
-	SAFE_RELEASE(m_pConstBuffer);
 }
 
 void ImageFilter::SetShaderResources(const std::vector<ID3D11ShaderResourceView*>& RESOURCES)

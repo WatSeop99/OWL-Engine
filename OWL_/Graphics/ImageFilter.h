@@ -1,5 +1,7 @@
 #pragma once
 
+class ConstantBuffer;
+
 class ImageFilter
 {
 public:
@@ -14,16 +16,15 @@ public:
 
 	void Cleanup();
 
+	inline ConstantBuffer* GetConstantBufferPtr() { return &m_ConstantBuffer; }
+
 	void SetShaderResources(const std::vector<ID3D11ShaderResourceView*>& RESOURCES);
 	void SetRenderTargets(const std::vector<ID3D11RenderTargetView*>& TARGETS);
 
-public:
-	ImageFilterConstData ConstantsData = { 0, };
-
 protected:
 	ID3D11PixelShader* m_pPixelShader = nullptr;
-	ID3D11Buffer* m_pConstBuffer = nullptr;
 	D3D11_VIEWPORT m_Viewport = { 0, };
+	ConstantBuffer m_ConstantBuffer;
 
 	// Do not delete pointers.
 	std::vector<ID3D11ShaderResourceView*> m_pSRVs;

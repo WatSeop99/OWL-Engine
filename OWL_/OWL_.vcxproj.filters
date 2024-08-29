@@ -30,7 +30,7 @@
     <ClInclude Include="Graphics\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\ConstantBuffers.h">
+    <ClInclude Include="Graphics\ConstantDataType.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\GraphicsUtils.h">

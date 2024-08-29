@@ -1,6 +1,6 @@
 #include "../Common.h"
 #include "Camera.h"
-#include "ConstantBuffers.h"
+#include "ConstantDataType.h"
 #include "GraphicsCommon.h"
 #include "../Geometry/Model.h"
 #include "ShadowMap.h"

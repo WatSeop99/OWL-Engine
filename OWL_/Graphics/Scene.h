@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Camera.h"
-#include "ConstantBuffers.h"
+#include "ConstantDataType.h"
 #include "../Renderer/GBuffer.h"
 #include "Light.h"
 #include "../Geometry/Model.h"
