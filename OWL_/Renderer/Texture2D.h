@@ -1,13 +1,12 @@
 #pragma once
 
-
 // https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Texture.h
 
 class Texture2D
 {
 public:
 	Texture2D(UINT width = 1, UINT height = 1) : Width(width), Height(height) {}
-	~Texture2D() { Destroy(); }
+	~Texture2D() { Cleanup(); }
 
 	void Initialize(ID3D11Device* pDevice, UINT width, UINT height, DXGI_FORMAT pixelFormat = DXGI_FORMAT_UNKNOWN, bool bIsDepthStencil = false);
 	void Initialize(ID3D11Device* pDevice, D3D11_TEXTURE2D_DESC& desc);
@@ -16,7 +15,7 @@ public:
 
 	void Download(ID3D11DeviceContext* pContext, std::vector<uint8_t>& buffer);
 
-	void Destroy();
+	void Cleanup();
 
 public:
 	UINT Width;

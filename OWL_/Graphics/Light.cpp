@@ -1,7 +1,6 @@
 #include "../Common.h"
 #include "Light.h"
 
-
 Light::Light(UINT width, UINT height) : m_ShadowMap(width, height)
 {
 	m_LightViewCamera.bUseFirstPersonView = true;
@@ -13,9 +12,10 @@ Light::Light(UINT width, UINT height) : m_ShadowMap(width, height)
 	m_LightViewCamera.SetFarZ(50.0f);
 }
 
-void Light::Initialize(ID3D11Device* pDevice)
+void Light::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 {
 	_ASSERT(pDevice);
+	_ASSERT(pContext);
 
 	switch (Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
 	{
@@ -38,7 +38,7 @@ void Light::Initialize(ID3D11Device* pDevice)
 			break;
 	}
 
-	m_ShadowMap.Initialize(pDevice, Property.LightType);
+	m_ShadowMap.Initialize(pDevice, pContext, Property.LightType);
 }
 
 void Light::Update(ID3D11DeviceContext* pContext, float deltaTime, Camera& mainCamera)
@@ -77,24 +77,24 @@ void Light::Update(ID3D11DeviceContext* pContext, float deltaTime, Camera& mainC
 		{
 			case LIGHT_DIRECTIONAL:
 			{
-				ConstantsBuffer<GlobalConstants>* const pShadowConstants = m_ShadowMap.GetAddressOfShadowConstantBuffers();
+				ConstantBuffer* const pShadowConstants = m_ShadowMap.GetShadowConstantBuffersPtr();
 				for (int i = 0; i < 4; ++i)
 				{
-					ConstantsBuffer<GlobalConstants>* const pConstant = &pShadowConstants[i];
-					Property.ViewProjections[i] = pConstant->CPU.ViewProjection;
-					Property.Projections[i] = pConstant->CPU.Projection;
-					Property.InverseProjections[i] = pConstant->CPU.InverseProjection;
+					GlobalConstants* const pConstantData = (GlobalConstants*)pShadowConstants[i].pSystemMem;
+					Property.ViewProjections[i] = pConstantData->ViewProjection;
+					Property.Projections[i] = pConstantData->Projection;
+					Property.InverseProjections[i] = pConstantData->InverseProjection;
 				}
 			}
 			break;
 
 			case LIGHT_POINT:
 			{
-				ConstantsBuffer<GlobalConstants>* const pShadowCubeConstants = m_ShadowMap.GetAddressOfShadowConstantBuffers();
+				ConstantBuffer* const pShadowCubeConstants = m_ShadowMap.GetShadowConstantBuffersPtr();
 				for (int i = 0; i < 6; ++i)
 				{
-					ConstantsBuffer<GlobalConstants>* const pConstant = &pShadowCubeConstants[i];
-					Property.ViewProjections[i] = (pConstant->CPU.View.Transpose() * lightProjection).Transpose();
+					GlobalConstants* const pConstantData = (GlobalConstants*)pShadowCubeConstants[i].pSystemMem;
+					Property.ViewProjections[i] = (pConstantData->View.Transpose() * lightProjection).Transpose();
 				}
 				Property.Projections[0] = lightProjection.Transpose();
 				Property.InverseProjections[0] = lightProjection.Invert().Transpose();

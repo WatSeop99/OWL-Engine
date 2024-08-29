@@ -1,8 +1,8 @@
 #include "../Common.h"
-#include "ConstantBuffers.h"
+#include "../Graphics/ConstantBuffers.h"
 #include "../Geometry/GeometryGenerator.h"
-#include "GraphicsCommon.h"
-#include "GraphicsUtils.h"
+#include "../Graphics/GraphicsCommon.h"
+#include "../Graphics/GraphicsUtils.h"
 #include "../Geometry/MeshInfo.h"
 #include "../Geometry/Model.h"
 #include "PostProcessor.h"
@@ -23,7 +23,7 @@ void PostProcessor::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCont
 	MakeSquare(&meshInfo);
 
 	pMesh = New Mesh;
-	pMesh->Initialize(pDevice);
+	pMesh->Initialize(pDevice, pContext);
 
 	hr = CreateVertexBuffer(pDevice, meshInfo.Vertices, &pMesh->pVertexBuffer);
 	BREAK_IF_FAILED(hr);

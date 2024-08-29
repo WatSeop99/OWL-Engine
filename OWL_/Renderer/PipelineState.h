@@ -10,9 +10,9 @@ class GraphicsPSO
 {
 public:
 	GraphicsPSO() = default;
-	~GraphicsPSO() { Destroy(); }
+	~GraphicsPSO() { Cleanup(); }
 
-	void Destroy()
+	void Cleanup()
 	{
 		pRasterizerState = nullptr;
 		pDepthStencilState = nullptr;

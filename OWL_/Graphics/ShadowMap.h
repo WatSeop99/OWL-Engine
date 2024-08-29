@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../Renderer/ConstantBuffer.h"
 #include "../Renderer/Texture2D.h"
 
 class ShadowMap
@@ -8,7 +9,7 @@ public:
 	ShadowMap(UINT width = 1280, UINT height = 1280) : m_ShadowWidth(width), m_ShadowHeight(height), m_LightType(LIGHT_OFF) {}
 	~ShadowMap() { Cleanup(); }
 
-	void Initialize(ID3D11Device* pDevice, UINT lightType);
+	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, UINT lightType);
 
 	void Update(ID3D11DeviceContext* pContext, const LightProperty& PROPERTY, Camera& lightCam, Camera& mainCamera);
 
@@ -23,7 +24,8 @@ public:
 	inline Texture2D* GetPointLightShadowBufferPtr() { return &m_PointLightShadowBuffer; }
 	inline Texture2D* GetDirectionalLightShadowBufferPtr() { return &m_DirectionalLightShadowBuffer; }
 
-	inline ConstantsBuffer<GlobalConstants>* GetAddressOfShadowConstantBuffers() { return m_pShadowConstantsBuffers; }
+	//inline ConstantsBuffer<GlobalConstants>* GetShadowConstantBuffersPtr() { return m_pShadowConstantsBuffers; }
+	inline ConstantBuffer* GetShadowConstantBuffersPtr() { return m_pShadowConstantsBuffers; }
 
 	inline void SetShadowWidth(const UINT WIDTH) { m_ShadowWidth = WIDTH; }
 	inline void SetShadowHeight(const UINT HEIGHT) { m_ShadowHeight = HEIGHT; }
@@ -42,6 +44,8 @@ private:
 	Texture2D m_SpotLightShadowBuffer;
 	Texture2D m_PointLightShadowBuffer;
 	Texture2D m_DirectionalLightShadowBuffer;
-	ConstantsBuffer<GlobalConstants> m_pShadowConstantsBuffers[6]; // spot, point, direc => 0, 6, 4개씩 사용.
-	ConstantsBuffer<ShadowConstants> m_ShadowConstantsBufferForGS; // 2개 이상의 view 행렬을 사용하는 광원을 위한  geometry용 상수버퍼.
+	//ConstantsBuffer<GlobalConstants> m_pShadowConstantsBuffers[6]; // spot, point, direc => 0, 6, 4개씩 사용.
+	//ConstantsBuffer<ShadowConstants> m_ShadowConstantsBufferForGS; // 2개 이상의 view 행렬을 사용하는 광원을 위한  geometry용 상수버퍼.
+	ConstantBuffer m_pShadowConstantsBuffers[6]; // spot, point, direc => 0, 6, 4개씩 사용.
+	ConstantBuffer m_ShadowConstantsBufferForGS; // 2개 이상의 view 행렬을 사용하는 광원을 위한  geometry용 상수버퍼.
 };

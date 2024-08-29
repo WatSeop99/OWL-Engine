@@ -132,6 +132,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Renderer\ConstantBuffer.h" />
     <ClInclude Include="Renderer\GBuffer.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -159,10 +160,11 @@
     <ClInclude Include="Geometry\MeshInfo.h" />
     <ClInclude Include="Geometry\Model.h" />
     <ClInclude Include="Geometry\ModelLoader.h" />
-    <ClInclude Include="Graphics\PostProcessor.h" />
+    <ClInclude Include="Renderer\PostProcessor.h" />
     <ClInclude Include="Geometry\SkinnedMeshModel.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Renderer\StructuredBuffer.h" />
+    <ClInclude Include="Renderer\ResourceManager.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Renderer\Texture2D.h" />
     <ClInclude Include="Renderer\Texture3D.h" />
@@ -178,6 +180,7 @@
     <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Renderer\ConstantBuffer.cpp" />
     <ClCompile Include="Renderer\BaseRenderer.cpp" />
     <ClCompile Include="Graphics\Camera.cpp" />
     <ClCompile Include="Renderer\GBuffer.cpp">
@@ -204,8 +207,9 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Geometry\Model.cpp" />
     <ClCompile Include="Geometry\ModelLoader.cpp" />
-    <ClCompile Include="Graphics\PostProcessor.cpp" />
+    <ClCompile Include="Renderer\PostProcessor.cpp" />
     <ClCompile Include="Renderer\Texture2D.cpp" />
+    <ClCompile Include="Renderer\ResourceManager.cpp" />
     <ClCompile Include="Util\Util.cpp" />
   </ItemGroup>
   <ItemGroup>

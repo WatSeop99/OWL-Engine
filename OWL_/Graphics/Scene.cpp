@@ -60,14 +60,18 @@ void Scene::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 			m_ppLightSpheres[i] = New Model;
 			m_ppLightSpheres[i]->Initialize(pDevice, pContext, { sphere });
 			m_ppLightSpheres[i]->UpdateWorld(Matrix::CreateTranslation(pLights[i].Property.Position));
-			m_ppLightSpheres[i]->Meshes[0]->MaterialConstant.CPU.AlbedoFactor = Vector3(0.0f);
-			m_ppLightSpheres[i]->Meshes[0]->MaterialConstant.CPU.EmissionFactor = Vector3(1.0f, 1.0f, 0.0f);
+
+			MaterialConstants* pMaterialConstData = (MaterialConstants*)m_ppLightSpheres[i]->Meshes[0]->MaterialConstant.pSystemMem;
+			pMaterialConstData->AlbedoFactor = Vector3(0.0f);
+			pMaterialConstData->EmissionFactor = Vector3(1.0f, 1.0f, 0.0f);
 			m_ppLightSpheres[i]->bCastShadow = false; // 조명 표시 물체들은 그림자 X.
-			for (size_t j = 0, size = m_ppLightSpheres[i]->Meshes.size(); j < size; ++j)
+			for (UINT64 j = 0, size = m_ppLightSpheres[i]->Meshes.size(); j < size; ++j)
 			{
 				Mesh* pCurMesh = m_ppLightSpheres[i]->Meshes[j];
-				pCurMesh->MaterialConstant.CPU.AlbedoFactor = Vector3(0.0f);
-				pCurMesh->MaterialConstant.CPU.EmissionFactor = Vector3(1.0f, 1.0f, 0.0f);
+
+				MaterialConstants* pMeshMaterialConstData = (MaterialConstants*)pCurMesh->MaterialConstant.pSystemMem;
+				pMeshMaterialConstData->AlbedoFactor = Vector3(0.0f);
+				pMeshMaterialConstData->EmissionFactor = Vector3(1.0f, 1.0f, 0.0f);
 			}
 
 			m_ppLightSpheres[i]->bIsVisible = true;
@@ -97,10 +101,12 @@ void Scene::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 
 		m_pGround = New Model;
 		m_pGround->Initialize(pDevice, pContext, { mesh });
-		m_pGround->Meshes[0]->MaterialConstant.CPU.AlbedoFactor = Vector3(0.7f);
-		m_pGround->Meshes[0]->MaterialConstant.CPU.EmissionFactor = Vector3(0.0f);
-		m_pGround->Meshes[0]->MaterialConstant.CPU.MetallicFactor = 0.5f;
-		m_pGround->Meshes[0]->MaterialConstant.CPU.RoughnessFactor = 0.3f;
+
+		MaterialConstants* pMatertialConstData = (MaterialConstants*)m_pGround->Meshes[0]->MaterialConstant.pSystemMem;
+		pMatertialConstData->AlbedoFactor = Vector3(0.7f);
+		pMatertialConstData->EmissionFactor = Vector3(0.0f);
+		pMatertialConstData->MetallicFactor = 0.5f;
+		pMatertialConstData->RoughnessFactor = 0.3f;
 
 		// Vector3 position = Vector3(0.0f, -1.0f, 0.0f);
 		Vector3 position = Vector3(0.0f, -0.5f, 0.0f);
@@ -111,14 +117,22 @@ void Scene::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 		m_pMirror = m_pGround; // 바닥에 거울처럼 반사 구현.
 	}
 
-	m_GlobalConstants.CPU.StrengthIBL = 0.1f;
+	GlobalConstants initialGlobal;
+	LightConstants initialLight;
+	m_GlobalConstants.Initialize(pDevice, pContext, sizeof(GlobalConstants), &initialGlobal);
+	m_ReflectionGlobalConstants.Initialize(pDevice, pContext, sizeof(GlobalConstants), &initialGlobal);
+	m_LightConstants.Initialize(pDevice, pContext, sizeof(LightConstants), &initialLight);
+
+	GlobalConstants* pGlobalConstData = (GlobalConstants*)m_GlobalConstants.pSystemMem;
+	pGlobalConstData->StrengthIBL = 0.2f;
+	//m_GlobalConstants.CPU.StrengthIBL = 0.1f;
 	// m_GlobalConstants.CPU.StrengthIBL = 1.0f;
 
 	// 광원마다 shadow map 설정.
-	for (size_t i = 0, size = pLights.size(); i < size; ++i)
+	for (UINT64 i = 0, size = pLights.size(); i < size; ++i)
 	{
 		// pLights[i].SetShadowSize(1280, 1280); // 사이즈 변경 가능.
-		pLights[i].Initialize(pDevice);
+		pLights[i].Initialize(pDevice, pContext);
 	}
 
 	// 환경 박스 초기화.
@@ -135,7 +149,7 @@ void Scene::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	MakeSquare(&meshInfo);
 
 	m_pScreenMesh = New Mesh;
-	m_pScreenMesh->Initialize(pDevice);
+	m_pScreenMesh->Initialize(pDevice, pContext);
 
 	HRESULT hr = CreateVertexBuffer(pDevice, meshInfo.Vertices, &(m_pScreenMesh->pVertexBuffer));
 	BREAK_IF_FAILED(hr);
@@ -234,7 +248,7 @@ void Scene::Destroy()
 void Scene::ResetBuffers(ID3D11Device* pDevice, const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVELS)
 {
 	SAFE_RELEASE(m_pDefaultDSV);
-	m_DepthOnlyBuffer.Destroy();
+	m_DepthOnlyBuffer.Cleanup();
 
 	if (m_GBuffer.bIsEnabled)
 	{
@@ -267,18 +281,6 @@ void Scene::initCubemaps(ID3D11Device* pDevice, std::wstring&& basePath, std::ws
 
 void Scene::createBuffers(ID3D11Device* pDevice, const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVELS)
 {
-	HRESULT hr = S_OK;
-
-	// constants buffers.
-	hr = CreateConstBuffer(pDevice, m_GlobalConstants.CPU, &(m_GlobalConstants.pGPU));
-	BREAK_IF_FAILED(hr);
-
-	hr = CreateConstBuffer(pDevice, m_ReflectionGlobalConstants.CPU, &(m_ReflectionGlobalConstants.pGPU));
-	BREAK_IF_FAILED(hr);
-
-	hr = CreateConstBuffer(pDevice, m_LightConstants, &(m_LightConstants.pGPU));
-	BREAK_IF_FAILED(hr);
-
 	createDepthBuffers(pDevice, bUSE_MSAA, NUM_QUALITY_LEVELS);
 }
 
@@ -339,10 +341,10 @@ void Scene::updateLights(ID3D11DeviceContext* pContext, const float DELTA_TIME)
 	{
 		pLights[i].Update(pContext, DELTA_TIME, m_Camera);
 		m_ppLightSpheres[i]->UpdateWorld(Matrix::CreateScale(std::max(0.01f, pLights[i].Property.Radius)) * Matrix::CreateTranslation(pLights[i].Property.Position));
-		memcpy(&m_LightConstants.CPU.Lights[i], &pLights[i].Property, sizeof(LightProperty));
+		memcpy(&((LightConstants*)m_LightConstants.pSystemMem)->Lights[i], &pLights[i].Property, sizeof(LightProperty));
 	}
 
-	m_LightConstants.Upload(pContext);
+	m_LightConstants.Upload();
 }
 
 void Scene::updateGlobalConstants(ID3D11DeviceContext* pContext, const float DELTA_TIME)
@@ -352,25 +354,28 @@ void Scene::updateGlobalConstants(ID3D11DeviceContext* pContext, const float DEL
 	const Matrix VIEW = m_Camera.GetView();
 	const Matrix PROJECTION = m_Camera.GetProjection();
 
-	m_GlobalConstants.CPU.GlobalTime += DELTA_TIME;
-	m_GlobalConstants.CPU.EyeWorld = EYE_WORLD;
-	m_GlobalConstants.CPU.View = VIEW.Transpose();
-	m_GlobalConstants.CPU.Projection = PROJECTION.Transpose();
-	m_GlobalConstants.CPU.InverseProjection = PROJECTION.Invert().Transpose();
-	m_GlobalConstants.CPU.ViewProjection = (VIEW * PROJECTION).Transpose();
-	m_GlobalConstants.CPU.InverseView = VIEW.Invert().Transpose();
+	GlobalConstants* pGlobalConstData = (GlobalConstants*)m_GlobalConstants.pSystemMem;
+	GlobalConstants* pReflectionConstData = (GlobalConstants*)m_ReflectionGlobalConstants.pSystemMem;
+
+	pGlobalConstData->GlobalTime += DELTA_TIME;
+	pGlobalConstData->EyeWorld = EYE_WORLD;
+	pGlobalConstData->View = VIEW.Transpose();
+	pGlobalConstData->Projection = PROJECTION.Transpose();
+	pGlobalConstData->InverseProjection = PROJECTION.Invert().Transpose();
+	pGlobalConstData->ViewProjection = (VIEW * PROJECTION).Transpose();
+	pGlobalConstData->InverseView = VIEW.Invert().Transpose();
 
 	// 그림자 렌더링에 사용.
-	m_GlobalConstants.CPU.InverseViewProjection = m_GlobalConstants.CPU.ViewProjection.Invert();
+	pGlobalConstData->InverseViewProjection = pGlobalConstData->ViewProjection.Invert();
 
-	memcpy(&m_ReflectionGlobalConstants.CPU, &m_GlobalConstants.CPU, sizeof(GlobalConstants));
-	m_ReflectionGlobalConstants.CPU.View = (REFLECTION * VIEW).Transpose();
-	m_ReflectionGlobalConstants.CPU.ViewProjection = (REFLECTION * VIEW * PROJECTION).Transpose();
+	memcpy(pReflectionConstData, pGlobalConstData, sizeof(GlobalConstants));
+	pReflectionConstData->View = (REFLECTION * VIEW).Transpose();
+	pReflectionConstData->ViewProjection = (REFLECTION * VIEW * PROJECTION).Transpose();
 	// 그림자 렌더링에 사용 (광원의 위치도 반사시킨 후에 계산해야 함).
-	m_ReflectionGlobalConstants.CPU.InverseViewProjection = m_ReflectionGlobalConstants.CPU.ViewProjection.Invert();
+	pReflectionConstData->InverseViewProjection = pReflectionConstData->ViewProjection.Invert();
 
-	m_GlobalConstants.Upload(pContext);
-	m_ReflectionGlobalConstants.Upload(pContext);
+	m_GlobalConstants.Upload();
+	m_ReflectionGlobalConstants.Upload();
 }
 
 void Scene::renderDepthOnly(ID3D11DeviceContext* pContext)
@@ -378,10 +383,10 @@ void Scene::renderDepthOnly(ID3D11DeviceContext* pContext)
 	pContext->OMSetRenderTargets(0, nullptr, m_DepthOnlyBuffer.pDSV);
 	pContext->ClearDepthStencilView(m_DepthOnlyBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-	setGlobalConstants(pContext, &(m_GlobalConstants.pGPU), 0);
+	setGlobalConstants(pContext, &m_GlobalConstants.pBuffer, 0);
 	setPipelineState(pContext, g_DepthOnlyPSO);
 
-	for (size_t i = 0, size = pRenderObjects.size(); i < size; ++i)
+	for (UINT64 i = 0, size = pRenderObjects.size(); i < size; ++i)
 	{
 		Model* pCurModel = pRenderObjects[i];
 		pCurModel->Render(pContext);
@@ -403,7 +408,7 @@ void Scene::renderShadowMaps(ID3D11DeviceContext* pContext)
 	ID3D11ShaderResourceView* ppNulls[2] = { nullptr, };
 	pContext->PSSetShaderResources(15, 2, ppNulls);
 
-	for (size_t i = 0, size = pLights.size(); i < size; ++i)
+	for (UINT64 i = 0, size = pLights.size(); i < size; ++i)
 	{
 		pLights[i].RenderShadowMap(pContext, pRenderObjects, m_pMirror);
 	}
@@ -465,8 +470,8 @@ void Scene::renderOpaqueObjects(ID3D11DeviceContext* pContext)
 		pContext->PSSetShaderResources(25, 1, &pCurShadowCascadeBuffer->pSRV);
 	}
 
-	setGlobalConstants(pContext, &(m_GlobalConstants.pGPU), 0);
-	setGlobalConstants(pContext, &(m_LightConstants.pGPU), 1);
+	setGlobalConstants(pContext, &m_GlobalConstants.pBuffer, 0);
+	setGlobalConstants(pContext, &m_LightConstants.pBuffer, 1);
 
 	// 스카이박스 그리기.
 	// 최적화를 하고 싶다면 투명한 물체들만 따로 마지막에 그리면 됨.
@@ -486,7 +491,7 @@ void Scene::renderGBuffer(ID3D11DeviceContext* pContext)
 	// 다시 렌더링 해상도로 되돌리기.
 	setScreenViewport(pContext);
 
-	setGlobalConstants(pContext, &(m_GlobalConstants.pGPU), 0);
+	setGlobalConstants(pContext, &m_GlobalConstants.pBuffer, 0);
 
 	m_GBuffer.PrepareRender(pContext, m_pDefaultDSV);
 
@@ -506,7 +511,7 @@ void Scene::renderDeferredLighting(ID3D11DeviceContext* pContext)
 	ID3D11ShaderResourceView* ppShadowSRVs[MAX_LIGHTS] = { nullptr, };
 	UINT pointLightIndex = -1;
 	UINT directionalLightIndex = -1;
-	for (size_t i = 0, size = pLights.size(); i < size; ++i)
+	for (UINT64 i = 0, size = pLights.size(); i < size; ++i)
 	{
 		ShadowMap& curShadowMap = pLights[i].GetShadowMap();
 		switch (pLights[i].Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
@@ -545,7 +550,7 @@ void Scene::renderDeferredLighting(ID3D11DeviceContext* pContext)
 		pContext->PSSetShaderResources(25, 1, &pCurShadowCascadeBuffer->pSRV);
 	}
 
-	setGlobalConstants(pContext, &(m_LightConstants.pGPU), 1);
+	setGlobalConstants(pContext, &m_LightConstants.pBuffer, 1);
 
 	const float CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	pContext->ClearRenderTargetView(m_FloatBuffer.pRTV, CLEAR_COLOR);
@@ -573,7 +578,7 @@ void Scene::renderDeferredLighting(ID3D11DeviceContext* pContext)
 
 void Scene::renderOptions(ID3D11DeviceContext* pContext)
 {
-	for (size_t i = 0, size = pRenderObjects.size(); i < size; ++i)
+	for (UINT64 i = 0, size = pRenderObjects.size(); i < size; ++i)
 	{
 		Model* pCurModel = pRenderObjects[i];
 		if (pCurModel->bDrawNormals)
@@ -596,7 +601,7 @@ void Scene::renderOptions(ID3D11DeviceContext* pContext)
 
 void Scene::renderMirror(ID3D11DeviceContext* pContext)
 {
-	if (m_pMirror == nullptr)
+	if (!m_pMirror)
 	{
 		return;
 	}
@@ -613,7 +618,8 @@ void Scene::renderMirror(ID3D11DeviceContext* pContext)
 		m_pMirror->Render(pContext);
 
 		// 거울 위치에 반사된 물체들을 렌더링.
-		setGlobalConstants(pContext, &(m_ReflectionGlobalConstants.pGPU), 0);
+		setGlobalConstants(pContext, &m_ReflectionGlobalConstants.pBuffer, 0);
+		//setGlobalConstants(pContext, &(m_ReflectionGlobalConstants.pGPU), 0);
 		pContext->ClearDepthStencilView(m_pDefaultDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 		for (size_t i = 0, size = pRenderObjects.size(); i < size; ++i)
@@ -627,7 +633,7 @@ void Scene::renderMirror(ID3D11DeviceContext* pContext)
 		m_pSkybox->Render(pContext);
 
 		// 거울 자체의 재질을 "Blend"로 그림.
-		setGlobalConstants(pContext, &(m_GlobalConstants.pGPU), 0);
+		setGlobalConstants(pContext, &m_GlobalConstants.pBuffer, 0);
 		setPipelineState(pContext, bDrawAsWire ? g_MirrorBlendWirePSO : g_MirrorBlendSolidPSO);
 		m_pMirror->Render(pContext);
 	}

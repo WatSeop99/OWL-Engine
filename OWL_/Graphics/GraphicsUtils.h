@@ -1,5 +1,8 @@
 ﻿#pragma once
 
+HRESULT ReadEXRImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWidth, int* pHeight, DXGI_FORMAT* pPixelFormat);
+HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWidth, int* pHeight);
+
 HRESULT CreateVertexShaderAndInputLayout(ID3D11Device* pDevice, const wchar_t* pszFileName, const D3D11_INPUT_ELEMENT_DESC* pINPUT_ELEMENTS, const UINT ELEMENTS_SIZE, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11VertexShader** ppVertexShader, ID3D11InputLayout** ppInputLayout);
 HRESULT CreateHullShader(ID3D11Device* pDevice, const wchar_t* pszFileName, ID3D11HullShader** ppHullShader);
 HRESULT CreateDomainShader(ID3D11Device* pDevice, const wchar_t* pszFileName, ID3D11DomainShader** ppDomainShader);

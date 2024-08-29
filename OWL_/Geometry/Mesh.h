@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "../Common.h"
+#include "../Renderer/ConstantBuffer.h"
 #include "../Renderer/Texture2D.h"
 #include "../Renderer/Texture3D.h"
 
@@ -25,15 +26,20 @@ public:
 	Mesh() = default;
 	~Mesh() { Cleanup(); };
 
-	void Initialize(ID3D11Device* pDevice)
+	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	{
 		_ASSERT(pDevice);
+		_ASSERT(pContext);
 
 		pMaterialBuffer = New Material;
 		*pMaterialBuffer = { Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture3D(), Texture3D() };
 		
-		MeshConstant.Initialize(pDevice);
-		MaterialConstant.Initialize(pDevice);
+		/*MeshConstant.Initialize(pDevice);
+		MaterialConstant.Initialize(pDevice);*/
+		MeshConstants initMeshConst;
+		MaterialConstants initMaterialConst;
+		MeshConstant.Initialize(pDevice, pContext, sizeof(MeshConstants), &initMeshConst);
+		MaterialConstant.Initialize(pDevice, pContext, sizeof(MaterialConstants), &initMaterialConst);
 	}
 
 	void Cleanup()
@@ -59,8 +65,10 @@ public:
 	ID3D11Buffer* pIndexBuffer = nullptr;
 	Material* pMaterialBuffer = nullptr;
 
-	ConstantsBuffer<MeshConstants> MeshConstant;
-	ConstantsBuffer<MaterialConstants> MaterialConstant;
+	/*ConstantsBuffer<MeshConstants> MeshConstant;
+	ConstantsBuffer<MaterialConstants> MaterialConstant;*/
+	ConstantBuffer MeshConstant;
+	ConstantBuffer MaterialConstant;
 
 	UINT VertexCount = 0;
 	UINT IndexCount = 0;

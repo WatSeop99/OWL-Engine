@@ -13,8 +13,13 @@
 
 #include "GraphicsUtils.h"
 
-HRESULT ReadEXRImage(const wchar_t* pszFileName, std::vector<uint8_t>& image, int* pWidth, int* pHeight, DXGI_FORMAT* pPixelFormat)
+HRESULT ReadEXRImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWidth, int* pHeight, DXGI_FORMAT* pPixelFormat)
 {
+	_ASSERT(pszFileName);
+	_ASSERT(pWidth);
+	_ASSERT(pHeight);
+	_ASSERT(pPixelFormat);
+
 	HRESULT hr = S_OK;
 
 	DirectX::TexMetadata metaData;
@@ -32,8 +37,8 @@ HRESULT ReadEXRImage(const wchar_t* pszFileName, std::vector<uint8_t>& image, in
 		goto LB_RET;
 	}
 
-	*pWidth = (int)(metaData.width);
-	*pHeight = (int)(metaData.height);
+	*pWidth = (int)metaData.width;
+	*pHeight = (int)metaData.height;
 	*pPixelFormat = metaData.format;
 
 	// Debug information
@@ -63,8 +68,12 @@ LB_RET:
 	return hr;
 }
 
-HRESULT ReadImage(const wchar_t* pszFileName, std::vector<uint8_t>& image, int* pWidth, int* pHeight)
+HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWidth, int* pHeight)
 {
+	_ASSERT(pszFileName);
+	_ASSERT(pWidth);
+	_ASSERT(pHeight);
+
 	HRESULT hr = S_OK;
 	int channels = 0;
 
@@ -74,58 +83,67 @@ HRESULT ReadImage(const wchar_t* pszFileName, std::vector<uint8_t>& image, int* 
 		pFileName[0] = '\0';
 	}
 
-	unsigned char* pImg = stbi_load(pFileName, pWidth, pHeight, &channels, 0);
+	UCHAR* pImg = stbi_load(pFileName, pWidth, pHeight, &channels, 0);
 
 	// 4채널로 만들어 복사.
 	image.resize((*pWidth) * (*pHeight) * 4);
+	switch (channels)
+	{
+		case 1:
+		{
+			for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
+			{
+				UINT8 g = pImg[i * channels];
+				for (int c = 0; c < 4; ++c)
+				{
+					image[4 * i + c] = g;
+				}
+			}
+		}
+			break;
 
-	if (channels == 1)
-	{
-		for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
+		case 2:
 		{
-			uint8_t g = pImg[i * channels];
-			for (int c = 0; c < 4; ++c)
+			for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
 			{
-				image[4 * i + c] = g;
+				for (int c = 0; c < 2; ++c)
+				{
+					image[4 * i + c] = pImg[i * channels + c];
+				}
+				image[4 * i + 2] = 255;
+				image[4 * i + 3] = 255;
 			}
 		}
-	}
-	else if (channels == 2)
-	{
-		for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
+			break;
+
+		case 3:
 		{
-			for (int c = 0; c < 2; ++c)
+			for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
 			{
-				image[4 * i + c] = pImg[i * channels + c];
-			}
-			image[4 * i + 2] = 255;
-			image[4 * i + 3] = 255;
-		}
-	}
-	else if (channels == 3)
-	{
-		for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
-		{
-			for (int c = 0; c < 3; ++c)
-			{
-				image[4 * i + c] = pImg[i * channels + c];
-			}
-			image[4 * i + 3] = 255;
-		}
-	}
-	else if (channels == 4)
-	{
-		for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
-		{
-			for (int c = 0; c < 4; ++c)
-			{
-				image[4 * i + c] = pImg[i * channels + c];
+				for (int c = 0; c < 3; ++c)
+				{
+					image[4 * i + c] = pImg[i * channels + c];
+				}
+				image[4 * i + 3] = 255;
 			}
 		}
-	}
-	else
-	{
-		hr = E_FAIL;
+			break;
+
+		case 4:
+		{
+			for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
+			{
+				for (int c = 0; c < 4; ++c)
+				{
+					image[4 * i + c] = pImg[i * channels + c];
+				}
+			}
+		}
+			break;
+
+		default:
+			hr = E_FAIL;
+			break;
 	}
 
 	free(pImg);

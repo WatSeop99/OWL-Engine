@@ -7,9 +7,10 @@
 
 using DirectX::SimpleMath::Vector4;
 
-void ShadowMap::Initialize(ID3D11Device* pDevice, UINT lightType)
+void ShadowMap::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, UINT lightType)
 {
 	_ASSERT(pDevice);
+	_ASSERT(pContext);
 
 	m_LightType = lightType;
 
@@ -103,11 +104,13 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, UINT lightType)
 		BREAK_IF_FAILED(hr);
 	}
 
+	GlobalConstants initialGlobal;
+	ShadowConstants initialShadow;
 	for (int i = 0; i < 6; ++i)
 	{
-		m_pShadowConstantsBuffers[i].Initialize(pDevice);
+		m_pShadowConstantsBuffers[i].Initialize(pDevice, pContext, sizeof(GlobalConstants), &initialGlobal);
 	}
-	m_ShadowConstantsBufferForGS.Initialize(pDevice);
+	m_ShadowConstantsBufferForGS.Initialize(pDevice, pContext, sizeof(ShadowConstants), &initialShadow);
 }
 
 void ShadowMap::Update(ID3D11DeviceContext* pContext, const LightProperty& PROPERTY, Camera& lightCam, Camera& mainCamera)
@@ -134,18 +137,21 @@ void ShadowMap::Update(ID3D11DeviceContext* pContext, const LightProperty& PROPE
 			{
 				calculateCascadeLightViewProjection(&lightSectionPosition, &lightSectionView, &lightSectionProjection, camView, camProjection, PROPERTY.Direction, i);
 
-				m_pShadowConstantsBuffers[i].CPU.EyeWorld = lightSectionPosition;
-				m_pShadowConstantsBuffers[i].CPU.View = lightSectionView.Transpose();
-				m_pShadowConstantsBuffers[i].CPU.Projection = lightSectionProjection.Transpose();
-				m_pShadowConstantsBuffers[i].CPU.InverseProjection = lightSectionProjection.Invert().Transpose();
-				m_pShadowConstantsBuffers[i].CPU.ViewProjection = (lightSectionView * lightSectionProjection).Transpose();
+				GlobalConstants* pShadowGlobalConstData = (GlobalConstants*)m_pShadowConstantsBuffers[i].pSystemMem;
+				ShadowConstants* pShadowConstGSData = (ShadowConstants*)m_ShadowConstantsBufferForGS.pSystemMem;
 
-				m_ShadowConstantsBufferForGS.CPU.ViewProjects[i] = m_pShadowConstantsBuffers[i].CPU.ViewProjection;
+				pShadowGlobalConstData->EyeWorld = lightSectionPosition;
+				pShadowGlobalConstData->View = lightSectionView.Transpose();
+				pShadowGlobalConstData->Projection = lightSectionProjection.Transpose();
+				pShadowGlobalConstData->InverseProjection = lightSectionProjection.Invert().Transpose();
+				pShadowGlobalConstData->ViewProjection = (lightSectionView * lightSectionProjection).Transpose();
 
-				m_pShadowConstantsBuffers[i].Upload(pContext);
+				pShadowConstGSData->ViewProjects[i] = pShadowGlobalConstData->ViewProjection;
+
+				m_pShadowConstantsBuffers[i].Upload();
 			}
 
-			m_ShadowConstantsBufferForGS.Upload(pContext);
+			m_ShadowConstantsBufferForGS.Upload();
 
 			mainCamera.bUseFirstPersonView = bOriginalFPS;
 		}
@@ -177,18 +183,21 @@ void ShadowMap::Update(ID3D11DeviceContext* pContext, const LightProperty& PROPE
 			{
 				lightView = DirectX::XMMatrixLookAtLH(PROPERTY.Position, PROPERTY.Position + VIEW_DIRs[i], UP_DIRs[i]);
 
-				m_pShadowConstantsBuffers[i].CPU.EyeWorld = PROPERTY.Position;
-				m_pShadowConstantsBuffers[i].CPU.View = lightView.Transpose();
-				m_pShadowConstantsBuffers[i].CPU.Projection = lightProjection.Transpose();
-				m_pShadowConstantsBuffers[i].CPU.InverseProjection = lightProjection.Invert().Transpose();
-				m_pShadowConstantsBuffers[i].CPU.ViewProjection = (lightView * lightProjection).Transpose();
+				GlobalConstants* pShadowGlobalConstData = (GlobalConstants*)m_pShadowConstantsBuffers[i].pSystemMem;
+				ShadowConstants* pShadowConstGSData = (ShadowConstants*)m_ShadowConstantsBufferForGS.pSystemMem;
 
-				m_ShadowConstantsBufferForGS.CPU.ViewProjects[i] = m_pShadowConstantsBuffers[i].CPU.ViewProjection;
+				pShadowGlobalConstData->EyeWorld = PROPERTY.Position;
+				pShadowGlobalConstData->View = lightView.Transpose();
+				pShadowGlobalConstData->Projection = lightProjection.Transpose();
+				pShadowGlobalConstData->InverseProjection = lightProjection.Invert().Transpose();
+				pShadowGlobalConstData->ViewProjection = (lightView * lightProjection).Transpose();
 
-				m_pShadowConstantsBuffers[i].Upload(pContext);
+				pShadowConstGSData->ViewProjects[i] = pShadowGlobalConstData->ViewProjection;
+
+				m_pShadowConstantsBuffers[i].Upload();
 			}
 
-			m_ShadowConstantsBufferForGS.Upload(pContext);
+			m_ShadowConstantsBufferForGS.Upload();
 		}
 		break;
 
@@ -196,13 +205,14 @@ void ShadowMap::Update(ID3D11DeviceContext* pContext, const LightProperty& PROPE
 		{
 			lightView = DirectX::XMMatrixLookAtLH(PROPERTY.Position, PROPERTY.Position + PROPERTY.Direction, lightCam.GetUpDir());
 
-			m_pShadowConstantsBuffers[0].CPU.EyeWorld = PROPERTY.Position;
-			m_pShadowConstantsBuffers[0].CPU.View = lightView.Transpose();
-			m_pShadowConstantsBuffers[0].CPU.Projection = lightProjection.Transpose();
-			m_pShadowConstantsBuffers[0].CPU.InverseProjection = lightProjection.Invert().Transpose();
-			m_pShadowConstantsBuffers[0].CPU.ViewProjection = (lightView * lightProjection).Transpose();
+			GlobalConstants* pShadowGlobalConstData = (GlobalConstants*)m_pShadowConstantsBuffers[0].pSystemMem;
+			pShadowGlobalConstData->EyeWorld = PROPERTY.Position;
+			pShadowGlobalConstData->View = lightView.Transpose();
+			pShadowGlobalConstData->Projection = lightProjection.Transpose();
+			pShadowGlobalConstData->InverseProjection = lightProjection.Invert().Transpose();
+			pShadowGlobalConstData->ViewProjection = (lightView * lightProjection).Transpose();
 
-			m_pShadowConstantsBuffers[0].Upload(pContext);
+			m_pShadowConstantsBuffers[0].Upload();
 		}
 		break;
 
@@ -221,18 +231,9 @@ void ShadowMap::Render(ID3D11DeviceContext* pContext, std::vector<Model*>& pBasi
 		{
 			pContext->ClearDepthStencilView(m_DirectionalLightShadowBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 			pContext->OMSetRenderTargets(0, nullptr, m_DirectionalLightShadowBuffer.pDSV);
-			pContext->GSSetConstantBuffers(0, 1, &(m_ShadowConstantsBufferForGS.pGPU));
+			pContext->GSSetConstantBuffers(0, 1, &m_ShadowConstantsBufferForGS.pBuffer);
 
-			/*pContext->VSSetShader(Graphics::g_pDepthOnlyCascadeVS, nullptr, 0);
-			pContext->PSSetShader(Graphics::g_pDepthOnlyCascadePS, nullptr, 0);
-			pContext->HSSetShader(nullptr, nullptr, 0);
-			pContext->DSSetShader(nullptr, nullptr, 0);
-			pContext->GSSetShader(Graphics::g_pDepthOnlyCascadeGS, nullptr, 0);
-			pContext->CSSetShader(nullptr, nullptr, 0);
-			pContext->IASetInputLayout(Graphics::g_pSkyboxIL);
-			pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);*/
-
-			for (size_t i = 0, size = pBasicList.size(); i < size; ++i)
+			for (UINT64 i = 0, size = pBasicList.size(); i < size; ++i)
 			{
 				Model* const pCurModel = pBasicList[i];
 				if (pCurModel->bCastShadow && pCurModel->bIsVisible)
@@ -254,18 +255,9 @@ void ShadowMap::Render(ID3D11DeviceContext* pContext, std::vector<Model*>& pBasi
 		{
 			pContext->ClearDepthStencilView(m_PointLightShadowBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 			pContext->OMSetRenderTargets(0, nullptr, m_PointLightShadowBuffer.pDSV);
-			pContext->GSSetConstantBuffers(0, 1, &(m_ShadowConstantsBufferForGS.pGPU));
+			pContext->GSSetConstantBuffers(0, 1, &m_ShadowConstantsBufferForGS.pBuffer);
 
-			/*pContext->VSSetShader(Graphics::g_pDepthOnlyCubeVS, nullptr, 0);
-			pContext->PSSetShader(Graphics::g_pDepthOnlyCubePS, nullptr, 0);
-			pContext->HSSetShader(nullptr, nullptr, 0);
-			pContext->DSSetShader(nullptr, nullptr, 0);
-			pContext->GSSetShader(Graphics::g_pDepthOnlyCubeGS, nullptr, 0);
-			pContext->CSSetShader(nullptr, nullptr, 0);
-			pContext->IASetInputLayout(Graphics::g_pSkyboxIL);
-			pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);*/
-
-			for (size_t i = 0, size = pBasicList.size(); i < size; ++i)
+			for (UINT64 i = 0, size = pBasicList.size(); i < size; ++i)
 			{
 				Model* const pCurModel = pBasicList[i];
 				if (pCurModel->bCastShadow && pCurModel->bIsVisible)
@@ -287,9 +279,9 @@ void ShadowMap::Render(ID3D11DeviceContext* pContext, std::vector<Model*>& pBasi
 		{
 			pContext->ClearDepthStencilView(m_SpotLightShadowBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 			pContext->OMSetRenderTargets(0, nullptr, m_SpotLightShadowBuffer.pDSV);
-			pContext->VSSetConstantBuffers(0, 1, &(m_pShadowConstantsBuffers[0].pGPU));
-			pContext->PSSetConstantBuffers(0, 1, &(m_pShadowConstantsBuffers[0].pGPU));
-			pContext->GSSetConstantBuffers(0, 1, &(m_pShadowConstantsBuffers[0].pGPU));
+			pContext->VSSetConstantBuffers(0, 1, &m_pShadowConstantsBuffers[0].pBuffer);
+			pContext->PSSetConstantBuffers(0, 1, &m_pShadowConstantsBuffers[0].pBuffer);
+			pContext->GSSetConstantBuffers(0, 1, &m_pShadowConstantsBuffers[0].pBuffer);
 
 			for (UINT64 i = 0, size = pBasicList.size(); i < size; ++i)
 			{
@@ -315,9 +307,9 @@ void ShadowMap::Render(ID3D11DeviceContext* pContext, std::vector<Model*>& pBasi
 
 void ShadowMap::Cleanup()
 {
-	m_SpotLightShadowBuffer.Destroy();
-	m_PointLightShadowBuffer.Destroy();
-	m_DirectionalLightShadowBuffer.Destroy();
+	m_SpotLightShadowBuffer.Cleanup();
+	m_PointLightShadowBuffer.Cleanup();
+	m_DirectionalLightShadowBuffer.Cleanup();
 	m_ShadowConstantsBufferForGS.Cleanup();
 	for (int i = 0; i < 6; ++i)
 	{

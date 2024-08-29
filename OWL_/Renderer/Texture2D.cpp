@@ -10,7 +10,7 @@ void Texture2D::Initialize(ID3D11Device* pDevice, UINT width, UINT height, DXGI_
 	Width = width;
 	Height = height;
 
-	Destroy();
+	Cleanup();
 
 	hr = CreateTexture2D(pDevice, width, height, pixelFormat, bIsDepthStencil, &pTexture, &pRTV, &pSRV, &pDSV, &pUAV);
 	BREAK_IF_FAILED(hr);
@@ -25,7 +25,7 @@ void Texture2D::Initialize(ID3D11Device* pDevice, D3D11_TEXTURE2D_DESC& desc)
 {
 	HRESULT hr = S_OK;
 
-	Destroy();
+	Cleanup();
 
 	Width = desc.Width;
 	Height = desc.Height;
@@ -84,7 +84,7 @@ void Texture2D::Download(ID3D11DeviceContext* pContext, std::vector<uint8_t>& bu
 	pContext->Unmap(pStaging, 0);
 }
 
-void Texture2D::Destroy()
+void Texture2D::Cleanup()
 {
 	SAFE_RELEASE(pTexture);
 	SAFE_RELEASE(pStaging);

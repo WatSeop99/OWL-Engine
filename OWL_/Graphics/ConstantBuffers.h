@@ -15,7 +15,6 @@ using DirectX::SimpleMath::Matrix;
 using DirectX::SimpleMath::Vector2;
 using DirectX::SimpleMath::Vector3;
 
-// 주로 Vertex/Geometry 쉐이더에서 사용.
 ALIGN(16) struct MeshConstants
 {
 	Matrix World;
@@ -27,7 +26,6 @@ ALIGN(16) struct MeshConstants
 	float WindLeaves = 0.0f;
 };
 
-// 주로 Pixel 쉐이더에서 사용.
 ALIGN(16) struct MaterialConstants
 {
 	Vector3 AlbedoFactor = Vector3(1.0f);
@@ -76,7 +74,6 @@ ALIGN(16) struct ShadowConstants
 	Matrix ViewProjects[6];
 };
 
-// register(b1) 사용
 ALIGN(16) struct GlobalConstants
 {
 	Matrix View;
@@ -97,7 +94,6 @@ ALIGN(16) struct GlobalConstants
 	int dummy[4];
 };
 
-// register(b5) 사용, PostEffectsPS.hlsl
 ALIGN(16) struct PostEffectsConstants
 {
 	int Mode = 1; // 1: Rendered image, 2: DepthOnly
@@ -111,44 +107,18 @@ ALIGN(16) struct VolumeConsts
 	float LightAbsorption = 5.0f;
 	Vector3 LightDir = Vector3(0.0f, 1.0f, 0.0f);
 	float DensityAbsorption = 10.0f;
-	Vector3 LightColor = Vector3(1, 1, 1) * 40.0f;
+	Vector3 LightColor = Vector3(1.0f) * 40.0f;
 	float Aniso = 0.3f;
 };
 
 ALIGN(16) struct ImageFilterConstData
 {
-	float DX;
-	float DY;
-	float Threshold;
-	float Strength;
-	float Option1; // exposure in CombinePS.hlsl
-	float Option2; // gamma in CombinePS.hlsl
-	float Option3; // blur in CombinePS.hlsl
-	float Option4;
-};
-
-template <typename CONSTANTS>
-class ConstantsBuffer
-{
-public:
-	ConstantsBuffer() = default;
-	~ConstantsBuffer() { Cleanup(); }
-
-	void Initialize(ID3D11Device* pDevice)
-	{
-		HRESULT hr = S_OK;
-
-		Cleanup();
-
-		hr = CreateConstBuffer(pDevice, CPU, &pGPU);
-		BREAK_IF_FAILED(hr);
-	}
-
-	void Upload(ID3D11DeviceContext* pContext) { UpdateBuffer(pContext, CPU, pGPU); }
-
-	void Cleanup() { SAFE_RELEASE(pGPU); }
-
-public:
-	ID3D11Buffer* pGPU = nullptr;
-	CONSTANTS CPU;
+	float DX = 0.0f;
+	float DY = 0.0f;
+	float Threshold = 0.0f;
+	float Strength = 0.0f;
+	float Option1 = 0.0f; // exposure in CombinePS.hlsl
+	float Option2 = 0.0f; // gamma in CombinePS.hlsl
+	float Option3 = 0.0f; // blur in CombinePS.hlsl
+	float Option4 = 0.0f;
 };

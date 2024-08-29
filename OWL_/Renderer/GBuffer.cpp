@@ -83,10 +83,10 @@ void GBuffer::AfterRender(ID3D11DeviceContext* pContext)
 
 void GBuffer::Cleanup()
 {
-	AlbedoBuffer.Destroy();
-	NormalBuffer.Destroy();
-	PositionBuffer.Destroy();
-	DepthBuffer.Destroy();
-	EmissionBuffer.Destroy();
-	ExtraBuffer.Destroy();
+	AlbedoBuffer.Cleanup();
+	NormalBuffer.Cleanup();
+	PositionBuffer.Cleanup();
+	DepthBuffer.Cleanup();
+	EmissionBuffer.Cleanup();
+	ExtraBuffer.Cleanup();
 }

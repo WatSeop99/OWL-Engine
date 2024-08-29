@@ -480,7 +480,7 @@ void ModelLoader::updateTangents()
 
 	// https://github.com/microsoft/DirectXMesh/wiki/ComputeTangentFrame
 	// 추후 시간 체크 해볼 것.
-	for (size_t i = 0, size = pMeshInfos.size(); i < size; ++i)
+	for (UINT64 i = 0, size = pMeshInfos.size(); i < size; ++i)
 	{
 		// 방법 1.
 		/*MeshInfo& m = pMeshInfos[i];

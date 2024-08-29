@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ImageFilter.h"
+#include "../Graphics/ImageFilter.h"
 #include "../Geometry/Mesh.h"
 
 class PostProcessor

@@ -5,7 +5,6 @@
 
 // https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/GraphicsCommon.h
 
-
 // Samplers
 extern ID3D11SamplerState* g_pLinearWrapSS;
 extern ID3D11SamplerState* g_pLinearClampSS;

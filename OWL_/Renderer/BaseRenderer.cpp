@@ -129,8 +129,12 @@ void BaseRenderer::InitScene()
 		m_pCursorSphere->Initialize(m_pDevice5, m_pContext4, { sphere });
 		m_pCursorSphere->bIsVisible = false; // 마우스가 눌렸을 때만 보임
 		m_pCursorSphere->bCastShadow = false; // 그림자 X
-		m_pCursorSphere->Meshes[0]->MaterialConstant.CPU.AlbedoFactor = Vector3(0.0f);
-		m_pCursorSphere->Meshes[0]->MaterialConstant.CPU.EmissionFactor = Vector3(0.0f, 1.0f, 0.0f);
+
+		MaterialConstants* pMaterialConstData = (MaterialConstants*)m_pCursorSphere->Meshes[0]->MaterialConstant.pSystemMem;
+		/*m_pCursorSphere->Meshes[0]->MaterialConstant.CPU.AlbedoFactor = Vector3(0.0f);
+		m_pCursorSphere->Meshes[0]->MaterialConstant.CPU.EmissionFactor = Vector3(0.0f, 1.0f, 0.0f);*/
+		pMaterialConstData->AlbedoFactor = Vector3(0.0f);
+		pMaterialConstData->EmissionFactor = Vector3(0.0f, 1.0f, 0.0f);
 
 		m_Scene.pRenderObjects.push_back(m_pCursorSphere); // 리스트에 등록.
 	}
@@ -788,8 +792,8 @@ void BaseRenderer::destroyBuffersForRendering()
 	// swap chain에 사용될 back bufffer와 관련된 모든 버퍼를 초기화.
 	RELEASE(m_pBackBuffer);
 	RELEASE(m_pBackBufferRTV);
-	m_PrevBuffer.Destroy();
-	m_FloatBuffer.Destroy();
-	m_ResolvedBuffer.Destroy();
+	m_PrevBuffer.Cleanup();
+	m_FloatBuffer.Cleanup();
+	m_ResolvedBuffer.Cleanup();
 	m_PostProcessor.Cleanup();
 }

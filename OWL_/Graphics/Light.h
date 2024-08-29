@@ -11,7 +11,7 @@ public:
 	Light(UINT width = 1280, UINT height = 1280);
 	~Light() { Cleanup(); }
 
-	void Initialize(ID3D11Device* pDevice);
+	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
 
 	void Update(ID3D11DeviceContext* pContext, float deltaTime, Camera& mainCamera);
 

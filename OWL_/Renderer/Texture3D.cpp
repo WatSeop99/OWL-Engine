@@ -9,7 +9,7 @@ void Texture3D::Initialize(ID3D11Device* pDevice, UINT width, UINT height, UINT 
 {
 	HRESULT hr = S_OK;
 
-	Destroy();
+	Cleanup();
 
 	Width = width;
 	Height = height;
@@ -29,7 +29,7 @@ void Texture3D::Initialize(ID3D11Device* pDevice, D3D11_TEXTURE3D_DESC& desc, co
 {
 	HRESULT hr = S_OK;
 
-	Destroy();
+	Cleanup();
 
 	Width = desc.Width;
 	Height = desc.Height;
@@ -103,7 +103,7 @@ void Texture3D::Upload(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, con
 	pContext->CopyResource(pTexture, pStaging);
 }
 
-void Texture3D::Destroy()
+void Texture3D::Cleanup()
 {
 	SAFE_RELEASE(pTexture);
 	SAFE_RELEASE(pStaging);

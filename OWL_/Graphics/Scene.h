@@ -42,8 +42,9 @@ public:
 	inline void SetScreenHeight(const UINT HEIGHT) { m_ScreenHeight = HEIGHT; m_GBuffer.SetScreenHeight(HEIGHT); }
 
 	inline bool SupportDeferred() const { return m_GBuffer.bIsEnabled; }
-	inline GlobalConstants& GetGlobalConstantsCPU() { return m_GlobalConstants.CPU; }
-	inline ID3D11Buffer* GetGlobalConstantsGPU() const { return m_GlobalConstants.pGPU; }
+	//inline GlobalConstants& GetGlobalConstantsCPU() { return m_GlobalConstants.CPU; }
+	inline GlobalConstants* GetGlobalConstantsCPU() { return (GlobalConstants*)m_GlobalConstants.pSystemMem; }
+	inline ID3D11Buffer* GetGlobalConstantsGPU() const { return m_GlobalConstants.pBuffer; }
 	inline ID3D11ShaderResourceView* GetDepthOnlyBufferSRV() const { return m_DepthOnlyBuffer.pSRV; }
 	inline Model* GetMirror() { return m_pMirror; }
 
@@ -102,9 +103,12 @@ private:
 	Texture2D m_DepthOnlyBuffer; // No MSAA
 
 	// 렌더링을 위한 여러 상수 퍼버들.
-	ConstantsBuffer<GlobalConstants> m_GlobalConstants;
+	/*ConstantsBuffer<GlobalConstants> m_GlobalConstants;
 	ConstantsBuffer<GlobalConstants> m_ReflectionGlobalConstants;
-	ConstantsBuffer<LightConstants> m_LightConstants;
+	ConstantsBuffer<LightConstants> m_LightConstants;*/
+	ConstantBuffer m_GlobalConstants;
+	ConstantBuffer m_ReflectionGlobalConstants;
+	ConstantBuffer m_LightConstants;
 
 	// 공통으로 사용하는 환경맵 리소스들.
 	ID3D11ShaderResourceView* m_pEnvSRV = nullptr;

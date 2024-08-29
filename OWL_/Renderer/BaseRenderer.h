@@ -4,7 +4,7 @@
 #include "../Graphics/GraphicsCommon.h"
 #include "../Geometry/MeshInfo.h"
 #include "../Geometry/Model.h"
-#include "../Graphics/PostProcessor.h"
+#include "../Renderer/PostProcessor.h"
 #include "../Graphics/Scene.h"
 #include "Timer.h"
 

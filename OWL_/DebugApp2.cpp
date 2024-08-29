@@ -38,7 +38,7 @@ void DebugApp2::InitScene()
 		ReadAnimationFromFile(data, path, filename);
 		std::vector<MeshInfo>& meshInfos = std::get<0>(data);
 
-		for (size_t i = 0, size = clipNames.size(); i < size; ++i)
+		for (UINT64 i = 0, size = clipNames.size(); i < size; ++i)
 		{
 			std::wstring& name = clipNames[i];
 			std::tuple<std::vector<MeshInfo>, AnimationData> tempData;
@@ -58,12 +58,17 @@ void DebugApp2::InitScene()
 		Vector3 center(0.0f, 0.0f, 2.0f);
 		m_pCharacter = New SkinnedMeshModel;
 		m_pCharacter->Initialize(m_pDevice5, m_pContext4, meshInfos, aniData);
-		for (size_t i = 0, size = m_pCharacter->Meshes.size(); i < size; ++i)
+		for (UINT64 i = 0, size = m_pCharacter->Meshes.size(); i < size; ++i)
 		{
 			Mesh* pCurMesh = m_pCharacter->Meshes[i];
-			pCurMesh->MaterialConstant.CPU.AlbedoFactor = Vector3(1.0f);
+
+			MaterialConstants* pMaterialConstData = (MaterialConstants*)pCurMesh->MaterialConstant.pSystemMem;
+			/*pCurMesh->MaterialConstant.CPU.AlbedoFactor = Vector3(1.0f);
 			pCurMesh->MaterialConstant.CPU.RoughnessFactor = 0.8f;
-			pCurMesh->MaterialConstant.CPU.MetallicFactor = 0.0f;
+			pCurMesh->MaterialConstant.CPU.MetallicFactor = 0.0f;*/
+			pMaterialConstData->AlbedoFactor = Vector3(1.0f);
+			pMaterialConstData->RoughnessFactor = 0.8f;
+			pMaterialConstData->MetallicFactor = 0.0f;
 		}
 		m_pCharacter->UpdateWorld(Matrix::CreateScale(1.0f) * Matrix::CreateTranslation(center));
 
@@ -75,7 +80,7 @@ void DebugApp2::InitScene()
 void DebugApp2::UpdateGUI()
 {
 	BaseRenderer::UpdateGUI();
-	GlobalConstants& globalConstsCPU = m_Scene.GetGlobalConstantsCPU();
+	GlobalConstants* pGlobalConstsCPU = m_Scene.GetGlobalConstantsCPU();
 
 	ImGui::SetNextItemOpen(false, ImGuiCond_Once);
 	if (ImGui::TreeNode("General"))
@@ -98,14 +103,13 @@ void DebugApp2::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Skybox"))
 	{
-		ImGui::SliderFloat("Strength", &(globalConstsCPU.StrengthIBL), 0.0f,
-						   0.5f);
-		ImGui::RadioButton("Env", &(globalConstsCPU.TextureToDraw), 0);
+		ImGui::SliderFloat("Strength", &pGlobalConstsCPU->StrengthIBL, 0.0f, 0.5f);
+		ImGui::RadioButton("Env", &pGlobalConstsCPU->TextureToDraw, 0);
 		ImGui::SameLine();
-		ImGui::RadioButton("Specular", &(globalConstsCPU.TextureToDraw), 1);
+		ImGui::RadioButton("Specular", &pGlobalConstsCPU->TextureToDraw, 1);
 		ImGui::SameLine();
-		ImGui::RadioButton("Irradiance", &(globalConstsCPU.TextureToDraw), 2);
-		ImGui::SliderFloat("EnvLodBias", &(globalConstsCPU.EnvLODBias), 0.0f, 10.0f);
+		ImGui::RadioButton("Irradiance", &pGlobalConstsCPU->TextureToDraw, 2);
+		ImGui::SliderFloat("EnvLodBias", &pGlobalConstsCPU->EnvLODBias, 0.0f, 10.0f);
 		ImGui::TreePop();
 	}
 
@@ -145,8 +149,11 @@ void DebugApp2::UpdateGUI()
 		}
 
 		Model* pMirror = m_Scene.GetMirror();
-		ImGui::SliderFloat("Metallic", &(pMirror->Meshes[0]->MaterialConstant.CPU.MetallicFactor), 0.0f, 1.0f);
-		ImGui::SliderFloat("Roughness", &(pMirror->Meshes[0]->MaterialConstant.CPU.RoughnessFactor), 0.0f, 1.0f);
+		MaterialConstants* pMaterialConstData = (MaterialConstants*)pMirror->Meshes[0]->MaterialConstant.pSystemMem;
+		ImGui::SliderFloat("Metallic", &pMaterialConstData->MetallicFactor, 0.0f, 1.0f);
+		ImGui::SliderFloat("Roughness", &pMaterialConstData->RoughnessFactor, 0.0f, 1.0f);
+		/*ImGui::SliderFloat("Metallic", &(pMirror->Meshes[0]->MaterialConstant.CPU.MetallicFactor), 0.0f, 1.0f);
+		ImGui::SliderFloat("Roughness", &(pMirror->Meshes[0]->MaterialConstant.CPU.RoughnessFactor), 0.0f, 1.0f);*/
 
 		ImGui::TreePop();
 	}
@@ -165,15 +172,28 @@ void DebugApp2::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Material"))
 	{
-		ImGui::SliderFloat("LodBias", &(globalConstsCPU.LODBias), 0.0f, 10.0f);
+		ImGui::SliderFloat("LodBias", &pGlobalConstsCPU->LODBias, 0.0f, 10.0f);
 
 		int flag = 0;
 
-		if (m_pPickedModel != nullptr)
+		if (m_pPickedModel)
 		{
-			for (size_t i = 0, size = m_pPickedModel->Meshes.size(); i < size; ++i)
+			for (UINT64 i = 0, size = m_pPickedModel->Meshes.size(); i < size; ++i)
 			{
-				flag += ImGui::SliderFloat("Metallic", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.MetallicFactor), 0.0f, 1.0f);
+				MaterialConstants* pMaterialConstData = (MaterialConstants*)m_pPickedModel->Meshes[i]->MaterialConstant.pSystemMem;
+				MeshConstants* pMeshConstData = (MeshConstants*)m_pPickedModel->Meshes[i]->MeshConstant.pSystemMem;
+				flag += ImGui::SliderFloat("Metallic", &pMaterialConstData->MetallicFactor, 0.0f, 1.0f);
+				flag += ImGui::SliderFloat("Roughness", &pMaterialConstData->RoughnessFactor, 0.0f, 1.0f);
+				flag += ImGui::CheckboxFlags("AlbedoTexture", &pMaterialConstData->bUseAlbedoMap, 1);
+				flag += ImGui::CheckboxFlags("EmissiveTexture", &pMaterialConstData->bUseEmissiveMap, 1);
+				flag += ImGui::CheckboxFlags("Use NormalMapping", &pMaterialConstData->bUseNormalMap, 1);
+				flag += ImGui::CheckboxFlags("Use AO", &pMaterialConstData->bUseAOMap, 1);
+				flag += ImGui::CheckboxFlags("Use HeightMapping", &pMeshConstData->bUseHeightMap, 1);
+				flag += ImGui::SliderFloat("HeightScale", &pMeshConstData->HeightScale, 0.0f, 0.1f);
+				flag += ImGui::CheckboxFlags("Use MetallicMap", &pMaterialConstData->bUseMetallicMap, 1);
+				flag += ImGui::CheckboxFlags("Use RoughnessMap", &pMaterialConstData->bUseRoughnessMap, 1);
+
+				/*flag += ImGui::SliderFloat("Metallic", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.MetallicFactor), 0.0f, 1.0f);
 				flag += ImGui::SliderFloat("Roughness", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.RoughnessFactor), 0.0f, 1.0f);
 				flag += ImGui::CheckboxFlags("AlbedoTexture", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseAlbedoMap), 1);
 				flag += ImGui::CheckboxFlags("EmissiveTexture", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseEmissiveMap), 1);
@@ -182,7 +202,7 @@ void DebugApp2::UpdateGUI()
 				flag += ImGui::CheckboxFlags("Use HeightMapping", &(m_pPickedModel->Meshes[i]->MeshConstant.CPU.bUseHeightMap), 1);
 				flag += ImGui::SliderFloat("HeightScale", &(m_pPickedModel->Meshes[i]->MeshConstant.CPU.HeightScale), 0.0f, 0.1f);
 				flag += ImGui::CheckboxFlags("Use MetallicMap", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseMetallicMap), 1);
-				flag += ImGui::CheckboxFlags("Use RoughnessMap", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseRoughnessMap), 1);
+				flag += ImGui::CheckboxFlags("Use RoughnessMap", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseRoughnessMap), 1);*/
 			}
 
 			if (flag)
