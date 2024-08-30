@@ -51,7 +51,7 @@ void DebugApp::InitScene()
 
 		Vector3 center(0.0f, -0.05f, 2.0f);
 		Model* newModel = New Model;
-		newModel->Initialize(m_pDevice5, m_pContext4, meshInfos);
+		newModel->Initialize(m_pDevice, m_pContext, meshInfos);
 
 		MaterialConstants* pMaterialConstData = (MaterialConstants*)newModel->Meshes[0]->MaterialConstant.pSystemMem;
 		pMaterialConstData->bInvertNormalMapY = TRUE;
@@ -73,7 +73,7 @@ void DebugApp::InitScene()
 
 		Vector3 center(0.5f, 0.5f, 2.0f);
 		Model* newModel = New Model;
-		newModel->Initialize(m_pDevice5, m_pContext4, { meshInfo });
+		newModel->Initialize(m_pDevice, m_pContext, { meshInfo });
 		newModel->UpdateWorld(Matrix::CreateTranslation(center));
 		for (UINT64 i = 0, size = newModel->Meshes.size(); i < size; ++i)
 		{
@@ -85,7 +85,7 @@ void DebugApp::InitScene()
 			pMaterialConstData->MetallicFactor = 0.6f;
 			pMaterialConstData->RoughnessFactor = 0.2f;
 		}
-		newModel->UpdateConstantBuffers(m_pContext4);
+		newModel->UpdateConstantBuffers(m_pContext);
 		newModel->bIsPickable = true; // 마우스로 선택/이동 가능.
 		newModel->Name = "SecondSphere";
 
@@ -99,7 +99,7 @@ void DebugApp::InitScene()
 
 		Vector3 center(0.0f, 0.5f, 2.5f);
 		Model* newModel = New Model;
-		newModel->Initialize(m_pDevice5, m_pContext4, { meshInfo });
+		newModel->Initialize(m_pDevice, m_pContext, { meshInfo });
 		newModel->UpdateWorld(Matrix::CreateTranslation(center));
 		for (UINT64 i = 0, size = newModel->Meshes.size(); i < size; ++i)
 		{
@@ -111,7 +111,7 @@ void DebugApp::InitScene()
 			pMaterialConstData->MetallicFactor = 0.9f;
 			pMaterialConstData->RoughnessFactor = 0.5f;
 		}
-		newModel->UpdateConstantBuffers(m_pContext4);
+		newModel->UpdateConstantBuffers(m_pContext);
 		newModel->bIsPickable = true; // 마우스로 선택/이동 가능.
 		newModel->Name = "Box";
 
@@ -125,7 +125,7 @@ void DebugApp::InitScene()
 
 		Vector3 center(0.5f, 0.2f, -1.0f);
 		Model* newModel = New Model;
-		newModel->Initialize(m_pDevice5, m_pContext4, { meshInfo });
+		newModel->Initialize(m_pDevice, m_pContext, { meshInfo });
 		newModel->UpdateWorld(Matrix::CreateTranslation(center));
 		for (UINT64 i = 0, size = newModel->Meshes.size(); i < size; ++i)
 		{
@@ -137,7 +137,7 @@ void DebugApp::InitScene()
 			pMaeterialConstData->MetallicFactor = 0.6f;
 			pMaeterialConstData->RoughnessFactor = 0.2f;
 		}
-		newModel->UpdateConstantBuffers(m_pContext4);
+		newModel->UpdateConstantBuffers(m_pContext);
 		newModel->bIsPickable = true; // 마우스로 선택/이동 가능.
 		newModel->Name = "SecondSphere";
 
@@ -147,12 +147,12 @@ void DebugApp::InitScene()
 
 void DebugApp::Render()
 {
-	m_pTimer->Start(m_pContext4, true);
+	m_pTimer->Start(m_pContext, true);
 
 	BaseRenderer::Render();
 
 	OutputDebugStringA("Rendering time ==> ");
-	m_pTimer->End(m_pContext4);
+	m_pTimer->End(m_pContext);
 }
 
 void DebugApp::UpdateGUI()
@@ -171,7 +171,7 @@ void DebugApp::UpdateGUI()
 		{
 			destroyBuffersForRendering();
 			createBuffers();
-			m_PostProcessor.Initialize(m_pDevice5, m_pContext4,
+			m_PostProcessor.Initialize(m_pDevice, m_pContext,
 									   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, m_FloatBuffer.pTexture, m_ResolvedBuffer.pTexture, m_PrevBuffer.pTexture, m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV() },
 									   m_ScreenWidth, m_ScreenHeight, 4);
 		}
@@ -273,7 +273,7 @@ void DebugApp::UpdateGUI()
 			}
 			if (flag)
 			{
-				m_pPickedModel->UpdateConstantBuffers(m_pContext4);
+				m_pPickedModel->UpdateConstantBuffers(m_pContext);
 			}
 			ImGui::Checkbox("Draw Normals", &(m_pPickedModel->bDrawNormals));
 		}

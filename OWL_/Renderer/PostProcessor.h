@@ -51,7 +51,7 @@ public:
 	ImageFilter CombineFilter;
 	int CombineUpdateFlag = 0;
 
-	struct Mesh* pMesh = nullptr;
+	Mesh* pMesh = nullptr;
 
 private:
 	D3D11_VIEWPORT m_Viewport = { 0, };

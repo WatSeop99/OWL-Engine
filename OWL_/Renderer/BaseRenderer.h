@@ -40,6 +40,7 @@ public:
 
 	inline float GetAspectRatio() const { return (float)m_ScreenWidth / (float)m_ScreenHeight; }
 
+
 	void SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU, UINT slot);
 	void SetPipelineState(const GraphicsPSO& PSO);
 	void SetPipelineState(const ComputePSO& PSO);
@@ -71,12 +72,9 @@ protected:
 	DXGI_FORMAT m_BackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	D3D11_VIEWPORT m_ScreenViewport = { 0, };
 
-	ID3D11Device* m_pDevice = nullptr;
-	ID3D11Device5* m_pDevice5 = nullptr;
-	ID3D11DeviceContext* m_pContext = nullptr;
-	ID3D11DeviceContext4* m_pContext4 = nullptr;
-	IDXGISwapChain* m_pSwapChain = nullptr;
-	IDXGISwapChain4* m_pSwapChain4 = nullptr;
+	ID3D11Device5* m_pDevice = nullptr;
+	ID3D11DeviceContext4* m_pContext = nullptr;
+	IDXGISwapChain4* m_pSwapChain = nullptr;
 
 	ID3D11Texture2D* m_pBackBuffer = nullptr;
 	ID3D11RenderTargetView* m_pBackBufferRTV = nullptr;

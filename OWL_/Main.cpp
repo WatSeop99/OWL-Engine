@@ -18,7 +18,7 @@ void CheckD3DMemoryLeak()
 	GetDebugInterface(IID_PPV_ARGS(&pDebug));
 
 	OutputDebugStringW(L"================================== Direct3D Object Memory Leak List ==================================\n");
-	pDebug->ReportLiveObjects(DXGI_DEBUG_D3D11, DXGI_DEBUG_RLO_DETAIL);
+	pDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_DETAIL);
 	OutputDebugStringW(L"===========================================================================================\n");
 
 	pDebug->Release();

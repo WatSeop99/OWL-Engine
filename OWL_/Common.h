@@ -48,6 +48,7 @@
 #include <dxgi1_5.h>
 #include <dxgi1_3.h>
 #include <d3dcompiler.h>
+#include <dxgidebug.h>
 #include <DirectXColors.h>
 #include <DirectXPackedVector.h>
 

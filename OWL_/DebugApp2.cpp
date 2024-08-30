@@ -57,7 +57,7 @@ void DebugApp2::InitScene()
 
 		Vector3 center(0.0f, 0.0f, 2.0f);
 		m_pCharacter = New SkinnedMeshModel;
-		m_pCharacter->Initialize(m_pDevice5, m_pContext4, meshInfos, aniData);
+		m_pCharacter->Initialize(m_pDevice, m_pContext, meshInfos, aniData);
 		for (UINT64 i = 0, size = m_pCharacter->Meshes.size(); i < size; ++i)
 		{
 			Mesh* pCurMesh = m_pCharacter->Meshes[i];
@@ -93,7 +93,7 @@ void DebugApp2::UpdateGUI()
 		{
 			BaseRenderer::destroyBuffersForRendering();
 			BaseRenderer::createBuffers();
-			m_PostProcessor.Initialize(m_pDevice5, m_pContext4,
+			m_PostProcessor.Initialize(m_pDevice, m_pContext,
 									   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, m_FloatBuffer.pTexture, m_ResolvedBuffer.pTexture, m_PrevBuffer.pTexture, m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV() },
 									   m_ScreenWidth, m_ScreenHeight, 4);
 		}
@@ -207,7 +207,7 @@ void DebugApp2::UpdateGUI()
 
 			if (flag)
 			{
-				m_pPickedModel->UpdateConstantBuffers(m_pContext4);
+				m_pPickedModel->UpdateConstantBuffers(m_pContext);
 			}
 			ImGui::Checkbox("Draw Normals", &(m_pPickedModel->bDrawNormals));
 		}
@@ -311,17 +311,17 @@ void DebugApp2::Update(float deltaTime)
 		break;
 	}
 
-	m_pCharacter->UpdateAnimation(m_pContext4, s_State, s_FrameCount);
+	m_pCharacter->UpdateAnimation(m_pContext, s_State, s_FrameCount);
 
 	++s_FrameCount;
 }
 
 void DebugApp2::Render()
 {
-	m_pTimer->Start(m_pContext4, true);
+	m_pTimer->Start(m_pContext, true);
 
 	BaseRenderer::Render();
 
 	OutputDebugStringA("Rendering time ==> ");
-	m_pTimer->End(m_pContext4);
+	m_pTimer->End(m_pContext);
 }

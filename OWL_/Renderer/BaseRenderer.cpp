@@ -38,8 +38,8 @@ BaseRenderer::~BaseRenderer()
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
-	m_pContext4->OMSetRenderTargets(0, nullptr, nullptr);
-	m_pContext4->Flush();
+	m_pContext->OMSetRenderTargets(0, nullptr, nullptr);
+	m_pContext->Flush();
 
 	DestroyCommonStates();
 
@@ -54,14 +54,10 @@ BaseRenderer::~BaseRenderer()
 	SAFE_RELEASE(m_pBackBufferRTV);
 	SAFE_RELEASE(m_pBackBuffer);
 	SAFE_RELEASE(m_pSwapChain);
-	SAFE_RELEASE(m_pSwapChain4);
 	SAFE_RELEASE(m_pContext);
-	SAFE_RELEASE(m_pContext4);
 	SAFE_RELEASE(m_pDevice);
-	SAFE_RELEASE(m_pDevice5);
 
 	DestroyWindow(m_hMainWindow);
-	// UnregisterClass(wc.lpszClassName, wc.hInstance); //생략
 }
 
 int BaseRenderer::Run()
@@ -95,15 +91,15 @@ void BaseRenderer::Initialize()
 	initGUI();
 
 	// Timer setting.
-	m_pTimer = New Timer(m_pDevice5);
+	m_pTimer = New Timer(m_pDevice);
 
 	_ASSERT(m_pTimer != nullptr);
-	m_pTimer->Start(m_pContext4, false);
+	m_pTimer->Start(m_pContext, false);
 
 	InitScene();
 
 	// postprocessor 초기화.
-	m_PostProcessor.Initialize(m_pDevice5, m_pContext4,
+	m_PostProcessor.Initialize(m_pDevice, m_pContext,
 							   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, m_FloatBuffer.pTexture, m_ResolvedBuffer.pTexture, m_PrevBuffer.pTexture, m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV() },
 							   m_ScreenWidth, m_ScreenHeight, 4);
 
@@ -111,14 +107,14 @@ void BaseRenderer::Initialize()
 	SetForegroundWindow(m_hMainWindow);
 
 	OutputDebugStringA("Renderer intialize time ==> ");
-	m_pTimer->End(m_pContext4);
+	m_pTimer->End(m_pContext);
 }
 
 // 여러 예제들이 공통적으로 사용하기 좋은 장면 설정
 void BaseRenderer::InitScene()
 {
-	m_Scene.Initialize(m_pDevice5, m_pContext4);
-	m_Scene.ResetBuffers(m_pDevice5, m_bUseMSAA, m_NumQualityLevels);
+	m_Scene.Initialize(m_pDevice, m_pContext);
+	m_Scene.ResetBuffers(m_pDevice, m_bUseMSAA, m_NumQualityLevels);
 
 	// 커서 표시 (Main sphere와의 충돌이 감지되면 월드 공간에 작게 그려지는 구).
 	{
@@ -126,7 +122,7 @@ void BaseRenderer::InitScene()
 		MakeSphere(&sphere, 0.01f, 10, 10);
 
 		m_pCursorSphere = New Model;
-		m_pCursorSphere->Initialize(m_pDevice5, m_pContext4, { sphere });
+		m_pCursorSphere->Initialize(m_pDevice, m_pContext, { sphere });
 		m_pCursorSphere->bIsVisible = false; // 마우스가 눌렸을 때만 보임
 		m_pCursorSphere->bCastShadow = false; // 그림자 X
 
@@ -163,10 +159,10 @@ void BaseRenderer::Update(float deltaTime)
 	ProcessMouseControl();
 
 	// 전체 씬 업데이트.
-	m_Scene.Update(m_pContext4, deltaTime);
+	m_Scene.Update(m_pContext, deltaTime);
 
 	// 후처리 프로세서 업데이트.
-	m_PostProcessor.Update(m_pContext4);
+	m_PostProcessor.Update(m_pContext);
 }
 
 void BaseRenderer::RenderGUI()
@@ -183,8 +179,8 @@ void BaseRenderer::RenderGUI()
 
 void BaseRenderer::Render()
 {
-	m_Scene.Render(m_pContext4);
-	m_PostProcessor.Render(m_pContext4);
+	m_Scene.Render(m_pContext);
+	m_PostProcessor.Render(m_pContext);
 	RenderGUI(); // 추후 editor/game 모드를 설정하여 따로 렌더링하도록 구상.
 }
 
@@ -229,7 +225,7 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_SIZE:
 		{
 			// 화면 해상도가 바뀌면 SwapChain을 다시 생성.
-			if (m_pSwapChain4)
+			if (m_pSwapChain)
 			{
 				m_ScreenWidth = (int)LOWORD(lParam);
 				m_ScreenHeight = (int)HIWORD(lParam);
@@ -250,7 +246,7 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 					// 기존 버퍼 초기화.
 					destroyBuffersForRendering();
-					m_pSwapChain4->ResizeBuffers(0,                  // 현재 개수 유지.
+					m_pSwapChain->ResizeBuffers(0,                  // 현재 개수 유지.
 												 m_ScreenWidth,		 // 해상도 변경.
 												 m_ScreenHeight,
 												 DXGI_FORMAT_UNKNOWN, // 현재 포맷 유지.
@@ -260,10 +256,10 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					createBuffers();
 					m_Scene.SetScreenWidth(m_ScreenWidth);
 					m_Scene.SetScreenHeight(m_ScreenHeight);
-					m_Scene.ResetBuffers(m_pDevice5, m_bUseMSAA, m_NumQualityLevels);
+					m_Scene.ResetBuffers(m_pDevice, m_bUseMSAA, m_NumQualityLevels);
 					setMainViewport();
 					m_Camera.SetAspectRatio(GetAspectRatio());
-					m_PostProcessor.Initialize(m_pDevice5, m_pContext4,
+					m_PostProcessor.Initialize(m_pDevice, m_pContext,
 											   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, m_FloatBuffer.pTexture, m_ResolvedBuffer.pTexture, m_PrevBuffer.pTexture, m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV() },
 											   m_ScreenWidth, m_ScreenHeight, 4);
 				}
@@ -342,8 +338,8 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (wParam == 'C') // c키 화면 캡쳐.
 			{
 				ID3D11Texture2D* pBackBuffer = nullptr;
-				m_pSwapChain4->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
-				WriteToPngFile(m_pDevice5, m_pContext4, pBackBuffer, L"captured.png");
+				m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
+				WriteToPngFile(m_pDevice, m_pContext, pBackBuffer, L"captured.png");
 				RELEASE(pBackBuffer);
 			}
 			if (wParam == 'P') // 애니메이션 일시중지할 때 사용.
@@ -377,34 +373,34 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 void BaseRenderer::SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU, UINT slot)
 {
 	// 쉐이더와 일관성 유지 cbuffer GlobalConstants : register(b0).
-	m_pContext4->VSSetConstantBuffers(slot, 1, ppGlobalConstsGPU);
-	m_pContext4->PSSetConstantBuffers(slot, 1, ppGlobalConstsGPU);
-	m_pContext4->GSSetConstantBuffers(slot, 1, ppGlobalConstsGPU);
+	m_pContext->VSSetConstantBuffers(slot, 1, ppGlobalConstsGPU);
+	m_pContext->PSSetConstantBuffers(slot, 1, ppGlobalConstsGPU);
+	m_pContext->GSSetConstantBuffers(slot, 1, ppGlobalConstsGPU);
 }
 
 void BaseRenderer::SetPipelineState(const GraphicsPSO& PSO)
 {
-	m_pContext4->VSSetShader(PSO.pVertexShader, nullptr, 0);
-	m_pContext4->PSSetShader(PSO.pPixelShader, nullptr, 0);
-	m_pContext4->HSSetShader(PSO.pHullShader, nullptr, 0);
-	m_pContext4->DSSetShader(PSO.pDomainShader, nullptr, 0);
-	m_pContext4->GSSetShader(PSO.pGeometryShader, nullptr, 0);
-	m_pContext4->CSSetShader(nullptr, nullptr, 0);
-	m_pContext4->IASetInputLayout(PSO.pInputLayout);
-	m_pContext4->RSSetState(PSO.pRasterizerState);
-	m_pContext4->OMSetBlendState(PSO.pBlendState, PSO.BlendFactor, 0xffffffff);
-	m_pContext4->OMSetDepthStencilState(PSO.pDepthStencilState, PSO.StencilRef);
-	m_pContext4->IASetPrimitiveTopology(PSO.PrimitiveTopology);
+	m_pContext->VSSetShader(PSO.pVertexShader, nullptr, 0);
+	m_pContext->PSSetShader(PSO.pPixelShader, nullptr, 0);
+	m_pContext->HSSetShader(PSO.pHullShader, nullptr, 0);
+	m_pContext->DSSetShader(PSO.pDomainShader, nullptr, 0);
+	m_pContext->GSSetShader(PSO.pGeometryShader, nullptr, 0);
+	m_pContext->CSSetShader(nullptr, nullptr, 0);
+	m_pContext->IASetInputLayout(PSO.pInputLayout);
+	m_pContext->RSSetState(PSO.pRasterizerState);
+	m_pContext->OMSetBlendState(PSO.pBlendState, PSO.BlendFactor, 0xffffffff);
+	m_pContext->OMSetDepthStencilState(PSO.pDepthStencilState, PSO.StencilRef);
+	m_pContext->IASetPrimitiveTopology(PSO.PrimitiveTopology);
 }
 
 void BaseRenderer::SetPipelineState(const ComputePSO& PSO)
 {
-	m_pContext4->VSSetShader(nullptr, nullptr, 0);
-	m_pContext4->PSSetShader(nullptr, nullptr, 0);
-	m_pContext4->HSSetShader(nullptr, nullptr, 0);
-	m_pContext4->DSSetShader(nullptr, nullptr, 0);
-	m_pContext4->GSSetShader(nullptr, nullptr, 0);
-	m_pContext4->CSSetShader(PSO.pComputeShader, nullptr, 0);
+	m_pContext->VSSetShader(nullptr, nullptr, 0);
+	m_pContext->PSSetShader(nullptr, nullptr, 0);
+	m_pContext->HSSetShader(nullptr, nullptr, 0);
+	m_pContext->DSSetShader(nullptr, nullptr, 0);
+	m_pContext->GSSetShader(nullptr, nullptr, 0);
+	m_pContext->CSSetShader(PSO.pComputeShader, nullptr, 0);
 }
 
 Model* BaseRenderer::PickClosest(const Ray& PICKNG_RAY, float* pMinDist)
@@ -526,7 +522,7 @@ void BaseRenderer::ProcessMouseControl()
 		s_pActiveModel = nullptr;
 	}
 
-	if (s_pActiveModel != nullptr)
+	if (s_pActiveModel)
 	{
 		Vector3 translation = s_pActiveModel->World.Translation();
 		s_pActiveModel->World.Translation(Vector3(0.0f));
@@ -577,7 +573,7 @@ void BaseRenderer::initMainWindow()
 								 wr.bottom - wr.top, // 윈도우 세로 방향 해상도
 								 NULL, NULL, wc.hInstance, NULL);
 
-	if (m_hMainWindow == nullptr)
+	if (!m_hMainWindow)
 	{
 		__debugbreak();
 	}
@@ -620,6 +616,9 @@ void BaseRenderer::initDirect3D()
 		UINT adapterIndex = 0;
 		while (pFactory->EnumAdapters1(adapterIndex, (IDXGIAdapter1**)&pAdapter) != DXGI_ERROR_NOT_FOUND)
 		{
+			ID3D11Device* pDevice = nullptr;
+			ID3D11DeviceContext* pContext = nullptr;
+
 			pAdapter->GetDesc2(&m_AdapterDesc);
 			hr = D3D11CreateDevice(pAdapter,
 								   DRIVER_TYPE,
@@ -627,14 +626,19 @@ void BaseRenderer::initDirect3D()
 								   0,
 								   FEATURE_LEVELS, numFeatureLevels,
 								   D3D11_SDK_VERSION,
-								   &m_pDevice, &m_FeatureLevel, &m_pContext);
+								   &pDevice, &m_FeatureLevel, &pContext);
 			if (SUCCEEDED(hr))
 			{
-				m_pDevice->QueryInterface(IID_PPV_ARGS(&m_pDevice5));
-				m_pContext->QueryInterface(IID_PPV_ARGS(&m_pContext4));
+				pDevice->QueryInterface(IID_PPV_ARGS(&m_pDevice));
+				pDevice->Release();
+				pContext->QueryInterface(IID_PPV_ARGS(&m_pContext));
+				pContext->Release();
+
 				goto LB_EXIT;
 			}
 
+			SAFE_RELEASE(pDevice);
+			SAFE_RELEASE(pContext);
 			RELEASE(pAdapter);
 			++adapterIndex;
 		}
@@ -646,7 +650,6 @@ LB_EXIT:
 		DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
 		swapChainDesc.Width = m_ScreenWidth;
 		swapChainDesc.Height = m_ScreenHeight;
-		// swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		swapChainDesc.Format = DXGI_FORMAT_R10G10B10A2_UNORM;
 		//swapChainDesc.BufferDesc.RefreshRate.Numerator = m_uiRefreshRate;
 		//swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
@@ -676,22 +679,21 @@ LB_EXIT:
 		fsSwapChainDesc.Windowed = TRUE;
 
 		IDXGISwapChain1* pSwapChain1 = nullptr;
-		hr = pFactory->CreateSwapChainForHwnd(m_pDevice5, m_hMainWindow, &swapChainDesc, &fsSwapChainDesc, nullptr, &pSwapChain1);
+		hr = pFactory->CreateSwapChainForHwnd(m_pDevice, m_hMainWindow, &swapChainDesc, &fsSwapChainDesc, nullptr, &pSwapChain1);
 		BREAK_IF_FAILED(hr);
 
-		pSwapChain1->QueryInterface(IID_PPV_ARGS(&m_pSwapChain4));
 		pSwapChain1->QueryInterface(IID_PPV_ARGS(&m_pSwapChain));
-		RELEASE(pSwapChain1);
+		pSwapChain1->Release();
 
 		m_BackBufferFormat = swapChainDesc.Format;
 	}
 
-	InitCommonStates(m_pDevice5);
+	InitCommonStates(m_pDevice);
 	createBuffers();
 	setMainViewport();
 
-	RELEASE(pFactory);
-	RELEASE(pAdapter);
+	pFactory->Release();
+	pAdapter->Release();
 }
 
 void BaseRenderer::initGUI()
@@ -704,7 +706,7 @@ void BaseRenderer::initGUI()
 	ImGui::StyleColorsLight();
 
 	// Setup Platform/Renderer backends
-	if (!ImGui_ImplDX11_Init(m_pDevice5, m_pContext4))
+	if (!ImGui_ImplDX11_Init(m_pDevice, m_pContext))
 	{
 		__debugbreak();
 	}
@@ -721,20 +723,20 @@ void BaseRenderer::createBuffers()
 	HRESULT hr = S_OK;
 
 	// BackBuffer는 화면으로 최종 출력. (SRV는 불필요)
-	hr = m_pSwapChain4->GetBuffer(0, IID_PPV_ARGS(&m_pBackBuffer));
+	hr = m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&m_pBackBuffer));
 	BREAK_IF_FAILED(hr);
 
-	hr = m_pDevice5->CreateRenderTargetView(m_pBackBuffer, nullptr, &m_pBackBufferRTV);
+	hr = m_pDevice->CreateRenderTargetView(m_pBackBuffer, nullptr, &m_pBackBufferRTV);
 	BREAK_IF_FAILED(hr);
 
 	// 이전 프레임 저장용.
 	D3D11_TEXTURE2D_DESC desc = {};
 	m_pBackBuffer->GetDesc(&desc);
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-	m_PrevBuffer.Initialize(m_pDevice5, desc);
+	m_PrevBuffer.Initialize(m_pDevice, desc);
 
 	// FLOAT MSAA RenderTargetView/ShaderResourceView.
-	hr = m_pDevice5->CheckMultisampleQualityLevels(DXGI_FORMAT_R16G16B16A16_FLOAT, 4, &m_NumQualityLevels);
+	hr = m_pDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_R16G16B16A16_FLOAT, 4, &m_NumQualityLevels);
 	BREAK_IF_FAILED(hr);
 
 	desc.MipLevels = desc.ArraySize = 1;
@@ -753,15 +755,15 @@ void BaseRenderer::createBuffers()
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 	desc.MiscFlags = 0;
 	desc.CPUAccessFlags = 0;
-	m_FloatBuffer.Initialize(m_pDevice5, desc);
+	m_FloatBuffer.Initialize(m_pDevice, desc);
 
 	// FLOAT MSAA를 Relsolve해서 저장할 SRV/RTV.
 	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET | D3D11_BIND_UNORDERED_ACCESS;
-	m_ResolvedBuffer.Initialize(m_pDevice5, desc);
+	m_ResolvedBuffer.Initialize(m_pDevice, desc);
 
-	m_Scene.ResetBuffers(m_pDevice5, m_bUseMSAA, m_NumQualityLevels);
+	m_Scene.ResetBuffers(m_pDevice, m_bUseMSAA, m_NumQualityLevels);
 }
 
 void BaseRenderer::setMainViewport()
@@ -775,7 +777,7 @@ void BaseRenderer::setMainViewport()
 	m_ScreenViewport.MinDepth = 0.0f;
 	m_ScreenViewport.MaxDepth = 1.0f;
 
-	m_pContext4->RSSetViewports(1, &m_ScreenViewport);
+	m_pContext->RSSetViewports(1, &m_ScreenViewport);
 }
 
 void BaseRenderer::setComputeShaderBarrier()
@@ -783,8 +785,8 @@ void BaseRenderer::setComputeShaderBarrier()
 	// 예제들에서 최대 사용하는 SRV, UAV 갯수가 6개.
 	ID3D11ShaderResourceView* ppNullSRVs[6] = { nullptr, };
 	ID3D11UnorderedAccessView* ppNullUAVs[6] = { nullptr, };
-	m_pContext4->CSSetShaderResources(0, 6, ppNullSRVs);
-	m_pContext4->CSSetUnorderedAccessViews(0, 6, ppNullUAVs, nullptr);
+	m_pContext->CSSetShaderResources(0, 6, ppNullSRVs);
+	m_pContext->CSSetUnorderedAccessViews(0, 6, ppNullUAVs, nullptr);
 }
 
 void BaseRenderer::destroyBuffersForRendering()
