@@ -5,7 +5,7 @@
 
 void SkinnedMeshModel::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const std::vector<MeshInfo>& MESHES, const AnimationData& ANIM_DATA)
 {
-	InitAnimationData(pDevice, ANIM_DATA);
+	InitAnimationData(pDevice, pContext, ANIM_DATA);
 	Model::Initialize(pDevice, pContext, MESHES);
 }
 
@@ -27,9 +27,10 @@ void SkinnedMeshModel::InitMeshBuffers(ID3D11Device* pDevice, const MeshInfo& ME
 	pNewMesh->Stride = sizeof(SkinnedVertex);
 }
 
-void SkinnedMeshModel::InitAnimationData(ID3D11Device* pDevice, const AnimationData& ANIM_DATA)
+void SkinnedMeshModel::InitAnimationData(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const AnimationData& ANIM_DATA)
 {
 	_ASSERT(pDevice);
+	_ASSERT(pContext);
 
 	if (ANIM_DATA.Clips.empty())
 	{
@@ -40,14 +41,10 @@ void SkinnedMeshModel::InitAnimationData(ID3D11Device* pDevice, const AnimationD
 
 	// 여기서는 AnimationClip이 SkinnedMesh라고 가정.
 	// 일반적으로 모든 Animation이 SkinnedMesh Animation은 아님.
-	BoneTransforms.CPU.resize(ANIM_DATA.Clips[0].Keys.size()); // 뼈의 수.
-
-	// 주의: 모든 Keys()의 갯수가 동일하지 않을 수 있음.
-	for (UINT64 i = 0, size = ANIM_DATA.Clips[0].Keys.size(); i < size; ++i)
-	{
-		BoneTransforms.CPU[i] = Matrix();
-	}
-	BoneTransforms.Initialize(pDevice);
+	
+	const UINT64 TOTAL_BONE_COUNT = ANIM_DATA.BoneNameToID.size(); // 뼈의 수.
+	std::vector<Matrix> initData(TOTAL_BONE_COUNT);
+	BoneTransforms.Initialize(pDevice, pContext, sizeof(Matrix), TOTAL_BONE_COUNT, initData.data());
 }
 
 void SkinnedMeshModel::UpdateAnimation(ID3D11DeviceContext* pContext, const int CLIP_ID, const int FRAME)
@@ -56,11 +53,12 @@ void SkinnedMeshModel::UpdateAnimation(ID3D11DeviceContext* pContext, const int 
 
 	CharacterAnimaionData.Update(CLIP_ID, FRAME);
 
-	for (UINT64 i = 0, size = BoneTransforms.CPU.size(); i < size; ++i)
+	Matrix* pBoneTransformData = (Matrix*)BoneTransforms.pSystemMem;
+	for (UINT64 i = 0, size = CharacterAnimaionData.BoneIDToNames.size(); i < size; ++i)
 	{
-		BoneTransforms.CPU[i] = CharacterAnimaionData.Get(CLIP_ID, i, FRAME).Transpose();
+		pBoneTransformData[i] = CharacterAnimaionData.Get(CLIP_ID, i, FRAME).Transpose();
 	}
-	BoneTransforms.Upload(pContext);
+	BoneTransforms.Upload();
 }
 
 void SkinnedMeshModel::Render(ID3D11DeviceContext* pContext)

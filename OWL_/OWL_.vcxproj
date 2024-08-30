@@ -194,6 +194,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Graphics\ShadowMap.cpp" />
+    <ClCompile Include="Renderer\StructuredBuffer.cpp" />
     <ClCompile Include="Renderer\Texture3D.cpp" />
     <ClCompile Include="Renderer\Timer.cpp" />
     <ClCompile Include="DebugApp.cpp" />

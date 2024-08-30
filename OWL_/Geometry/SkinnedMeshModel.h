@@ -12,7 +12,7 @@ public:
 
 	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const std::vector<MeshInfo>& MESHES, const AnimationData& ANIM_DATA);
 	void InitMeshBuffers(ID3D11Device* pDevice, const MeshInfo& MESH_DATA, Mesh* pNewMesh) override;
-	void InitAnimationData(ID3D11Device* pDevice, const AnimationData& ANIM_DATA);
+	void InitAnimationData(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const AnimationData& ANIM_DATA);
 
 	void UpdateAnimation(ID3D11DeviceContext* pContext, const int CLIP_ID, const int FRAME) override;
 
@@ -26,6 +26,7 @@ public:
 	inline GraphicsPSO& GetReflectPSO(const bool bWIRED) override { return (bWIRED ? g_ReflectSkinnedWirePSO : g_ReflectSkinnedSolidPSO); }
 
 public:
-	StructuredBuffer<Matrix> BoneTransforms;
+	//StructuredBuffer<Matrix> BoneTransforms;
+	StructuredBuffer BoneTransforms;
 	AnimationData CharacterAnimaionData;
 };

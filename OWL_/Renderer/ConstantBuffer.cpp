@@ -20,7 +20,6 @@ void ConstantBuffer::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCon
 	{
 		__debugbreak();
 	}
-
 	if (pInitData)
 	{
 		memcpy(pSystemMem, pInitData, CBSize);
@@ -65,7 +64,6 @@ void ConstantBuffer::Cleanup()
 	}
 	m_CBSize = 0;
 	SAFE_RELEASE(pBuffer);
-
 	SAFE_RELEASE(m_pDevice);
 	SAFE_RELEASE(m_pContext);
 }
