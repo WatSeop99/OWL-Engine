@@ -83,14 +83,13 @@ HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWid
 		pFileName[0] = '\0';
 	}
 
-	UCHAR* pImg = stbi_load(pFileName, pWidth, pHeight, &channels, 0);
+	BYTE* pImg = stbi_load(pFileName, pWidth, pHeight, &channels, 0);
 
 	// 4채널로 만들어 복사.
 	image.resize((*pWidth) * (*pHeight) * 4);
 	switch (channels)
 	{
 		case 1:
-		{
 			for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
 			{
 				UINT8 g = pImg[i * channels];
@@ -99,11 +98,9 @@ HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWid
 					image[4 * i + c] = g;
 				}
 			}
-		}
 			break;
 
 		case 2:
-		{
 			for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
 			{
 				for (int c = 0; c < 2; ++c)
@@ -113,11 +110,9 @@ HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWid
 				image[4 * i + 2] = 255;
 				image[4 * i + 3] = 255;
 			}
-		}
 			break;
 
 		case 3:
-		{
 			for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
 			{
 				for (int c = 0; c < 3; ++c)
@@ -126,11 +121,9 @@ HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWid
 				}
 				image[4 * i + 3] = 255;
 			}
-		}
 			break;
 
 		case 4:
-		{
 			for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
 			{
 				for (int c = 0; c < 4; ++c)
@@ -138,7 +131,6 @@ HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWid
 					image[4 * i + c] = pImg[i * channels + c];
 				}
 			}
-		}
 			break;
 
 		default:
@@ -151,18 +143,18 @@ HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWid
 	return hr;
 }
 
-HRESULT ReadImage(const wchar_t* pszAlbedoFileName, const wchar_t* pszOpacityFileName, std::vector<uint8_t>& image, int* pWidth, int* pHeight)
+HRESULT ReadImage(const WCHAR* pszAlbedoFileName, const WCHAR* pszOpacityFileName, std::vector<UINT8>& image, int* pWidth, int* pHeight)
 {
-	std::vector<uint8_t> opacityImage;
+	std::vector<UINT8> opacityImage;
 	HRESULT hr = ReadImage(pszAlbedoFileName, image, pWidth, pHeight);
 	if (FAILED(hr))
 	{
 		goto LB_RET;
 	}
 
+
 	int opaWidth = 0;
 	int opaHeight = 0;
-
 	hr = ReadImage(pszOpacityFileName, opacityImage, &opaWidth, &opaHeight);
 	if (FAILED(hr))
 	{
@@ -622,7 +614,7 @@ HRESULT CreateTexture(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, cons
 
 	int width = 0;
 	int height = 0;
-	std::vector<uint8_t> image;
+	std::vector<UINT8> image;
 	DXGI_FORMAT pixelFormat = (bUSE_SRGB ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM);
 
 	if (GetFileExtension(pszFileName).compare(L"exr") == 0)
@@ -657,7 +649,7 @@ HRESULT CreateTexture(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, cons
 
 	int width = 0;
 	int height = 0;
-	std::vector<uint8_t> image;
+	std::vector<UINT8> image;
 	DXGI_FORMAT pixelFormat = (bUSE_SRGB ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM);
 
 	hr = ReadImage(pszAlbedoFileName, pszOpacityFileName, image, &width, &height);

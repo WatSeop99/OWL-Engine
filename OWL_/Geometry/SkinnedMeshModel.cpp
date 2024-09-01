@@ -21,10 +21,10 @@ void SkinnedMeshModel::InitMeshBuffers(const MeshInfo& MESH_DATA, Mesh* pNewMesh
 	HRESULT hr = S_OK;
 	ID3D11Device* pDevice = m_pRenderer->GetDevice();
 
-	hr = CreateVertexBuffer(pDevice, MESH_DATA.SkinnedVertices, &(pNewMesh->pVertexBuffer));
+	hr = CreateVertexBuffer(pDevice, MESH_DATA.SkinnedVertices, &pNewMesh->pVertexBuffer);
 	BREAK_IF_FAILED(hr);
 
-	hr = CreateIndexBuffer(pDevice, MESH_DATA.Indices, &(pNewMesh->pIndexBuffer));
+	hr = CreateIndexBuffer(pDevice, MESH_DATA.Indices, &pNewMesh->pIndexBuffer);
 	BREAK_IF_FAILED(hr);
 
 	pNewMesh->IndexCount = (UINT)MESH_DATA.Indices.size();

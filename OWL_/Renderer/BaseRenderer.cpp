@@ -49,6 +49,11 @@ BaseRenderer::~BaseRenderer()
 		delete m_pTimer;
 		m_pTimer = nullptr;
 	}
+	if (m_pResourceManager)
+	{
+		delete m_pResourceManager;
+		m_pResourceManager = nullptr;
+	}
 
 	m_pCursorSphere = nullptr;
 
@@ -94,8 +99,11 @@ void BaseRenderer::Initialize()
 	// Timer setting.
 	m_pTimer = New Timer(m_pDevice);
 
-	_ASSERT(m_pTimer != nullptr);
-	m_pTimer->Start(m_pContext, false);
+	m_pResourceManager = New ResourceManager();
+	m_pResourceManager->Initialize(m_pDevice, m_pContext);
+
+	/*_ASSERT(m_pTimer);
+	m_pTimer->Start(m_pContext, false);*/
 
 	InitScene();
 
@@ -107,8 +115,8 @@ void BaseRenderer::Initialize()
 	// 콘솔창이 렌더링 창을 덮는 것을 방지.
 	SetForegroundWindow(m_hMainWindow);
 
-	OutputDebugStringA("Renderer intialize time ==> ");
-	m_pTimer->End(m_pContext);
+	/*OutputDebugStringA("Renderer intialize time ==> ");
+	m_pTimer->End(m_pContext);*/
 }
 
 // 여러 예제들이 공통적으로 사용하기 좋은 장면 설정

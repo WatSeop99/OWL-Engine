@@ -2,7 +2,7 @@
 #include "../Graphics/GraphicsUtils.h"
 #include "Texture.h"
 
-void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE2D_DESC& DESC, void* pInitData, bool bCPUAccessable)
+void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE2D_DESC& DESC, void* pInitData)
 {
 	_ASSERT(pDevice);
 	_ASSERT(pContext);
@@ -11,18 +11,13 @@ void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, c
 	m_pDevice->AddRef();
 	m_pContext = pContext;
 	m_pContext->AddRef();
-
-	m_Texture2DDesc = DESC;
+	
+	memcpy(&m_Texture2DDesc, &DESC, sizeof(D3D11_TEXTURE2D_DESC));
 	m_eTextureType = TextureType_Texture2D;
-	m_bCPUAccessable = bCPUAccessable;
-
-	if (bCPUAccessable)
-	{
-		createStagingTexture(pInitData);
-	}
 
 	// Create texture resources.
 	createTexture();
+	createStagingTexture(pInitData);
 	if (m_Texture2DDesc.BindFlags & D3D11_BIND_RENDER_TARGET)
 	{
 		createRenderTargetView();
@@ -41,7 +36,7 @@ void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, c
 	}
 }
 
-void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE3D_DESC& DESC, void* pInitData, bool bCPUAccessable)
+void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE3D_DESC& DESC, void* pInitData)
 {
 	_ASSERT(pDevice);
 	_ASSERT(pContext);
@@ -51,17 +46,12 @@ void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, c
 	m_pContext = pContext;
 	m_pContext->AddRef();
 
-	m_Texture3DDesc = DESC;
+	memcpy(&m_Texture3DDesc, &DESC, sizeof(D3D11_TEXTURE3D_DESC));
 	m_eTextureType = TextureType_Texture3D;
-	m_bCPUAccessable = bCPUAccessable;
-
-	if (bCPUAccessable)
-	{
-		createStagingTexture(pInitData);
-	}
 
 	// Create texture resources.
 	createTexture();
+	createStagingTexture(pInitData);
 	if (m_Texture3DDesc.BindFlags & D3D11_BIND_RENDER_TARGET)
 	{
 		createRenderTargetView();
@@ -82,15 +72,62 @@ void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, c
 
 void Texture::Upload()
 {
+	_ASSERT(m_pContext);
+	_ASSERT(pSystemMem);
 
+	if (m_eTextureType == TextureType_Texture2D)
+	{
+		_ASSERT(m_pTexture2D);
+		_ASSERT(m_pStagingTexture2D);
+
+		const UINT64 PIXEL_SIZE = GetPixelSize(m_Texture2DDesc.Format);
+
+		D3D11_MAPPED_SUBRESOURCE mappedResource = {};
+		m_pContext->Map(m_pStagingTexture2D, 0, D3D11_MAP_WRITE, 0, &mappedResource);
+
+		const UINT8* pSRC = (UINT8*)pSystemMem;
+		UINT8* pDst = (UINT8*)mappedResource.pData;
+		for (UINT i = 0; i < m_Texture2DDesc.Height; ++i)
+		{
+			memcpy(&pDst[i * mappedResource.RowPitch], &pSRC[(i * m_Texture2DDesc.Width) * PIXEL_SIZE], m_Texture2DDesc.Width * PIXEL_SIZE);
+		}
+
+		m_pContext->Unmap(m_pStagingTexture2D, 0);
+		m_pContext->CopyResource(m_pTexture2D, m_pStagingTexture2D);
+	}
+	else if (m_eTextureType == TextureType_Texture3D)
+	{
+		_ASSERT(m_pTexture3D);
+		_ASSERT(m_pStagingTexture3D);
+
+		const UINT64 PIXEL_SIZE = GetPixelSize(m_Texture3DDesc.Format);
+
+		D3D11_MAPPED_SUBRESOURCE mappedResource = {};
+		m_pContext->Map(m_pStagingTexture3D, 0, D3D11_MAP_WRITE, 0, &mappedResource);
+
+		const UINT8* pSRC = (UINT8*)pSystemMem;
+		UINT8* pDst = (UINT8*)mappedResource.pData;
+		for (UINT k = 0; k < m_Texture3DDesc.Depth; ++k)
+		{
+			for (UINT j = 0; j < m_Texture3DDesc.Height; ++j)
+			{
+				memcpy(&pDst[j * mappedResource.RowPitch + k * mappedResource.DepthPitch],
+					   &pDst[(j * m_Texture3DDesc.Width + k * m_Texture3DDesc.Width * m_Texture3DDesc.Height) * PIXEL_SIZE],
+					   m_Texture3DDesc.Width * PIXEL_SIZE);
+			}
+		}
+
+		m_pContext->Unmap(m_pStagingTexture3D, 0);
+		m_pContext->CopyResource(m_pTexture3D, m_pStagingTexture3D);
+	}
 }
 
 void Texture::Cleanup()
 {
-	SAFE_RELEASE(m_pRTV);
-	SAFE_RELEASE(m_pSRV);
-	SAFE_RELEASE(m_pDSV);
-	SAFE_RELEASE(m_pUAV);
+	SAFE_RELEASE(pRTV);
+	SAFE_RELEASE(pSRV);
+	SAFE_RELEASE(pDSV);
+	SAFE_RELEASE(pUAV);
 
 	switch (m_eTextureType)
 	{
@@ -106,7 +143,7 @@ void Texture::Cleanup()
 
 		case TextureType_Unknown:
 		default:
-			__debugbreak();
+			//__debugbreak();
 			break;
 	}
 
@@ -123,6 +160,8 @@ void Texture::createTexture()
 
 	if (m_eTextureType == TextureType_Texture2D)
 	{
+		_ASSERT(!m_pTexture2D);
+
 		if (m_Texture2DDesc.BindFlags & D3D11_BIND_DEPTH_STENCIL)
 		{
 			DXGI_FORMAT originalFormat = m_Texture2DDesc.Format;
@@ -156,6 +195,8 @@ void Texture::createTexture()
 	}
 	else if (m_eTextureType == TextureType_Texture3D)
 	{
+		_ASSERT(!m_pTexture3D);
+
 		if (m_Texture3DDesc.BindFlags & D3D11_BIND_DEPTH_STENCIL)
 		{
 			DXGI_FORMAT originalFormat = m_Texture3DDesc.Format;
@@ -201,18 +242,30 @@ void Texture::createStagingTexture(void* pInitData)
 
 	if (m_eTextureType == TextureType_Texture2D)
 	{
-		D3D11_TEXTURE2D_DESC stagingTextureDesc = m_Texture2DDesc;
+		_ASSERT(!m_pStagingTexture2D);
+
+		D3D11_TEXTURE2D_DESC stagingTextureDesc = {};
+		memcpy(&stagingTextureDesc, &m_Texture2DDesc, sizeof(D3D11_TEXTURE2D_DESC));
+		stagingTextureDesc.MipLevels = 1;
 		stagingTextureDesc.Usage = D3D11_USAGE_STAGING;
+		stagingTextureDesc.BindFlags = 0;
 		stagingTextureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;
+		stagingTextureDesc.MiscFlags = 0;
 
 		textureFormat = stagingTextureDesc.Format;
 		hr = m_pDevice->CreateTexture2D(&stagingTextureDesc, nullptr, &m_pStagingTexture2D);
 	}
 	else if (m_eTextureType == TextureType_Texture3D)
 	{
-		D3D11_TEXTURE3D_DESC stagingTextureDesc = m_Texture3DDesc;
+		_ASSERT(!m_pStagingTexture3D);
+
+		D3D11_TEXTURE3D_DESC stagingTextureDesc = {};
+		memcpy(&stagingTextureDesc, &m_Texture3DDesc, sizeof(D3D11_TEXTURE3D_DESC));
+		stagingTextureDesc.MipLevels = 1;
 		stagingTextureDesc.Usage = D3D11_USAGE_STAGING;
+		stagingTextureDesc.BindFlags = 0;
 		stagingTextureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;
+		stagingTextureDesc.MiscFlags = 0;
 
 		textureFormat = stagingTextureDesc.Format;
 		hr = m_pDevice->CreateTexture3D(&stagingTextureDesc, nullptr, &m_pStagingTexture3D);
@@ -230,6 +283,8 @@ void Texture::createStagingTexture(void* pInitData)
 
 	if (m_eTextureType == TextureType_Texture2D)
 	{
+		_ASSERT(m_pTexture2D);
+
 		m_pContext->Map(m_pStagingTexture2D, 0, D3D11_MAP_WRITE, 0, &mappedResource);
 
 		const UINT8* pSRC = (UINT8*)pInitData;
@@ -241,10 +296,12 @@ void Texture::createStagingTexture(void* pInitData)
 		}
 
 		m_pContext->Unmap(m_pStagingTexture2D, 0);
-		m_pContext->CopyResource(m_pTexture2D, m_pStagingTexture2D);
+		m_pContext->CopySubresourceRegion(m_pTexture2D, 0, 0, 0, 0, m_pStagingTexture2D, 0, nullptr);
 	}
 	else if (m_eTextureType == TextureType_Texture3D)
 	{
+		_ASSERT(m_pTexture3D);
+
 		m_pContext->Map(m_pStagingTexture3D, 0, D3D11_MAP_WRITE, 0, &mappedResource);
 
 		const UINT8* pSRC = (UINT8*)pInitData;
@@ -267,18 +324,19 @@ void Texture::createStagingTexture(void* pInitData)
 void Texture::createRenderTargetView()
 {
 	_ASSERT(m_pDevice);
+	_ASSERT(!pRTV);
 	
 	HRESULT hr = S_OK;
 
 	if (m_eTextureType == TextureType_Texture2D)
 	{
 		_ASSERT(m_pTexture2D);
-		hr = m_pDevice->CreateRenderTargetView(m_pTexture2D, nullptr, &m_pRTV);
+		hr = m_pDevice->CreateRenderTargetView(m_pTexture2D, nullptr, &pRTV);
 	}
 	else if (m_eTextureType == TextureType_Texture3D)
 	{
 		_ASSERT(m_pTexture3D);
-		hr = m_pDevice->CreateRenderTargetView(m_pTexture3D, nullptr, &m_pRTV);
+		hr = m_pDevice->CreateRenderTargetView(m_pTexture3D, nullptr, &pRTV);
 	}
 	BREAK_IF_FAILED(hr);
 }
@@ -286,6 +344,8 @@ void Texture::createRenderTargetView()
 void Texture::createShaderResourceView()
 {
 	_ASSERT(m_pDevice);
+	_ASSERT(m_pContext);
+	_ASSERT(!pSRV);
 
 	HRESULT hr = S_OK;
 
@@ -319,11 +379,11 @@ void Texture::createShaderResourceView()
 			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			srvDesc.Texture2D.MipLevels = 1;
 
-			hr = m_pDevice->CreateShaderResourceView(m_pTexture2D, &srvDesc, &m_pSRV);
+			hr = m_pDevice->CreateShaderResourceView(m_pTexture2D, &srvDesc, &pSRV);
 		}
 		else
 		{
-			hr = m_pDevice->CreateShaderResourceView(m_pTexture2D, nullptr, &m_pSRV);
+			hr = m_pDevice->CreateShaderResourceView(m_pTexture2D, nullptr, &pSRV);
 		}
 	}
 	else if (m_eTextureType == TextureType_Texture3D)
@@ -355,19 +415,25 @@ void Texture::createShaderResourceView()
 			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
 			srvDesc.Texture3D.MipLevels = 1;
 
-			hr = m_pDevice->CreateShaderResourceView(m_pTexture3D, &srvDesc, &m_pSRV);
+			hr = m_pDevice->CreateShaderResourceView(m_pTexture3D, &srvDesc, &pSRV);
 		}
 		else
 		{
-			hr = m_pDevice->CreateShaderResourceView(m_pTexture3D, nullptr, &m_pSRV);
+			hr = m_pDevice->CreateShaderResourceView(m_pTexture3D, nullptr, &pSRV);
 		}
 	}
 	BREAK_IF_FAILED(hr);
+
+	if (m_eTextureType == TextureType_Texture2D && (m_Texture2DDesc.MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS))
+	{
+		m_pContext->GenerateMips(pSRV);
+	}
 }
 
 void Texture::createDepthStencilView()
 {
 	_ASSERT(m_pDevice);
+	_ASSERT(!pDSV);
 
 	HRESULT hr = S_OK;
 
@@ -398,7 +464,7 @@ void Texture::createDepthStencilView()
 		dsvDesc.Format = dsvFormat;
 		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 
-		hr = m_pDevice->CreateDepthStencilView(m_pTexture2D, &dsvDesc, &m_pDSV);
+		hr = m_pDevice->CreateDepthStencilView(m_pTexture2D, &dsvDesc, &pDSV);
 	}
 	else if (m_eTextureType == TextureType_Texture3D)
 	{
@@ -426,7 +492,7 @@ void Texture::createDepthStencilView()
 		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 		dsvDesc.Format = dsvFormat;
 		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
-		hr = m_pDevice->CreateDepthStencilView(m_pTexture3D, nullptr, &m_pDSV);
+		hr = m_pDevice->CreateDepthStencilView(m_pTexture3D, nullptr, &pDSV);
 	}
 
 	BREAK_IF_FAILED(hr);
@@ -435,18 +501,19 @@ void Texture::createDepthStencilView()
 void Texture::createUnorderedAccessView()
 {
 	_ASSERT(m_pDevice);
+	_ASSERT(!pUAV);
 
 	HRESULT hr = S_OK;
 
 	if (m_eTextureType == TextureType_Texture2D)
 	{
 		_ASSERT(m_pTexture2D);
-		hr = m_pDevice->CreateUnorderedAccessView(m_pTexture2D, nullptr, &m_pUAV);
+		hr = m_pDevice->CreateUnorderedAccessView(m_pTexture2D, nullptr, &pUAV);
 	}
 	else if (m_eTextureType == TextureType_Texture3D)
 	{
 		_ASSERT(m_pTexture3D);
-		hr = m_pDevice->CreateUnorderedAccessView(m_pTexture3D, nullptr, &m_pUAV);
+		hr = m_pDevice->CreateUnorderedAccessView(m_pTexture3D, nullptr, &pUAV);
 	}
 	BREAK_IF_FAILED(hr);
 }

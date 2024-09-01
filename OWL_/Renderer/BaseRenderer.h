@@ -2,6 +2,7 @@
 
 #include "../Graphics/Camera.h"
 #include "../Graphics/GraphicsCommon.h"
+#include "ResourceManager.h"
 #include "../Renderer/PostProcessor.h"
 #include "../Graphics/Scene.h"
 
@@ -38,6 +39,7 @@ public:
 	inline float GetAspectRatio() const { return (float)m_ScreenWidth / (float)m_ScreenHeight; }
 	inline ID3D11Device* GetDevice() { return m_pDevice; }
 	inline ID3D11DeviceContext* GetDeviceContext() { return m_pContext; }
+	inline ResourceManager* GetResourceManager() { return m_pResourceManager; }
 
 	void SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU, UINT slot);
 	void SetPipelineState(const GraphicsPSO& PSO);
@@ -73,6 +75,8 @@ protected:
 	ID3D11Device5* m_pDevice = nullptr;
 	ID3D11DeviceContext4* m_pContext = nullptr;
 	IDXGISwapChain4* m_pSwapChain = nullptr;
+
+	ResourceManager* m_pResourceManager = nullptr;
 
 	ID3D11Texture2D* m_pBackBuffer = nullptr;
 	ID3D11RenderTargetView* m_pBackBufferRTV = nullptr;

@@ -13,12 +13,15 @@ public:
 	Texture() = default;
 	~Texture() { Cleanup(); }
 
-	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE2D_DESC& DESC, void* pInitData, bool bCPUAccessable = false);
-	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE3D_DESC& DESC, void* pInitData, bool bCPUAccessable = false);
+	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE2D_DESC& DESC, void* pInitData);
+	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE3D_DESC& DESC, void* pInitData);
 
 	void Upload();
 
 	void Cleanup();
+
+	inline ID3D11Texture2D** GetTexture2DPtr() { return &m_pTexture2D; }
+	inline ID3D11Texture3D** GetTexture3DPtr() { return &m_pTexture3D; }
 
 protected:
 	void createTexture();
@@ -29,6 +32,10 @@ protected:
 	void createUnorderedAccessView();
 
 public:
+	ID3D11RenderTargetView* pRTV = nullptr;
+	ID3D11ShaderResourceView* pSRV = nullptr;
+	ID3D11DepthStencilView* pDSV = nullptr;
+	ID3D11UnorderedAccessView* pUAV = nullptr;
 	void* pSystemMem = nullptr;
 
 private:
@@ -45,10 +52,6 @@ private:
 		ID3D11Texture2D* m_pStagingTexture2D;
 		ID3D11Texture3D* m_pStagingTexture3D;
 	};
-	ID3D11RenderTargetView* m_pRTV = nullptr;
-	ID3D11ShaderResourceView* m_pSRV = nullptr;
-	ID3D11DepthStencilView* m_pDSV = nullptr;
-	ID3D11UnorderedAccessView* m_pUAV = nullptr;
 	union
 	{
 		D3D11_TEXTURE2D_DESC m_Texture2DDesc;
@@ -56,6 +59,5 @@ private:
 	};
 
 	eTextureType m_eTextureType = TextureType_Unknown;
-	bool m_bCPUAccessable = false;
 };
 

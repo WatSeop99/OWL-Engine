@@ -66,6 +66,7 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 
 	ID3D11Device* pDevice = pRenderer->GetDevice();
 	ID3D11DeviceContext* pContext = pRenderer->GetDeviceContext();
+	ResourceManager* pResourceManager = pRenderer->GetResourceManager();
 
 	Meshes.reserve(MESH_INFOS.size());
 	for (UINT64 i = 0, meshSize = MESH_INFOS.size(); i < meshSize; ++i)
@@ -86,17 +87,36 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 
 			if (_stat64(albedoTextureA.c_str(), &sourceFileStat) != -1)
 			{
+				std::vector<UINT8> imageData;
+				int width = 0;
+				int height = 0;
+
 				if (!MESH_DATA.szOpacityTextureFileName.empty())
 				{
-					hr = CreateTexture(pDevice, pContext, MESH_DATA.szAlbedoTextureFileName.c_str(), MESH_DATA.szOpacityTextureFileName.c_str(), false,
-									   &pNewMesh->pMaterialBuffer->Albedo.pTexture, &pNewMesh->pMaterialBuffer->Albedo.pSRV);
+					hr = ReadImage(MESH_DATA.szAlbedoTextureFileName.c_str(), MESH_DATA.szOpacityTextureFileName.c_str(), imageData, &width, &height);
+					/*hr = CreateTexture(pDevice, pContext, MESH_DATA.szAlbedoTextureFileName.c_str(), MESH_DATA.szOpacityTextureFileName.c_str(), false,
+									   &pNewMesh->pMaterialBuffer->Albedo.pTexture, &pNewMesh->pMaterialBuffer->Albedo.pSRV);*/
 				}
 				else
 				{
-					hr = CreateTexture(pDevice, pContext, MESH_DATA.szAlbedoTextureFileName.c_str(), true,
-									   &pNewMesh->pMaterialBuffer->Albedo.pTexture, &pNewMesh->pMaterialBuffer->Albedo.pSRV);
+					hr = ReadImage(MESH_DATA.szAlbedoTextureFileName.c_str(), imageData, &width, &height);
+					/*hr = CreateTexture(pDevice, pContext, MESH_DATA.szAlbedoTextureFileName.c_str(), true,
+									   pNewMesh->pMaterialBuffer->Albedo.GetTexture2DPtr(), &pNewMesh->pMaterialBuffer->Albedo.pSRV);*/
 				}
 				BREAK_IF_FAILED(hr);
+
+				D3D11_TEXTURE2D_DESC textureDesc = {};
+				textureDesc.Width = width;
+				textureDesc.Height = height;
+				textureDesc.MipLevels = 0;
+				textureDesc.ArraySize = 1;
+				textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+				textureDesc.SampleDesc.Count = 1;
+				textureDesc.Usage = D3D11_USAGE_DEFAULT;
+				textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+				textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+				pNewMesh->pMaterialBuffer->Albedo.Initialize(pDevice, pContext, textureDesc, imageData.data());
 				pMaterialConstData->bUseAlbedoMap = TRUE;
 			}
 			else
@@ -112,9 +132,28 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 
 			if (_stat64(emissiveTextureA.c_str(), &sourceFileStat) != -1)
 			{
-				hr = CreateTexture(pDevice, pContext, MESH_DATA.szEmissiveTextureFileName.c_str(), true,
-								   &pNewMesh->pMaterialBuffer->Emissive.pTexture, &pNewMesh->pMaterialBuffer->Emissive.pSRV);
+				std::vector<UINT8> imageData;
+				int width = 0;
+				int height = 0;
+
+				hr = ReadImage(MESH_DATA.szEmissiveTextureFileName.c_str(), imageData, &width, &height);
+				/*hr = CreateTexture(pDevice, pContext, MESH_DATA.szEmissiveTextureFileName.c_str(), true,
+								   &pNewMesh->pMaterialBuffer->Emissive.pTexture, &pNewMesh->pMaterialBuffer->Emissive.pSRV);*/
 				BREAK_IF_FAILED(hr);
+				
+				D3D11_TEXTURE2D_DESC textureDesc = {};
+				textureDesc.Width = width;
+				textureDesc.Height = height;
+				textureDesc.MipLevels = 0;
+				textureDesc.ArraySize = 1;
+				//textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+				textureDesc.SampleDesc.Count = 1;
+				textureDesc.Usage = D3D11_USAGE_DEFAULT;
+				textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+				textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+				pNewMesh->pMaterialBuffer->Emissive.Initialize(pDevice, pContext, textureDesc, imageData.data());
 				pMaterialConstData->bUseEmissiveMap = TRUE;
 			}
 			else
@@ -130,9 +169,27 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 
 			if (_stat64(normalTextureA.c_str(), &sourceFileStat) != -1)
 			{
-				hr = CreateTexture(pDevice, pContext, MESH_DATA.szNormalTextureFileName.c_str(), false,
-								   &pNewMesh->pMaterialBuffer->Normal.pTexture, &pNewMesh->pMaterialBuffer->Normal.pSRV);
+				std::vector<UINT8> imageData;
+				int width = 0;
+				int height = 0;
+
+				hr = ReadImage(MESH_DATA.szNormalTextureFileName.c_str(), imageData, &width, &height);
+				/*hr = CreateTexture(pDevice, pContext, MESH_DATA.szNormalTextureFileName.c_str(), false,
+								   &pNewMesh->pMaterialBuffer->Normal.pTexture, &pNewMesh->pMaterialBuffer->Normal.pSRV);*/
 				BREAK_IF_FAILED(hr);
+
+				D3D11_TEXTURE2D_DESC textureDesc = {};
+				textureDesc.Width = width;
+				textureDesc.Height = height;
+				textureDesc.MipLevels = 0;
+				textureDesc.ArraySize = 1;
+				textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				textureDesc.SampleDesc.Count = 1;
+				textureDesc.Usage = D3D11_USAGE_DEFAULT;
+				textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+				textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+				pNewMesh->pMaterialBuffer->Normal.Initialize(pDevice, pContext, textureDesc, imageData.data());
 				pMaterialConstData->bUseNormalMap = TRUE;
 			}
 			else
@@ -148,9 +205,27 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 
 			if (_stat64(heightTextureA.c_str(), &sourceFileStat) != -1)
 			{
-				hr = CreateTexture(pDevice, pContext, MESH_DATA.szHeightTextureFileName.c_str(), false,
-								   &pNewMesh->pMaterialBuffer->Height.pTexture, &pNewMesh->pMaterialBuffer->Height.pSRV);
+				std::vector<UINT8> imageData;
+				int width = 0;
+				int height = 0;
+
+				hr = ReadImage(MESH_DATA.szHeightTextureFileName.c_str(), imageData, &width, &height);
+				/*hr = CreateTexture(pDevice, pContext, MESH_DATA.szHeightTextureFileName.c_str(), false,
+								   &pNewMesh->pMaterialBuffer->Height.pTexture, &pNewMesh->pMaterialBuffer->Height.pSRV);*/
 				BREAK_IF_FAILED(hr);
+
+				D3D11_TEXTURE2D_DESC textureDesc = {};
+				textureDesc.Width = width;
+				textureDesc.Height = height;
+				textureDesc.MipLevels = 0;
+				textureDesc.ArraySize = 1;
+				textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				textureDesc.SampleDesc.Count = 1;
+				textureDesc.Usage = D3D11_USAGE_DEFAULT;
+				textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+				textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+				pNewMesh->pMaterialBuffer->Height.Initialize(pDevice, pContext, textureDesc, imageData.data());
 				pMeshConstData->bUseHeightMap = TRUE;
 			}
 			else
@@ -166,9 +241,27 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 
 			if (_stat64(aoTextureA.c_str(), &sourceFileStat) != -1)
 			{
-				hr = CreateTexture(pDevice, pContext, MESH_DATA.szAOTextureFileName.c_str(), false,
-								   &pNewMesh->pMaterialBuffer->AmbientOcclusion.pTexture, &pNewMesh->pMaterialBuffer->AmbientOcclusion.pSRV);
+				std::vector<UINT8> imageData;
+				int width = 0;
+				int height = 0;
+
+				hr = ReadImage(MESH_DATA.szAOTextureFileName.c_str(), imageData, &width, &height);
+				/*hr = CreateTexture(pDevice, pContext, MESH_DATA.szAOTextureFileName.c_str(), false,
+								   &pNewMesh->pMaterialBuffer->AmbientOcclusion.pTexture, &pNewMesh->pMaterialBuffer->AmbientOcclusion.pSRV);*/
 				BREAK_IF_FAILED(hr);
+
+				D3D11_TEXTURE2D_DESC textureDesc = {};
+				textureDesc.Width = width;
+				textureDesc.Height = height;
+				textureDesc.MipLevels = 0;
+				textureDesc.ArraySize = 1;
+				textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				textureDesc.SampleDesc.Count = 1;
+				textureDesc.Usage = D3D11_USAGE_DEFAULT;
+				textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+				textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+				pNewMesh->pMaterialBuffer->AmbientOcclusion.Initialize(pDevice, pContext, textureDesc, imageData.data());
 				pMaterialConstData->bUseAOMap = TRUE;
 			}
 			else
@@ -184,9 +277,27 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 
 			if (_stat64(metallicTextureA.c_str(), &sourceFileStat) != -1)
 			{
-				hr = CreateTexture(pDevice, pContext, MESH_DATA.szMetallicTextureFileName.c_str(), false,
-								   &pNewMesh->pMaterialBuffer->Metallic.pTexture, &pNewMesh->pMaterialBuffer->Metallic.pSRV);
+				std::vector<UINT8> imageData;
+				int width = 0;
+				int height = 0;
+
+				hr = ReadImage(MESH_DATA.szMetallicTextureFileName.c_str(), imageData, &width, &height);
+				/*hr = CreateTexture(pDevice, pContext, MESH_DATA.szMetallicTextureFileName.c_str(), false,
+								   &pNewMesh->pMaterialBuffer->Metallic.pTexture, &pNewMesh->pMaterialBuffer->Metallic.pSRV);*/
 				BREAK_IF_FAILED(hr);
+
+				D3D11_TEXTURE2D_DESC textureDesc = {};
+				textureDesc.Width = width;
+				textureDesc.Height = height;
+				textureDesc.MipLevels = 0;
+				textureDesc.ArraySize = 1;
+				textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				textureDesc.SampleDesc.Count = 1;
+				textureDesc.Usage = D3D11_USAGE_DEFAULT;
+				textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+				textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+				pNewMesh->pMaterialBuffer->Metallic.Initialize(pDevice, pContext, textureDesc, imageData.data());
 				pMaterialConstData->bUseMetallicMap = TRUE;
 			}
 			else
@@ -202,9 +313,27 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 
 			if (_stat64(roughnessTextureA.c_str(), &sourceFileStat) != -1)
 			{
-				hr = CreateTexture(pDevice, pContext, MESH_DATA.szRoughnessTextureFileName.c_str(), false,
-								   &pNewMesh->pMaterialBuffer->Roughness.pTexture, &pNewMesh->pMaterialBuffer->Roughness.pSRV);
+				std::vector<UINT8> imageData;
+				int width = 0;
+				int height = 0;
+
+				hr = ReadImage(MESH_DATA.szRoughnessTextureFileName.c_str(), imageData, &width, &height);
+				/*hr = CreateTexture(pDevice, pContext, MESH_DATA.szRoughnessTextureFileName.c_str(), false,
+								   &pNewMesh->pMaterialBuffer->Roughness.pTexture, &pNewMesh->pMaterialBuffer->Roughness.pSRV);*/
 				BREAK_IF_FAILED(hr);
+				
+				D3D11_TEXTURE2D_DESC textureDesc = {};
+				textureDesc.Width = width;
+				textureDesc.Height = height;
+				textureDesc.MipLevels = 0;
+				textureDesc.ArraySize = 1;
+				textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				textureDesc.SampleDesc.Count = 1;
+				textureDesc.Usage = D3D11_USAGE_DEFAULT;
+				textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+				textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+				pNewMesh->pMaterialBuffer->Roughness.Initialize(pDevice, pContext, textureDesc, imageData.data());
 				pMaterialConstData->bUseRoughnessMap = TRUE;
 			}
 			else
@@ -368,7 +497,7 @@ void Model::Render()
 {
 	_ASSERT(m_pRenderer);
 
-	if (bIsVisible == false)
+	if (!bIsVisible)
 	{
 		return;
 	}
@@ -382,7 +511,7 @@ void Model::Render()
 		ID3D11Buffer* ppConstantBuffers[] = { pCurMesh->MeshConstant.pBuffer, pCurMesh->MaterialConstant.pBuffer };
 		UINT numConstantBuffers = _countof(ppConstantBuffers);
 		pContext->VSSetConstantBuffers(2, numConstantBuffers, ppConstantBuffers);
-		pContext->VSSetShaderResources(6, 1, &(pCurMesh->pMaterialBuffer->Height.pSRV));
+		pContext->VSSetShaderResources(6, 1, &pCurMesh->pMaterialBuffer->Height.pSRV);
 
 		// 물체 렌더링할 때 여러가지 텍스춰 사용. (t0 부터시작)
 		ID3D11ShaderResourceView* ppSRVs[] =

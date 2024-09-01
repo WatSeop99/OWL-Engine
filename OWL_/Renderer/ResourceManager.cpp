@@ -90,31 +90,29 @@ HRESULT ResourceManager::CreateTextureFromFile(const WCHAR* pszFileName, ID3D11T
 	{
 		hr = ReadImage(pszFileName, imageData, &width, &height);
 	}
-	
+
 	if (FAILED(hr))
 	{
 		hr = E_FAIL;
 		goto LB_RET;
 	}
 
-	{
-		D3D11_TEXTURE2D_DESC textureDesc = {};
-		textureDesc.Width = width;
-		textureDesc.Height = height;
-		textureDesc.MipLevels = 0;
-		textureDesc.ArraySize = 1;
-		textureDesc.Format = pixelFormat;
-		textureDesc.SampleDesc.Count = 1;
-		textureDesc.Usage = D3D11_USAGE_DEFAULT; // 스테이징 텍스쳐로부터 복사 가능.
-		textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-		textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS; // 밉맵 사용.
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = width;
+	textureDesc.Height = height;
+	textureDesc.MipLevels = 0;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = pixelFormat;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT; // 스테이징 텍스쳐로부터 복사 가능.
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+	textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS; // 밉맵 사용.
 
-		D3D11_SUBRESOURCE_DATA imageDataForTexture = {};
-		imageDataForTexture.pSysMem = imageData.data();
+	D3D11_SUBRESOURCE_DATA imageDataForTexture = {};
+	imageDataForTexture.pSysMem = imageData.data();
 
-		hr = m_pDevice->CreateTexture2D(&textureDesc, &imageDataForTexture, ppOutTexture);
-		*pOutDesc = textureDesc;
-	}
+	hr = m_pDevice->CreateTexture2D(&textureDesc, &imageDataForTexture, ppOutTexture);
+	*pOutDesc = textureDesc;
 
 LB_RET:
 	return hr;
@@ -868,7 +866,7 @@ HRESULT ResourceManager::createVertexShaderAndInputLayout(const WCHAR* pszFileNa
 	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-	hr = D3DCompileFromFile(pszFileName, pSHADER_MACROS, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_1", compileFlags, 0, &pShaderBlob, &pErrorBlob);
+	hr = D3DCompileFromFile(pszFileName, pSHADER_MACROS, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_0", compileFlags, 0, &pShaderBlob, &pErrorBlob);
 	if (FAILED(hr))
 	{
 		if (pErrorBlob)
@@ -912,7 +910,7 @@ HRESULT ResourceManager::createHullShader(const WCHAR* pszFileName, ID3D11HullSh
 	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-	hr = D3DCompileFromFile(pszFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "hs_5_1", compileFlags, 0, &pShaderBlob, &pErrorBlob);
+	hr = D3DCompileFromFile(pszFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "hs_5_0", compileFlags, 0, &pShaderBlob, &pErrorBlob);
 	if (FAILED(hr))
 	{
 		if (pErrorBlob)
@@ -946,7 +944,7 @@ HRESULT ResourceManager::createDomainShader(const WCHAR* pszFileName, ID3D11Doma
 	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-	hr = D3DCompileFromFile(pszFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ds_5_1", compileFlags, 0, &pShaderBlob, &pErrorBlob);
+	hr = D3DCompileFromFile(pszFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ds_5_0", compileFlags, 0, &pShaderBlob, &pErrorBlob);
 	if (FAILED(hr))
 	{
 		if (pErrorBlob)
@@ -980,7 +978,7 @@ HRESULT ResourceManager::createGeometryShader(const WCHAR* pszFileName, ID3D11Ge
 	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-	hr = D3DCompileFromFile(pszFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "gs_5_1", compileFlags, 0, &pShaderBlob, &pErrorBlob);
+	hr = D3DCompileFromFile(pszFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "gs_5_0", compileFlags, 0, &pShaderBlob, &pErrorBlob);
 	if (FAILED(hr))
 	{
 		if (pErrorBlob)
@@ -1014,7 +1012,7 @@ HRESULT ResourceManager::createPixelShader(const WCHAR* pszFileName, ID3D11Pixel
 	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-	hr = D3DCompileFromFile(pszFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_1", compileFlags, 0, &pShaderBlob, &pErrorBlob);
+	hr = D3DCompileFromFile(pszFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_0", compileFlags, 0, &pShaderBlob, &pErrorBlob);
 	if (FAILED(hr))
 	{
 		if (pErrorBlob != nullptr)
@@ -1048,7 +1046,7 @@ HRESULT ResourceManager::createComputeShader(const WCHAR* pszFileName, ID3D11Com
 	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-	hr = D3DCompileFromFile(pszFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_1", compileFlags, 0, &pShaderBlob, &pErrorBlob);
+	hr = D3DCompileFromFile(pszFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_0", compileFlags, 0, &pShaderBlob, &pErrorBlob);
 	if (FAILED(hr))
 	{
 		if (pErrorBlob)
