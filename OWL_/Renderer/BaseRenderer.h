@@ -2,20 +2,17 @@
 
 #include "../Graphics/Camera.h"
 #include "../Graphics/GraphicsCommon.h"
-#include "../Geometry/MeshInfo.h"
-#include "../Geometry/Model.h"
 #include "../Renderer/PostProcessor.h"
 #include "../Graphics/Scene.h"
-#include "Timer.h"
-
 
 using DirectX::BoundingSphere;
 using DirectX::SimpleMath::Quaternion;
 using DirectX::SimpleMath::Ray;
 using DirectX::SimpleMath::Vector3;
-using std::shared_ptr;
-using std::vector;
-using std::wstring;
+
+struct MeshInfo;
+class Model;
+class Timer;
 
 class BaseRenderer
 {
@@ -39,7 +36,8 @@ public:
 	virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	inline float GetAspectRatio() const { return (float)m_ScreenWidth / (float)m_ScreenHeight; }
-
+	inline ID3D11Device* GetDevice() { return m_pDevice; }
+	inline ID3D11DeviceContext* GetDeviceContext() { return m_pContext; }
 
 	void SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU, UINT slot);
 	void SetPipelineState(const GraphicsPSO& PSO);

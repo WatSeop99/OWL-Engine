@@ -1,23 +1,16 @@
 #pragma once
 
-#include "Camera.h"
 #include "ConstantDataType.h"
+#include "../Renderer/ConstantBuffer.h"
 #include "../Renderer/GBuffer.h"
 #include "Light.h"
-#include "../Geometry/Model.h"
 
+class Camera;
+class Mesh;
+class Model;
 
 class Scene
 {
-public:
-	enum eRenderObjectType
-	{
-		Opaque = 0,
-		Transparent,
-		Reflection,
-		TotalObjectType
-	};
-
 public:
 	Scene(Camera& camera, Texture2D& floatBuffer, Texture2D& resolvedBuffer, UINT width = 1280, UINT height = 720) :
 		m_Camera(camera),
@@ -27,7 +20,7 @@ public:
 		m_ScreenHeight(height),
 		m_GBuffer(floatBuffer, width, height)
 	{}
-	~Scene() { Destroy(); }
+	~Scene() { Cleanup(); }
 
 	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
 
@@ -35,14 +28,13 @@ public:
 
 	void Render(ID3D11DeviceContext* pContext);
 
-	void Destroy();
+	void Cleanup();
 	void ResetBuffers(ID3D11Device* pDevice, const bool bUSE_MSAA = false, const UINT NUM_QUALITY_LEVELS = 0);
 
 	inline void SetScreenWidth(const UINT WIDTH) { m_ScreenWidth = WIDTH; m_GBuffer.SetScreenWidth(WIDTH); }
 	inline void SetScreenHeight(const UINT HEIGHT) { m_ScreenHeight = HEIGHT; m_GBuffer.SetScreenHeight(HEIGHT); }
 
 	inline bool SupportDeferred() const { return m_GBuffer.bIsEnabled; }
-	//inline GlobalConstants& GetGlobalConstantsCPU() { return m_GlobalConstants.CPU; }
 	inline GlobalConstants* GetGlobalConstantsCPU() { return (GlobalConstants*)m_GlobalConstants.pSystemMem; }
 	inline ID3D11Buffer* GetGlobalConstantsGPU() const { return m_GlobalConstants.pBuffer; }
 	inline ID3D11ShaderResourceView* GetDepthOnlyBufferSRV() const { return m_DepthOnlyBuffer.pSRV; }
@@ -79,7 +71,6 @@ protected:
 public:
 	std::vector<Model*> pRenderObjects; // opaque.
 	std::vector<Light> pLights;
-	// Light* pDirectionalLight = nullptr;
 
 	bool bDrawAsWire = false;
 	bool bDrawOBB = false;
@@ -103,9 +94,6 @@ private:
 	Texture2D m_DepthOnlyBuffer; // No MSAA
 
 	// 렌더링을 위한 여러 상수 퍼버들.
-	/*ConstantsBuffer<GlobalConstants> m_GlobalConstants;
-	ConstantsBuffer<GlobalConstants> m_ReflectionGlobalConstants;
-	ConstantsBuffer<LightConstants> m_LightConstants;*/
 	ConstantBuffer m_GlobalConstants;
 	ConstantBuffer m_ReflectionGlobalConstants;
 	ConstantBuffer m_LightConstants;

@@ -4,11 +4,10 @@
 #include <imgui_impl_win32.h>
 #include "Geometry/GeometryGenerator.h"
 #include "Graphics/GraphicsUtils.h"
+#include "Graphics/Light.h"
+#include "Geometry/Mesh.h"
+#include "Renderer/Timer.h"
 #include "DebugApp.h"
-
-using namespace std;
-using namespace DirectX;
-using namespace DirectX::SimpleMath;
 
 DebugApp::DebugApp() : BaseRenderer() { }
 

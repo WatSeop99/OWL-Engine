@@ -1,7 +1,9 @@
 ﻿#pragma once
 
 #include "../Common.h"
+#include "../Graphics/ConstantDataType.h"
 #include "../Renderer/ConstantBuffer.h"
+#include "../Renderer/Texture.h"
 #include "../Renderer/Texture2D.h"
 #include "../Renderer/Texture3D.h"
 
@@ -15,10 +17,19 @@ struct Material
 	Texture2D AmbientOcclusion;
 	Texture2D Metallic;
 	Texture2D Roughness;
+	/*Texture Albedo;
+	Texture Emissive;
+	Texture Normal;
+	Texture Height;
+	Texture AmbientOcclusion;
+	Texture Metallic;
+	Texture Roughness;*/
 
 	// 3D textures.
 	Texture3D Density;
 	Texture3D Lighting;
+	/*Texture Density;
+	Texture Lighting;*/
 };
 class Mesh
 {
@@ -32,10 +43,9 @@ public:
 		_ASSERT(pContext);
 
 		pMaterialBuffer = New Material;
+		//*pMaterialBuffer = { Texture(), Texture(), Texture(), Texture(), Texture(), Texture(), Texture(), Texture(), Texture() };
 		*pMaterialBuffer = { Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture3D(), Texture3D() };
 		
-		/*MeshConstant.Initialize(pDevice);
-		MaterialConstant.Initialize(pDevice);*/
 		MeshConstants initMeshConst;
 		MaterialConstants initMaterialConst;
 		MeshConstant.Initialize(pDevice, pContext, sizeof(MeshConstants), &initMeshConst);
@@ -65,8 +75,6 @@ public:
 	ID3D11Buffer* pIndexBuffer = nullptr;
 	Material* pMaterialBuffer = nullptr;
 
-	/*ConstantsBuffer<MeshConstants> MeshConstant;
-	ConstantsBuffer<MaterialConstants> MaterialConstant;*/
 	ConstantBuffer MeshConstant;
 	ConstantBuffer MaterialConstant;
 

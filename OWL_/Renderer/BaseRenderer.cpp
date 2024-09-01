@@ -3,14 +3,15 @@
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
 #include "../Geometry/GeometryGenerator.h"
+#include "../Graphics/Light.h"
+#include "../Geometry/Mesh.h"
+#include "../Geometry/MeshInfo.h"
+#include "../Geometry/Model.h"
+#include "Timer.h"
 #include "BaseRenderer.h"
 
-// imgui_impl_win32.cpp에 정의된 메시지 처리 함수에 대한 전방 선언
-// Vcpkg를 통해 IMGUI를 사용할 경우 빨간줄로 경고가 뜰 수 있음
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-using namespace DirectX;
-using namespace DirectX::SimpleMath;
 using DirectX::BoundingSphere;
 using DirectX::SimpleMath::Vector3;
 
@@ -197,8 +198,8 @@ void BaseRenderer::OnMouseMove(int mouseX, int mouseY)
 
 	// 커서가 화면 밖으로 나갔을 경우 범위 조절.
 	// 게임에서는 클램프를 안할 수도 있습니다..
-	m_MouseNDCX = std::clamp(m_MouseNDCX, -1.0f, 1.0f);
-	m_MouseNDCY = std::clamp(m_MouseNDCY, -1.0f, 1.0f);
+	m_MouseNDCX = Clamp(m_MouseNDCX, -1.0f, 1.0f);
+	m_MouseNDCY = Clamp(m_MouseNDCY, -1.0f, 1.0f);
 
 	// 카메라 시점 회전.
 	m_Camera.UpdateMouse(m_MouseNDCX, m_MouseNDCY);
@@ -449,7 +450,7 @@ void BaseRenderer::ProcessMouseControl()
 		const Vector3 WORLD_FAR = Vector3::Transform(NDC_FAR, INV_PROJECTION_VIEW);
 		Vector3 dir = WORLD_FAR - WORLD_NEAR;
 		dir.Normalize();
-		const Ray CUR_RAY = SimpleMath::Ray(WORLD_NEAR, dir);
+		const Ray CUR_RAY = DirectX::SimpleMath::Ray(WORLD_NEAR, dir);
 
 		if (s_pActiveModel == nullptr) // 이전 프레임에서 아무 물체도 선택되지 않았을 경우에는 새로 선택.
 		{
@@ -488,7 +489,7 @@ void BaseRenderer::ProcessMouseControl()
 				{
 					Vector3 c = s_pActiveModel->BoundingSphere.Center - WORLD_NEAR;
 					Vector3 centerToRay = dir.Dot(c) * dir - c;
-					pickPoint = c + centerToRay * std::clamp(s_pActiveModel->BoundingSphere.Radius / centerToRay.Length(), 0.0f, 1.0f);
+					pickPoint = c + centerToRay * Clamp(s_pActiveModel->BoundingSphere.Radius / centerToRay.Length(), 0.0f, 1.0f);
 					pickPoint += WORLD_NEAR;
 				}
 
@@ -499,7 +500,7 @@ void BaseRenderer::ProcessMouseControl()
 				{
 					Vector3 axis = s_PrevVector.Cross(currentVector);
 					axis.Normalize();
-					dragRotation = SimpleMath::Quaternion::CreateFromAxisAngle(axis, theta);
+					dragRotation = Quaternion::CreateFromAxisAngle(axis, theta);
 					s_PrevVector = currentVector;
 				}
 

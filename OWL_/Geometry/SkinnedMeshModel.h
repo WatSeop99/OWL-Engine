@@ -1,8 +1,10 @@
 #pragma once
 
+#include "Animation.h"
 #include "Model.h"
 #include "../Renderer/StructuredBuffer.h"
 
+class Mesh;
 
 class SkinnedMeshModel final : public Model
 {
@@ -26,7 +28,6 @@ public:
 	inline GraphicsPSO& GetReflectPSO(const bool bWIRED) override { return (bWIRED ? g_ReflectSkinnedWirePSO : g_ReflectSkinnedSolidPSO); }
 
 public:
-	//StructuredBuffer<Matrix> BoneTransforms;
 	StructuredBuffer BoneTransforms;
 	AnimationData CharacterAnimaionData;
 };

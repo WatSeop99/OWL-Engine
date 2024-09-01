@@ -3,6 +3,7 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include "../Common.h"
+#include "MeshInfo.h"
 #include "ModelLoader.h"
 
 using namespace DirectX::SimpleMath;
@@ -447,7 +448,7 @@ HRESULT ModelLoader::readTextureFileName(const aiScene* pSCENE, aiMaterial* pMat
 			{
 				// Embedded texture가 존재하고 png일 경우 저장.
 				// Embedded texture는 fbx와 같은 모델 파일에 텍스쳐도 같이 들어있는 경우.
-				if (string(pTEXTURE->achFormatHint).find("png") != std::string::npos)
+				if (std::string(pTEXTURE->achFormatHint).find("png") != std::string::npos)
 				{
 					std::ofstream fileSystem(fullPath.c_str(), std::ios::binary | std::ios::out);
 					fileSystem.write((char*)pTEXTURE->pcData, pTEXTURE->mWidth);

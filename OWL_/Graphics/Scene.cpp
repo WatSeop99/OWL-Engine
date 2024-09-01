@@ -1,10 +1,13 @@
 #include "../Common.h"
+#include "Camera.h"
 #include "../Geometry/GeometryGenerator.h"
+#include "../Geometry/Mesh.h"
+#include "../Geometry/Model.h"
 #include "Scene.h"
 
 void Scene::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 {
-	Destroy();
+	Cleanup();
 	LoadScene(pDevice);
 
 	createBuffers(pDevice);
@@ -206,7 +209,7 @@ void Scene::Render(ID3D11DeviceContext* pContext)
 	renderMirror(pContext);
 }
 
-void Scene::Destroy()
+void Scene::Cleanup()
 {
 	// SaveScene();
 
@@ -619,7 +622,6 @@ void Scene::renderMirror(ID3D11DeviceContext* pContext)
 
 		// 거울 위치에 반사된 물체들을 렌더링.
 		setGlobalConstants(pContext, &m_ReflectionGlobalConstants.pBuffer, 0);
-		//setGlobalConstants(pContext, &(m_ReflectionGlobalConstants.pGPU), 0);
 		pContext->ClearDepthStencilView(m_pDefaultDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 		for (size_t i = 0, size = pRenderObjects.size(); i < size; ++i)

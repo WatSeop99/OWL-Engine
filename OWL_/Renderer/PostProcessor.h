@@ -1,7 +1,9 @@
 #pragma once
 
+#include "../Graphics/ConstantDataType.h"
 #include "../Graphics/ImageFilter.h"
-#include "../Geometry/Mesh.h"
+
+class Mesh;
 
 class PostProcessor
 {

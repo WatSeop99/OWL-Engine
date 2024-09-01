@@ -1,9 +1,7 @@
 ﻿#pragma once
 
-#include "Animation.h"
-#include "MeshInfo.h"
-
-using DirectX::SimpleMath::Vector2;
+struct MeshInfo;
+class AnimationData;
 
 HRESULT ReadFromFile(std::vector<MeshInfo>& dst, std::wstring& basePath, std::wstring& fileName, bool bRevertNormals = false);
 HRESULT ReadAnimationFromFile(std::tuple<std::vector<MeshInfo>, AnimationData>& dst, std::wstring& basePath, std::wstring& fileName, bool bRevertNormals = false);

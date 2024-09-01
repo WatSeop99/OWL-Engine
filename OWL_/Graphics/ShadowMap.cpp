@@ -47,8 +47,7 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 		hr = pDevice->CreateTexture2D(&cubeDesc, nullptr, &(m_PointLightShadowBuffer.pTexture));
 		BREAK_IF_FAILED(hr);
 
-		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-		ZeroMemory(&srvDesc, sizeof(srvDesc));
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
 		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
 		srvDesc.TextureCube.MipLevels = cubeDesc.MipLevels;
@@ -56,8 +55,7 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 		hr = pDevice->CreateShaderResourceView(m_PointLightShadowBuffer.pTexture, &srvDesc, &(m_PointLightShadowBuffer.pSRV));
 		BREAK_IF_FAILED(hr);
 
-		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-		ZeroMemory(&dsvDesc, sizeof(dsvDesc));
+		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
 		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
 		dsvDesc.Texture2DArray.MipSlice = 0;
@@ -389,13 +387,13 @@ void ShadowMap::setShadowViewport(ID3D11DeviceContext* pContext)
 
 void ShadowMap::calculateCascadeLightViewProjection(Vector3* pPosition, Matrix* pView, Matrix* pProjection, const Matrix& VIEW, const Matrix& PROJECTION, const Vector3& DIR, int cascadeIndex)
 {
-	_ASSERT(pPosition != nullptr);
-	_ASSERT(pView != nullptr);
-	_ASSERT(pProjection != nullptr);
+	_ASSERT(pPosition);
+	_ASSERT(pView);
+	_ASSERT(pProjection);
 
 	const float FRUSTUM_Zs[5] = { 0.01f, 10.0f, 40.0f, 80.0f, 500.0f }; // 고정 값들로 우선 설정.
 	Matrix inverseView = VIEW.Invert();
-	Vector3 frustumCenter(0.0f);
+	Vector3 frustumCenter;
 	float boundingSphereRadius = 0.0f;
 
 	float fov = 45.0f;

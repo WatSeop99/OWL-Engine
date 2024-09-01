@@ -1,10 +1,8 @@
 ﻿#include "../Common.h"
+#include "Animation.h"
+#include "MeshInfo.h"
 #include "ModelLoader.h"
 #include "GeometryGenerator.h"
-
-
-using namespace DirectX;
-using namespace DirectX::SimpleMath;
 
 HRESULT ReadFromFile(std::vector<MeshInfo>& dst, std::wstring& basePath, std::wstring& fileName, bool bRevertNormals)
 {
@@ -473,7 +471,7 @@ void MakeCylinder(MeshInfo* pDst, const float BOTTOM_RADIUS, const float TOP_RAD
 
 	// Texture 좌표계때문에 (NUM_SLICES + 1) x 2 개의 버텍스 사용.
 
-	const float D_THETA = -XM_2PI / (float)NUM_SLICES;
+	const float D_THETA = -DirectX::XM_2PI / (float)NUM_SLICES;
 
 	std::vector<Vertex>& vertices = pDst->Vertices;
 	std::vector<UINT>& indices = pDst->Indices;
@@ -530,8 +528,8 @@ void MakeSphere(MeshInfo* pDst, const float RADIUS, const int NUM_SLICES, const 
 	const float D_THETA = -DirectX::XM_2PI / (float)NUM_SLICES;
 	const float D_PHI = -DirectX::XM_PI / (float)NUM_STACKS;
 
-	vector<Vertex>& vertices = pDst->Vertices;
-	vector<UINT>& indices = pDst->Indices;
+	std::vector<Vertex>& vertices = pDst->Vertices;
+	std::vector<UINT>& indices = pDst->Indices;
 	vertices.resize((NUM_STACKS + 1) * (NUM_SLICES + 1));
 	indices.reserve(NUM_SLICES * NUM_STACKS * 6);
 

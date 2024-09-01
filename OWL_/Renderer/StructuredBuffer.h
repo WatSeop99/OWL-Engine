@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../Graphics/GraphicsUtils.h"
-
 class StructuredBuffer
 {
 public:

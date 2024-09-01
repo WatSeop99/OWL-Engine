@@ -16,17 +16,17 @@ public:
 
 	void Cleanup();
 
-	inline ConstantBuffer* GetConstantBufferPtr() { return &m_ConstantBuffer; }
+	inline ConstantBuffer* GetConstantBufferPtr() { return m_pConstantBuffer; }
 
 	void SetShaderResources(const std::vector<ID3D11ShaderResourceView*>& RESOURCES);
 	void SetRenderTargets(const std::vector<ID3D11RenderTargetView*>& TARGETS);
 
 protected:
-	ID3D11PixelShader* m_pPixelShader = nullptr;
 	D3D11_VIEWPORT m_Viewport = { 0, };
-	ConstantBuffer m_ConstantBuffer;
+	ConstantBuffer* m_pConstantBuffer = nullptr;
 
 	// Do not delete pointers.
 	std::vector<ID3D11ShaderResourceView*> m_pSRVs;
 	std::vector<ID3D11RenderTargetView*> m_pRTVs;
+	ID3D11PixelShader* m_pPixelShader = nullptr;
 };

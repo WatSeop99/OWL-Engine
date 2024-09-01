@@ -6,7 +6,7 @@ class GBuffer
 {
 public:
 	GBuffer(Texture2D& floatBuffer, UINT width = 1280, UINT height = 720) : FinalBuffer(floatBuffer), m_ScreenWidth(width), m_ScreenHeight(height) {}
-	~GBuffer() = default;
+	~GBuffer() { Cleanup(); }
 
 	void Initialize(ID3D11Device* pDevice);
 

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Camera.h"
-#include "ConstantDataType.h"
-#include "../Geometry/Model.h"
 #include "ShadowMap.h"
+
+class Model;
 
 class Light
 {
@@ -22,8 +22,8 @@ public:
 	inline ShadowMap& GetShadowMap() { return m_ShadowMap; }
 	inline ShadowMap* GetAddressOfShadowMap() { return &m_ShadowMap; }
 
-	inline void SetPosition(const Vector3& pos) { m_LightViewCamera.SetEyePos(pos); }
-	inline void SetDirection(const Vector3& dir) { m_LightViewCamera.SetViewDir(dir); }
+	inline void SetPosition(const Vector3& POS) { m_LightViewCamera.SetEyePos(POS); }
+	inline void SetDirection(const Vector3& DIR) { m_LightViewCamera.SetViewDir(DIR); }
 	inline void SetShadowSize(const UINT WIDTH, const UINT HEIGHT) { m_ShadowMap.SetShadowWidth(WIDTH); m_ShadowMap.SetShadowHeight(HEIGHT); }
 
 public:

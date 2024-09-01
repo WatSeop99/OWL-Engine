@@ -1,4 +1,6 @@
 #include "../Common.h"
+#include "ConstantDataType.h"
+#include "../Geometry/Model.h"
 #include "Light.h"
 
 Light::Light(UINT width, UINT height) : m_ShadowMap(width, height)
@@ -20,18 +22,14 @@ void Light::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	switch (Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
 	{
 		case LIGHT_DIRECTIONAL:
-		{
 			m_LightViewCamera.SetFarZ(500.0f);
 			m_ShadowMap.SetShadowWidth(2560);
 			m_ShadowMap.SetShadowHeight(2560);
-		}
-		break;
+			break;
 
 		case LIGHT_POINT:
-		{
 			m_LightViewCamera.SetProjectionFovAngleY(90.0f);
-		}
-		break;
+			break;
 
 		case LIGHT_SPOT:
 		default:

@@ -1,7 +1,13 @@
 #pragma once
 
 #include "../Renderer/ConstantBuffer.h"
+#include "../Graphics/ConstantDataType.h"
 #include "../Renderer/Texture2D.h"
+
+struct LightProperty;
+class Camera;
+class GraphicsPSO;
+class Model;
 
 class ShadowMap
 {
@@ -24,7 +30,6 @@ public:
 	inline Texture2D* GetPointLightShadowBufferPtr() { return &m_PointLightShadowBuffer; }
 	inline Texture2D* GetDirectionalLightShadowBufferPtr() { return &m_DirectionalLightShadowBuffer; }
 
-	//inline ConstantsBuffer<GlobalConstants>* GetShadowConstantBuffersPtr() { return m_pShadowConstantsBuffers; }
 	inline ConstantBuffer* GetShadowConstantBuffersPtr() { return m_pShadowConstantsBuffers; }
 
 	inline void SetShadowWidth(const UINT WIDTH) { m_ShadowWidth = WIDTH; }
@@ -44,8 +49,6 @@ private:
 	Texture2D m_SpotLightShadowBuffer;
 	Texture2D m_PointLightShadowBuffer;
 	Texture2D m_DirectionalLightShadowBuffer;
-	//ConstantsBuffer<GlobalConstants> m_pShadowConstantsBuffers[6]; // spot, point, direc => 0, 6, 4개씩 사용.
-	//ConstantsBuffer<ShadowConstants> m_ShadowConstantsBufferForGS; // 2개 이상의 view 행렬을 사용하는 광원을 위한  geometry용 상수버퍼.
 	ConstantBuffer m_pShadowConstantsBuffers[6]; // spot, point, direc => 0, 6, 4개씩 사용.
 	ConstantBuffer m_ShadowConstantsBufferForGS; // 2개 이상의 view 행렬을 사용하는 광원을 위한  geometry용 상수버퍼.
 };

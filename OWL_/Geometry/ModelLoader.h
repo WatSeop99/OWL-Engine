@@ -1,13 +1,13 @@
 ﻿#pragma once
 
 #include "Animation.h"
-#include "MeshInfo.h"
 
+enum aiTextureType;
 struct aiNode;
 struct aiScene;
 struct aiMesh;
 struct aiMaterial;
-enum aiTextureType;
+struct MeshInfo;
 
 class ModelLoader
 {

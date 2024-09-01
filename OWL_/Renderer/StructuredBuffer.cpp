@@ -1,4 +1,5 @@
 #include "../Common.h"
+#include "../Graphics/GraphicsUtils.h"
 #include "StructuredBuffer.h"
 
 void StructuredBuffer::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, UINT sizePerElem, UINT elemCount, void* pInitData)

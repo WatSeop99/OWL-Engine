@@ -1,6 +1,7 @@
 #include "../Common.h"
 #include "../Graphics/GraphicsCommon.h"
 #include "../Graphics/GraphicsUtils.h"
+#include "Mesh.h"
 #include "SkinnedMeshModel.h"
 
 void SkinnedMeshModel::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const std::vector<MeshInfo>& MESHES, const AnimationData& ANIM_DATA)

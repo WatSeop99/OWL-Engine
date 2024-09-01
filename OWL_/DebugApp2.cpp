@@ -3,6 +3,9 @@
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
 #include "Geometry/GeometryGenerator.h"
+#include "Graphics/Light.h"
+#include "Geometry/Mesh.h"
+#include "Renderer/Timer.h"
 #include "DebugApp2.h"
 
 using namespace DirectX::SimpleMath;
@@ -63,9 +66,6 @@ void DebugApp2::InitScene()
 			Mesh* pCurMesh = m_pCharacter->Meshes[i];
 
 			MaterialConstants* pMaterialConstData = (MaterialConstants*)pCurMesh->MaterialConstant.pSystemMem;
-			/*pCurMesh->MaterialConstant.CPU.AlbedoFactor = Vector3(1.0f);
-			pCurMesh->MaterialConstant.CPU.RoughnessFactor = 0.8f;
-			pCurMesh->MaterialConstant.CPU.MetallicFactor = 0.0f;*/
 			pMaterialConstData->AlbedoFactor = Vector3(1.0f);
 			pMaterialConstData->RoughnessFactor = 0.8f;
 			pMaterialConstData->MetallicFactor = 0.0f;
@@ -152,8 +152,6 @@ void DebugApp2::UpdateGUI()
 		MaterialConstants* pMaterialConstData = (MaterialConstants*)pMirror->Meshes[0]->MaterialConstant.pSystemMem;
 		ImGui::SliderFloat("Metallic", &pMaterialConstData->MetallicFactor, 0.0f, 1.0f);
 		ImGui::SliderFloat("Roughness", &pMaterialConstData->RoughnessFactor, 0.0f, 1.0f);
-		/*ImGui::SliderFloat("Metallic", &(pMirror->Meshes[0]->MaterialConstant.CPU.MetallicFactor), 0.0f, 1.0f);
-		ImGui::SliderFloat("Roughness", &(pMirror->Meshes[0]->MaterialConstant.CPU.RoughnessFactor), 0.0f, 1.0f);*/
 
 		ImGui::TreePop();
 	}
@@ -161,7 +159,6 @@ void DebugApp2::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Light"))
 	{
-		// ImGui::SliderFloat3("Position", &m_globalConstsCPU.lights[0].position.x, -5.0f, 5.0f);
 		ImGui::SliderFloat("Halo Radius", &(m_Scene.pLights[1].Property.HaloRadius), 0.0f, 2.0f);
 		ImGui::SliderFloat("Halo Strength", &(m_Scene.pLights[1].Property.HaloStrength), 0.0f, 1.0f);
 		ImGui::SliderFloat("Radius", &(m_Scene.pLights[1].Property.Radius), 0.0f, 0.5f);
@@ -192,17 +189,6 @@ void DebugApp2::UpdateGUI()
 				flag += ImGui::SliderFloat("HeightScale", &pMeshConstData->HeightScale, 0.0f, 0.1f);
 				flag += ImGui::CheckboxFlags("Use MetallicMap", &pMaterialConstData->bUseMetallicMap, 1);
 				flag += ImGui::CheckboxFlags("Use RoughnessMap", &pMaterialConstData->bUseRoughnessMap, 1);
-
-				/*flag += ImGui::SliderFloat("Metallic", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.MetallicFactor), 0.0f, 1.0f);
-				flag += ImGui::SliderFloat("Roughness", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.RoughnessFactor), 0.0f, 1.0f);
-				flag += ImGui::CheckboxFlags("AlbedoTexture", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseAlbedoMap), 1);
-				flag += ImGui::CheckboxFlags("EmissiveTexture", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseEmissiveMap), 1);
-				flag += ImGui::CheckboxFlags("Use NormalMapping", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseNormalMap), 1);
-				flag += ImGui::CheckboxFlags("Use AO", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseAOMap), 1);
-				flag += ImGui::CheckboxFlags("Use HeightMapping", &(m_pPickedModel->Meshes[i]->MeshConstant.CPU.bUseHeightMap), 1);
-				flag += ImGui::SliderFloat("HeightScale", &(m_pPickedModel->Meshes[i]->MeshConstant.CPU.HeightScale), 0.0f, 0.1f);
-				flag += ImGui::CheckboxFlags("Use MetallicMap", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseMetallicMap), 1);
-				flag += ImGui::CheckboxFlags("Use RoughnessMap", &(m_pPickedModel->Meshes[i]->MaterialConstant.CPU.bUseRoughnessMap), 1);*/
 			}
 
 			if (flag)

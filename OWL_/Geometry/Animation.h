@@ -5,9 +5,6 @@
 using DirectX::SimpleMath::Matrix;
 using DirectX::SimpleMath::Quaternion;
 using DirectX::SimpleMath::Vector3;
-using std::map;
-using std::string;
-using std::vector;
 
 struct AnimationClip
 {

@@ -3,6 +3,7 @@
 #include "../Geometry/GeometryGenerator.h"
 #include "../Graphics/GraphicsCommon.h"
 #include "../Graphics/GraphicsUtils.h"
+#include "../Geometry/Mesh.h"
 #include "../Geometry/MeshInfo.h"
 #include "../Geometry/Model.h"
 #include "PostProcessor.h"

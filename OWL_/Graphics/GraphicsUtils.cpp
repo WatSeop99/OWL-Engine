@@ -55,9 +55,9 @@ HRESULT ReadEXRImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* p
 	uint16_t* pF16 = nullptr;
 	float minValue = FLT_MAX;
 	float maxValue = FLT_MIN;
-	f32.resize(image.size() / 2);
+	f32.resize(image.SIZE() / 2);
 	pF16 = (uint16_t*)image.data();
-	for (int i = 0, size = image.size() / 2; i < size; ++i)
+	for (int i = 0, SIZE = image.SIZE() / 2; i < SIZE; ++i)
 	{
 		f32[i] = fp16_ieee_to_fp32_value(f16[i]);
 		minValue = (minValue < f32[i] ? minValue : f32[i]);
@@ -160,18 +160,16 @@ HRESULT ReadImage(const wchar_t* pszAlbedoFileName, const wchar_t* pszOpacityFil
 		goto LB_RET;
 	}
 
+	int opaWidth = 0;
+	int opaHeight = 0;
+
+	hr = ReadImage(pszOpacityFileName, opacityImage, &opaWidth, &opaHeight);
+	if (FAILED(hr))
 	{
-		int opaWidth = 0;
-		int opaHeight = 0;
-
-		hr = ReadImage(pszOpacityFileName, opacityImage, &opaWidth, &opaHeight);
-		if (FAILED(hr))
-		{
-			goto LB_RET;
-		}
-
-		_ASSERT(*pWidth == opaWidth && *pHeight == opaHeight);
+		goto LB_RET;
 	}
+
+	_ASSERT(*pWidth == opaWidth && *pHeight == opaHeight);
 
 	for (int j = 0; j < *pHeight; ++j)
 	{
@@ -204,40 +202,39 @@ HRESULT CreateTextureHelper(ID3D11Device* pDevice, ID3D11DeviceContext* pContext
 	}
 	SET_DEBUG_INFO_TO_OBJECT(pStagingTexture, "GraphicsUtils::CreateTextureHelper::pStagingTexture");
 
+
+	D3D11_TEXTURE2D_DESC textureDesc = { 0, };
+	textureDesc.Width = WIDTH;
+	textureDesc.Height = HEIGHT;
+	textureDesc.MipLevels = 0;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = PIXEL_FORMAT;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT; // 스테이징 텍스쳐로부터 복사 가능.
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+	textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS; // 밉맵 사용.
+
+	// 초기 데이터 없이 텍스쳐 생성(검정색).
+	hr = pDevice->CreateTexture2D(&textureDesc, nullptr, ppTexture);
+	if (FAILED(hr))
 	{
-		D3D11_TEXTURE2D_DESC textureDesc = { 0, };
-		textureDesc.Width = WIDTH;
-		textureDesc.Height = HEIGHT;
-		textureDesc.MipLevels = 0;
-		textureDesc.ArraySize = 1;
-		textureDesc.Format = PIXEL_FORMAT;
-		textureDesc.SampleDesc.Count = 1;
-		textureDesc.Usage = D3D11_USAGE_DEFAULT; // 스테이징 텍스쳐로부터 복사 가능.
-		textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-		textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS; // 밉맵 사용.
-
-		// 초기 데이터 없이 텍스쳐 생성(검정색).
-		hr = pDevice->CreateTexture2D(&textureDesc, nullptr, ppTexture);
-		if (FAILED(hr))
-		{
-			RELEASE(pStagingTexture);
-			goto LB_RET;
-		}
-
-		// 스테이징 텍스쳐로부터 가장 해상도가 높은 이미지 복사.
-		pContext->CopySubresourceRegion(*ppTexture, 0, 0, 0, 0, pStagingTexture, 0, nullptr);
 		RELEASE(pStagingTexture);
-
-		// ResourceView 만들기.
-		hr = pDevice->CreateShaderResourceView(*ppTexture, 0, ppSRV);
-		if (FAILED(hr))
-		{
-			goto LB_RET;
-		}
-
-		// 해상도를 낮춰가며 밉맵 생성.
-		pContext->GenerateMips(*ppSRV);
+		goto LB_RET;
 	}
+
+	// 스테이징 텍스쳐로부터 가장 해상도가 높은 이미지 복사.
+	pContext->CopySubresourceRegion(*ppTexture, 0, 0, 0, 0, pStagingTexture, 0, nullptr);
+	RELEASE(pStagingTexture);
+
+	// ResourceView 만들기.
+	hr = pDevice->CreateShaderResourceView(*ppTexture, 0, ppSRV);
+	if (FAILED(hr))
+	{
+		goto LB_RET;
+	}
+
+	// 해상도를 낮춰가며 밉맵 생성.
+	pContext->GenerateMips(*ppSRV);
 
 LB_RET:
 	return hr;
@@ -511,18 +508,16 @@ ID3D11Texture2D* CreateStagingTexture(ID3D11Device* pDevice, ID3D11DeviceContext
 		goto LB_RET;
 	}
 
-	{
-		size_t pixelSize = GetPixelSize(PIXEL_FORMAT);
-		D3D11_MAPPED_SUBRESOURCE mappedResource;
+	size_t pixelSize = GetPixelSize(PIXEL_FORMAT);
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
 
-		pContext->Map(pStagingTexture, 0, D3D11_MAP_WRITE, 0, &mappedResource);
-		uint8_t* pData = (uint8_t*)mappedResource.pData;
-		for (UINT h = 0; h < (UINT)HEIGHT; ++h)
-		{
-			memcpy(&pData[h * mappedResource.RowPitch], &IMAGE[h * WIDTH * pixelSize], WIDTH * pixelSize);
-		}
-		pContext->Unmap(pStagingTexture, 0);
+	pContext->Map(pStagingTexture, 0, D3D11_MAP_WRITE, 0, &mappedResource);
+	uint8_t* pData = (uint8_t*)mappedResource.pData;
+	for (UINT h = 0; h < (UINT)HEIGHT; ++h)
+	{
+		memcpy(&pData[h * mappedResource.RowPitch], &IMAGE[h * WIDTH * pixelSize], WIDTH * pixelSize);
 	}
+	pContext->Unmap(pStagingTexture, 0);
 
 LB_RET:
 	return pStagingTexture;
@@ -1352,35 +1347,31 @@ HRESULT CreateAppendBuffer(ID3D11Device* pDevice, const UINT NUM_ELEMENTS, const
 		goto LB_RET;
 	}
 
-	{
-		D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
-		ZeroMemory(&uavDesc, sizeof(uavDesc));
-		uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-		uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
-		uavDesc.Buffer.NumElements = NUM_ELEMENTS;
-		uavDesc.Buffer.Flags = D3D11_BUFFER_UAV_FLAG_APPEND; // append buffer로 사용.
+	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+	ZeroMemory(&uavDesc, sizeof(uavDesc));
+	uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+	uavDesc.Buffer.NumElements = NUM_ELEMENTS;
+	uavDesc.Buffer.Flags = D3D11_BUFFER_UAV_FLAG_APPEND; // append buffer로 사용.
 
-		hr = pDevice->CreateUnorderedAccessView(*ppBuffer, &uavDesc, ppUAV);
-		if (FAILED(hr))
-		{
-			RELEASE(*ppBuffer);
-			goto LB_RET;
-		}
+	hr = pDevice->CreateUnorderedAccessView(*ppBuffer, &uavDesc, ppUAV);
+	if (FAILED(hr))
+	{
+		RELEASE(*ppBuffer);
+		goto LB_RET;
 	}
 
-	{
-		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-		ZeroMemory(&srvDesc, sizeof(srvDesc));
-		srvDesc.Format = DXGI_FORMAT_UNKNOWN;
-		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-		srvDesc.BufferEx.NumElements = NUM_ELEMENTS;
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+	ZeroMemory(&srvDesc, sizeof(srvDesc));
+	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	srvDesc.BufferEx.NumElements = NUM_ELEMENTS;
 
-		hr = pDevice->CreateShaderResourceView(*ppBuffer, &srvDesc, ppSRV);
-		if (FAILED(hr))
-		{
-			RELEASE(*ppBuffer);
-			RELEASE(*ppUAV);
-		}
+	hr = pDevice->CreateShaderResourceView(*ppBuffer, &srvDesc, ppSRV);
+	if (FAILED(hr))
+	{
+		RELEASE(*ppBuffer);
+		RELEASE(*ppUAV);
 	}
 
 LB_RET:
@@ -1395,6 +1386,7 @@ HRESULT CreateTextureArray(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 	_ASSERT((*ppTextureResourceView) == nullptr);
 
 	HRESULT hr = S_OK;
+	std::vector<std::vector<UINT8>> imageArray;
 
 	if (FILE_NAMES.empty())
 	{
@@ -1403,74 +1395,71 @@ HRESULT CreateTextureArray(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 	}
 
 	// 모든 이미지의 width와 height가 같다고 가정.
+	int width = 0;
+	int height = 0;
+	const UINT SIZE = (UINT)FILE_NAMES.size();
+
+	imageArray.reserve(SIZE);
+	for (const std::wstring& f : FILE_NAMES)
 	{
-		int width = 0;
-		int height = 0;
-		UINT size = (UINT)(FILE_NAMES.size());
-		std::vector<std::vector<uint8_t>> imageArray;
+		OutputDebugStringW(f.c_str());
 
-		imageArray.reserve(size);
-		for (const std::wstring& f : FILE_NAMES)
-		{
-			OutputDebugStringW(f.c_str());
-
-			std::vector<uint8_t> image;
-			hr = ReadImage(f.c_str(), image, &width, &height);
-			if (FAILED(hr))
-			{
-				goto LB_RET;
-			}
-
-			imageArray.push_back(image);
-		}
-
-		D3D11_TEXTURE2D_DESC textureDesc = { 0, };
-		textureDesc.Width = (UINT)width;
-		textureDesc.Height = (UINT)height;
-		textureDesc.MipLevels = 0; // 밉맵 레벨 최대.
-		textureDesc.ArraySize = size;
-		textureDesc.SampleDesc.Count = 1;
-		textureDesc.SampleDesc.Quality = 0;
-		textureDesc.Usage = D3D11_USAGE_DEFAULT; // 스테이징 텍스쳐로부터 복사 가능.
-		textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-		textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS; // 밉맵 사용.
-
-		hr = pDevice->CreateTexture2D(&textureDesc, nullptr, ppTexture);
+		std::vector<UINT8> image;
+		hr = ReadImage(f.c_str(), image, &width, &height);
 		if (FAILED(hr))
 		{
 			goto LB_RET;
 		}
 
-		// pTexture->GetDesc(&textureDesc);
-
-		for (size_t i = 0, size = imageArray.size(); i < size; ++i)
-		{
-			std::vector<uint8_t>& image = imageArray[i];
-
-			// StagingTexture는 Texture2D임. Texture2DArray가 아님.
-			ID3D11Texture2D* pStagingTexture = CreateStagingTexture(pDevice, pContext,
-																	width, height,
-																	image,
-																	textureDesc.Format,
-																	1, 1);
-			if (pStagingTexture == nullptr)
-			{
-				goto LB_RET;
-			}
-
-			// 스테이징 텍스쳐를 텍스쳐 배열의 해당 위치에 복사.
-			UINT subresourceIndex = D3D11CalcSubresource(0, (UINT)i, textureDesc.MipLevels);
-			pContext->CopySubresourceRegion(*ppTexture, subresourceIndex, 0, 0, 0, pStagingTexture, 0, nullptr);
-		}
-
-		hr = pDevice->CreateShaderResourceView(*ppTexture, nullptr, ppTextureResourceView);
-		if (FAILED(hr))
-		{
-			goto LB_RET;
-		}
-
-		pContext->GenerateMips(*ppTextureResourceView);
+		imageArray.push_back(image);
 	}
+
+	D3D11_TEXTURE2D_DESC textureDesc = { 0, };
+	textureDesc.Width = (UINT)width;
+	textureDesc.Height = (UINT)height;
+	textureDesc.MipLevels = 0; // 밉맵 레벨 최대.
+	textureDesc.ArraySize = SIZE;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT; // 스테이징 텍스쳐로부터 복사 가능.
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+	textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS; // 밉맵 사용.
+
+	hr = pDevice->CreateTexture2D(&textureDesc, nullptr, ppTexture);
+	if (FAILED(hr))
+	{
+		goto LB_RET;
+	}
+
+	// pTexture->GetDesc(&textureDesc);
+
+	for (UINT64 i = 0, size = imageArray.size(); i < size; ++i)
+	{
+		std::vector<UINT8>& image = imageArray[i];
+
+		// StagingTexture는 Texture2D임. Texture2DArray가 아님.
+		ID3D11Texture2D* pStagingTexture = CreateStagingTexture(pDevice, pContext,
+																width, height,
+																image,
+																textureDesc.Format,
+																1, 1);
+		if (!pStagingTexture)
+		{
+			goto LB_RET;
+		}
+
+		// 스테이징 텍스쳐를 텍스쳐 배열의 해당 위치에 복사.
+		UINT subresourceIndex = D3D11CalcSubresource(0, (UINT)i, textureDesc.MipLevels);
+		pContext->CopySubresourceRegion(*ppTexture, subresourceIndex, 0, 0, 0, pStagingTexture, 0, nullptr);
+	}
+
+	hr = pDevice->CreateShaderResourceView(*ppTexture, nullptr, ppTextureResourceView);
+	if (FAILED(hr))
+	{
+		goto LB_RET;
+	}
+
+	pContext->GenerateMips(*ppTextureResourceView);
 
 LB_RET:
 	return hr;

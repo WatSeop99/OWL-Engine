@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../Common.h"
-#include "GraphicsUtils.h"
 
 // "Common.hlsli"와 동일해야 함.
 #define MAX_LIGHTS 3

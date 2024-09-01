@@ -2,13 +2,12 @@
 
 // https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Model/Model.h
 
-#include "Animation.h"
-#include "../Graphics/ConstantDataType.h"
 #include "../Graphics/GraphicsCommon.h"
-#include "Mesh.h"
 #include "MeshInfo.h"
 
 using DirectX::SimpleMath::Matrix;
+
+class Mesh;
 
 class Model
 {
@@ -17,7 +16,7 @@ public:
 	virtual ~Model() { Cleanup(); }
 
 	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, std::wstring& basePath, std::wstring& fileName);
-	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const vector<MeshInfo>& MESH_INFOS);
+	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const std::vector<MeshInfo>& MESH_INFOS);
 	virtual void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
 	virtual void InitMeshBuffers(ID3D11Device* pDevice, const MeshInfo& MESH_INFO, Mesh* pNewMesh);
 
