@@ -13,9 +13,9 @@ public:
 
 	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
 
-	void Update(ID3D11DeviceContext* pContext, float deltaTime, Camera& mainCamera);
+	void Update(float deltaTime, Camera& mainCamera);
 
-	void RenderShadowMap(ID3D11DeviceContext* pContext, std::vector<Model*>& pBasicList, Model* pMirror);
+	void RenderShadowMap(std::vector<Model*>& pBasicList, Model* pMirror);
 
 	void Cleanup();
 

@@ -114,8 +114,8 @@ void BaseRenderer::Initialize()
 // 여러 예제들이 공통적으로 사용하기 좋은 장면 설정
 void BaseRenderer::InitScene()
 {
-	m_Scene.Initialize(m_pDevice, m_pContext);
-	m_Scene.ResetBuffers(m_pDevice, m_bUseMSAA, m_NumQualityLevels);
+	m_Scene.Initialize(this);
+	m_Scene.ResetBuffers(m_bUseMSAA, m_NumQualityLevels);
 
 	// 커서 표시 (Main sphere와의 충돌이 감지되면 월드 공간에 작게 그려지는 구).
 	{
@@ -123,7 +123,7 @@ void BaseRenderer::InitScene()
 		MakeSphere(&sphere, 0.01f, 10, 10);
 
 		m_pCursorSphere = New Model;
-		m_pCursorSphere->Initialize(m_pDevice, m_pContext, { sphere });
+		m_pCursorSphere->Initialize(this, { sphere });
 		m_pCursorSphere->bIsVisible = false; // 마우스가 눌렸을 때만 보임
 		m_pCursorSphere->bCastShadow = false; // 그림자 X
 
@@ -160,7 +160,7 @@ void BaseRenderer::Update(float deltaTime)
 	ProcessMouseControl();
 
 	// 전체 씬 업데이트.
-	m_Scene.Update(m_pContext, deltaTime);
+	m_Scene.Update(deltaTime);
 
 	// 후처리 프로세서 업데이트.
 	m_PostProcessor.Update(m_pContext);
@@ -180,7 +180,7 @@ void BaseRenderer::RenderGUI()
 
 void BaseRenderer::Render()
 {
-	m_Scene.Render(m_pContext);
+	m_Scene.Render();
 	m_PostProcessor.Render(m_pContext);
 	RenderGUI(); // 추후 editor/game 모드를 설정하여 따로 렌더링하도록 구상.
 }
@@ -257,7 +257,7 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					createBuffers();
 					m_Scene.SetScreenWidth(m_ScreenWidth);
 					m_Scene.SetScreenHeight(m_ScreenHeight);
-					m_Scene.ResetBuffers(m_pDevice, m_bUseMSAA, m_NumQualityLevels);
+					m_Scene.ResetBuffers(m_bUseMSAA, m_NumQualityLevels);
 					setMainViewport();
 					m_Camera.SetAspectRatio(GetAspectRatio());
 					m_PostProcessor.Initialize(m_pDevice, m_pContext,
@@ -323,7 +323,6 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 			if (wParam == VK_SPACE)
 			{
-				// m_pLights[1].bRotated = !m_pLights[1].bRotated;
 				m_Scene.pLights[1].bRotated = !(m_Scene.pLights[1].bRotated);
 			}
 
@@ -409,7 +408,7 @@ Model* BaseRenderer::PickClosest(const Ray& PICKNG_RAY, float* pMinDist)
 	*pMinDist = 1e5f;
 	Model* pMinModel = nullptr;
 
-	for (size_t i = 0, size = m_Scene.pRenderObjects.size(); i < size; ++i)
+	for (UINT64 i = 0, size = m_Scene.pRenderObjects.size(); i < size; ++i)
 	{
 		Model* pCurModel = m_Scene.pRenderObjects[i];
 		float dist = 0.0f;
@@ -764,7 +763,7 @@ void BaseRenderer::createBuffers()
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET | D3D11_BIND_UNORDERED_ACCESS;
 	m_ResolvedBuffer.Initialize(m_pDevice, desc);
 
-	m_Scene.ResetBuffers(m_pDevice, m_bUseMSAA, m_NumQualityLevels);
+	//m_Scene.ResetBuffers(m_bUseMSAA, m_NumQualityLevels);
 }
 
 void BaseRenderer::setMainViewport()

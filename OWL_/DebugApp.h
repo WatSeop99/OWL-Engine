@@ -9,7 +9,7 @@ using DirectX::SimpleMath::Vector3;
 class DebugApp : public BaseRenderer
 {
 public:
-	DebugApp();
+	DebugApp() = default;
 	~DebugApp();
 
 	void InitScene() override;

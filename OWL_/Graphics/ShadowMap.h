@@ -17,9 +17,9 @@ public:
 
 	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, UINT lightType);
 
-	void Update(ID3D11DeviceContext* pContext, const LightProperty& PROPERTY, Camera& lightCam, Camera& mainCamera);
+	void Update(const LightProperty& PROPERTY, Camera& lightCam, Camera& mainCamera);
 
-	void Render(ID3D11DeviceContext* pContext, std::vector<Model*>& pBasicList, Model* pMirror);
+	void Render(std::vector<Model*>& pBasicList, Model* pMirror);
 
 	void Cleanup();
 
@@ -36,12 +36,15 @@ public:
 	inline void SetShadowHeight(const UINT HEIGHT) { m_ShadowHeight = HEIGHT; }
 
 protected:
-	void setPipelineState(ID3D11DeviceContext* pContext, const GraphicsPSO& PSO);
-	void setShadowViewport(ID3D11DeviceContext* pContext);
+	void setPipelineState(const GraphicsPSO& PSO);
+	void setShadowViewport();
 
 	void calculateCascadeLightViewProjection(Vector3* pPosition, Matrix* pView, Matrix* pProjection, const Matrix& VIEW, const Matrix& PROJECTION, const Vector3& DIR, int cascadeIndex);
 
 private:
+	ID3D11Device* m_pDevice = nullptr;
+	ID3D11DeviceContext* m_pContext = nullptr;
+
 	UINT m_ShadowWidth = 0;
 	UINT m_ShadowHeight = 0;
 	UINT m_LightType = LIGHT_OFF;

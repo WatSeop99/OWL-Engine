@@ -5,6 +5,7 @@
 #include "../Renderer/GBuffer.h"
 #include "Light.h"
 
+class BaseRenderer;
 class Camera;
 class Mesh;
 class Model;
@@ -22,14 +23,14 @@ public:
 	{}
 	~Scene() { Cleanup(); }
 
-	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
+	void Initialize(BaseRenderer* pRenderer);
 
-	void Update(ID3D11DeviceContext* pContext, const float DELTA_TIME);
+	void Update(const float DELTA_TIME);
 
-	void Render(ID3D11DeviceContext* pContext);
+	void Render();
 
 	void Cleanup();
-	void ResetBuffers(ID3D11Device* pDevice, const bool bUSE_MSAA = false, const UINT NUM_QUALITY_LEVELS = 0);
+	void ResetBuffers(const bool bUSE_MSAA = false, const UINT NUM_QUALITY_LEVELS = 0);
 
 	inline void SetScreenWidth(const UINT WIDTH) { m_ScreenWidth = WIDTH; m_GBuffer.SetScreenWidth(WIDTH); }
 	inline void SetScreenHeight(const UINT HEIGHT) { m_ScreenHeight = HEIGHT; m_GBuffer.SetScreenHeight(HEIGHT); }
@@ -40,33 +41,33 @@ public:
 	inline ID3D11ShaderResourceView* GetDepthOnlyBufferSRV() const { return m_DepthOnlyBuffer.pSRV; }
 	inline Model* GetMirror() { return m_pMirror; }
 
-	void LoadScene(ID3D11Device* pDevice)
+	void LoadScene()
 	{
 		// initCubemaps(pDevice, L"./Assets/Textures/Cubemaps/HDRI/", L"SampleEnvHDR.dds", L"SampleSpecularHDR.dds", L"SampleDiffuseHDR.dds", L"SampleBrdf.dds"); 
-		initCubemaps(pDevice, L"./Assets/Textures/Cubemaps/HDRI/", L"clear_pureskyEnvHDR.dds", L"clear_pureskySpecularHDR.dds", L"clear_pureskyDiffuseHDR.dds", L"clear_pureskyBrdf.dds");
+		initCubemaps(L"./Assets/Textures/Cubemaps/HDRI/", L"clear_pureskyEnvHDR.dds", L"clear_pureskySpecularHDR.dds", L"clear_pureskyDiffuseHDR.dds", L"clear_pureskyBrdf.dds");
 	}
 	void SaveScene() {}
 
 protected:
-	void initCubemaps(ID3D11Device* pDevice, std::wstring&& basePath, std::wstring&& envFileName, std::wstring&& specularFileName, std::wstring&& irradianceFileName, std::wstring&& brdfFileName);
+	void initCubemaps(std::wstring&& basePath, std::wstring&& envFileName, std::wstring&& specularFileName, std::wstring&& irradianceFileName, std::wstring&& brdfFileName);
 
-	void createBuffers(ID3D11Device* pDevice, const bool bUSE_MSAA = false, const UINT NUM_QUALITY_LEVELS = 0);
-	void createDepthBuffers(ID3D11Device* pDevice, const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVELS);
+	void createBuffers(const bool bUSE_MSAA = false, const UINT NUM_QUALITY_LEVELS = 0);
+	void createDepthBuffers(const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVELS);
 
-	void updateLights(ID3D11DeviceContext* pContext, const float DELTA_TIME);
-	void updateGlobalConstants(ID3D11DeviceContext* pContext, const float DELTA_TIME);
+	void updateLights(const float DELTA_TIME);
+	void updateGlobalConstants(const float DELTA_TIME);
 
-	void renderDepthOnly(ID3D11DeviceContext* pContext);
-	void renderShadowMaps(ID3D11DeviceContext* pContext);
-	void renderOpaqueObjects(ID3D11DeviceContext* pContext);
-	void renderGBuffer(ID3D11DeviceContext* pContext);
-	void renderDeferredLighting(ID3D11DeviceContext* pContext);
-	void renderOptions(ID3D11DeviceContext* pContext);
-	void renderMirror(ID3D11DeviceContext* pContext);
+	void renderDepthOnly();
+	void renderShadowMaps();
+	void renderOpaqueObjects();
+	void renderGBuffer();
+	void renderDeferredLighting();
+	void renderOptions();
+	void renderMirror();
 
-	void setPipelineState(ID3D11DeviceContext* pContext, const GraphicsPSO& PSO);
-	void setScreenViewport(ID3D11DeviceContext* pContext);
-	void setGlobalConstants(ID3D11DeviceContext* pContext, ID3D11Buffer** ppGlobalConstants, UINT slot);
+	void setPipelineState(const GraphicsPSO& PSO);
+	void setScreenViewport();
+	void setGlobalConstants(ID3D11Buffer** ppGlobalConstants, UINT slot);
 
 public:
 	std::vector<Model*> pRenderObjects; // opaque.
@@ -79,6 +80,8 @@ public:
 	float MirrorAlpha = 1.0f; // Opacity
 
 private:
+	BaseRenderer* m_pRenderer = nullptr;
+
 	UINT m_ScreenWidth;
 	UINT m_ScreenHeight;
 	Mesh* m_pScreenMesh = nullptr;

@@ -60,7 +60,7 @@ void DebugApp2::InitScene()
 
 		Vector3 center(0.0f, 0.0f, 2.0f);
 		m_pCharacter = New SkinnedMeshModel;
-		m_pCharacter->Initialize(m_pDevice, m_pContext, meshInfos, aniData);
+		m_pCharacter->Initialize(this, meshInfos, aniData);
 		for (UINT64 i = 0, size = m_pCharacter->Meshes.size(); i < size; ++i)
 		{
 			Mesh* pCurMesh = m_pCharacter->Meshes[i];
@@ -193,7 +193,7 @@ void DebugApp2::UpdateGUI()
 
 			if (flag)
 			{
-				m_pPickedModel->UpdateConstantBuffers(m_pContext);
+				m_pPickedModel->UpdateConstantBuffers();
 			}
 			ImGui::Checkbox("Draw Normals", &(m_pPickedModel->bDrawNormals));
 		}
@@ -297,7 +297,7 @@ void DebugApp2::Update(float deltaTime)
 		break;
 	}
 
-	m_pCharacter->UpdateAnimation(m_pContext, s_State, s_FrameCount);
+	m_pCharacter->UpdateAnimation(s_State, s_FrameCount);
 
 	++s_FrameCount;
 }

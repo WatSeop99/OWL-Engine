@@ -1,4 +1,5 @@
 #include "../Common.h"
+#include "../Renderer/BaseRenderer.h"
 #include "../Graphics/ConstantDataType.h"
 #include "GeometryGenerator.h"
 #include "../Graphics/GraphicsUtils.h"
@@ -45,20 +46,26 @@ void ExtendBoundingBox(const DirectX::BoundingBox& SRC_BOX, DirectX::BoundingBox
 	pDestBox->Extents = maxCorner - pDestBox->Center;
 }
 
-void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, std::wstring& basePath, std::wstring& fileName)
+void Model::Initialize(BaseRenderer* pRenderer, std::wstring& basePath, std::wstring& fileName)
 {
+	_ASSERT(pRenderer);
+
 	std::vector<MeshInfo> meshInfos;
 	ReadFromFile(meshInfos, basePath, fileName);
-	Initialize(pDevice, pContext, meshInfos);
+	Initialize(pRenderer, meshInfos);
 }
 
-void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const std::vector<MeshInfo>& MESH_INFOS)
+void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MESH_INFOS)
 {
-	_ASSERT(pDevice);
-	_ASSERT(pContext);
+	_ASSERT(pRenderer);
+
+	m_pRenderer = pRenderer;
 
 	HRESULT hr = S_OK;
 	struct _stat64 sourceFileStat;
+
+	ID3D11Device* pDevice = pRenderer->GetDevice();
+	ID3D11DeviceContext* pContext = pRenderer->GetDeviceContext();
 
 	Meshes.reserve(MESH_INFOS.size());
 	for (UINT64 i = 0, meshSize = MESH_INFOS.size(); i < meshSize; ++i)
@@ -67,7 +74,7 @@ void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, con
 
 		Mesh* pNewMesh = New Mesh;
 		pNewMesh->Initialize(pDevice, pContext);
-		InitMeshBuffers(pDevice, MESH_DATA, pNewMesh);
+		InitMeshBuffers(MESH_DATA, pNewMesh);
 		
 		MeshConstants* pMeshConstData = (MeshConstants*)pNewMesh->MeshConstant.pSystemMem;
 		MaterialConstants* pMaterialConstData = (MaterialConstants*)pNewMesh->MaterialConstant.pSystemMem;
@@ -260,7 +267,6 @@ void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, con
 		m_pBoundingSphereMesh = New Mesh;
 		m_pBoundingSphereMesh->Initialize(pDevice, pContext);
 
-		//m_pBoundingSphereMesh->MeshConstant.CPU.World = Matrix();
 		MeshConstants* pMeshConstData = (MeshConstants*)m_pBoundingSphereMesh->MeshConstant.pSystemMem;
 		pMeshConstData->World = Matrix();
 
@@ -276,18 +282,13 @@ void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, con
 	}
 }
 
-void Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
+void Model::InitMeshBuffers(const MeshInfo& MESH_INFO, Mesh* pNewMesh)
 {
-	OutputDebugStringA("Model::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext) was not implemented.");
-	__debugbreak();
-}
-
-void Model::InitMeshBuffers(ID3D11Device* pDevice, const MeshInfo& MESH_INFO, Mesh* pNewMesh)
-{
-	_ASSERT(pDevice);
+	_ASSERT(m_pRenderer);
 	_ASSERT(pNewMesh);
 
 	HRESULT hr = S_OK;
+	ID3D11Device* pDevice = m_pRenderer->GetDevice();
 
 	hr = CreateVertexBuffer(pDevice, MESH_INFO.Vertices, &pNewMesh->pVertexBuffer);
 	BREAK_IF_FAILED(hr);
@@ -300,9 +301,10 @@ void Model::InitMeshBuffers(ID3D11Device* pDevice, const MeshInfo& MESH_INFO, Me
 	pNewMesh->Stride = sizeof(Vertex);
 }
 
-void Model::UpdateConstantBuffers(ID3D11DeviceContext* pContext)
+void Model::UpdateConstantBuffers()
 {
-	_ASSERT(pContext);
+	_ASSERT(m_pBoundingBoxMesh);
+	_ASSERT(m_pBoundingSphereMesh);
 
 	if (!bIsVisible)
 	{
@@ -355,21 +357,23 @@ void Model::UpdateWorld(const Matrix& WORLD)
 	}
 }
 
-void Model::UpdateAnimation(ID3D11DeviceContext* pContext, int clipID, int frame)
+void Model::UpdateAnimation(const int CLIP_ID, const int FRAME)
 {
 	// class SkinnedMeshModel¿¡¼­ override.
 	/*OutputDebugStringA("Model::UpdateAnimation(ID3D11DeviceContext* pContext, int clipID, int frame) was not implemented.");
 	__debugbreak();*/
 }
 
-void Model::Render(ID3D11DeviceContext* pContext)
+void Model::Render()
 {
-	_ASSERT(pContext);
+	_ASSERT(m_pRenderer);
 
 	if (bIsVisible == false)
 	{
 		return;
 	}
+
+	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	for (UINT64 i = 0, size = Meshes.size(); i < size; ++i)
 	{
@@ -415,9 +419,11 @@ void Model::Render(ID3D11DeviceContext* pContext)
 	}
 }
 
-void Model::RenderNormals(ID3D11DeviceContext* pContext)
+void Model::RenderNormals()
 {
-	_ASSERT(pContext);
+	_ASSERT(m_pRenderer);
+
+	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	for (UINT64 i = 0, size = Meshes.size(); i < size; ++i)
 	{
@@ -431,9 +437,11 @@ void Model::RenderNormals(ID3D11DeviceContext* pContext)
 	}
 }
 
-void Model::RenderWireBoundingBox(ID3D11DeviceContext* pContext)
+void Model::RenderWireBoundingBox()
 {
-	_ASSERT(pContext);
+	_ASSERT(m_pRenderer);
+
+	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	ID3D11Buffer* ppConstantsBuffers[] = { m_pBoundingBoxMesh->MeshConstant.pBuffer, m_pBoundingBoxMesh->MaterialConstant.pBuffer };
 	UINT numConstantsBuffers = _countof(ppConstantsBuffers);
@@ -443,9 +451,11 @@ void Model::RenderWireBoundingBox(ID3D11DeviceContext* pContext)
 	pContext->DrawIndexed(m_pBoundingBoxMesh->IndexCount, 0, 0);
 }
 
-void Model::RenderWireBoundingSphere(ID3D11DeviceContext* pContext)
+void Model::RenderWireBoundingSphere()
 {
-	_ASSERT(pContext);
+	_ASSERT(m_pRenderer);
+
+	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	ID3D11Buffer* ppConstantsBuffers[] = { m_pBoundingSphereMesh->MeshConstant.pBuffer, m_pBoundingSphereMesh->MaterialConstant.pBuffer };
 	UINT numConstantBuffers = _countof(ppConstantsBuffers);
@@ -474,4 +484,5 @@ void Model::Cleanup()
 		Meshes[i] = nullptr;
 	}
 	Meshes.clear();
+	m_pRenderer = nullptr;
 }

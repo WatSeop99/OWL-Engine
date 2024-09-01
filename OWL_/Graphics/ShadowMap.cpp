@@ -12,6 +12,11 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 	_ASSERT(pDevice);
 	_ASSERT(pContext);
 
+	m_pDevice = pDevice;
+	m_pDevice->AddRef();
+	m_pContext = pContext;
+	m_pContext->AddRef();
+
 	m_LightType = lightType;
 
 	D3D11_TEXTURE2D_DESC desc2D = {};
@@ -111,10 +116,8 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 	m_ShadowConstantsBufferForGS.Initialize(pDevice, pContext, sizeof(ShadowConstants), &initialShadow);
 }
 
-void ShadowMap::Update(ID3D11DeviceContext* pContext, const LightProperty& PROPERTY, Camera& lightCam, Camera& mainCamera)
+void ShadowMap::Update(const LightProperty& PROPERTY, Camera& lightCam, Camera& mainCamera)
 {
-	_ASSERT(pContext);
-
 	Matrix lightView;
 	Matrix lightProjection = lightCam.GetProjection();
 
@@ -219,81 +222,83 @@ void ShadowMap::Update(ID3D11DeviceContext* pContext, const LightProperty& PROPE
 	}
 }
 
-void ShadowMap::Render(ID3D11DeviceContext* pContext, std::vector<Model*>& pBasicList, Model* pMirror)
+void ShadowMap::Render(std::vector<Model*>& pBasicList, Model* pMirror)
 {
-	setShadowViewport(pContext);
+	_ASSERT(m_pContext);
+
+	setShadowViewport();
 
 	switch (m_LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
 	{
 		case LIGHT_DIRECTIONAL:
 		{
-			pContext->ClearDepthStencilView(m_DirectionalLightShadowBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
-			pContext->OMSetRenderTargets(0, nullptr, m_DirectionalLightShadowBuffer.pDSV);
-			pContext->GSSetConstantBuffers(0, 1, &m_ShadowConstantsBufferForGS.pBuffer);
+			m_pContext->ClearDepthStencilView(m_DirectionalLightShadowBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
+			m_pContext->OMSetRenderTargets(0, nullptr, m_DirectionalLightShadowBuffer.pDSV);
+			m_pContext->GSSetConstantBuffers(0, 1, &m_ShadowConstantsBufferForGS.pBuffer);
 
 			for (UINT64 i = 0, size = pBasicList.size(); i < size; ++i)
 			{
 				Model* const pCurModel = pBasicList[i];
 				if (pCurModel->bCastShadow && pCurModel->bIsVisible)
 				{
-					setPipelineState(pContext, pCurModel->GetDepthOnlyCascadePSO());
-					pCurModel->Render(pContext);
+					setPipelineState(pCurModel->GetDepthOnlyCascadePSO());
+					pCurModel->Render();
 				}
 			}
 
 			if (pMirror && pMirror->bCastShadow)
 			{
-				setPipelineState(pContext, g_DepthOnlyCascadePSO);
-				pMirror->Render(pContext);
+				setPipelineState(g_DepthOnlyCascadePSO);
+				pMirror->Render();
 			}
 		}
 		break;
 
 		case LIGHT_POINT:
 		{
-			pContext->ClearDepthStencilView(m_PointLightShadowBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
-			pContext->OMSetRenderTargets(0, nullptr, m_PointLightShadowBuffer.pDSV);
-			pContext->GSSetConstantBuffers(0, 1, &m_ShadowConstantsBufferForGS.pBuffer);
+			m_pContext->ClearDepthStencilView(m_PointLightShadowBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
+			m_pContext->OMSetRenderTargets(0, nullptr, m_PointLightShadowBuffer.pDSV);
+			m_pContext->GSSetConstantBuffers(0, 1, &m_ShadowConstantsBufferForGS.pBuffer);
 
 			for (UINT64 i = 0, size = pBasicList.size(); i < size; ++i)
 			{
 				Model* const pCurModel = pBasicList[i];
 				if (pCurModel->bCastShadow && pCurModel->bIsVisible)
 				{
-					setPipelineState(pContext, pCurModel->GetDepthOnlyCubePSO());
-					pCurModel->Render(pContext);
+					setPipelineState(pCurModel->GetDepthOnlyCubePSO());
+					pCurModel->Render();
 				}
 			}
 
 			if (pMirror && pMirror->bCastShadow)
 			{
-				setPipelineState(pContext, g_DepthOnlyCubePSO);
-				pMirror->Render(pContext);
+				setPipelineState(g_DepthOnlyCubePSO);
+				pMirror->Render();
 			}
 		}
 		break;
 
 		case LIGHT_SPOT:
 		{
-			pContext->ClearDepthStencilView(m_SpotLightShadowBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
-			pContext->OMSetRenderTargets(0, nullptr, m_SpotLightShadowBuffer.pDSV);
-			pContext->VSSetConstantBuffers(0, 1, &m_pShadowConstantsBuffers[0].pBuffer);
-			pContext->PSSetConstantBuffers(0, 1, &m_pShadowConstantsBuffers[0].pBuffer);
-			pContext->GSSetConstantBuffers(0, 1, &m_pShadowConstantsBuffers[0].pBuffer);
+			m_pContext->ClearDepthStencilView(m_SpotLightShadowBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
+			m_pContext->OMSetRenderTargets(0, nullptr, m_SpotLightShadowBuffer.pDSV);
+			m_pContext->VSSetConstantBuffers(0, 1, &m_pShadowConstantsBuffers[0].pBuffer);
+			m_pContext->PSSetConstantBuffers(0, 1, &m_pShadowConstantsBuffers[0].pBuffer);
+			m_pContext->GSSetConstantBuffers(0, 1, &m_pShadowConstantsBuffers[0].pBuffer);
 
 			for (UINT64 i = 0, size = pBasicList.size(); i < size; ++i)
 			{
 				Model* const pCurModel = pBasicList[i];
 				if (pCurModel->bCastShadow && pCurModel->bIsVisible)
 				{
-					setPipelineState(pContext, pCurModel->GetDepthOnlyPSO());
-					pCurModel->Render(pContext);
+					setPipelineState(pCurModel->GetDepthOnlyPSO());
+					pCurModel->Render();
 				}
 			}
 
 			if (pMirror && pMirror->bCastShadow)
 			{
-				pMirror->Render(pContext);
+				pMirror->Render();
 			}
 		}
 		break;
@@ -313,28 +318,31 @@ void ShadowMap::Cleanup()
 	{
 		m_pShadowConstantsBuffers[i].Cleanup();
 	}
+
+	SAFE_RELEASE(m_pContext);
+	SAFE_RELEASE(m_pDevice);
 }
 
-void ShadowMap::setPipelineState(ID3D11DeviceContext* pContext, const GraphicsPSO& PSO)
+void ShadowMap::setPipelineState(const GraphicsPSO& PSO)
 {
-	_ASSERT(pContext);
+	_ASSERT(m_pContext);
 
-	pContext->VSSetShader(PSO.pVertexShader, nullptr, 0);
-	pContext->PSSetShader(PSO.pPixelShader, nullptr, 0);
-	pContext->HSSetShader(PSO.pHullShader, nullptr, 0);
-	pContext->DSSetShader(PSO.pDomainShader, nullptr, 0);
-	pContext->GSSetShader(PSO.pGeometryShader, nullptr, 0);
-	pContext->CSSetShader(nullptr, nullptr, 0);
-	pContext->IASetInputLayout(PSO.pInputLayout);
-	pContext->RSSetState(PSO.pRasterizerState);
-	pContext->OMSetBlendState(PSO.pBlendState, PSO.BlendFactor, 0xffffffff);
-	pContext->OMSetDepthStencilState(PSO.pDepthStencilState, PSO.StencilRef);
-	pContext->IASetPrimitiveTopology(PSO.PrimitiveTopology);
+	m_pContext->VSSetShader(PSO.pVertexShader, nullptr, 0);
+	m_pContext->PSSetShader(PSO.pPixelShader, nullptr, 0);
+	m_pContext->HSSetShader(PSO.pHullShader, nullptr, 0);
+	m_pContext->DSSetShader(PSO.pDomainShader, nullptr, 0);
+	m_pContext->GSSetShader(PSO.pGeometryShader, nullptr, 0);
+	m_pContext->CSSetShader(nullptr, nullptr, 0);
+	m_pContext->IASetInputLayout(PSO.pInputLayout);
+	m_pContext->RSSetState(PSO.pRasterizerState);
+	m_pContext->OMSetBlendState(PSO.pBlendState, PSO.BlendFactor, 0xffffffff);
+	m_pContext->OMSetDepthStencilState(PSO.pDepthStencilState, PSO.StencilRef);
+	m_pContext->IASetPrimitiveTopology(PSO.PrimitiveTopology);
 }
 
-void ShadowMap::setShadowViewport(ID3D11DeviceContext* pContext)
+void ShadowMap::setShadowViewport()
 {
-	_ASSERT(pContext);
+	_ASSERT(m_pContext);
 
 	switch (m_LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
 	{
@@ -347,7 +355,7 @@ void ShadowMap::setShadowViewport(ID3D11DeviceContext* pContext)
 				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
 				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
 			};
-			pContext->RSSetViewports(4, pViewports);
+			m_pContext->RSSetViewports(4, pViewports);
 		}
 		break;
 
@@ -362,7 +370,7 @@ void ShadowMap::setShadowViewport(ID3D11DeviceContext* pContext)
 				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
 				{ 0, 0, (float)m_ShadowWidth, (float)m_ShadowHeight, 0.0f, 1.0f },
 			};
-			pContext->RSSetViewports(6, pViewports);
+			m_pContext->RSSetViewports(6, pViewports);
 		}
 		break;
 
@@ -376,7 +384,7 @@ void ShadowMap::setShadowViewport(ID3D11DeviceContext* pContext)
 			shadowViewport.MinDepth = 0.0f;
 			shadowViewport.MaxDepth = 1.0f;
 
-			pContext->RSSetViewports(1, &shadowViewport);
+			m_pContext->RSSetViewports(1, &shadowViewport);
 		}
 		break;
 

@@ -39,10 +39,8 @@ void Light::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	m_ShadowMap.Initialize(pDevice, pContext, Property.LightType);
 }
 
-void Light::Update(ID3D11DeviceContext* pContext, float deltaTime, Camera& mainCamera)
+void Light::Update(float deltaTime, Camera& mainCamera)
 {
-	_ASSERT(pContext);
-
 	static Vector3 s_LightDev = Vector3::UnitX;
 	if (bRotated)
 	{
@@ -69,7 +67,7 @@ void Light::Update(ID3D11DeviceContext* pContext, float deltaTime, Camera& mainC
 		// 그림자 맵 생성시 필요.
 		Matrix lightView = DirectX::XMMatrixLookAtLH(Property.Position, Property.Position + Property.Direction, up); // 카메라를 이용하면 pitch, yaw를 고려하게됨. 이를 방지하기 위함.
 		Matrix lightProjection = m_LightViewCamera.GetProjection();
-		m_ShadowMap.Update(pContext, Property, m_LightViewCamera, mainCamera);
+		m_ShadowMap.Update(Property, m_LightViewCamera, mainCamera);
 
 		switch (Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
 		{
@@ -126,11 +124,11 @@ void Light::Update(ID3D11DeviceContext* pContext, float deltaTime, Camera& mainC
 	}
 }
 
-void Light::RenderShadowMap(ID3D11DeviceContext* pContext, std::vector<Model*>& pBasicList, Model* pMirror)
+void Light::RenderShadowMap(std::vector<Model*>& pBasicList, Model* pMirror)
 {
 	if (Property.LightType & LIGHT_SHADOW)
 	{
-		m_ShadowMap.Render(pContext, pBasicList, pMirror);
+		m_ShadowMap.Render(pBasicList, pMirror);
 	}
 }
 

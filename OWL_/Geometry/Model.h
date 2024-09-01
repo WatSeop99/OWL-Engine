@@ -8,6 +8,7 @@
 using DirectX::SimpleMath::Matrix;
 
 class Mesh;
+class BaseRenderer;
 
 class Model
 {
@@ -15,19 +16,18 @@ public:
 	Model() = default;
 	virtual ~Model() { Cleanup(); }
 
-	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, std::wstring& basePath, std::wstring& fileName);
-	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const std::vector<MeshInfo>& MESH_INFOS);
-	virtual void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
-	virtual void InitMeshBuffers(ID3D11Device* pDevice, const MeshInfo& MESH_INFO, Mesh* pNewMesh);
+	void Initialize(BaseRenderer* pRenderer, std::wstring& basePath, std::wstring& fileName);
+	void Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MESH_INFOS);
+	virtual void InitMeshBuffers(const MeshInfo& MESH_INFO, Mesh* pNewMesh);
 
-	void UpdateConstantBuffers(ID3D11DeviceContext* pContext);
+	void UpdateConstantBuffers();
 	void UpdateWorld(const Matrix& WORLD);
-	virtual void UpdateAnimation(ID3D11DeviceContext* pContext, int clipID, int frame);
+	virtual void UpdateAnimation(const int CLIP_ID, const int FRAME);
 
-	virtual void Render(ID3D11DeviceContext* pContext);
-	virtual void RenderNormals(ID3D11DeviceContext* pContext);
-	virtual void RenderWireBoundingBox(ID3D11DeviceContext* pContext);
-	virtual void RenderWireBoundingSphere(ID3D11DeviceContext* pContext);
+	virtual void Render();
+	virtual void RenderNormals();
+	virtual void RenderWireBoundingBox();
+	virtual void RenderWireBoundingSphere();
 
 	void Cleanup();
 
@@ -54,7 +54,9 @@ public:
 
 	std::string Name = "NoName";
 
-private:
+protected:
+	BaseRenderer* m_pRenderer = nullptr;
+
 	Mesh* m_pBoundingBoxMesh = nullptr;
 	Mesh* m_pBoundingSphereMesh = nullptr;
 };

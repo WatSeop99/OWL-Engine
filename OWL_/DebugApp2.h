@@ -7,7 +7,7 @@
 class DebugApp2 : public BaseRenderer
 {
 public:
-	DebugApp2() : BaseRenderer() { }
+	DebugApp2() = default;
 	~DebugApp2();
 
 	void InitScene() override;
