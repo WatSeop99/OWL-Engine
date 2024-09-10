@@ -4,19 +4,10 @@
 #include "../Graphics/ConstantDataType.h"
 #include "../Renderer/ConstantBuffer.h"
 #include "../Renderer/Texture.h"
-#include "../Renderer/Texture2D.h"
-#include "../Renderer/Texture3D.h"
 
 struct Material
 {
 	// 2D textures.
-	/*Texture2D Albedo;
-	Texture2D Emissive;
-	Texture2D Normal;
-	Texture2D Height;
-	Texture2D AmbientOcclusion;
-	Texture2D Metallic;
-	Texture2D Roughness;*/
 	Texture Albedo;
 	Texture Emissive;
 	Texture Normal;
@@ -26,8 +17,6 @@ struct Material
 	Texture Roughness;
 
 	// 3D textures.
-	/*Texture3D Density;
-	Texture3D Lighting;*/
 	Texture Density;
 	Texture Lighting;
 };
@@ -44,8 +33,6 @@ public:
 
 		pMaterialBuffer = New Material;
 		ZeroMemory(pMaterialBuffer, sizeof(Material));
-		//*pMaterialBuffer = { Texture(), Texture(), Texture(), Texture(), Texture(), Texture(), Texture(), Texture(), Texture() };
-		//*pMaterialBuffer = { Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture2D(), Texture3D(), Texture3D() };
 		
 		MeshConstants initMeshConst;
 		MaterialConstants initMaterialConst;

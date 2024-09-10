@@ -109,7 +109,7 @@ void BaseRenderer::Initialize()
 
 	// postprocessor 초기화.
 	m_PostProcessor.Initialize(m_pDevice, m_pContext,
-							   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, m_FloatBuffer.pTexture, m_ResolvedBuffer.pTexture, m_PrevBuffer.pTexture, m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV() },
+							   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *(m_FloatBuffer.GetTexture2DPtr()), *(m_ResolvedBuffer.GetTexture2DPtr()), *(m_PrevBuffer.GetTexture2DPtr()), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV()},
 							   m_ScreenWidth, m_ScreenHeight, 4);
 
 	// 콘솔창이 렌더링 창을 덮는 것을 방지.
@@ -141,7 +141,7 @@ void BaseRenderer::InitScene()
 		pMaterialConstData->AlbedoFactor = Vector3(0.0f);
 		pMaterialConstData->EmissionFactor = Vector3(0.0f, 1.0f, 0.0f);
 
-		m_Scene.pRenderObjects.push_back(m_pCursorSphere); // 리스트에 등록.
+		m_Scene.RenderObjects.push_back(m_pCursorSphere); // 리스트에 등록.
 	}
 }
 
@@ -269,7 +269,7 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					setMainViewport();
 					m_Camera.SetAspectRatio(GetAspectRatio());
 					m_PostProcessor.Initialize(m_pDevice, m_pContext,
-											   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, m_FloatBuffer.pTexture, m_ResolvedBuffer.pTexture, m_PrevBuffer.pTexture, m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV() },
+											   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *(m_FloatBuffer.GetTexture2DPtr()), *(m_ResolvedBuffer.GetTexture2DPtr()), *(m_PrevBuffer.GetTexture2DPtr()), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV()},
 											   m_ScreenWidth, m_ScreenHeight, 4);
 				}
 			}
@@ -331,7 +331,7 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 			if (wParam == VK_SPACE)
 			{
-				m_Scene.pLights[1].bRotated = !(m_Scene.pLights[1].bRotated);
+				m_Scene.Lights[1].bRotated = !(m_Scene.Lights[1].bRotated);
 			}
 
 			break;
@@ -416,9 +416,9 @@ Model* BaseRenderer::PickClosest(const Ray& PICKNG_RAY, float* pMinDist)
 	*pMinDist = 1e5f;
 	Model* pMinModel = nullptr;
 
-	for (UINT64 i = 0, size = m_Scene.pRenderObjects.size(); i < size; ++i)
+	for (UINT64 i = 0, size = m_Scene.RenderObjects.size(); i < size; ++i)
 	{
-		Model* pCurModel = m_Scene.pRenderObjects[i];
+		Model* pCurModel = m_Scene.RenderObjects[i];
 		float dist = 0.0f;
 		if (pCurModel->bIsPickable &&
 			PICKNG_RAY.Intersects(pCurModel->BoundingSphere, dist) &&
@@ -741,7 +741,7 @@ void BaseRenderer::createBuffers()
 	D3D11_TEXTURE2D_DESC desc = {};
 	m_pBackBuffer->GetDesc(&desc);
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-	m_PrevBuffer.Initialize(m_pDevice, desc);
+	m_PrevBuffer.Initialize(m_pDevice, m_pContext, desc, nullptr);
 
 	// FLOAT MSAA RenderTargetView/ShaderResourceView.
 	hr = m_pDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_R16G16B16A16_FLOAT, 4, &m_NumQualityLevels);
@@ -763,13 +763,13 @@ void BaseRenderer::createBuffers()
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 	desc.MiscFlags = 0;
 	desc.CPUAccessFlags = 0;
-	m_FloatBuffer.Initialize(m_pDevice, desc);
+	m_FloatBuffer.Initialize(m_pDevice, m_pContext, desc, nullptr);
 
 	// FLOAT MSAA를 Relsolve해서 저장할 SRV/RTV.
 	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET | D3D11_BIND_UNORDERED_ACCESS;
-	m_ResolvedBuffer.Initialize(m_pDevice, desc);
+	m_ResolvedBuffer.Initialize(m_pDevice, m_pContext, desc, nullptr);
 
 	//m_Scene.ResetBuffers(m_bUseMSAA, m_NumQualityLevels);
 }

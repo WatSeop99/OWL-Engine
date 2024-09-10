@@ -19,19 +19,19 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 
 	m_LightType = lightType;
 
-	D3D11_TEXTURE2D_DESC desc2D = {};
-	desc2D.Width = m_ShadowWidth;
-	desc2D.Height = m_ShadowHeight;
-	desc2D.MipLevels = 1;
-	desc2D.ArraySize = 1;
-	desc2D.Format = DXGI_FORMAT_D32_FLOAT; // DSV 포맷 기준으로 설정해야 함.
-	desc2D.SampleDesc.Count = 1;
-	desc2D.SampleDesc.Quality = 0;
-	desc2D.Usage = D3D11_USAGE_DEFAULT;
-	desc2D.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
-	desc2D.CPUAccessFlags = 0;
-	desc2D.MiscFlags = 0;
-	m_SpotLightShadowBuffer.Initialize(pDevice, desc2D);
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = m_ShadowWidth;
+	textureDesc.Height = m_ShadowHeight;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_D32_FLOAT; // DSV 포맷 기준으로 설정해야 함.
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.MiscFlags = 0;
+	m_SpotLightShadowBuffer.Initialize(pDevice, pContext, textureDesc, nullptr);
 
 	HRESULT hr = S_OK;
 	{
@@ -41,7 +41,7 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 		cubeDesc.Height = m_ShadowHeight;
 		cubeDesc.MipLevels = 1;
 		cubeDesc.ArraySize = 6;
-		cubeDesc.Format = DXGI_FORMAT_R32_TYPELESS; // texture 포맷 기준
+		cubeDesc.Format = DXGI_FORMAT_D32_FLOAT; // DSV 포맷 기준
 		cubeDesc.SampleDesc.Count = 1;
 		cubeDesc.SampleDesc.Quality = 0;
 		cubeDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -49,16 +49,16 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 		cubeDesc.CPUAccessFlags = 0;
 		cubeDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
 
-		hr = pDevice->CreateTexture2D(&cubeDesc, nullptr, &(m_PointLightShadowBuffer.pTexture));
-		BREAK_IF_FAILED(hr);
+
+		m_PointLightShadowBuffer.Initialize(pDevice, pContext, cubeDesc, nullptr);
 
 		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
 		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
 		srvDesc.TextureCube.MipLevels = cubeDesc.MipLevels;
 		srvDesc.TextureCube.MostDetailedMip = 0;
-		hr = pDevice->CreateShaderResourceView(m_PointLightShadowBuffer.pTexture, &srvDesc, &(m_PointLightShadowBuffer.pSRV));
-		BREAK_IF_FAILED(hr);
+		SAFE_RELEASE(m_PointLightShadowBuffer.pSRV);
+		m_PointLightShadowBuffer.CreateCustomSRV(srvDesc);
 
 		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
@@ -66,8 +66,8 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 		dsvDesc.Texture2DArray.MipSlice = 0;
 		dsvDesc.Texture2DArray.FirstArraySlice = 0;
 		dsvDesc.Texture2DArray.ArraySize = 6;
-		hr = pDevice->CreateDepthStencilView(m_PointLightShadowBuffer.pTexture, &dsvDesc, &(m_PointLightShadowBuffer.pDSV));
-		BREAK_IF_FAILED(hr);
+		SAFE_RELEASE(m_PointLightShadowBuffer.pDSV);
+		m_PointLightShadowBuffer.CreateCustomDSV(dsvDesc);
 	}
 
 	{
@@ -76,15 +76,15 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 		textureDesc.Height = m_ShadowHeight;
 		textureDesc.MipLevels = 1;
 		textureDesc.ArraySize = 4;
-		textureDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+		textureDesc.Format = DXGI_FORMAT_D32_FLOAT;
 		textureDesc.SampleDesc.Count = 1;
 		textureDesc.SampleDesc.Quality = 0;
 		textureDesc.Usage = D3D11_USAGE_DEFAULT;
 		textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
 		textureDesc.CPUAccessFlags = 0;
 		textureDesc.MiscFlags = 0;
-		hr = pDevice->CreateTexture2D(&textureDesc, nullptr, &(m_DirectionalLightShadowBuffer.pTexture));
-		BREAK_IF_FAILED(hr);
+
+		m_DirectionalLightShadowBuffer.Initialize(pDevice, pContext, textureDesc, nullptr);
 
 		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
@@ -93,8 +93,8 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 		dsvDesc.Texture2DArray.FirstArraySlice = 0;
 		dsvDesc.Texture2DArray.ArraySize = 4;
 		dsvDesc.Texture2DArray.MipSlice = 0;
-		hr = pDevice->CreateDepthStencilView(m_DirectionalLightShadowBuffer.pTexture, &dsvDesc, &(m_DirectionalLightShadowBuffer.pDSV));
-		BREAK_IF_FAILED(hr);
+		SAFE_RELEASE(m_DirectionalLightShadowBuffer.pDSV);
+		m_DirectionalLightShadowBuffer.CreateCustomDSV(dsvDesc);
 
 		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
@@ -103,8 +103,9 @@ void ShadowMap::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 		srvDesc.Texture2DArray.ArraySize = 4;
 		srvDesc.Texture2DArray.MipLevels = 1;
 		srvDesc.Texture2DArray.MostDetailedMip = 0;
-		hr = pDevice->CreateShaderResourceView(m_DirectionalLightShadowBuffer.pTexture, &srvDesc, &(m_DirectionalLightShadowBuffer.pSRV));
-		BREAK_IF_FAILED(hr);
+
+		SAFE_RELEASE(m_DirectionalLightShadowBuffer.pSRV);
+		m_DirectionalLightShadowBuffer.CreateCustomSRV(srvDesc);
 	}
 
 	GlobalConstants initialGlobal;

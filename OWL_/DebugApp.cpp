@@ -60,7 +60,7 @@ void DebugApp::InitScene()
 		newModel->bIsPickable = true; // 마우스로 선택/이동 가능.
 		newModel->Name = "MainModel";
 
-		m_Scene.pRenderObjects.push_back(newModel); // 리스트에 등록.
+		m_Scene.RenderObjects.push_back(newModel); // 리스트에 등록.
 	}
 
 	// 추가 물체1.
@@ -86,7 +86,7 @@ void DebugApp::InitScene()
 		newModel->bIsPickable = true; // 마우스로 선택/이동 가능.
 		newModel->Name = "SecondSphere";
 
-		m_Scene.pRenderObjects.push_back(newModel);
+		m_Scene.RenderObjects.push_back(newModel);
 	}
 
 	// 추가 물체2.
@@ -112,7 +112,7 @@ void DebugApp::InitScene()
 		newModel->bIsPickable = true; // 마우스로 선택/이동 가능.
 		newModel->Name = "Box";
 
-		m_Scene.pRenderObjects.push_back(newModel);
+		m_Scene.RenderObjects.push_back(newModel);
 	}
 
 	// 추가 물체3.
@@ -138,7 +138,7 @@ void DebugApp::InitScene()
 		newModel->bIsPickable = true; // 마우스로 선택/이동 가능.
 		newModel->Name = "SecondSphere";
 
-		m_Scene.pRenderObjects.push_back(newModel);
+		m_Scene.RenderObjects.push_back(newModel);
 	}
 }
 
@@ -169,7 +169,7 @@ void DebugApp::UpdateGUI()
 			destroyBuffersForRendering();
 			createBuffers();
 			m_PostProcessor.Initialize(m_pDevice, m_pContext,
-									   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, m_FloatBuffer.pTexture, m_ResolvedBuffer.pTexture, m_PrevBuffer.pTexture, m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV() },
+									   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *(m_FloatBuffer.GetTexture2DPtr()), *(m_ResolvedBuffer.GetTexture2DPtr()), *(m_PrevBuffer.GetTexture2DPtr()), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV()},
 									   m_ScreenWidth, m_ScreenHeight, 4);
 		}
 		ImGui::TreePop();
@@ -237,9 +237,9 @@ void DebugApp::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Light"))
 	{
-		ImGui::SliderFloat("Halo Radius", &(m_Scene.pLights[1].Property.HaloRadius), 0.0f, 2.0f);
-		ImGui::SliderFloat("Halo Strength", &(m_Scene.pLights[1].Property.HaloStrength), 0.0f, 1.0f);
-		ImGui::SliderFloat("Radius", &(m_Scene.pLights[1].Property.Radius), 0.0f, 0.5f);
+		ImGui::SliderFloat("Halo Radius", &(m_Scene.Lights[1].Property.HaloRadius), 0.0f, 2.0f);
+		ImGui::SliderFloat("Halo Strength", &(m_Scene.Lights[1].Property.HaloStrength), 0.0f, 1.0f);
+		ImGui::SliderFloat("Radius", &(m_Scene.Lights[1].Property.Radius), 0.0f, 0.5f);
 		ImGui::TreePop();
 	}
 

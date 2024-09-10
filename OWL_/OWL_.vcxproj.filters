@@ -60,12 +60,6 @@
     <ClInclude Include="Renderer\StructuredBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Texture2D.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\Texture3D.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Renderer\Timer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -166,12 +160,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Geometry\ModelLoader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\Texture2D.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\Texture3D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Geometry\Animation.cpp">

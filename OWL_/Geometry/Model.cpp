@@ -94,14 +94,10 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				if (!MESH_DATA.szOpacityTextureFileName.empty())
 				{
 					hr = ReadImage(MESH_DATA.szAlbedoTextureFileName.c_str(), MESH_DATA.szOpacityTextureFileName.c_str(), imageData, &width, &height);
-					/*hr = CreateTexture(pDevice, pContext, MESH_DATA.szAlbedoTextureFileName.c_str(), MESH_DATA.szOpacityTextureFileName.c_str(), false,
-									   &pNewMesh->pMaterialBuffer->Albedo.pTexture, &pNewMesh->pMaterialBuffer->Albedo.pSRV);*/
 				}
 				else
 				{
 					hr = ReadImage(MESH_DATA.szAlbedoTextureFileName.c_str(), imageData, &width, &height);
-					/*hr = CreateTexture(pDevice, pContext, MESH_DATA.szAlbedoTextureFileName.c_str(), true,
-									   pNewMesh->pMaterialBuffer->Albedo.GetTexture2DPtr(), &pNewMesh->pMaterialBuffer->Albedo.pSRV);*/
 				}
 				BREAK_IF_FAILED(hr);
 
@@ -137,8 +133,6 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				int height = 0;
 
 				hr = ReadImage(MESH_DATA.szEmissiveTextureFileName.c_str(), imageData, &width, &height);
-				/*hr = CreateTexture(pDevice, pContext, MESH_DATA.szEmissiveTextureFileName.c_str(), true,
-								   &pNewMesh->pMaterialBuffer->Emissive.pTexture, &pNewMesh->pMaterialBuffer->Emissive.pSRV);*/
 				BREAK_IF_FAILED(hr);
 				
 				D3D11_TEXTURE2D_DESC textureDesc = {};
@@ -146,7 +140,6 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				textureDesc.Height = height;
 				textureDesc.MipLevels = 0;
 				textureDesc.ArraySize = 1;
-				//textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 				textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 				textureDesc.SampleDesc.Count = 1;
 				textureDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -174,8 +167,6 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				int height = 0;
 
 				hr = ReadImage(MESH_DATA.szNormalTextureFileName.c_str(), imageData, &width, &height);
-				/*hr = CreateTexture(pDevice, pContext, MESH_DATA.szNormalTextureFileName.c_str(), false,
-								   &pNewMesh->pMaterialBuffer->Normal.pTexture, &pNewMesh->pMaterialBuffer->Normal.pSRV);*/
 				BREAK_IF_FAILED(hr);
 
 				D3D11_TEXTURE2D_DESC textureDesc = {};
@@ -210,8 +201,6 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				int height = 0;
 
 				hr = ReadImage(MESH_DATA.szHeightTextureFileName.c_str(), imageData, &width, &height);
-				/*hr = CreateTexture(pDevice, pContext, MESH_DATA.szHeightTextureFileName.c_str(), false,
-								   &pNewMesh->pMaterialBuffer->Height.pTexture, &pNewMesh->pMaterialBuffer->Height.pSRV);*/
 				BREAK_IF_FAILED(hr);
 
 				D3D11_TEXTURE2D_DESC textureDesc = {};
@@ -246,8 +235,6 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				int height = 0;
 
 				hr = ReadImage(MESH_DATA.szAOTextureFileName.c_str(), imageData, &width, &height);
-				/*hr = CreateTexture(pDevice, pContext, MESH_DATA.szAOTextureFileName.c_str(), false,
-								   &pNewMesh->pMaterialBuffer->AmbientOcclusion.pTexture, &pNewMesh->pMaterialBuffer->AmbientOcclusion.pSRV);*/
 				BREAK_IF_FAILED(hr);
 
 				D3D11_TEXTURE2D_DESC textureDesc = {};
@@ -282,8 +269,6 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				int height = 0;
 
 				hr = ReadImage(MESH_DATA.szMetallicTextureFileName.c_str(), imageData, &width, &height);
-				/*hr = CreateTexture(pDevice, pContext, MESH_DATA.szMetallicTextureFileName.c_str(), false,
-								   &pNewMesh->pMaterialBuffer->Metallic.pTexture, &pNewMesh->pMaterialBuffer->Metallic.pSRV);*/
 				BREAK_IF_FAILED(hr);
 
 				D3D11_TEXTURE2D_DESC textureDesc = {};
@@ -318,8 +303,6 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				int height = 0;
 
 				hr = ReadImage(MESH_DATA.szRoughnessTextureFileName.c_str(), imageData, &width, &height);
-				/*hr = CreateTexture(pDevice, pContext, MESH_DATA.szRoughnessTextureFileName.c_str(), false,
-								   &pNewMesh->pMaterialBuffer->Roughness.pTexture, &pNewMesh->pMaterialBuffer->Roughness.pSRV);*/
 				BREAK_IF_FAILED(hr);
 				
 				D3D11_TEXTURE2D_DESC textureDesc = {};

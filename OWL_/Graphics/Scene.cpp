@@ -21,43 +21,43 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 	m_GBuffer.bIsEnabled = false;
 	if (m_GBuffer.bIsEnabled)
 	{
-		m_GBuffer.Initialize(pDevice);
+		m_GBuffer.Initialize(pDevice, pContext);
 	}
 
-	pLights.resize(MAX_LIGHTS);
+	Lights.resize(MAX_LIGHTS);
 	m_ppLightSpheres.resize(MAX_LIGHTS);
 
 	// 조명 설정.
 	{
 		// 조명 0.
-		pLights[0].Property.Radiance = Vector3(3.0f);
-		pLights[0].Property.FallOffEnd = 10.0f;
-		pLights[0].Property.Position = Vector3(0.0f, 0.0f, 0.0f);
-		pLights[0].Property.Direction = Vector3(0.0f, 0.0f, 1.0f);
-		pLights[0].Property.SpotPower = 3.0f;
-		pLights[0].Property.LightType = LIGHT_POINT | LIGHT_SHADOW;
-		pLights[0].Property.Radius = 0.04f;
-		// pLights[0].Property.LightType = LIGHT_OFF;
+		Lights[0].Property.Radiance = Vector3(3.0f);
+		Lights[0].Property.FallOffEnd = 10.0f;
+		Lights[0].Property.Position = Vector3(0.0f);
+		Lights[0].Property.Direction = Vector3(0.0f, 0.0f, 1.0f);
+		Lights[0].Property.SpotPower = 3.0f;
+		Lights[0].Property.LightType = LIGHT_POINT | LIGHT_SHADOW;
+		Lights[0].Property.Radius = 0.04f;
+		// Lights[0].Property.LightType = LIGHT_OFF;
 
 		// 조명 1.
-		pLights[1].Property.Radiance = Vector3(3.0f);
-		pLights[1].Property.FallOffEnd = 10.0f;
-		pLights[1].Property.Position = Vector3(1.0f, 1.1f, 2.0f);
-		pLights[1].Property.SpotPower = 2.0f;
-		pLights[1].Property.Direction = Vector3(0.0f, -0.5f, 1.7f) - pLights[1].Property.Position;
-		pLights[1].Property.Direction.Normalize();
-		pLights[1].Property.LightType = LIGHT_SPOT | LIGHT_SHADOW;
-		pLights[1].Property.Radius = 0.02f;
-		// pLights[1].Property.LightType = LIGHT_OFF;
+		Lights[1].Property.Radiance = Vector3(3.0f);
+		Lights[1].Property.FallOffEnd = 10.0f;
+		Lights[1].Property.Position = Vector3(1.0f, 1.1f, 2.0f);
+		Lights[1].Property.SpotPower = 2.0f;
+		Lights[1].Property.Direction = Vector3(0.0f, -0.5f, 1.7f) - Lights[1].Property.Position;
+		Lights[1].Property.Direction.Normalize();
+		Lights[1].Property.LightType = LIGHT_SPOT | LIGHT_SHADOW;
+		Lights[1].Property.Radius = 0.02f;
+		// Lights[1].Property.LightType = LIGHT_OFF;
 
 		// 조명 2.
-		pLights[2].Property.Radiance = Vector3(4.0f);
-		pLights[2].Property.Position = Vector3(5.0f, 5.0f, 5.0f);
-		pLights[2].Property.Direction = Vector3(-1.0f, -1.0f, -1.0f);
-		pLights[2].Property.Direction.Normalize();
-		pLights[2].Property.LightType = LIGHT_DIRECTIONAL | LIGHT_SHADOW;
-		pLights[2].Property.Radius = 0.05f;
-		// pLights[2].Property.LightType = LIGHT_OFF;
+		Lights[2].Property.Radiance = Vector3(4.0f);
+		Lights[2].Property.Position = Vector3(5.0f);
+		Lights[2].Property.Direction = Vector3(-1.0f, -1.0f, -1.0f);
+		Lights[2].Property.Direction.Normalize();
+		Lights[2].Property.LightType = LIGHT_DIRECTIONAL | LIGHT_SHADOW;
+		Lights[2].Property.Radius = 0.05f;
+		// Lights[2].Property.LightType = LIGHT_OFF;
 	}
 
 	// 조명 위치 표시.
@@ -69,7 +69,7 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 
 			m_ppLightSpheres[i] = New Model;
 			m_ppLightSpheres[i]->Initialize(pRenderer, { sphere });
-			m_ppLightSpheres[i]->UpdateWorld(Matrix::CreateTranslation(pLights[i].Property.Position));
+			m_ppLightSpheres[i]->UpdateWorld(Matrix::CreateTranslation(Lights[i].Property.Position));
 
 			MaterialConstants* pMaterialConstData = (MaterialConstants*)m_ppLightSpheres[i]->Meshes[0]->MaterialConstant.pSystemMem;
 			pMaterialConstData->AlbedoFactor = Vector3(0.0f);
@@ -88,7 +88,7 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 			m_ppLightSpheres[i]->Name = "LightSphere" + std::to_string(i);
 			m_ppLightSpheres[i]->bIsPickable = false;
 
-			pRenderObjects.push_back(m_ppLightSpheres[i]); // 리스트에 등록.
+			RenderObjects.push_back(m_ppLightSpheres[i]); // 리스트에 등록.
 		}
 		// m_ppLightSpheres[0]->bIsVisible = false;
 		// m_ppLightSpheres[1]->bIsVisible = false;
@@ -139,10 +139,10 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 	// m_GlobalConstants.CPU.StrengthIBL = 1.0f;
 
 	// 광원마다 shadow map 설정.
-	for (UINT64 i = 0, size = pLights.size(); i < size; ++i)
+	for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
 	{
-		// pLights[i].SetShadowSize(1280, 1280); // 사이즈 변경 가능.
-		pLights[i].Initialize(pDevice, pContext);
+		// Lights[i].SetShadowSize(1280, 1280); // 사이즈 변경 가능.
+		Lights[i].Initialize(pDevice, pContext);
 	}
 
 	// 환경 박스 초기화.
@@ -179,9 +179,9 @@ void Scene::Update(const float DELTA_TIME)
 		m_pMirror->UpdateConstantBuffers();
 	}
 
-	for (UINT64 i = 0, size = pRenderObjects.size(); i < size; ++i)
+	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
 	{
-		Model* pCurModel = pRenderObjects[i];
+		Model* pCurModel = RenderObjects[i];
 		pCurModel->UpdateConstantBuffers();
 	}
 }
@@ -250,13 +250,13 @@ void Scene::Cleanup()
 		m_pScreenMesh = nullptr;
 	}
 
-	pLights.clear();
-	for (UINT64 i = 0, size = pRenderObjects.size(); i < size; ++i)
+	Lights.clear();
+	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
 	{
-		delete pRenderObjects[i];
-		pRenderObjects[i] = nullptr;
+		delete RenderObjects[i];
+		RenderObjects[i] = nullptr;
 	}
-	pRenderObjects.clear();
+	RenderObjects.clear();
 
 	m_pRenderer = nullptr;
 }
@@ -266,6 +266,7 @@ void Scene::ResetBuffers(const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVELS)
 	_ASSERT(m_pRenderer);
 
 	ID3D11Device* pDevice = m_pRenderer->GetDevice();
+	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	SAFE_RELEASE(m_pDefaultDSV);
 	m_DepthOnlyBuffer.Cleanup();
@@ -275,7 +276,7 @@ void Scene::ResetBuffers(const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVELS)
 		m_GBuffer.Cleanup();
 		m_GBuffer.SetScreenWidth(m_ScreenWidth);
 		m_GBuffer.SetScreenHeight(m_ScreenHeight);
-		m_GBuffer.Initialize(pDevice);
+		m_GBuffer.Initialize(pDevice, pContext);
 	}
 
 	createDepthBuffers(bUSE_MSAA, NUM_QUALITY_LEVELS);
@@ -313,6 +314,7 @@ void Scene::createDepthBuffers(const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVE
 
 	HRESULT hr = S_OK;
 	ID3D11Device* pDevice = m_pRenderer->GetDevice();
+	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	// depth buffers.
 	D3D11_TEXTURE2D_DESC desc = {};
@@ -358,16 +360,16 @@ void Scene::createDepthBuffers(const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVE
 	desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
 	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
-	m_DepthOnlyBuffer.Initialize(pDevice, desc);
+	m_DepthOnlyBuffer.Initialize(pDevice, pContext, desc, nullptr);
 }
 
 void Scene::updateLights(const float DELTA_TIME)
 {
-	for (UINT64 i = 0, size = pLights.size(); i < size; ++i)
+	for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
 	{
-		pLights[i].Update(DELTA_TIME, m_Camera);
-		m_ppLightSpheres[i]->UpdateWorld(Matrix::CreateScale(Max(0.01f, pLights[i].Property.Radius)) * Matrix::CreateTranslation(pLights[i].Property.Position));
-		memcpy(&((LightConstants*)m_LightConstants.pSystemMem)->Lights[i], &pLights[i].Property, sizeof(LightProperty));
+		Lights[i].Update(DELTA_TIME, m_Camera);
+		m_ppLightSpheres[i]->UpdateWorld(Matrix::CreateScale(Max(0.01f, Lights[i].Property.Radius)) * Matrix::CreateTranslation(Lights[i].Property.Position));
+		memcpy(&((LightConstants*)m_LightConstants.pSystemMem)->Lights[i], &Lights[i].Property, sizeof(LightProperty));
 	}
 
 	m_LightConstants.Upload();
@@ -416,9 +418,9 @@ void Scene::renderDepthOnly()
 	setGlobalConstants(&m_GlobalConstants.pBuffer, 0);
 	setPipelineState(g_DepthOnlyPSO);
 
-	for (UINT64 i = 0, size = pRenderObjects.size(); i < size; ++i)
+	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
 	{
-		Model* pCurModel = pRenderObjects[i];
+		Model* pCurModel = RenderObjects[i];
 		pCurModel->Render();
 	}
 
@@ -442,9 +444,9 @@ void Scene::renderShadowMaps()
 	ID3D11ShaderResourceView* ppNulls[2] = { nullptr, };
 	pContext->PSSetShaderResources(15, 2, ppNulls);
 
-	for (UINT64 i = 0, size = pLights.size(); i < size; ++i)
+	for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
 	{
-		pLights[i].RenderShadowMap(pRenderObjects, m_pMirror);
+		Lights[i].RenderShadowMap(RenderObjects, m_pMirror);
 	}
 }
 
@@ -468,11 +470,11 @@ void Scene::renderOpaqueObjects()
 	ID3D11ShaderResourceView* ppShadowSRVs[MAX_LIGHTS] = { nullptr, };
 	UINT pointLightIndex = -1;
 	UINT directionalLightIndex = -1;
-	for (size_t i = 0, size = pLights.size(); i < size; ++i)
+	for (size_t i = 0, size = Lights.size(); i < size; ++i)
 	{
-		ShadowMap& curShadowMap = pLights[i].GetShadowMap();
+		ShadowMap& curShadowMap = Lights[i].GetShadowMap();
 
-		switch (pLights[i].Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
+		switch (Lights[i].Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
 		{
 			case LIGHT_DIRECTIONAL:
 				directionalLightIndex = (UINT)i;
@@ -484,7 +486,7 @@ void Scene::renderOpaqueObjects()
 
 			case LIGHT_SPOT:
 			{
-				Texture2D* pCurShadowBuffer = curShadowMap.GetSpotLightShadowBufferPtr();
+				Texture* pCurShadowBuffer = curShadowMap.GetSpotLightShadowBufferPtr();
 				ppShadowSRVs[i] = pCurShadowBuffer->pSRV;
 			}
 			break;
@@ -493,18 +495,18 @@ void Scene::renderOpaqueObjects()
 				break;
 		}
 	}
-	pContext->PSSetShaderResources(15, (UINT)pLights.size(), ppShadowSRVs);
+	pContext->PSSetShaderResources(15, (UINT)Lights.size(), ppShadowSRVs);
 
 	if (pointLightIndex != -1)
 	{
-		ShadowMap& curShadowMap = pLights[pointLightIndex].GetShadowMap();
-		Texture2D* pCurShadowCubeBuffer = curShadowMap.GetPointLightShadowBufferPtr();
+		ShadowMap& curShadowMap = Lights[pointLightIndex].GetShadowMap();
+		Texture* pCurShadowCubeBuffer = curShadowMap.GetPointLightShadowBufferPtr();
 		pContext->PSSetShaderResources(20, 1, &pCurShadowCubeBuffer->pSRV);
 	}
 	if (directionalLightIndex != -1)
 	{
-		ShadowMap& curShadowMap = pLights[directionalLightIndex].GetShadowMap();
-		Texture2D* pCurShadowCascadeBuffer = curShadowMap.GetDirectionalLightShadowBufferPtr();
+		ShadowMap& curShadowMap = Lights[directionalLightIndex].GetShadowMap();
+		Texture* pCurShadowCascadeBuffer = curShadowMap.GetDirectionalLightShadowBufferPtr();
 		pContext->PSSetShaderResources(25, 1, &pCurShadowCascadeBuffer->pSRV);
 	}
 
@@ -516,9 +518,9 @@ void Scene::renderOpaqueObjects()
 	setPipelineState(bDrawAsWire ? g_SkyboxWirePSO : g_SkyboxSolidPSO);
 	m_pSkybox->Render();
 
-	for (UINT64 i = 0, size = pRenderObjects.size(); i < size; ++i)
+	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
 	{
-		Model* pCurModel = pRenderObjects[i];
+		Model* pCurModel = RenderObjects[i];
 		setPipelineState( pCurModel->GetPSO(bDrawAsWire));
 		pCurModel->Render();
 	}
@@ -526,25 +528,21 @@ void Scene::renderOpaqueObjects()
 
 void Scene::renderGBuffer()
 {
-	_ASSERT(m_pRenderer);
-
-	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
-
 	// 다시 렌더링 해상도로 되돌리기.
 	setScreenViewport();
 
 	setGlobalConstants(&m_GlobalConstants.pBuffer, 0);
 
-	m_GBuffer.PrepareRender(pContext, m_pDefaultDSV);
+	m_GBuffer.PrepareRender(m_pDefaultDSV);
 
-	for (UINT64 i = 0, size = pRenderObjects.size(); i < size; ++i)
+	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
 	{
-		Model* pCurModel = pRenderObjects[i];
+		Model* pCurModel = RenderObjects[i];
 		setPipelineState(pCurModel->GetGBufferPSO(bDrawAsWire));
 		pCurModel->Render();
 	}
 
-	m_GBuffer.AfterRender(pContext);
+	m_GBuffer.AfterRender();
 }
 
 void Scene::renderDeferredLighting()
@@ -557,10 +555,10 @@ void Scene::renderDeferredLighting()
 	ID3D11ShaderResourceView* ppShadowSRVs[MAX_LIGHTS] = { nullptr, };
 	UINT pointLightIndex = -1;
 	UINT directionalLightIndex = -1;
-	for (UINT64 i = 0, size = pLights.size(); i < size; ++i)
+	for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
 	{
-		ShadowMap& curShadowMap = pLights[i].GetShadowMap();
-		switch (pLights[i].Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
+		ShadowMap& curShadowMap = Lights[i].GetShadowMap();
+		switch (Lights[i].Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
 		{
 			case LIGHT_DIRECTIONAL:
 				directionalLightIndex = (UINT)i;
@@ -572,7 +570,7 @@ void Scene::renderDeferredLighting()
 
 			case LIGHT_SPOT:
 			{
-				Texture2D* pCurShadowBuffer = curShadowMap.GetSpotLightShadowBufferPtr();
+				Texture* pCurShadowBuffer = curShadowMap.GetSpotLightShadowBufferPtr();
 				ppShadowSRVs[i] = pCurShadowBuffer->pSRV;
 			}
 			break;
@@ -581,18 +579,18 @@ void Scene::renderDeferredLighting()
 				break;
 		}
 	}
-	pContext->PSSetShaderResources(15, (UINT)pLights.size(), ppShadowSRVs);
+	pContext->PSSetShaderResources(15, (UINT)Lights.size(), ppShadowSRVs);
 
 	if (pointLightIndex != -1)
 	{
-		ShadowMap& curShadowMap = pLights[pointLightIndex].GetShadowMap();
-		Texture2D* pCurShadowCubeBuffer = curShadowMap.GetPointLightShadowBufferPtr();
+		ShadowMap& curShadowMap = Lights[pointLightIndex].GetShadowMap();
+		Texture* pCurShadowCubeBuffer = curShadowMap.GetPointLightShadowBufferPtr();
 		pContext->PSSetShaderResources(20, 1, &pCurShadowCubeBuffer->pSRV);
 	}
 	if (directionalLightIndex != -1)
 	{
-		ShadowMap& curShadowMap = pLights[directionalLightIndex].GetShadowMap();
-		Texture2D* pCurShadowCascadeBuffer = curShadowMap.GetDirectionalLightShadowBufferPtr();
+		ShadowMap& curShadowMap = Lights[directionalLightIndex].GetShadowMap();
+		Texture* pCurShadowCascadeBuffer = curShadowMap.GetDirectionalLightShadowBufferPtr();
 		pContext->PSSetShaderResources(25, 1, &pCurShadowCascadeBuffer->pSRV);
 	}
 
@@ -624,9 +622,9 @@ void Scene::renderDeferredLighting()
 
 void Scene::renderOptions()
 {
-	for (UINT64 i = 0, size = pRenderObjects.size(); i < size; ++i)
+	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
 	{
-		Model* pCurModel = pRenderObjects[i];
+		Model* pCurModel = RenderObjects[i];
 		if (pCurModel->bDrawNormals)
 		{
 			setPipelineState(g_NormalsPSO);
@@ -671,9 +669,9 @@ void Scene::renderMirror()
 		setGlobalConstants(&m_ReflectionGlobalConstants.pBuffer, 0);
 		pContext->ClearDepthStencilView(m_pDefaultDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-		for (size_t i = 0, size = pRenderObjects.size(); i < size; ++i)
+		for (size_t i = 0, size = RenderObjects.size(); i < size; ++i)
 		{
-			Model* pCurModel = pRenderObjects[i];
+			Model* pCurModel = RenderObjects[i];
 			setPipelineState(pCurModel->GetPSO(bDrawAsWire));
 			pCurModel->Render();
 		}

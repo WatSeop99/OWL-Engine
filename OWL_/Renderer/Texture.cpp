@@ -16,6 +16,8 @@ void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, c
 	m_eTextureType = TextureType_Texture2D;
 
 	// Create texture resources.
+	m_pTexture2D = nullptr;
+	m_pStagingTexture2D = nullptr;
 	createTexture();
 	createStagingTexture(pInitData);
 	if (m_Texture2DDesc.BindFlags & D3D11_BIND_RENDER_TARGET)
@@ -50,6 +52,8 @@ void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, c
 	m_eTextureType = TextureType_Texture3D;
 
 	// Create texture resources.
+	m_pTexture3D = nullptr;
+	m_pStagingTexture3D = nullptr;
 	createTexture();
 	createStagingTexture(pInitData);
 	if (m_Texture3DDesc.BindFlags & D3D11_BIND_RENDER_TARGET)
@@ -68,6 +72,42 @@ void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, c
 	{
 		createUnorderedAccessView();
 	}
+}
+
+void Texture::CreateCustomSRV(const D3D11_SHADER_RESOURCE_VIEW_DESC& SRV_DESC)
+{
+	_ASSERT(m_pDevice);
+	_ASSERT(!pSRV);
+
+	HRESULT hr = S_OK;
+	
+	if (m_eTextureType == TextureType_Texture2D)
+	{
+		hr = m_pDevice->CreateShaderResourceView(m_pTexture2D, &SRV_DESC, &pSRV);
+	}
+	else if (m_eTextureType == TextureType_Texture3D)
+	{
+		hr = m_pDevice->CreateShaderResourceView(m_pTexture3D, &SRV_DESC, &pSRV);
+	}
+	BREAK_IF_FAILED(hr);
+}
+
+void Texture::CreateCustomDSV(const D3D11_DEPTH_STENCIL_VIEW_DESC& DSV_DESC)
+{
+	_ASSERT(m_pDevice);
+	_ASSERT(!pDSV);
+
+	HRESULT hr = S_OK;
+
+	if (m_eTextureType == TextureType_Texture2D)
+	{
+		hr = m_pDevice->CreateDepthStencilView(m_pTexture2D, &DSV_DESC, &pDSV);
+	}
+	else if (m_eTextureType == TextureType_Texture3D)
+	{
+		hr = m_pDevice->CreateDepthStencilView(m_pTexture3D, &DSV_DESC, &pDSV);
+	}
+	BREAK_IF_FAILED(hr);
 }
 
 void Texture::Upload()
@@ -247,6 +287,7 @@ void Texture::createStagingTexture(void* pInitData)
 		D3D11_TEXTURE2D_DESC stagingTextureDesc = {};
 		memcpy(&stagingTextureDesc, &m_Texture2DDesc, sizeof(D3D11_TEXTURE2D_DESC));
 		stagingTextureDesc.MipLevels = 1;
+		stagingTextureDesc.SampleDesc.Count = 1;
 		stagingTextureDesc.Usage = D3D11_USAGE_STAGING;
 		stagingTextureDesc.BindFlags = 0;
 		stagingTextureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;
@@ -266,6 +307,7 @@ void Texture::createStagingTexture(void* pInitData)
 		stagingTextureDesc.BindFlags = 0;
 		stagingTextureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;
 		stagingTextureDesc.MiscFlags = 0;
+		//stagingTextureDesc.MiscFlags |= D3D11_BIND_UNORDERED_ACCESS;
 
 		textureFormat = stagingTextureDesc.Format;
 		hr = m_pDevice->CreateTexture3D(&stagingTextureDesc, nullptr, &m_pStagingTexture3D);

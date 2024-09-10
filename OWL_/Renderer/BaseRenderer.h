@@ -5,6 +5,7 @@
 #include "ResourceManager.h"
 #include "../Renderer/PostProcessor.h"
 #include "../Graphics/Scene.h"
+#include "Texture.h"
 
 using DirectX::BoundingSphere;
 using DirectX::SimpleMath::Quaternion;
@@ -83,9 +84,9 @@ protected:
 
 	// 삼각형 레스터화 -> float(MSAA) -> resolved(No MSAA)
 	// -> 후처리(블룸, 톤매핑) -> backBuffer(최종 SwapChain Present)
-	Texture2D m_FloatBuffer;
-	Texture2D m_ResolvedBuffer;
-	Texture2D m_PrevBuffer; // 간단한 모션 블러 효과를 위함.
+	Texture m_FloatBuffer;
+	Texture m_ResolvedBuffer;
+	Texture m_PrevBuffer; // 간단한 모션 블러 효과를 위함.
 
 	// 레벨.
 	Scene m_Scene;

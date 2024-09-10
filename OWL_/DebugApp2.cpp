@@ -72,7 +72,7 @@ void DebugApp2::InitScene()
 		}
 		m_pCharacter->UpdateWorld(Matrix::CreateScale(1.0f) * Matrix::CreateTranslation(center));
 
-		m_Scene.pRenderObjects.push_back(m_pCharacter); // 리스트에 등록
+		m_Scene.RenderObjects.push_back(m_pCharacter); // 리스트에 등록
 		m_pPickedModel = m_pCharacter;
 	}
 }
@@ -94,7 +94,7 @@ void DebugApp2::UpdateGUI()
 			BaseRenderer::destroyBuffersForRendering();
 			BaseRenderer::createBuffers();
 			m_PostProcessor.Initialize(m_pDevice, m_pContext,
-									   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, m_FloatBuffer.pTexture, m_ResolvedBuffer.pTexture, m_PrevBuffer.pTexture, m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV() },
+									   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *(m_FloatBuffer.GetTexture2DPtr()), *(m_ResolvedBuffer.GetTexture2DPtr()), *(m_PrevBuffer.GetTexture2DPtr()), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV()},
 									   m_ScreenWidth, m_ScreenHeight, 4);
 		}
 		ImGui::TreePop();
@@ -159,9 +159,9 @@ void DebugApp2::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Light"))
 	{
-		ImGui::SliderFloat("Halo Radius", &(m_Scene.pLights[1].Property.HaloRadius), 0.0f, 2.0f);
-		ImGui::SliderFloat("Halo Strength", &(m_Scene.pLights[1].Property.HaloStrength), 0.0f, 1.0f);
-		ImGui::SliderFloat("Radius", &(m_Scene.pLights[1].Property.Radius), 0.0f, 0.5f);
+		ImGui::SliderFloat("Halo Radius", &(m_Scene.Lights[1].Property.HaloRadius), 0.0f, 2.0f);
+		ImGui::SliderFloat("Halo Strength", &(m_Scene.Lights[1].Property.HaloStrength), 0.0f, 1.0f);
+		ImGui::SliderFloat("Radius", &(m_Scene.Lights[1].Property.Radius), 0.0f, 0.5f);
 
 		ImGui::TreePop();
 	}

@@ -4,6 +4,7 @@
 #include "../Renderer/ConstantBuffer.h"
 #include "../Renderer/GBuffer.h"
 #include "Light.h"
+#include "Texture.h"
 
 class BaseRenderer;
 class Camera;
@@ -13,7 +14,7 @@ class Model;
 class Scene
 {
 public:
-	Scene(Camera& camera, Texture2D& floatBuffer, Texture2D& resolvedBuffer, UINT width = 1280, UINT height = 720) :
+	Scene(Camera& camera, Texture& floatBuffer, Texture& resolvedBuffer, UINT width = 1280, UINT height = 720) :
 		m_Camera(camera),
 		m_FloatBuffer(floatBuffer),
 		m_ResolvedBuffer(resolvedBuffer),
@@ -70,8 +71,8 @@ protected:
 	void setGlobalConstants(ID3D11Buffer** ppGlobalConstants, UINT slot);
 
 public:
-	std::vector<Model*> pRenderObjects; // opaque.
-	std::vector<Light> pLights;
+	std::vector<Model*> RenderObjects; // opaque.
+	std::vector<Light> Lights;
 
 	bool bDrawAsWire = false;
 	bool bDrawOBB = false;
@@ -86,15 +87,15 @@ private:
 	UINT m_ScreenHeight;
 	Mesh* m_pScreenMesh = nullptr;
 	Camera& m_Camera;
-	Texture2D& m_FloatBuffer;
-	Texture2D& m_ResolvedBuffer;
+	Texture& m_FloatBuffer;
+	Texture& m_ResolvedBuffer;
 
 	// g-buffer.
 	GBuffer m_GBuffer;
 
 	// depth buffer 관련.
 	ID3D11DepthStencilView* m_pDefaultDSV = nullptr;
-	Texture2D m_DepthOnlyBuffer; // No MSAA
+	Texture m_DepthOnlyBuffer; // No MSAA
 
 	// 렌더링을 위한 여러 상수 퍼버들.
 	ConstantBuffer m_GlobalConstants;

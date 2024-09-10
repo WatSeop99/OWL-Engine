@@ -165,8 +165,6 @@
     <ClInclude Include="Renderer\StructuredBuffer.h" />
     <ClInclude Include="Renderer\ResourceManager.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="Renderer\Texture2D.h" />
-    <ClInclude Include="Renderer\Texture3D.h" />
     <ClInclude Include="Renderer\Timer.h" />
     <ClInclude Include="Renderer\Texture.h" />
     <ClInclude Include="Util\Util.h" />
@@ -195,7 +193,6 @@
     </ClCompile>
     <ClCompile Include="Graphics\ShadowMap.cpp" />
     <ClCompile Include="Renderer\StructuredBuffer.cpp" />
-    <ClCompile Include="Renderer\Texture3D.cpp" />
     <ClCompile Include="Renderer\Timer.cpp" />
     <ClCompile Include="DebugApp.cpp" />
     <ClCompile Include="Geometry\Animation.cpp" />
@@ -209,7 +206,6 @@
     <ClCompile Include="Geometry\Model.cpp" />
     <ClCompile Include="Geometry\ModelLoader.cpp" />
     <ClCompile Include="Renderer\PostProcessor.cpp" />
-    <ClCompile Include="Renderer\Texture2D.cpp" />
     <ClCompile Include="Renderer\ResourceManager.cpp" />
     <ClCompile Include="Renderer\Texture.cpp" />
     <ClCompile Include="Util\Util.cpp" />

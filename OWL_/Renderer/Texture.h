@@ -16,6 +16,9 @@ public:
 	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE2D_DESC& DESC, void* pInitData);
 	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE3D_DESC& DESC, void* pInitData);
 
+	void CreateCustomSRV(const D3D11_SHADER_RESOURCE_VIEW_DESC& SRV_DESC);
+	void CreateCustomDSV(const D3D11_DEPTH_STENCIL_VIEW_DESC& DSV_DESC);
+
 	void Upload();
 
 	void Cleanup();
