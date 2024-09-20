@@ -21,12 +21,12 @@ public:
 
 	void Render() override;
 
-	inline GraphicsPSO& GetPSO(const bool bWIRED) override { return (bWIRED ? g_SkinnedWirePSO : g_SkinnedSolidPSO); }
-	inline GraphicsPSO& GetGBufferPSO(const bool bWIRED) override { return (bWIRED ? g_GBufferSKinnedWirePSO : g_GBufferSkinnedPSO); }
-	inline GraphicsPSO& GetDepthOnlyPSO() override { return g_DepthOnlySkinnedPSO; }
-	inline GraphicsPSO& GetDepthOnlyCubePSO() override { return g_DepthOnlyCubeSkinnedPSO; }
-	inline GraphicsPSO& GetDepthOnlyCascadePSO() override { return g_DepthOnlyCascadeSkinnedPSO; }
-	inline GraphicsPSO& GetReflectPSO(const bool bWIRED) override { return (bWIRED ? g_ReflectSkinnedWirePSO : g_ReflectSkinnedSolidPSO); }
+	inline eGraphicsPSOType GetPSO(const bool bWIRED) override { return (bWIRED ? GraphicsPSOType_SkinnedWire : GraphicsPSOType_SkinnedSolid); }
+	inline eGraphicsPSOType GetGBufferPSO(const bool bWIRED) override { return (bWIRED ? GraphicsPSOType_GBufferSkinnedWire : GraphicsPSOType_GBufferSkinned); }
+	inline eGraphicsPSOType GetDepthOnlyPSO() override { return GraphicsPSOType_DepthOnlySkinned; }
+	inline eGraphicsPSOType GetDepthOnlyCubePSO() override { return GraphicsPSOType_DepthOnlyCubeSkinned; }
+	inline eGraphicsPSOType GetDepthOnlyCascadePSO() override { return GraphicsPSOType_DepthOnlyCascadeSkinned; }
+	inline eGraphicsPSOType GetReflectPSO(const bool bWIRED) override { return (bWIRED ? GraphicsPSOType_ReflectSkinnedWire : GraphicsPSOType_ReflectSkinnedSolid); }
 
 public:
 	StructuredBuffer BoneTransforms;

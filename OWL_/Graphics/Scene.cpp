@@ -1,17 +1,24 @@
 #include "../Common.h"
+#include "Atmosphere/AerialLUT.h"
 #include "../Renderer/BaseRenderer.h"
 #include "Camera.h"
 #include "../Geometry/GeometryGenerator.h"
 #include "../Geometry/Mesh.h"
 #include "../Geometry/Model.h"
+#include "Atmosphere/MultiScatteringLUT.h"
+#include "Atmosphere/Sky.h"
+#include "Atmosphere/SkyLUT.h"
+#include "Atmosphere/Sun.h"
+#include "Atmosphere/TransmittanceLUT.h"
 #include "Scene.h"
 
-void Scene::Initialize(BaseRenderer* pRenderer)
+void Scene::Initialize(BaseRenderer* pRenderer, const bool bUSE_MSAA)
 {
 	_ASSERT(pRenderer);
 
 	m_pRenderer = pRenderer;
 
+	ResourceManager* pResourceManager = pRenderer->GetResourceManager();
 	ID3D11Device* pDevice = pRenderer->GetDevice();
 	ID3D11DeviceContext* pContext = pRenderer->GetDeviceContext();
 
@@ -19,7 +26,7 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 
 	createBuffers();
 	m_GBuffer.bIsEnabled = false;
-	if (m_GBuffer.bIsEnabled)
+	if (m_GBuffer.bIsEnabled && !bUSE_MSAA)
 	{
 		m_GBuffer.Initialize(pDevice, pContext);
 	}
@@ -142,7 +149,7 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 	for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
 	{
 		// Lights[i].SetShadowSize(1280, 1280); // 사이즈 변경 가능.
-		Lights[i].Initialize(pDevice, pContext);
+		Lights[i].Initialize(pRenderer);
 	}
 
 	// 환경 박스 초기화.
@@ -155,18 +162,69 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 	m_pSkybox->Name = "SkyBox";
 
 	// deferred rendering을 위한 스크린 공간 생성.
-	MeshInfo meshInfo;
-	MakeSquare(&meshInfo);
+	if (m_GBuffer.bIsEnabled)
+	{
+		MeshInfo meshInfo;
+		MakeSquare(&meshInfo);
 
-	m_pScreenMesh = New Mesh;
-	m_pScreenMesh->Initialize(pDevice, pContext);
+		m_pScreenMesh = New Mesh;
+		m_pScreenMesh->Initialize(pDevice, pContext);
 
-	HRESULT hr = CreateVertexBuffer(pDevice, meshInfo.Vertices, &(m_pScreenMesh->pVertexBuffer));
-	BREAK_IF_FAILED(hr);
+		HRESULT hr = pResourceManager->CreateVertexBuffer(sizeof(Vertex), (UINT)meshInfo.Vertices.size(), &m_pScreenMesh->pVertexBuffer, meshInfo.Vertices.data());
+		BREAK_IF_FAILED(hr);
 
-	m_pScreenMesh->IndexCount = (UINT)meshInfo.Indices.size();
-	hr = CreateIndexBuffer(pDevice, meshInfo.Indices, &(m_pScreenMesh->pIndexBuffer));
-	BREAK_IF_FAILED(hr);
+		m_pScreenMesh->IndexCount = (UINT)meshInfo.Indices.size();
+		hr = pResourceManager->CreateIndexBuffer(sizeof(UINT), (UINT)meshInfo.Indices.size(), &m_pScreenMesh->pIndexBuffer, meshInfo.Indices.data());
+		BREAK_IF_FAILED(hr);
+	}
+
+
+	m_SunProperty.LightType = LIGHT_SUN | LIGHT_SHADOW;
+	m_SunCamera.bUseFirstPersonView = true;
+	m_SunCamera.SetAspectRatio(2560.0f / 2560.0f);
+	m_SunCamera.SetEyePos(m_SunProperty.Position);
+	m_SunCamera.SetViewDir(m_SunProperty.Direction);
+	m_SunCamera.SetProjectionFovAngleY(120.0f);
+	m_SunCamera.SetNearZ(0.1f);
+	m_SunCamera.SetFarZ(50.0f);
+	m_ShadowMap.SetShadowWidth(2560);
+	m_ShadowMap.SetShadowHeight(2560);
+	m_ShadowMap.Initialize(pRenderer, LIGHT_SUN);
+
+	AtmosphereProperty STDUnitAtmosphereProperty = m_AtmosphereProperty.ToStdUnit();
+	m_pAtmosphereConstantBuffer = New ConstantBuffer;
+	m_pAtmosphereConstantBuffer->Initialize(pDevice, pContext, sizeof(AtmosphereProperty), &STDUnitAtmosphereProperty);
+	m_pSky = New Sky;
+	m_pSky->Initialize(pRenderer);
+	m_pSkyLUT = New SkyLUT;
+	m_pSkyLUT->Initialize(pRenderer);
+	m_pAerialLUT = New AerialLUT;
+	m_pAerialLUT->Initialize(pRenderer);
+	m_pTransmittanceLUT = New TransmittanceLUT;
+	m_pTransmittanceLUT->Initialize(pRenderer);
+	m_pMultiScatteringLUT = New MultiScatteringLUT;
+	m_pMultiScatteringLUT->Initialize(pRenderer);
+	m_pSun = New Sun;
+	m_pSun->Initialize(pRenderer);
+
+	/*m_pTransmittanceLUT->SetAtmosphere(m_pAtmosphereConstantBuffer);
+	m_pTransmittanceLUT->Generate();
+
+	Vector3 terrainColor(0.3f);
+	m_pMultiScatteringLUT->SetAtmosphere(m_pAtmosphereConstantBuffer);
+	m_pMultiScatteringLUT->Update(&terrainColor);
+	m_pMultiScatteringLUT->Generate(m_pTransmittanceLUT->GetTransmittanceLUT());
+
+	m_pSkyLUT->SetAtmosphere(m_pAtmosphereConstantBuffer);
+	m_pSkyLUT->SetMultiScatteringLUT(m_pMultiScatteringLUT->GetMultiScatteringLUT());
+	m_pSkyLUT->SetTransmittanceLUT(m_pTransmittanceLUT->GetTransmittanceLUT());
+
+	m_pAerialLUT->SetAtmosphere(m_pAtmosphereConstantBuffer);
+	m_pAerialLUT->SetMultiScatteringLUT(m_pMultiScatteringLUT->GetMultiScatteringLUT());
+	m_pAerialLUT->SetTransmittanceLUT(m_pTransmittanceLUT->GetTransmittanceLUT());
+
+	m_pSun->SetAtmosphere(m_pAtmosphereConstantBuffer);
+	m_pSun->SetTransmittanceLUT(m_pTransmittanceLUT->GetTransmittanceLUT());*/
 }
 
 void Scene::Update(const float DELTA_TIME)
@@ -181,22 +239,72 @@ void Scene::Update(const float DELTA_TIME)
 
 	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
 	{
-		Model* pCurModel = RenderObjects[i];
+		Model* const pCurModel = RenderObjects[i];
 		pCurModel->UpdateConstantBuffers();
 	}
+
+	const Vector3 CAMERA_POS = m_Camera.GetEyePos();
+	const Matrix CAMERA_VIEWPROJECTION = m_Camera.GetView() * m_Camera.GetProjection();
+	const float ATMOS_EYE_HEIGHT = m_pAerialLUT->pAerialData->WorldScale * CAMERA_POS.y;
+
+	// Update shadow map.
+	m_ShadowMap.Update(m_SunProperty, m_SunCamera, m_Camera);
+
+
+	m_pTransmittanceLUT->SetAtmosphere(m_pAtmosphereConstantBuffer);
+	m_pTransmittanceLUT->Generate();
+
+	Vector3 terrainColor(0.3f);
+	m_pMultiScatteringLUT->SetAtmosphere(m_pAtmosphereConstantBuffer);
+	m_pMultiScatteringLUT->Update(&terrainColor);
+	m_pMultiScatteringLUT->Generate(m_pTransmittanceLUT->GetTransmittanceLUT());
+
+	m_pSkyLUT->SetAtmosphere(m_pAtmosphereConstantBuffer);
+	m_pSkyLUT->SetMultiScatteringLUT(m_pMultiScatteringLUT->GetMultiScatteringLUT());
+	m_pSkyLUT->SetTransmittanceLUT(m_pTransmittanceLUT->GetTransmittanceLUT());
+
+	m_pAerialLUT->SetAtmosphere(m_pAtmosphereConstantBuffer);
+	m_pAerialLUT->SetMultiScatteringLUT(m_pMultiScatteringLUT->GetMultiScatteringLUT());
+	m_pAerialLUT->SetTransmittanceLUT(m_pTransmittanceLUT->GetTransmittanceLUT());
+
+	m_pSun->SetAtmosphere(m_pAtmosphereConstantBuffer);
+	m_pSun->SetTransmittanceLUT(m_pTransmittanceLUT->GetTransmittanceLUT());
+
+
+	// Update sky view LUT.
+	m_pSkyLUT->SetCamera(&(CAMERA_POS * m_pAerialLUT->pAerialData->WorldScale));
+	m_pSkyLUT->SetSun(&m_pSun->SunDirection, &(m_pSun->SunIntensity * m_pSun->SunColor));
+	m_pSkyLUT->Update();
+	m_pSkyLUT->Generate();
+
+	// Update aerial LUT.
+	m_pAerialLUT->SetCamera(&CAMERA_POS, ATMOS_EYE_HEIGHT, &m_Camera.GetFrustumDirection());
+	m_pAerialLUT->SetSun(&m_pSun->SunDirection);
+	m_pAerialLUT->Update();
+	m_pAerialLUT->Generate(m_ShadowMap.GetSpotLightShadowBuffer());
+
+	// Update Sky.
+	m_pSky->SetCamera(&m_Camera.GetFrustumDirection());
+	m_pSky->Update();
+
+	// Update Sun.
+	m_pSun->SetWorldScale(m_pAerialLUT->pAerialData->WorldScale);
+	m_pSun->SetCamera(&CAMERA_POS, &CAMERA_VIEWPROJECTION);
+	m_pSun->Update();
 }
 
 void Scene::Render()
 {
 	_ASSERT(m_pRenderer);
 
+	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	setScreenViewport();
 
 	// 공통으로 사용하는 샘플러들 설정.
-	pContext->VSSetSamplers(0, (UINT)g_ppSamplerStates.size(), g_ppSamplerStates.data());
-	pContext->PSSetSamplers(0, (UINT)g_ppSamplerStates.size(), g_ppSamplerStates.data());
+	pContext->VSSetSamplers(0, (UINT)pResourceManager->SamplerStates.size(), pResourceManager->SamplerStates.data());
+	pContext->PSSetSamplers(0, (UINT)pResourceManager->SamplerStates.size(), pResourceManager->SamplerStates.data());
 
 	// 공통으로 사용할 텍스춰들: "Common.hlsli"에서 register(t10)부터 시작
 	ID3D11ShaderResourceView* ppCommonSRVs[] = { m_pEnvSRV, m_pSpecularSRV, m_pIrradianceSRV, m_pBrdfSRV };
@@ -216,6 +324,7 @@ void Scene::Render()
 		renderOpaqueObjects();
 	}
 
+	renderSky();
 	renderOptions();
 	renderMirror();
 }
@@ -223,6 +332,43 @@ void Scene::Render()
 void Scene::Cleanup()
 {
 	// SaveScene();
+
+	if (m_pAtmosphereConstantBuffer)
+	{
+		delete m_pAtmosphereConstantBuffer;
+		m_pAtmosphereConstantBuffer = nullptr;
+	}
+	if (m_pSky)
+	{
+		delete m_pSky;
+		m_pSky = nullptr;
+	}
+	if (m_pSkyLUT)
+	{
+		delete m_pSkyLUT;
+		m_pSkyLUT = nullptr;
+	}
+	if (m_pAerialLUT)
+	{
+		delete m_pAerialLUT;
+		m_pAerialLUT = nullptr;
+	}
+	if (m_pTransmittanceLUT)
+	{
+		delete m_pTransmittanceLUT;
+		m_pTransmittanceLUT = nullptr;
+	}
+	if (m_pMultiScatteringLUT)
+	{
+		delete m_pMultiScatteringLUT;
+		m_pMultiScatteringLUT = nullptr;
+	}
+	if (m_pSun)
+	{
+		delete m_pSun;
+		m_pSun = nullptr;
+	}
+
 
 	m_pMirror = nullptr;
 	m_ppLightSpheres.clear();
@@ -259,6 +405,8 @@ void Scene::Cleanup()
 	RenderObjects.clear();
 
 	m_pRenderer = nullptr;
+	m_pFloatBuffer = nullptr;
+	m_pResolvedBuffer = nullptr;
 }
 
 void Scene::ResetBuffers(const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVELS)
@@ -271,7 +419,7 @@ void Scene::ResetBuffers(const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVELS)
 	SAFE_RELEASE(m_pDefaultDSV);
 	m_DepthOnlyBuffer.Cleanup();
 
-	if (m_GBuffer.bIsEnabled)
+	if (m_GBuffer.bIsEnabled && !bUSE_MSAA)
 	{
 		m_GBuffer.Cleanup();
 		m_GBuffer.SetScreenWidth(m_ScreenWidth);
@@ -287,20 +435,49 @@ void Scene::initCubemaps(std::wstring&& basePath, std::wstring&& envFileName, st
 	_ASSERT(m_pRenderer);
 
 	HRESULT hr = S_OK;
+	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
 	ID3D11Device* pDevice = m_pRenderer->GetDevice();
 
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	ID3D11Texture2D* pTexture = nullptr;
+
 	// BRDF LookUp Table은 CubeMap이 아니라 2D 텍스쳐임.
-	hr = CreateDDSTexture(pDevice, (basePath + envFileName).c_str(), true, &m_pEnvSRV);
+	hr = pResourceManager->CreateTextureCubeFromFile((basePath + envFileName).c_str(), &pTexture, &textureDesc);
 	BREAK_IF_FAILED(hr);
+	hr = pDevice->CreateShaderResourceView(pTexture, nullptr, &m_pEnvSRV);
+	BREAK_IF_FAILED(hr);
+	pTexture->Release();
+	pTexture = nullptr;
+	/*D3D11_TEXTURE2D_DESC textureDesc = {};
+	m_pEnv = new Texture;
+	pResourceManager->CreateTextureCubeFromFile((basePath + envFileName).c_str(), m_pEnv->GetTexture2DPtr(), &textureDesc);*/
 
-	hr = CreateDDSTexture(pDevice, (basePath + specularFileName).c_str(), true, &m_pSpecularSRV);
+	hr = pResourceManager->CreateTextureCubeFromFile((basePath + specularFileName).c_str(), &pTexture, &textureDesc);
 	BREAK_IF_FAILED(hr);
+	hr = pDevice->CreateShaderResourceView(pTexture, nullptr, &m_pSpecularSRV);
+	BREAK_IF_FAILED(hr);
+	pTexture->Release();
+	pTexture = nullptr;
+	/*m_pSpecular = new Texture;
+	pResourceManager->CreateTextureCubeFromFile((basePath + specularFileName).c_str(), m_pSpecular->GetTexture2DPtr(), &textureDesc);*/
 
-	hr = CreateDDSTexture(pDevice, (basePath + irradianceFileName).c_str(), true, &m_pIrradianceSRV);
+	hr = pResourceManager->CreateTextureCubeFromFile((basePath + irradianceFileName).c_str(), &pTexture, &textureDesc);
 	BREAK_IF_FAILED(hr);
+	hr = pDevice->CreateShaderResourceView(pTexture, nullptr, &m_pIrradianceSRV);
+	BREAK_IF_FAILED(hr);
+	pTexture->Release();
+	pTexture = nullptr;
+	/*m_pIrradiance = new Texture;
+	pResourceManager->CreateTextureCubeFromFile((basePath + irradianceFileName).c_str(), m_pIrradiance->GetTexture2DPtr(), &textureDesc);*/
 
-	hr = CreateDDSTexture(pDevice, (basePath + brdfFileName).c_str(), false, &m_pBrdfSRV);
+	hr = pResourceManager->CreateTextureCubeFromFile((basePath + brdfFileName).c_str(), &pTexture, &textureDesc);
 	BREAK_IF_FAILED(hr);
+	hr = pDevice->CreateShaderResourceView(pTexture, nullptr, &m_pBrdfSRV);
+	BREAK_IF_FAILED(hr);
+	pTexture->Release();
+	pTexture = nullptr;
+	/*m_pBRDF = new Texture;
+	pResourceManager->CreateTextureCubeFromFile((basePath + brdfFileName).c_str(), m_pBRDF->GetTexture2DPtr(), &textureDesc);*/
 }
 
 void Scene::createBuffers(const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVELS)
@@ -360,7 +537,7 @@ void Scene::createDepthBuffers(const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVE
 	desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
 	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
-	m_DepthOnlyBuffer.Initialize(pDevice, pContext, desc, nullptr);
+	m_DepthOnlyBuffer.Initialize(pDevice, pContext, desc, nullptr, true);
 }
 
 void Scene::updateLights(const float DELTA_TIME)
@@ -410,13 +587,15 @@ void Scene::renderDepthOnly()
 {
 	_ASSERT(m_pRenderer);
 	
+	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	pContext->OMSetRenderTargets(0, nullptr, m_DepthOnlyBuffer.pDSV);
 	pContext->ClearDepthStencilView(m_DepthOnlyBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	setGlobalConstants(&m_GlobalConstants.pBuffer, 0);
-	setPipelineState(g_DepthOnlyPSO);
+	//setPipelineState(g_DepthOnlyPSO);
+	pResourceManager->SetPipelineState(GraphicsPSOType_DepthOnly);
 
 	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
 	{
@@ -441,19 +620,33 @@ void Scene::renderShadowMaps()
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	// 쉐도우 맵을 다른 쉐이더에서 SRV 해제.
-	ID3D11ShaderResourceView* ppNulls[2] = { nullptr, };
-	pContext->PSSetShaderResources(15, 2, ppNulls);
+	ID3D11ShaderResourceView* ppNulls[3] = { nullptr, };
+	pContext->PSSetShaderResources(14, 3, ppNulls);
 
 	for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
 	{
 		Lights[i].RenderShadowMap(RenderObjects, m_pMirror);
 	}
+	m_ShadowMap.Render(RenderObjects, m_pMirror);
+}
+
+void Scene::renderSky()
+{
+	_ASSERT(m_pRenderer);
+	_ASSERT(m_pSky);
+	_ASSERT(m_pSun);
+	_ASSERT(m_pSkyLUT);
+
+	m_pSky->Render(m_pSkyLUT->GetSkyLUT());
+	
+	m_pSun->Render();
 }
 
 void Scene::renderOpaqueObjects()
 {
 	_ASSERT(m_pRenderer);
 
+	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	// 다시 렌더링 해상도로 되돌리기.
@@ -461,16 +654,16 @@ void Scene::renderOpaqueObjects()
 
 	// 거울은 빼고 원래 대로 그리기.
 	const float CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	pContext->ClearRenderTargetView(m_FloatBuffer.pRTV, CLEAR_COLOR);
+	pContext->ClearRenderTargetView(m_pFloatBuffer->pRTV, CLEAR_COLOR);
 	pContext->ClearDepthStencilView(m_pDefaultDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-	pContext->OMSetRenderTargets(1, &m_FloatBuffer.pRTV, m_pDefaultDSV);
+	pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_pDefaultDSV);
 
 	// 그림자맵들도 공용 텍스춰들 이후에 추가.
 	// 주의: 마지막 shadowDSV를 RenderTarget에서 해제한 후 설정.
 	ID3D11ShaderResourceView* ppShadowSRVs[MAX_LIGHTS] = { nullptr, };
 	UINT pointLightIndex = -1;
 	UINT directionalLightIndex = -1;
-	for (size_t i = 0, size = Lights.size(); i < size; ++i)
+	for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
 	{
 		ShadowMap& curShadowMap = Lights[i].GetShadowMap();
 
@@ -486,7 +679,7 @@ void Scene::renderOpaqueObjects()
 
 			case LIGHT_SPOT:
 			{
-				Texture* pCurShadowBuffer = curShadowMap.GetSpotLightShadowBufferPtr();
+				Texture* pCurShadowBuffer = curShadowMap.GetSpotLightShadowBuffer();
 				ppShadowSRVs[i] = pCurShadowBuffer->pSRV;
 			}
 			break;
@@ -495,19 +688,19 @@ void Scene::renderOpaqueObjects()
 				break;
 		}
 	}
-	pContext->PSSetShaderResources(15, (UINT)Lights.size(), ppShadowSRVs);
+	pContext->PSSetShaderResources(14, (UINT)Lights.size(), ppShadowSRVs);
 
 	if (pointLightIndex != -1)
 	{
 		ShadowMap& curShadowMap = Lights[pointLightIndex].GetShadowMap();
-		Texture* pCurShadowCubeBuffer = curShadowMap.GetPointLightShadowBufferPtr();
-		pContext->PSSetShaderResources(20, 1, &pCurShadowCubeBuffer->pSRV);
+		Texture* pCurShadowCubeBuffer = curShadowMap.GetPointLightShadowBuffer();
+		pContext->PSSetShaderResources(17, 1, &pCurShadowCubeBuffer->pSRV);
 	}
 	if (directionalLightIndex != -1)
 	{
 		ShadowMap& curShadowMap = Lights[directionalLightIndex].GetShadowMap();
-		Texture* pCurShadowCascadeBuffer = curShadowMap.GetDirectionalLightShadowBufferPtr();
-		pContext->PSSetShaderResources(25, 1, &pCurShadowCascadeBuffer->pSRV);
+		Texture* pCurShadowCascadeBuffer = curShadowMap.GetDirectionalLightShadowBuffer();
+		pContext->PSSetShaderResources(18, 1, &pCurShadowCascadeBuffer->pSRV);
 	}
 
 	setGlobalConstants(&m_GlobalConstants.pBuffer, 0);
@@ -515,19 +708,23 @@ void Scene::renderOpaqueObjects()
 
 	// 스카이박스 그리기.
 	// 최적화를 하고 싶다면 투명한 물체들만 따로 마지막에 그리면 됨.
-	setPipelineState(bDrawAsWire ? g_SkyboxWirePSO : g_SkyboxSolidPSO);
-	m_pSkybox->Render();
+	/*pResourceManager->SetPipelineState(bDrawAsWire ? GraphicsPSOType_SkyboxWire : GraphicsPSOType_SkyboxSolid);
+	m_pSkybox->Render();*/
 
 	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
 	{
 		Model* pCurModel = RenderObjects[i];
-		setPipelineState( pCurModel->GetPSO(bDrawAsWire));
+		pResourceManager->SetPipelineState(pCurModel->GetPSO(bDrawAsWire));
 		pCurModel->Render();
 	}
 }
 
 void Scene::renderGBuffer()
 {
+	_ASSERT(m_pRenderer);
+
+	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
+
 	// 다시 렌더링 해상도로 되돌리기.
 	setScreenViewport();
 
@@ -538,7 +735,7 @@ void Scene::renderGBuffer()
 	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
 	{
 		Model* pCurModel = RenderObjects[i];
-		setPipelineState(pCurModel->GetGBufferPSO(bDrawAsWire));
+		pResourceManager->SetPipelineState(pCurModel->GetGBufferPSO(bDrawAsWire));
 		pCurModel->Render();
 	}
 
@@ -549,6 +746,7 @@ void Scene::renderDeferredLighting()
 {
 	_ASSERT(m_pRenderer);
 
+	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	// 그림자맵들도 공용 텍스춰들 이후에 추가.
@@ -570,7 +768,7 @@ void Scene::renderDeferredLighting()
 
 			case LIGHT_SPOT:
 			{
-				Texture* pCurShadowBuffer = curShadowMap.GetSpotLightShadowBufferPtr();
+				Texture* pCurShadowBuffer = curShadowMap.GetSpotLightShadowBuffer();
 				ppShadowSRVs[i] = pCurShadowBuffer->pSRV;
 			}
 			break;
@@ -579,65 +777,69 @@ void Scene::renderDeferredLighting()
 				break;
 		}
 	}
-	pContext->PSSetShaderResources(15, (UINT)Lights.size(), ppShadowSRVs);
+	pContext->PSSetShaderResources(14, (UINT)Lights.size(), ppShadowSRVs);
 
 	if (pointLightIndex != -1)
 	{
 		ShadowMap& curShadowMap = Lights[pointLightIndex].GetShadowMap();
-		Texture* pCurShadowCubeBuffer = curShadowMap.GetPointLightShadowBufferPtr();
-		pContext->PSSetShaderResources(20, 1, &pCurShadowCubeBuffer->pSRV);
+		Texture* pCurShadowCubeBuffer = curShadowMap.GetPointLightShadowBuffer();
+		pContext->PSSetShaderResources(17, 1, &pCurShadowCubeBuffer->pSRV);
 	}
 	if (directionalLightIndex != -1)
 	{
 		ShadowMap& curShadowMap = Lights[directionalLightIndex].GetShadowMap();
-		Texture* pCurShadowCascadeBuffer = curShadowMap.GetDirectionalLightShadowBufferPtr();
-		pContext->PSSetShaderResources(25, 1, &pCurShadowCascadeBuffer->pSRV);
+		Texture* pCurShadowCascadeBuffer = curShadowMap.GetDirectionalLightShadowBuffer();
+		pContext->PSSetShaderResources(18, 1, &pCurShadowCascadeBuffer->pSRV);
 	}
 
 	setGlobalConstants(&m_LightConstants.pBuffer, 1);
 
 	const float CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	pContext->ClearRenderTargetView(m_FloatBuffer.pRTV, CLEAR_COLOR);
+	pContext->ClearRenderTargetView(m_pFloatBuffer->pRTV, CLEAR_COLOR);
 	pContext->ClearDepthStencilView(m_pDefaultDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-	pContext->OMSetRenderTargets(1, &(m_FloatBuffer.pRTV), m_pDefaultDSV);
+	pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_pDefaultDSV);
 
 	ID3D11ShaderResourceView* ppSRVs[5] = { m_GBuffer.AlbedoBuffer.pSRV, m_GBuffer.NormalBuffer.pSRV, m_GBuffer.PositionBuffer.pSRV, m_GBuffer.EmissionBuffer.pSRV, m_GBuffer.ExtraBuffer.pSRV };
 	pContext->PSSetShaderResources(0, 5, ppSRVs);
 
-	setPipelineState(g_DeferredRenderingPSO);
+	pResourceManager->SetPipelineState(GraphicsPSOType_DeferredRendering);
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	pContext->IASetVertexBuffers(0, 1, &(m_pScreenMesh->pVertexBuffer), &stride, &offset);
+	pContext->IASetVertexBuffers(0, 1, &m_pScreenMesh->pVertexBuffer, &stride, &offset);
 	pContext->IASetIndexBuffer(m_pScreenMesh->pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 	pContext->DrawIndexed(m_pScreenMesh->IndexCount, 0, 0);
 
-	pContext->OMSetRenderTargets(1, &(m_FloatBuffer.pRTV), m_GBuffer.DepthBuffer.pDSV);
+	pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_GBuffer.DepthBuffer.pDSV);
 
 	// 스카이박스 그리기.
-	setPipelineState(bDrawAsWire ? g_SkyboxWirePSO : g_SkyboxSolidPSO);
+	pResourceManager->SetPipelineState(bDrawAsWire ? GraphicsPSOType_SkyboxWire : GraphicsPSOType_SkyboxSolid);
 	m_pSkybox->Render();
 
 }
 
 void Scene::renderOptions()
 {
+	_ASSERT(m_pRenderer);
+
+	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
+
 	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
 	{
 		Model* pCurModel = RenderObjects[i];
 		if (pCurModel->bDrawNormals)
 		{
-			setPipelineState(g_NormalsPSO);
+			pResourceManager->SetPipelineState(GraphicsPSOType_Normal);
 			pCurModel->RenderNormals();
 		}
 		if (bDrawOBB)
 		{
-			setPipelineState(g_BoundingBoxPSO);
+			pResourceManager->SetPipelineState(GraphicsPSOType_BoundingBox);
 			pCurModel->RenderWireBoundingBox();
 		}
 		if (bDrawBS)
 		{
-			setPipelineState(g_BoundingBoxPSO);
+			pResourceManager->SetPipelineState(GraphicsPSOType_BoundingBox);
 			pCurModel->RenderWireBoundingSphere();
 		}
 	}
@@ -647,6 +849,7 @@ void Scene::renderMirror()
 {
 	_ASSERT(m_pRenderer);
 
+	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	if (!m_pMirror)
@@ -656,13 +859,14 @@ void Scene::renderMirror()
 
 	if (MirrorAlpha == 1.0f) // 불투명하면 거울만 그림.
 	{
-		setPipelineState(bDrawAsWire ? g_DefaultWirePSO : g_DefaultSolidPSO);
+		//setPipelineState(bDrawAsWire ? g_DefaultWirePSO : g_DefaultSolidPSO);
+		pResourceManager->SetPipelineState(bDrawAsWire ? GraphicsPSOType_DefaultWire : GraphicsPSOType_DefaultSolid);
 		m_pMirror->Render();
 	}
 	else if (MirrorAlpha < 1.0f) // 투명도가 조금이라도 있으면 처리.
 	{
 		// 거울 위치만 StencilBuffer에 1로 표기.
-		setPipelineState(g_StencilMaskPSO);
+		pResourceManager->SetPipelineState(GraphicsPSOType_StencilMask);
 		m_pMirror->Render();
 
 		// 거울 위치에 반사된 물체들을 렌더링.
@@ -672,44 +876,23 @@ void Scene::renderMirror()
 		for (size_t i = 0, size = RenderObjects.size(); i < size; ++i)
 		{
 			Model* pCurModel = RenderObjects[i];
-			setPipelineState(pCurModel->GetPSO(bDrawAsWire));
+			pResourceManager->SetPipelineState(pCurModel->GetPSO(bDrawAsWire));
 			pCurModel->Render();
 		}
 
-		setPipelineState(bDrawAsWire ? g_ReflectSkyboxWirePSO : g_ReflectSkyboxSolidPSO);
+		pResourceManager->SetPipelineState(bDrawAsWire ? GraphicsPSOType_ReflectSkyboxWire : GraphicsPSOType_ReflectSkyboxSolid);
 		m_pSkybox->Render();
 
 		// 거울 자체의 재질을 "Blend"로 그림.
 		setGlobalConstants(&m_GlobalConstants.pBuffer, 0);
-		setPipelineState(bDrawAsWire ? g_MirrorBlendWirePSO : g_MirrorBlendSolidPSO);
+		pResourceManager->SetPipelineState(bDrawAsWire ? GraphicsPSOType_MirrorBlendWire : GraphicsPSOType_MirrorBlendSolid);
 		m_pMirror->Render();
 	}
-}
-
-void Scene::setPipelineState(const GraphicsPSO& PSO)
-{
-	_ASSERT(m_pRenderer);
-
-	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
-
-	pContext->VSSetShader(PSO.pVertexShader, nullptr, 0);
-	pContext->PSSetShader(PSO.pPixelShader, nullptr, 0);
-	pContext->HSSetShader(PSO.pHullShader, nullptr, 0);
-	pContext->DSSetShader(PSO.pDomainShader, nullptr, 0);
-	pContext->GSSetShader(PSO.pGeometryShader, nullptr, 0);
-	pContext->CSSetShader(nullptr, nullptr, 0);
-	pContext->IASetInputLayout(PSO.pInputLayout);
-	pContext->RSSetState(PSO.pRasterizerState);
-	pContext->OMSetBlendState(PSO.pBlendState, PSO.BlendFactor, 0xffffffff);
-	pContext->OMSetDepthStencilState(PSO.pDepthStencilState, PSO.StencilRef);
-	pContext->IASetPrimitiveTopology(PSO.PrimitiveTopology);
 }
 
 void Scene::setScreenViewport()
 {
 	_ASSERT(m_pRenderer);
-
-	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	D3D11_VIEWPORT screenViewport = { 0, };
 	screenViewport.TopLeftX = 0;
@@ -719,7 +902,7 @@ void Scene::setScreenViewport()
 	screenViewport.MinDepth = 0.0f;
 	screenViewport.MaxDepth = 1.0f;
 
-	pContext->RSSetViewports(1, &screenViewport);
+	m_pRenderer->SetViewport(&screenViewport, 1);
 }
 
 void Scene::setGlobalConstants(ID3D11Buffer** ppGlobalConstants, UINT slot)

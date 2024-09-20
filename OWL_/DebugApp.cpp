@@ -168,7 +168,7 @@ void DebugApp::UpdateGUI()
 		{
 			destroyBuffersForRendering();
 			createBuffers();
-			m_PostProcessor.Initialize(m_pDevice, m_pContext,
+			m_PostProcessor.Initialize(this,
 									   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *(m_FloatBuffer.GetTexture2DPtr()), *(m_ResolvedBuffer.GetTexture2DPtr()), *(m_PrevBuffer.GetTexture2DPtr()), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV()},
 									   m_ScreenWidth, m_ScreenHeight, 4);
 		}
@@ -219,11 +219,11 @@ void DebugApp::UpdateGUI()
 		const float blendColor[4] = { m_Scene.MirrorAlpha, m_Scene.MirrorAlpha, m_Scene.MirrorAlpha, 1.0f };
 		if (m_Scene.bDrawAsWire)
 		{
-			g_MirrorBlendWirePSO.SetBlendFactor(blendColor);
+			m_pResourceManager->GraphicsPSOs[GraphicsPSOType_MirrorBlendWire].SetBlendFactor(blendColor);
 		}
 		else
 		{
-			g_MirrorBlendSolidPSO.SetBlendFactor(blendColor);
+			m_pResourceManager->GraphicsPSOs[GraphicsPSOType_MirrorBlendSolid].SetBlendFactor(blendColor);
 		}
 
 		Model* pMirror = m_Scene.GetMirror();

@@ -5,7 +5,7 @@
 class GBuffer
 {
 public:
-	GBuffer(Texture& floatBuffer, UINT width = 1280, UINT height = 720) : FinalBuffer(floatBuffer), m_ScreenWidth(width), m_ScreenHeight(height) {}
+	GBuffer(Texture* pFloatBuffer, UINT width = 1280, UINT height = 720) : pFinalBuffer(pFloatBuffer), m_ScreenWidth(width), m_ScreenHeight(height) {}
 	~GBuffer() { Cleanup(); }
 
 	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
@@ -30,7 +30,7 @@ public:
 	Texture DepthBuffer;
 	Texture EmissionBuffer;
 	Texture ExtraBuffer; // float4 => { metallic, roughness, ao, height }
-	Texture& FinalBuffer; // float buffer¿”.
+	Texture* pFinalBuffer = nullptr; // float buffer¿”.
 
 private:
 	ID3D11Device* m_pDevice = nullptr;

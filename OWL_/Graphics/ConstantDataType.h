@@ -8,6 +8,7 @@
 #define LIGHT_DIRECTIONAL 0x01
 #define LIGHT_POINT 0x02
 #define LIGHT_SPOT 0x04
+#define LIGHT_SUN 0x08
 #define LIGHT_SHADOW 0x10
 
 using DirectX::SimpleMath::Matrix;

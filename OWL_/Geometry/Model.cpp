@@ -64,9 +64,9 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 	HRESULT hr = S_OK;
 	struct _stat64 sourceFileStat;
 
+	ResourceManager* pResourceManager = pRenderer->GetResourceManager();
 	ID3D11Device* pDevice = pRenderer->GetDevice();
 	ID3D11DeviceContext* pContext = pRenderer->GetDeviceContext();
-	ResourceManager* pResourceManager = pRenderer->GetResourceManager();
 
 	Meshes.reserve(MESH_INFOS.size());
 	for (UINT64 i = 0, meshSize = MESH_INFOS.size(); i < meshSize; ++i)
@@ -90,6 +90,7 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				std::vector<UINT8> imageData;
 				int width = 0;
 				int height = 0;
+				DXGI_FORMAT pixelFormat = DXGI_FORMAT_UNKNOWN;
 
 				if (!MESH_DATA.szOpacityTextureFileName.empty())
 				{
@@ -97,7 +98,7 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				}
 				else
 				{
-					hr = ReadImage(MESH_DATA.szAlbedoTextureFileName.c_str(), imageData, &width, &height);
+					hr = ReadImage(MESH_DATA.szAlbedoTextureFileName.c_str(), imageData, &width, &height, &pixelFormat, true);
 				}
 				BREAK_IF_FAILED(hr);
 
@@ -107,12 +108,13 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				textureDesc.MipLevels = 0;
 				textureDesc.ArraySize = 1;
 				textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+				//textureDesc.Format = pixelFormat;
 				textureDesc.SampleDesc.Count = 1;
 				textureDesc.Usage = D3D11_USAGE_DEFAULT;
 				textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 				textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
-				pNewMesh->pMaterialBuffer->Albedo.Initialize(pDevice, pContext, textureDesc, imageData.data());
+				pNewMesh->pMaterialBuffer->Albedo.Initialize(pDevice, pContext, textureDesc, imageData.data(), true);
 				pMaterialConstData->bUseAlbedoMap = TRUE;
 			}
 			else
@@ -131,8 +133,9 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				std::vector<UINT8> imageData;
 				int width = 0;
 				int height = 0;
+				DXGI_FORMAT pixelFormat = DXGI_FORMAT_UNKNOWN;
 
-				hr = ReadImage(MESH_DATA.szEmissiveTextureFileName.c_str(), imageData, &width, &height);
+				hr = ReadImage(MESH_DATA.szEmissiveTextureFileName.c_str(), imageData, &width, &height, &pixelFormat);
 				BREAK_IF_FAILED(hr);
 				
 				D3D11_TEXTURE2D_DESC textureDesc = {};
@@ -141,12 +144,13 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				textureDesc.MipLevels = 0;
 				textureDesc.ArraySize = 1;
 				textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+				//textureDesc.Format = pixelFormat;
 				textureDesc.SampleDesc.Count = 1;
 				textureDesc.Usage = D3D11_USAGE_DEFAULT;
 				textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 				textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
-				pNewMesh->pMaterialBuffer->Emissive.Initialize(pDevice, pContext, textureDesc, imageData.data());
+				pNewMesh->pMaterialBuffer->Emissive.Initialize(pDevice, pContext, textureDesc, imageData.data(), true);
 				pMaterialConstData->bUseEmissiveMap = TRUE;
 			}
 			else
@@ -165,8 +169,9 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				std::vector<UINT8> imageData;
 				int width = 0;
 				int height = 0;
+				DXGI_FORMAT pixelFormat = DXGI_FORMAT_UNKNOWN;
 
-				hr = ReadImage(MESH_DATA.szNormalTextureFileName.c_str(), imageData, &width, &height);
+				hr = ReadImage(MESH_DATA.szNormalTextureFileName.c_str(), imageData, &width, &height, &pixelFormat);
 				BREAK_IF_FAILED(hr);
 
 				D3D11_TEXTURE2D_DESC textureDesc = {};
@@ -175,12 +180,13 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				textureDesc.MipLevels = 0;
 				textureDesc.ArraySize = 1;
 				textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				//textureDesc.Format = pixelFormat;
 				textureDesc.SampleDesc.Count = 1;
 				textureDesc.Usage = D3D11_USAGE_DEFAULT;
 				textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 				textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
-				pNewMesh->pMaterialBuffer->Normal.Initialize(pDevice, pContext, textureDesc, imageData.data());
+				pNewMesh->pMaterialBuffer->Normal.Initialize(pDevice, pContext, textureDesc, imageData.data(), true);
 				pMaterialConstData->bUseNormalMap = TRUE;
 			}
 			else
@@ -199,8 +205,9 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				std::vector<UINT8> imageData;
 				int width = 0;
 				int height = 0;
+				DXGI_FORMAT pixelFormat = DXGI_FORMAT_UNKNOWN;
 
-				hr = ReadImage(MESH_DATA.szHeightTextureFileName.c_str(), imageData, &width, &height);
+				hr = ReadImage(MESH_DATA.szHeightTextureFileName.c_str(), imageData, &width, &height, &pixelFormat);
 				BREAK_IF_FAILED(hr);
 
 				D3D11_TEXTURE2D_DESC textureDesc = {};
@@ -209,12 +216,13 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				textureDesc.MipLevels = 0;
 				textureDesc.ArraySize = 1;
 				textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				//textureDesc.Format = pixelFormat;
 				textureDesc.SampleDesc.Count = 1;
 				textureDesc.Usage = D3D11_USAGE_DEFAULT;
 				textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 				textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
-				pNewMesh->pMaterialBuffer->Height.Initialize(pDevice, pContext, textureDesc, imageData.data());
+				pNewMesh->pMaterialBuffer->Height.Initialize(pDevice, pContext, textureDesc, imageData.data(), true);
 				pMeshConstData->bUseHeightMap = TRUE;
 			}
 			else
@@ -233,8 +241,9 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				std::vector<UINT8> imageData;
 				int width = 0;
 				int height = 0;
+				DXGI_FORMAT pixelFormat = DXGI_FORMAT_UNKNOWN;
 
-				hr = ReadImage(MESH_DATA.szAOTextureFileName.c_str(), imageData, &width, &height);
+				hr = ReadImage(MESH_DATA.szAOTextureFileName.c_str(), imageData, &width, &height, &pixelFormat);
 				BREAK_IF_FAILED(hr);
 
 				D3D11_TEXTURE2D_DESC textureDesc = {};
@@ -243,12 +252,13 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				textureDesc.MipLevels = 0;
 				textureDesc.ArraySize = 1;
 				textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				//textureDesc.Format = pixelFormat;
 				textureDesc.SampleDesc.Count = 1;
 				textureDesc.Usage = D3D11_USAGE_DEFAULT;
 				textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 				textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
-				pNewMesh->pMaterialBuffer->AmbientOcclusion.Initialize(pDevice, pContext, textureDesc, imageData.data());
+				pNewMesh->pMaterialBuffer->AmbientOcclusion.Initialize(pDevice, pContext, textureDesc, imageData.data(), true);
 				pMaterialConstData->bUseAOMap = TRUE;
 			}
 			else
@@ -267,8 +277,9 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				std::vector<UINT8> imageData;
 				int width = 0;
 				int height = 0;
+				DXGI_FORMAT pixelFormat = DXGI_FORMAT_UNKNOWN;
 
-				hr = ReadImage(MESH_DATA.szMetallicTextureFileName.c_str(), imageData, &width, &height);
+				hr = ReadImage(MESH_DATA.szMetallicTextureFileName.c_str(), imageData, &width, &height, &pixelFormat);
 				BREAK_IF_FAILED(hr);
 
 				D3D11_TEXTURE2D_DESC textureDesc = {};
@@ -277,12 +288,13 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				textureDesc.MipLevels = 0;
 				textureDesc.ArraySize = 1;
 				textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				//textureDesc.Format = pixelFormat;
 				textureDesc.SampleDesc.Count = 1;
 				textureDesc.Usage = D3D11_USAGE_DEFAULT;
 				textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 				textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
-				pNewMesh->pMaterialBuffer->Metallic.Initialize(pDevice, pContext, textureDesc, imageData.data());
+				pNewMesh->pMaterialBuffer->Metallic.Initialize(pDevice, pContext, textureDesc, imageData.data(), true);
 				pMaterialConstData->bUseMetallicMap = TRUE;
 			}
 			else
@@ -301,8 +313,9 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				std::vector<UINT8> imageData;
 				int width = 0;
 				int height = 0;
+				DXGI_FORMAT pixelFormat = DXGI_FORMAT_UNKNOWN;
 
-				hr = ReadImage(MESH_DATA.szRoughnessTextureFileName.c_str(), imageData, &width, &height);
+				hr = ReadImage(MESH_DATA.szRoughnessTextureFileName.c_str(), imageData, &width, &height, &pixelFormat);
 				BREAK_IF_FAILED(hr);
 				
 				D3D11_TEXTURE2D_DESC textureDesc = {};
@@ -311,12 +324,13 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 				textureDesc.MipLevels = 0;
 				textureDesc.ArraySize = 1;
 				textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				//textureDesc.Format = pixelFormat;
 				textureDesc.SampleDesc.Count = 1;
 				textureDesc.Usage = D3D11_USAGE_DEFAULT;
 				textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 				textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
-				pNewMesh->pMaterialBuffer->Roughness.Initialize(pDevice, pContext, textureDesc, imageData.data());
+				pNewMesh->pMaterialBuffer->Roughness.Initialize(pDevice, pContext, textureDesc, imageData.data(), true);
 				pMaterialConstData->bUseRoughnessMap = TRUE;
 			}
 			else

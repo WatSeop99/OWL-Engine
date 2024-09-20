@@ -75,3 +75,5 @@ float Max(const float X, const float Y);
 Vector3 Max(const Vector3& V1, const Vector3& V2);
 
 float Clamp(const float VAL, const float LOWER, const float UPPER);
+float Lerp(const float A, const float B, const float F);
+float DegreeToRadian(const float ANGLE);

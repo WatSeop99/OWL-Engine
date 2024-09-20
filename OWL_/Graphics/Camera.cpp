@@ -130,3 +130,33 @@ Matrix Camera::GetProjection()
 			DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(m_ProjectionFovAngleY), m_Aspect, m_NearZ, m_FarZ) :
 			DirectX::XMMatrixOrthographicOffCenterLH(-m_Aspect, m_Aspect, -1.0f, 1.0f, m_NearZ, m_FarZ));
 }
+
+FrustumDirection Camera::GetFrustumDirection()
+{
+	const Matrix VIEW = GetView();
+	const Matrix INVERSE_VIEW = VIEW.Invert();
+
+	const Vector4 A0 = Vector4::Transform(Vector4(-1.0f, 1.0f, 0.2f, 1.0f), INVERSE_VIEW);
+	const Vector4 A1 = Vector4::Transform(Vector4(-1.0f, 1.0f, 0.5f, 1.0f), INVERSE_VIEW);
+
+	const Vector4 B0 = Vector4::Transform(Vector4(1.0f, 1.0f, 0.2f, 1.0f), INVERSE_VIEW);
+	const Vector4 B1 = Vector4::Transform(Vector4(1.0f, 1.0f, 0.5f, 1.0f), INVERSE_VIEW);
+
+	const Vector4 C0 = Vector4::Transform(Vector4(-1.0f, -1.0f, 0.2f, 1.0f), INVERSE_VIEW);
+	const Vector4 C1 = Vector4::Transform(Vector4(-1.0f, -1.0f, 0.5f, 1.0f), INVERSE_VIEW);
+
+	const Vector4 D0 = Vector4::Transform(Vector4(1.0f, -1.0f, 0.2f, 1.0f), INVERSE_VIEW);
+	const Vector4 D1 = Vector4::Transform(Vector4(1.0f, -1.0f, 0.5f, 1.0f), INVERSE_VIEW);
+
+	FrustumDirection result = {};
+	result.FrustumA = (Vector3(A1) / A1.w - Vector3(A0) / A0.w);
+	result.FrustumA.Normalize();
+	result.FrustumB = (Vector3(B1) / B1.w - Vector3(B0) / B0.w);
+	result.FrustumB.Normalize();
+	result.FrustumC = (Vector3(C1) / C1.w - Vector3(C0) / C0.w);
+	result.FrustumC.Normalize();
+	result.FrustumD = (Vector3(D1) / D1.w - Vector3(D0) / D0.w);
+	result.FrustumD.Normalize();
+
+	return result;
+}

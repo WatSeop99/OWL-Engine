@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "ShadowMap.h"
 
+class BaseRenderer;
 class Model;
 
 class Light
@@ -11,7 +12,7 @@ public:
 	Light(UINT width = 1280, UINT height = 1280);
 	~Light() { Cleanup(); }
 
-	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
+	void Initialize(BaseRenderer* pRenderer);
 
 	void Update(float deltaTime, Camera& mainCamera);
 
@@ -20,7 +21,7 @@ public:
 	void Cleanup();
 
 	inline ShadowMap& GetShadowMap() { return m_ShadowMap; }
-	inline ShadowMap* GetAddressOfShadowMap() { return &m_ShadowMap; }
+	inline ShadowMap* GetShadowMapPtr() { return &m_ShadowMap; }
 
 	inline void SetPosition(const Vector3& POS) { m_LightViewCamera.SetEyePos(POS); }
 	inline void SetDirection(const Vector3& DIR) { m_LightViewCamera.SetViewDir(DIR); }
@@ -32,6 +33,10 @@ public:
 	LightProperty Property;
 
 private:
+	const UINT m_TOTAL_LIGHT_TYPE = (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT);
+	
 	Camera m_LightViewCamera;
 	ShadowMap m_ShadowMap;
+	
+
 };

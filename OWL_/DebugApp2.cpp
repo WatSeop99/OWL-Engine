@@ -85,16 +85,17 @@ void DebugApp2::UpdateGUI()
 	ImGui::SetNextItemOpen(false, ImGuiCond_Once);
 	if (ImGui::TreeNode("General"))
 	{
-		ImGui::Checkbox("Use FPV", &(m_Camera.bUseFirstPersonView));
-		ImGui::Checkbox("Wireframe", &(m_Scene.bDrawAsWire));
-		ImGui::Checkbox("DrawOBB", &(m_Scene.bDrawOBB));
-		ImGui::Checkbox("DrawBSphere", &(m_Scene.bDrawBS));
+		ImGui::Checkbox("Use FPV", &m_Camera.bUseFirstPersonView);
+		ImGui::Checkbox("Wireframe", &m_Scene.bDrawAsWire);
+		ImGui::Checkbox("DrawOBB", &m_Scene.bDrawOBB);
+		ImGui::Checkbox("DrawBSphere", &m_Scene.bDrawBS);
 		if (ImGui::Checkbox("MSAA ON", &m_bUseMSAA))
 		{
 			BaseRenderer::destroyBuffersForRendering();
 			BaseRenderer::createBuffers();
-			m_PostProcessor.Initialize(m_pDevice, m_pContext,
-									   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *(m_FloatBuffer.GetTexture2DPtr()), *(m_ResolvedBuffer.GetTexture2DPtr()), *(m_PrevBuffer.GetTexture2DPtr()), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV()},
+			m_Scene.ResetBuffers(m_bUseMSAA, m_NumQualityLevels);
+			m_PostProcessor.Initialize(this,
+									   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *m_FloatBuffer.GetTexture2DPtr(), *m_ResolvedBuffer.GetTexture2DPtr(), *m_PrevBuffer.GetTexture2DPtr(), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV()},
 									   m_ScreenWidth, m_ScreenHeight, 4);
 		}
 		ImGui::TreePop();
@@ -116,11 +117,11 @@ void DebugApp2::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Post Effects"))
 	{
-		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Render", &(m_PostProcessor.PostEffectsConstsCPU.Mode), 1);
+		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Render", &m_PostProcessor.PostEffectsConstsCPU.Mode, 1);
 		ImGui::SameLine();
-		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Depth", &(m_PostProcessor.PostEffectsConstsCPU.Mode), 2);
-		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("DepthScale", &(m_PostProcessor.PostEffectsConstsCPU.DepthScale), 0.0f, 1.0f);
-		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("Fog", &(m_PostProcessor.PostEffectsConstsCPU.FogStrength), 0.0f, 10.0f);
+		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Depth", &m_PostProcessor.PostEffectsConstsCPU.Mode, 2);
+		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("DepthScale", &m_PostProcessor.PostEffectsConstsCPU.DepthScale, 0.0f, 1.0f);
+		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("Fog", &m_PostProcessor.PostEffectsConstsCPU.FogStrength, 0.0f, 10.0f);
 
 		ImGui::TreePop();
 	}
@@ -141,11 +142,11 @@ void DebugApp2::UpdateGUI()
 		const float BLEND_COLOR[4] = { m_Scene.MirrorAlpha, m_Scene.MirrorAlpha, m_Scene.MirrorAlpha, 1.0f };
 		if (m_Scene.bDrawAsWire)
 		{
-			g_MirrorBlendWirePSO.SetBlendFactor(BLEND_COLOR);
+			m_pResourceManager->GraphicsPSOs[GraphicsPSOType_MirrorBlendWire].SetBlendFactor(BLEND_COLOR);
 		}
 		else
 		{
-			g_MirrorBlendSolidPSO.SetBlendFactor(BLEND_COLOR);
+			m_pResourceManager->GraphicsPSOs[GraphicsPSOType_MirrorBlendSolid].SetBlendFactor(BLEND_COLOR);
 		}
 
 		Model* pMirror = m_Scene.GetMirror();
@@ -159,9 +160,9 @@ void DebugApp2::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Light"))
 	{
-		ImGui::SliderFloat("Halo Radius", &(m_Scene.Lights[1].Property.HaloRadius), 0.0f, 2.0f);
-		ImGui::SliderFloat("Halo Strength", &(m_Scene.Lights[1].Property.HaloStrength), 0.0f, 1.0f);
-		ImGui::SliderFloat("Radius", &(m_Scene.Lights[1].Property.Radius), 0.0f, 0.5f);
+		ImGui::SliderFloat("Halo Radius", &m_Scene.Lights[1].Property.HaloRadius, 0.0f, 2.0f);
+		ImGui::SliderFloat("Halo Strength", &m_Scene.Lights[1].Property.HaloStrength, 0.0f, 1.0f);
+		ImGui::SliderFloat("Radius", &m_Scene.Lights[1].Property.Radius, 0.0f, 0.5f);
 
 		ImGui::TreePop();
 	}

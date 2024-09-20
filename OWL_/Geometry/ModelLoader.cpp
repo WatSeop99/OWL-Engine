@@ -149,13 +149,13 @@ HRESULT ModelLoader::LoadAnimation(std::wstring& basePath, std::wstring& fileNam
 	return hr;
 }
 
-void ModelLoader::findDeformingBones(const aiScene* pSCENE)
+void ModelLoader::findDeformingBones(const aiScene* pScene)
 {
-	_ASSERT(pSCENE);
+	_ASSERT(pScene);
 
-	for (UINT i = 0; i < pSCENE->mNumMeshes; ++i)
+	for (UINT i = 0; i < pScene->mNumMeshes; ++i)
 	{
-		const aiMesh* pMESH = pSCENE->mMeshes[i];
+		const aiMesh* pMESH = pScene->mMeshes[i];
 		if (pMESH->HasBones())
 		{
 			for (UINT j = 0; j < pMESH->mNumBones; ++j)
@@ -167,27 +167,27 @@ void ModelLoader::findDeformingBones(const aiScene* pSCENE)
 	}
 }
 
-const aiNode* ModelLoader::findParent(const aiNode* pNODE)
+const aiNode* ModelLoader::findParent(const aiNode* pNode)
 {
-	if (!pNODE)
+	if (!pNode)
 	{
 		return nullptr;
 	}
-	if (AnimData.BoneNameToID.count(pNODE->mName.C_Str()) > 0)
+	if (AnimData.BoneNameToID.count(pNode->mName.C_Str()) > 0)
 	{
-		return pNODE;
+		return pNode;
 	}
 
-	return findParent(pNODE->mParent);
+	return findParent(pNode->mParent);
 }
 
-void ModelLoader::processNode(aiNode* pNode, const aiScene* pSCENE, Matrix& transform)
+void ModelLoader::processNode(aiNode* pNode, const aiScene* pScene, Matrix& transform)
 {
 	// https://ogldev.org/www/tutorial38/tutorial38.html
 	// If a node represents a bone in the hierarchy then the node name must
 	// match the bone name.
 
-	_ASSERT(pSCENE);
+	_ASSERT(pScene);
 
 	if (!pNode)
 	{
@@ -209,10 +209,10 @@ void ModelLoader::processNode(aiNode* pNode, const aiScene* pSCENE, Matrix& tran
 
 	for (UINT i = 0; i < pNode->mNumMeshes; ++i)
 	{
-		aiMesh* pMesh = pSCENE->mMeshes[pNode->mMeshes[i]];
+		aiMesh* pMesh = pScene->mMeshes[pNode->mMeshes[i]];
 		MeshInfo newMeshInfo;
 
-		processMesh(pMesh, pSCENE, &newMeshInfo);
+		processMesh(pMesh, pScene, &newMeshInfo);
 		for (UINT64 j = 0, size = newMeshInfo.Vertices.size(); j < size; ++j)
 		{
 			Vertex& v = newMeshInfo.Vertices[j];
@@ -224,13 +224,13 @@ void ModelLoader::processNode(aiNode* pNode, const aiScene* pSCENE, Matrix& tran
 
 	for (UINT i = 0; i < pNode->mNumChildren; ++i)
 	{
-		processNode(pNode->mChildren[i], pSCENE, m);
+		processNode(pNode->mChildren[i], pScene, m);
 	}
 }
 
-void ModelLoader::processMesh(aiMesh* pMesh, const aiScene* pSCENE, MeshInfo* pMeshInfo)
+void ModelLoader::processMesh(aiMesh* pMesh, const aiScene* pScene, MeshInfo* pMeshInfo)
 {
-	_ASSERT(pSCENE);
+	_ASSERT(pScene);
 	_ASSERT(pMeshInfo);
 
 	if (!pMesh)
@@ -301,24 +301,24 @@ void ModelLoader::processMesh(aiMesh* pMesh, const aiScene* pSCENE, MeshInfo* pM
 	// http://assimp.sourceforge.net/lib_html/materials.html.
 	if (pMesh->mMaterialIndex >= 0)
 	{
-		aiMaterial* pMaterial = pSCENE->mMaterials[pMesh->mMaterialIndex];
+		aiMaterial* pMaterial = pScene->mMaterials[pMesh->mMaterialIndex];
 
-		readTextureFileName(pSCENE, pMaterial, aiTextureType_BASE_COLOR, &pMeshInfo->szAlbedoTextureFileName);
+		readTextureFileName(pScene, pMaterial, aiTextureType_BASE_COLOR, &pMeshInfo->szAlbedoTextureFileName);
 		if (pMeshInfo->szAlbedoTextureFileName.empty())
 		{
-			readTextureFileName(pSCENE, pMaterial, aiTextureType_DIFFUSE, &pMeshInfo->szAlbedoTextureFileName);
+			readTextureFileName(pScene, pMaterial, aiTextureType_DIFFUSE, &pMeshInfo->szAlbedoTextureFileName);
 		}
-		readTextureFileName(pSCENE, pMaterial, aiTextureType_EMISSIVE, &pMeshInfo->szEmissiveTextureFileName);
-		readTextureFileName(pSCENE, pMaterial, aiTextureType_HEIGHT, &pMeshInfo->szHeightTextureFileName);
-		readTextureFileName(pSCENE, pMaterial, aiTextureType_NORMALS, &pMeshInfo->szNormalTextureFileName);
-		readTextureFileName(pSCENE, pMaterial, aiTextureType_METALNESS, &pMeshInfo->szMetallicTextureFileName);
-		readTextureFileName(pSCENE, pMaterial, aiTextureType_DIFFUSE_ROUGHNESS, &pMeshInfo->szRoughnessTextureFileName);
-		readTextureFileName(pSCENE, pMaterial, aiTextureType_AMBIENT_OCCLUSION, &pMeshInfo->szAOTextureFileName);
+		readTextureFileName(pScene, pMaterial, aiTextureType_EMISSIVE, &pMeshInfo->szEmissiveTextureFileName);
+		readTextureFileName(pScene, pMaterial, aiTextureType_HEIGHT, &pMeshInfo->szHeightTextureFileName);
+		readTextureFileName(pScene, pMaterial, aiTextureType_NORMALS, &pMeshInfo->szNormalTextureFileName);
+		readTextureFileName(pScene, pMaterial, aiTextureType_METALNESS, &pMeshInfo->szMetallicTextureFileName);
+		readTextureFileName(pScene, pMaterial, aiTextureType_DIFFUSE_ROUGHNESS, &pMeshInfo->szRoughnessTextureFileName);
+		readTextureFileName(pScene, pMaterial, aiTextureType_AMBIENT_OCCLUSION, &pMeshInfo->szAOTextureFileName);
 		if (pMeshInfo->szAOTextureFileName.empty())
 		{
-			readTextureFileName(pSCENE, pMaterial, aiTextureType_LIGHTMAP, &pMeshInfo->szAOTextureFileName);
+			readTextureFileName(pScene, pMaterial, aiTextureType_LIGHTMAP, &pMeshInfo->szAOTextureFileName);
 		}
-		readTextureFileName(pSCENE, pMaterial, aiTextureType_OPACITY, &pMeshInfo->szOpacityTextureFileName); // 불투명도를 표현하는 텍스쳐.
+		readTextureFileName(pScene, pMaterial, aiTextureType_OPACITY, &pMeshInfo->szOpacityTextureFileName); // 불투명도를 표현하는 텍스쳐.
 
 		if (!pMeshInfo->szOpacityTextureFileName.empty())
 		{

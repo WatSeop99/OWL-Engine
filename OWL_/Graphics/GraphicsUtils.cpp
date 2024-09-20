@@ -41,11 +41,6 @@ HRESULT ReadEXRImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* p
 	*pHeight = (int)metaData.height;
 	*pPixelFormat = metaData.format;
 
-	// Debug information
-	/*std::wstring debugStr(pszFileName);
-	debugStr += L" " + std::to_wstring(metaData.width) + L" " + std::to_wstring(metaData.height) + std::to_wstring(metaData.format);
-	OutputDebugStringW(debugStr.c_str());*/
-
 	image.resize(scratchImage.GetPixelsSize());
 	memcpy(image.data(), scratchImage.GetPixels(), image.size());
 
@@ -68,11 +63,12 @@ LB_RET:
 	return hr;
 }
 
-HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWidth, int* pHeight)
+HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWidth, int* pHeight, DXGI_FORMAT* pPixelFormat, const bool bUSE_SRGB)
 {
 	_ASSERT(pszFileName);
 	_ASSERT(pWidth);
 	_ASSERT(pHeight);
+	_ASSERT(pPixelFormat);
 
 	HRESULT hr = S_OK;
 	int channels = 0;
@@ -140,13 +136,72 @@ HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWid
 
 	free(pImg);
 
+//	DirectX::TexMetadata metaData;
+//	DirectX::ScratchImage scratchImage;
+//
+//	std::wstring fileExtension = GetFileExtension(pszFileName);
+//
+//	if (fileExtension.compare(L"hdr") == 0)
+//	{
+//		hr = GetMetadataFromHDRFile(pszFileName, metaData);
+//		if (FAILED(hr))
+//		{
+//			goto LB_RET;
+//		}
+//
+//		hr = LoadFromHDRFile(pszFileName, nullptr, scratchImage);
+//		if (FAILED(hr))
+//		{
+//			goto LB_RET;
+//		}
+//	}
+//	else if (fileExtension.compare(L"tga") == 0)
+//	{
+//		hr = GetMetadataFromTGAFile(pszFileName, metaData);
+//		if (FAILED(hr))
+//		{
+//			goto LB_RET;
+//		}
+//
+//		hr = LoadFromTGAFile(pszFileName, nullptr, scratchImage);
+//		if (FAILED(hr))
+//		{
+//			goto LB_RET;
+//		}
+//	}
+//	else
+//	{
+//		//hr = GetMetadataFromWICFile(pszFileName, DirectX::WIC_FLAGS_NONE, metaData);
+//		hr = GetMetadataFromWICFile(pszFileName, bUSE_SRGB ? DirectX::WIC_FLAGS_FORCE_RGB : DirectX::WIC_FLAGS_DEFAULT_SRGB, metaData);
+//		if (FAILED(hr))
+//		{
+//			goto LB_RET;
+//		}
+//
+//		//hr = LoadFromWICFile(pszFileName, DirectX::WIC_FLAGS_NONE, &metaData, scratchImage);
+//		hr = LoadFromWICFile(pszFileName, bUSE_SRGB ? DirectX::WIC_FLAGS_FORCE_RGB : DirectX::WIC_FLAGS_DEFAULT_SRGB, &metaData, scratchImage);
+//		if (FAILED(hr))
+//		{
+//			goto LB_RET;
+//		}
+//	}
+//
+//	*pWidth = (int)metaData.width;
+//	*pHeight = (int)metaData.height;
+//	*pPixelFormat = metaData.format;
+//
+//	image.resize(scratchImage.GetPixelsSize(), 255);
+//	memcpy(image.data(), scratchImage.GetPixels(), image.size());
+//
+//LB_RET:
 	return hr;
 }
 
 HRESULT ReadImage(const WCHAR* pszAlbedoFileName, const WCHAR* pszOpacityFileName, std::vector<UINT8>& image, int* pWidth, int* pHeight)
 {
 	std::vector<UINT8> opacityImage;
-	HRESULT hr = ReadImage(pszAlbedoFileName, image, pWidth, pHeight);
+	DXGI_FORMAT albedoFormat;
+	HRESULT hr = ReadImage(pszAlbedoFileName, image, pWidth, pHeight, &albedoFormat, true);
 	if (FAILED(hr))
 	{
 		goto LB_RET;
@@ -155,7 +210,8 @@ HRESULT ReadImage(const WCHAR* pszAlbedoFileName, const WCHAR* pszOpacityFileNam
 
 	int opaWidth = 0;
 	int opaHeight = 0;
-	hr = ReadImage(pszOpacityFileName, opacityImage, &opaWidth, &opaHeight);
+	DXGI_FORMAT opacityFormat;
+	hr = ReadImage(pszOpacityFileName, opacityImage, &opaWidth, &opaHeight, &opacityFormat, true);
 	if (FAILED(hr))
 	{
 		goto LB_RET;
@@ -185,48 +241,48 @@ HRESULT CreateTextureHelper(ID3D11Device* pDevice, ID3D11DeviceContext* pContext
 
 	HRESULT hr = S_OK;
 
-	// 스테이징 텍스쳐를 만들고 CPU에서 이미지 복사.
-	ID3D11Texture2D* pStagingTexture = CreateStagingTexture(pDevice, pContext, WIDTH, HEIGHT, image, PIXEL_FORMAT);
-	if (pStagingTexture == nullptr)
-	{
-		hr = E_FAIL;
-		goto LB_RET;
-	}
-	SET_DEBUG_INFO_TO_OBJECT(pStagingTexture, "GraphicsUtils::CreateTextureHelper::pStagingTexture");
+	//// 스테이징 텍스쳐를 만들고 CPU에서 이미지 복사.
+	//ID3D11Texture2D* pStagingTexture = CreateStagingTexture(pDevice, pContext, WIDTH, HEIGHT, image, PIXEL_FORMAT);
+	//if (pStagingTexture == nullptr)
+	//{
+	//	hr = E_FAIL;
+	//	goto LB_RET;
+	//}
+	//SET_DEBUG_INFO_TO_OBJECT(pStagingTexture, "GraphicsUtils::CreateTextureHelper::pStagingTexture");
 
 
-	D3D11_TEXTURE2D_DESC textureDesc = { 0, };
-	textureDesc.Width = WIDTH;
-	textureDesc.Height = HEIGHT;
-	textureDesc.MipLevels = 0;
-	textureDesc.ArraySize = 1;
-	textureDesc.Format = PIXEL_FORMAT;
-	textureDesc.SampleDesc.Count = 1;
-	textureDesc.Usage = D3D11_USAGE_DEFAULT; // 스테이징 텍스쳐로부터 복사 가능.
-	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-	textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS; // 밉맵 사용.
+	//D3D11_TEXTURE2D_DESC textureDesc = { 0, };
+	//textureDesc.Width = WIDTH;
+	//textureDesc.Height = HEIGHT;
+	//textureDesc.MipLevels = 0;
+	//textureDesc.ArraySize = 1;
+	//textureDesc.Format = PIXEL_FORMAT;
+	//textureDesc.SampleDesc.Count = 1;
+	//textureDesc.Usage = D3D11_USAGE_DEFAULT; // 스테이징 텍스쳐로부터 복사 가능.
+	//textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+	//textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS; // 밉맵 사용.
 
-	// 초기 데이터 없이 텍스쳐 생성(검정색).
-	hr = pDevice->CreateTexture2D(&textureDesc, nullptr, ppTexture);
-	if (FAILED(hr))
-	{
-		RELEASE(pStagingTexture);
-		goto LB_RET;
-	}
+	//// 초기 데이터 없이 텍스쳐 생성(검정색).
+	//hr = pDevice->CreateTexture2D(&textureDesc, nullptr, ppTexture);
+	//if (FAILED(hr))
+	//{
+	//	RELEASE(pStagingTexture);
+	//	goto LB_RET;
+	//}
 
-	// 스테이징 텍스쳐로부터 가장 해상도가 높은 이미지 복사.
-	pContext->CopySubresourceRegion(*ppTexture, 0, 0, 0, 0, pStagingTexture, 0, nullptr);
-	RELEASE(pStagingTexture);
+	//// 스테이징 텍스쳐로부터 가장 해상도가 높은 이미지 복사.
+	//pContext->CopySubresourceRegion(*ppTexture, 0, 0, 0, 0, pStagingTexture, 0, nullptr);
+	//RELEASE(pStagingTexture);
 
-	// ResourceView 만들기.
-	hr = pDevice->CreateShaderResourceView(*ppTexture, 0, ppSRV);
-	if (FAILED(hr))
-	{
-		goto LB_RET;
-	}
+	//// ResourceView 만들기.
+	//hr = pDevice->CreateShaderResourceView(*ppTexture, 0, ppSRV);
+	//if (FAILED(hr))
+	//{
+	//	goto LB_RET;
+	//}
 
-	// 해상도를 낮춰가며 밉맵 생성.
-	pContext->GenerateMips(*ppSRV);
+	//// 해상도를 낮춰가며 밉맵 생성.
+	//pContext->GenerateMips(*ppSRV);
 
 LB_RET:
 	return hr;
@@ -542,62 +598,62 @@ HRESULT CreateMetallicRoughnessTexture(ID3D11Device* pDevice, ID3D11DeviceContex
 
 	HRESULT hr = S_OK;
 
-	// GLTF 방식은 이미 합쳐져 있음.
-	if (pszMetallicFileName != nullptr && wcscmp(pszMetallicFileName, pszRoughnessFileName) == 0)
-	{
-		hr = CreateTexture(pDevice, pContext, pszMetallicFileName, false, ppTexture, ppSRV);
-	}
-	else // 별도의 파일인 경우, 따로 읽어 합쳐줌.
-	{
-		// ReadImage() 이용.
-		// 두 이미지를 4채널로 변환 후, 다시 3채널로 합침.
-		int mWidth = 0;
-		int mHeight = 0;
-		int rWidth = 0;
-		int rHeight = 0;
-		std::vector<uint8_t> mImage;
-		std::vector<uint8_t> rImage;
-		std::vector<uint8_t> combinedImage;
+	//// GLTF 방식은 이미 합쳐져 있음.
+	//if (pszMetallicFileName != nullptr && wcscmp(pszMetallicFileName, pszRoughnessFileName) == 0)
+	//{
+	//	hr = CreateTexture(pDevice, pContext, pszMetallicFileName, false, ppTexture, ppSRV);
+	//}
+	//else // 별도의 파일인 경우, 따로 읽어 합쳐줌.
+	//{
+	//	// ReadImage() 이용.
+	//	// 두 이미지를 4채널로 변환 후, 다시 3채널로 합침.
+	//	int mWidth = 0;
+	//	int mHeight = 0;
+	//	int rWidth = 0;
+	//	int rHeight = 0;
+	//	std::vector<UINT8> mImage;
+	//	std::vector<UINT8> rImage;
+	//	std::vector<UINT8> combinedImage;
 
-		if (pszMetallicFileName != nullptr)
-		{
-			hr = ReadImage(pszMetallicFileName, mImage, &mWidth, &mHeight);
-			if (FAILED(hr))
-			{
-				goto LB_RET;
-			}
-		}
-		if (pszRoughnessFileName != nullptr)
-		{
-			hr = ReadImage(pszRoughnessFileName, rImage, &rWidth, &rHeight);
-			if (FAILED(hr))
-			{
-				goto LB_RET;
-			}
-		}
+	//	if (pszMetallicFileName != nullptr)
+	//	{
+	//		hr = ReadImage(pszMetallicFileName, mImage, &mWidth, &mHeight);
+	//		if (FAILED(hr))
+	//		{
+	//			goto LB_RET;
+	//		}
+	//	}
+	//	if (pszRoughnessFileName != nullptr)
+	//	{
+	//		hr = ReadImage(pszRoughnessFileName, rImage, &rWidth, &rHeight);
+	//		if (FAILED(hr))
+	//		{
+	//			goto LB_RET;
+	//		}
+	//	}
 
-		// 두 이미지 해상도가 같다고 가정.
-		if (pszMetallicFileName != nullptr && pszRoughnessFileName != nullptr)
-		{
-			_ASSERT(mWidth == rWidth);
-			_ASSERT(mHeight == rHeight);
-		}
+	//	// 두 이미지 해상도가 같다고 가정.
+	//	if (pszMetallicFileName != nullptr && pszRoughnessFileName != nullptr)
+	//	{
+	//		_ASSERT(mWidth == rWidth);
+	//		_ASSERT(mHeight == rHeight);
+	//	}
 
-		combinedImage.resize((size_t)(mWidth * mHeight) * 4, 0);
-		for (size_t i = 0, size = mWidth * mHeight, mSize = mImage.size(), rSize = rImage.size(); i < size; ++i)
-		{
-			if (rSize > 0)
-			{
-				combinedImage[4 * i + 1] = rImage[4 * i]; // Green = Roughness;
-			}
-			if (mSize > 0)
-			{
-				combinedImage[4 * i + 2] = mImage[4 * i]; // Blue = Metalness;
-			}
-		}
+	//	combinedImage.resize((size_t)(mWidth * mHeight) * 4, 0);
+	//	for (size_t i = 0, size = mWidth * mHeight, mSize = mImage.size(), rSize = rImage.size(); i < size; ++i)
+	//	{
+	//		if (rSize > 0)
+	//		{
+	//			combinedImage[4 * i + 1] = rImage[4 * i]; // Green = Roughness;
+	//		}
+	//		if (mSize > 0)
+	//		{
+	//			combinedImage[4 * i + 2] = mImage[4 * i]; // Blue = Metalness;
+	//		}
+	//	}
 
-		hr = CreateTextureHelper(pDevice, pContext, mWidth, mHeight, combinedImage, DXGI_FORMAT_R8G8B8A8_UNORM, ppTexture, ppSRV);
-	}
+	//	hr = CreateTextureHelper(pDevice, pContext, mWidth, mHeight, combinedImage, DXGI_FORMAT_R8G8B8A8_UNORM, ppTexture, ppSRV);
+	//}
 
 LB_RET:
 	return hr;
@@ -612,7 +668,7 @@ HRESULT CreateTexture(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, cons
 
 	HRESULT hr = S_OK;
 
-	int width = 0;
+	/*int width = 0;
 	int height = 0;
 	std::vector<UINT8> image;
 	DXGI_FORMAT pixelFormat = (bUSE_SRGB ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM);
@@ -632,7 +688,7 @@ HRESULT CreateTexture(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, cons
 		goto LB_RET;
 	}
 
-	hr = CreateTextureHelper(pDevice, pContext, width, height, image, pixelFormat, ppTexture, ppTextureResourceView);
+	hr = CreateTextureHelper(pDevice, pContext, width, height, image, pixelFormat, ppTexture, ppTextureResourceView);*/
 
 LB_RET:
 	return hr;
@@ -1390,6 +1446,7 @@ HRESULT CreateTextureArray(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 	int width = 0;
 	int height = 0;
 	const UINT SIZE = (UINT)FILE_NAMES.size();
+	DXGI_FORMAT pixelFormat;
 
 	imageArray.reserve(SIZE);
 	for (const std::wstring& f : FILE_NAMES)
@@ -1397,7 +1454,7 @@ HRESULT CreateTextureArray(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 		OutputDebugStringW(f.c_str());
 
 		std::vector<UINT8> image;
-		hr = ReadImage(f.c_str(), image, &width, &height);
+		hr = ReadImage(f.c_str(), image, &width, &height, &pixelFormat);
 		if (FAILED(hr))
 		{
 			goto LB_RET;
@@ -1411,6 +1468,7 @@ HRESULT CreateTextureArray(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 	textureDesc.Height = (UINT)height;
 	textureDesc.MipLevels = 0; // 밉맵 레벨 최대.
 	textureDesc.ArraySize = SIZE;
+	textureDesc.Format = pixelFormat;
 	textureDesc.SampleDesc.Count = 1;
 	textureDesc.SampleDesc.Quality = 0;
 	textureDesc.Usage = D3D11_USAGE_DEFAULT; // 스테이징 텍스쳐로부터 복사 가능.
@@ -1531,40 +1589,38 @@ void WriteToPngFile(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID3D11
 	stbi_write_png(pFileName, desc.Width, desc.Height, 4, pixels.data(), desc.Width * 4);
 }
 
-size_t GetPixelSize(DXGI_FORMAT pixelFormat)
+UINT64 GetPixelSize(DXGI_FORMAT pixelFormat)
 {
 	switch (pixelFormat)
 	{
 		case DXGI_FORMAT_R16G16B16A16_FLOAT:
-			return sizeof(uint16_t) * 4;
+			return sizeof(UINT16) * 4;
 
 		case DXGI_FORMAT_R32G32B32A32_FLOAT:
-			return sizeof(uint32_t) * 4;
+			return sizeof(UINT32) * 4;
 
 		case DXGI_FORMAT_R32_FLOAT:
-			return sizeof(uint32_t);
+			return sizeof(UINT32);
 
 		case DXGI_FORMAT_R8G8B8A8_UNORM:
-			return sizeof(uint8_t) * 4;
+			return sizeof(UINT8) * 4;
 
 		case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-			return sizeof(uint8_t) * 4;
+			return sizeof(UINT8) * 4;
 
 		case DXGI_FORMAT_R32_SINT:
-			return sizeof(int32_t);
+			return sizeof(int);
 
 		case DXGI_FORMAT_R16_FLOAT:
-			return sizeof(uint16_t);
+			return sizeof(UINT16);
 
 		default:
 			break;
 	}
 
-	char debugString[256];
-	OutputDebugStringA("PixelFormat not implemented ");
-	sprintf(debugString, "%d", pixelFormat);
-	OutputDebugStringA(debugString);
-	OutputDebugStringA("\n");
+	char szDebugString[256];
+	sprintf_s(szDebugString, 256, "ixelFormat not implemented %d\n", pixelFormat);
+	OutputDebugStringA(szDebugString);
 
-	return sizeof(uint8_t) * 4;
+	return sizeof(UINT8) * 4;
 }

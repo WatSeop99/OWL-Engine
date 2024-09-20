@@ -1,6 +1,5 @@
 #include "../Common.h"
 #include "../Renderer/BaseRenderer.h"
-#include "../Graphics/GraphicsCommon.h"
 #include "../Graphics/GraphicsUtils.h"
 #include "Mesh.h"
 #include "SkinnedMeshModel.h"
@@ -51,7 +50,7 @@ void SkinnedMeshModel::InitAnimationData(const AnimationData& ANIM_DATA)
 	
 	const UINT64 TOTAL_BONE_COUNT = ANIM_DATA.BoneNameToID.size(); // »ÀÀÇ ¼ö.
 	std::vector<Matrix> initData(TOTAL_BONE_COUNT);
-	BoneTransforms.Initialize(pDevice, pContext, sizeof(Matrix), TOTAL_BONE_COUNT, initData.data());
+	BoneTransforms.Initialize(pDevice, pContext, sizeof(Matrix), (UINT)TOTAL_BONE_COUNT, initData.data());
 }
 
 void SkinnedMeshModel::UpdateAnimation(const int CLIP_ID, const int FRAME)
@@ -61,7 +60,7 @@ void SkinnedMeshModel::UpdateAnimation(const int CLIP_ID, const int FRAME)
 	Matrix* pBoneTransformData = (Matrix*)BoneTransforms.pSystemMem;
 	for (UINT64 i = 0, size = CharacterAnimaionData.BoneIDToNames.size(); i < size; ++i)
 	{
-		pBoneTransformData[i] = CharacterAnimaionData.Get(CLIP_ID, i, FRAME).Transpose();
+		pBoneTransformData[i] = CharacterAnimaionData.Get(CLIP_ID, (int)i, FRAME).Transpose();
 	}
 	BoneTransforms.Upload();
 }

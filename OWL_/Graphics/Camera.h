@@ -2,6 +2,15 @@
 
 using DirectX::SimpleMath::Matrix;
 using DirectX::SimpleMath::Vector3;
+using DirectX::SimpleMath::Vector4;
+
+struct FrustumDirection
+{
+	Vector3 FrustumA;
+	Vector3 FrustumB;
+	Vector3 FrustumC;
+	Vector3 FrustumD;
+};
 
 class Camera
 {
@@ -31,6 +40,7 @@ public:
 	inline float GetAspectRatio() { return m_Aspect; }
 	inline float GetNearZ() { return m_NearZ; }
 	inline float GetFarZ() { return m_FarZ; }
+	FrustumDirection GetFrustumDirection();
 
 	inline void SetAspectRatio(const float ASPECT_RATIO) { m_Aspect = ASPECT_RATIO; }
 	inline void SetEyePos(const Vector3& POS) { m_Position = POS; }

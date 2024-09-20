@@ -13,11 +13,13 @@ public:
 	Texture() = default;
 	~Texture() { Cleanup(); }
 
-	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE2D_DESC& DESC, void* pInitData);
-	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE3D_DESC& DESC, void* pInitData);
+	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE2D_DESC& DESC, void* pInitData, bool bCreatingViews);
+	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE3D_DESC& DESC, void* pInitData, bool bCreatingViews);
 
-	void CreateCustomSRV(const D3D11_SHADER_RESOURCE_VIEW_DESC& SRV_DESC);
-	void CreateCustomDSV(const D3D11_DEPTH_STENCIL_VIEW_DESC& DSV_DESC);
+	void CreateRTV(const D3D11_RENDER_TARGET_VIEW_DESC& RTV_DESC);
+	void CreateSRV(const D3D11_SHADER_RESOURCE_VIEW_DESC& SRV_DESC);
+	void CreateDSV(const D3D11_DEPTH_STENCIL_VIEW_DESC& DSV_DESC);
+	void CreateUAV(const D3D11_UNORDERED_ACCESS_VIEW_DESC& UAV_DESC);
 
 	void Upload();
 
@@ -44,7 +46,7 @@ public:
 private:
 	ID3D11Device* m_pDevice = nullptr;
 	ID3D11DeviceContext* m_pContext = nullptr;
-	
+
 	union
 	{
 		ID3D11Texture2D* m_pTexture2D;

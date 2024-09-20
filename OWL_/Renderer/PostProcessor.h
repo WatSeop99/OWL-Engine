@@ -3,6 +3,7 @@
 #include "../Graphics/ConstantDataType.h"
 #include "../Graphics/ImageFilter.h"
 
+class BaseRenderer;
 class Mesh;
 
 class PostProcessor
@@ -25,26 +26,25 @@ public:
 	PostProcessor() = default;
 	~PostProcessor() { Cleanup(); }
 
-	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS);
+	void Initialize(BaseRenderer* pRenderer, const PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS);
 
-	void Update(ID3D11DeviceContext* pContext);
+	void Update();
 
-	void Render(ID3D11DeviceContext* pContext);
+	void Render();
 
 	void Cleanup();
 
 protected:
-	void createPostBackBuffers(ID3D11Device* pDevice);
-	void createImageResources(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, int width, int height, ID3D11ShaderResourceView** ppSrv, ID3D11RenderTargetView** ppRtv);
+	void createPostBackBuffers();
+	void createImageResources(int width, int height, ID3D11ShaderResourceView** ppSrv, ID3D11RenderTargetView** ppRtv);
 
-	void renderPostEffects(ID3D11DeviceContext* pContext);
-	void renderPostProcessing(ID3D11DeviceContext* pContext);
-	void renderImageFilter(ID3D11DeviceContext* pContext, const ImageFilter& IMAGE_FILTER);
+	void renderPostEffects();
+	void renderPostProcessing();
+	void renderImageFilter(const ImageFilter& IMAGE_FILTER);
 
-	void setViewport(ID3D11DeviceContext* pContext);
+	void setViewport();
 	void setRenderConfig(const PostProcessingBuffers& CONFIG);
-	void setPipelineState(ID3D11DeviceContext* pContext, GraphicsPSO& PSO);
-	void setGlobalConsts(ID3D11DeviceContext* pContext, ID3D11Buffer** ppGlobalConstsGPU);
+	void setGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU);
 
 public:
 	PostEffectsConstants PostEffectsConstsCPU;
@@ -56,6 +56,8 @@ public:
 	Mesh* pMesh = nullptr;
 
 private:
+	BaseRenderer* m_pRenderer = nullptr;
+
 	D3D11_VIEWPORT m_Viewport = { 0, };
 	UINT m_ScreenWidth = 0;
 	UINT m_ScreenHeight = 0;

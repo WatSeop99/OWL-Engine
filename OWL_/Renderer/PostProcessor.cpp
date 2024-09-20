@@ -1,7 +1,7 @@
 #include "../Common.h"
+#include "BaseRenderer.h"
 #include "../Graphics/ConstantDataType.h"
 #include "../Geometry/GeometryGenerator.h"
-#include "../Graphics/GraphicsCommon.h"
 #include "../Graphics/GraphicsUtils.h"
 #include "../Geometry/Mesh.h"
 #include "../Geometry/MeshInfo.h"
@@ -9,15 +9,19 @@
 #include "PostProcessor.h"
 
 
-void PostProcessor::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS)
+void PostProcessor::Initialize(BaseRenderer* pRenderer, const PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS)
 {
-	_ASSERT(pDevice);
-	_ASSERT(pContext);
+	_ASSERT(pRenderer);
 
 	HRESULT hr = S_OK;
 
+	m_pRenderer = pRenderer;
 	m_ScreenWidth = WIDTH;
 	m_ScreenHeight = HEIGHT;
+
+	ResourceManager* pResourceManager = pRenderer->GetResourceManager();
+	ID3D11Device* pDevice = pRenderer->GetDevice();
+	ID3D11DeviceContext* pContext = pRenderer->GetDeviceContext();
 
 	// 스크린 공간 설정.
 	MeshInfo meshInfo;
@@ -35,7 +39,7 @@ void PostProcessor::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCont
 
 	// 후처리 효과용 버퍼 생성.
 	setRenderConfig(CONFIG);
-	createPostBackBuffers(pDevice);
+	createPostBackBuffers();
 
 	// 후처리 효과용 constBuffer.
 	hr = CreateConstBuffer(pDevice, PostEffectsConstsCPU, &m_pPostEffectsConstsGPU);
@@ -47,7 +51,7 @@ void PostProcessor::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCont
 	for (int i = 0; i < BLOOMLEVELS; ++i)
 	{
 		int div = (int)pow(2, i);
-		createImageResources(pDevice, pContext, WIDTH / div, HEIGHT / div, &m_pBloomSRVs[i], &m_pBloomRTVs[i]);
+		createImageResources(WIDTH / div, HEIGHT / div, &m_pBloomSRVs[i], &m_pBloomRTVs[i]);
 #ifdef _DEBUG
 		char szDebugStringName1[256];
 		char szDebugStringName2[256];
@@ -63,7 +67,7 @@ void PostProcessor::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCont
 	for (int i = 0; i < BLOOMLEVELS - 1; ++i)
 	{
 		int div = (int)pow(2, i + 1);
-		m_pBloomDownFilters[i].Initialize(pDevice, pContext, g_pBloomDownPS, WIDTH / div, HEIGHT / div);
+		m_pBloomDownFilters[i].Initialize(pDevice, pContext, pResourceManager->pBloomDownPS, WIDTH / div, HEIGHT / div);
 		if (i == 0)
 		{
 			m_pBloomDownFilters[i].SetShaderResources({ m_pPostEffectsSRV });
@@ -81,13 +85,13 @@ void PostProcessor::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCont
 	{
 		int level = BLOOMLEVELS - 2 - i;
 		int div = (int)pow(2, level);
-		m_pBloomUpFilters[i].Initialize(pDevice, pContext, g_pBloomUpPS, WIDTH / div, HEIGHT / div);
+		m_pBloomUpFilters[i].Initialize(pDevice, pContext, pResourceManager->pBloomUpPS, WIDTH / div, HEIGHT / div);
 		m_pBloomUpFilters[i].SetShaderResources({ m_pBloomSRVs[level + 1] });
 		m_pBloomUpFilters[i].SetRenderTargets({ m_pBloomRTVs[level] });
 	}
 
 	// combine + tone mapping.
-	CombineFilter.Initialize(pDevice, pContext, g_pCombinePS, WIDTH, HEIGHT);
+	CombineFilter.Initialize(pDevice, pContext, pResourceManager->pCombinePS, WIDTH, HEIGHT);
 	CombineFilter.SetShaderResources({ m_pPostEffectsSRV, m_pBloomSRVs[0], m_pPrevSRV }); // resource[1]은 모션 블러를 위한 이전 프레임 결과.
 	CombineFilter.SetRenderTargets({ m_pBackBufferRTV });
 	
@@ -101,10 +105,12 @@ void PostProcessor::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCont
 	CombineFilter.UpdateConstantBuffers(pContext);
 }
 
-void PostProcessor::Update(ID3D11DeviceContext* pContext)
+void PostProcessor::Update()
 {
-	_ASSERT(pContext);
+	_ASSERT(m_pRenderer);
 	_ASSERT(m_pPostEffectsConstsGPU);
+
+	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	if (PostEffectsUpdateFlag > 0)
 	{
@@ -119,9 +125,11 @@ void PostProcessor::Update(ID3D11DeviceContext* pContext)
 	}
 }
 
-void PostProcessor::Render(ID3D11DeviceContext* pContext)
+void PostProcessor::Render()
 {
-	_ASSERT(pContext);
+	_ASSERT(m_pRenderer);
+
+	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	// Resolve MSAA texture.
 	pContext->ResolveSubresource(m_pResolvedBuffer, 0, m_pFloatBuffer, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
@@ -129,16 +137,17 @@ void PostProcessor::Render(ID3D11DeviceContext* pContext)
 	// 스크린 렌더링을 위한 정점 버퍼와 인텍스 버퍼를 미리 설정.
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	pContext->IASetVertexBuffers(0, 1, &(pMesh->pVertexBuffer), &stride, &offset);
+	pContext->IASetVertexBuffers(0, 1, &pMesh->pVertexBuffer, &stride, &offset);
 	pContext->IASetIndexBuffer(pMesh->pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	// post effecting 후 post processing.
-	renderPostEffects(pContext);
-	renderPostProcessing(pContext);
+	renderPostEffects();
+	renderPostProcessing();
 }
 
 void PostProcessor::Cleanup()
 {
+	m_pRenderer = nullptr;
 	m_pGlobalConstsGPU = nullptr;
 	m_pBackBuffer = nullptr;
 	m_pFloatBuffer = nullptr;
@@ -174,11 +183,13 @@ void PostProcessor::Cleanup()
 	}
 }
 
-void PostProcessor::createPostBackBuffers(ID3D11Device* pDevice)
+void PostProcessor::createPostBackBuffers()
 {
-	_ASSERT(pDevice);
+	_ASSERT(m_pRenderer);
 
 	// 후처리를 위한 back buffer.
+
+	ID3D11Device* pDevice = m_pRenderer->GetDevice();
 
 	HRESULT hr = S_OK;
 	D3D11_TEXTURE2D_DESC desc = {};
@@ -197,12 +208,12 @@ void PostProcessor::createPostBackBuffers(ID3D11Device* pDevice)
 	BREAK_IF_FAILED(hr);
 }
 
-void PostProcessor::createImageResources(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, int width, int height, ID3D11ShaderResourceView** ppSrv, ID3D11RenderTargetView** ppRtv)
+void PostProcessor::createImageResources(int width, int height, ID3D11ShaderResourceView** ppSrv, ID3D11RenderTargetView** ppRtv)
 {
-	_ASSERT(pDevice);
-	_ASSERT(pContext);
+	_ASSERT(m_pRenderer);
 
 	HRESULT hr = S_OK;
+	ID3D11Device* pDevice = m_pRenderer->GetDevice();
 
 	ID3D11Texture2D* texture = nullptr;
 	D3D11_TEXTURE2D_DESC txtDesc = {};
@@ -228,14 +239,17 @@ void PostProcessor::createImageResources(ID3D11Device* pDevice, ID3D11DeviceCont
 	RELEASE(texture);
 }
 
-void PostProcessor::renderPostEffects(ID3D11DeviceContext* pContext)
+void PostProcessor::renderPostEffects()
 {
-	_ASSERT(pContext);
+	_ASSERT(m_pRenderer);
+
+	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
+	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext(); 
 
 	// PostEffects (m_pGlobalConstsGPU 사용).
-	setViewport(pContext);
-	setPipelineState(pContext, g_PostEffectsPSO);
-	setGlobalConsts(pContext, &m_pGlobalConstsGPU);
+	setViewport();
+	pResourceManager->SetPipelineState(GraphicsPSOType_PostEffects);
+	setGlobalConsts(&m_pGlobalConstsGPU);
 
 	ID3D11ShaderResourceView* ppPostEffectsSRVs[2] = { m_pResolvedSRV, m_pDepthOnlySRV };
 	pContext->PSSetShaderResources(20, 2, ppPostEffectsSRVs);
@@ -247,14 +261,17 @@ void PostProcessor::renderPostEffects(ID3D11DeviceContext* pContext)
 	pContext->PSSetShaderResources(20, 2, ppNulls);
 }
 
-void PostProcessor::renderPostProcessing(ID3D11DeviceContext* pContext)
+void PostProcessor::renderPostProcessing()
 {
-	_ASSERT(pContext);
+	_ASSERT(m_pRenderer);
+
+	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
+	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	// 후처리 (블룸 같은 순수 이미지 처리).
-	setPipelineState(pContext, g_PostProcessingPSO);
+	pResourceManager->SetPipelineState(GraphicsPSOType_PostProcessing);
 
-	pContext->PSSetSamplers(0, 1, &g_pLinearClampSS);
+	pContext->PSSetSamplers(0, 1, &pResourceManager->pLinearClampSS);
 
 	// 블룸이 필요한 경우에만 계산.
 	ImageFilterConstData* pCombineFilterConstData = (ImageFilterConstData*)CombineFilter.GetConstantBufferPtr()->pSystemMem;
@@ -262,30 +279,32 @@ void PostProcessor::renderPostProcessing(ID3D11DeviceContext* pContext)
 	{
 		for (UINT64 i = 0, size = m_pBloomDownFilters.size(); i < size; ++i)
 		{
-			renderImageFilter(pContext, m_pBloomDownFilters[i]);
+			renderImageFilter(m_pBloomDownFilters[i]);
 		}
 		for (UINT64 i = 0, size = m_pBloomUpFilters.size(); i < size; ++i)
 		{
-			renderImageFilter(pContext, m_pBloomUpFilters[i]);
+			renderImageFilter(m_pBloomUpFilters[i]);
 		}
 	}
 
-	renderImageFilter(pContext, CombineFilter);
+	renderImageFilter(CombineFilter);
 
 	pContext->CopyResource(m_pPrevBuffer, m_pBackBuffer); // 모션 블러 효과를 위해 렌더링 결과 보관.
 }
 
-void PostProcessor::renderImageFilter(ID3D11DeviceContext* pContext, const ImageFilter& IMAGE_FILTER)
+void PostProcessor::renderImageFilter(const ImageFilter& IMAGE_FILTER)
 {
-	_ASSERT(pContext);
+	_ASSERT(m_pRenderer);
+
+	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	IMAGE_FILTER.Render(pContext);
 	pContext->DrawIndexed(pMesh->IndexCount, 0, 0);
 }
 
-void PostProcessor::setViewport(ID3D11DeviceContext* pContext)
+void PostProcessor::setViewport()
 {
-	_ASSERT(pContext);
+	_ASSERT(m_pRenderer);
 
 	// Set the viewport
 	m_Viewport = { 0, };
@@ -296,7 +315,7 @@ void PostProcessor::setViewport(ID3D11DeviceContext* pContext)
 	m_Viewport.MinDepth = 0.0f;
 	m_Viewport.MaxDepth = 1.0f;
 
-	pContext->RSSetViewports(1, &m_Viewport);
+	m_pRenderer->SetViewport(&m_Viewport, 1);
 }
 
 void PostProcessor::setRenderConfig(const PostProcessingBuffers& CONFIG)
@@ -312,27 +331,11 @@ void PostProcessor::setRenderConfig(const PostProcessingBuffers& CONFIG)
 	m_pDepthOnlySRV = CONFIG.pDepthOnlySRV;
 }
 
-void PostProcessor::setPipelineState(ID3D11DeviceContext* pContext, GraphicsPSO& PSO)
+void PostProcessor::setGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU)
 {
-	_ASSERT(pContext);
-
-	pContext->VSSetShader(PSO.pVertexShader, nullptr, 0);
-	pContext->PSSetShader(PSO.pPixelShader, nullptr, 0);
-	pContext->HSSetShader(PSO.pHullShader, nullptr, 0);
-	pContext->DSSetShader(PSO.pDomainShader, nullptr, 0);
-	pContext->GSSetShader(PSO.pGeometryShader, nullptr, 0);
-	pContext->CSSetShader(nullptr, nullptr, 0);
-	pContext->IASetInputLayout(PSO.pInputLayout);
-	pContext->RSSetState(PSO.pRasterizerState);
-	pContext->OMSetBlendState(PSO.pBlendState, PSO.BlendFactor, 0xffffffff);
-	pContext->OMSetDepthStencilState(PSO.pDepthStencilState, PSO.StencilRef);
-	pContext->IASetPrimitiveTopology(PSO.PrimitiveTopology);
-}
-
-void PostProcessor::setGlobalConsts(ID3D11DeviceContext* pContext, ID3D11Buffer** ppGlobalConstsGPU)
-{
-	_ASSERT(pContext);
-	_ASSERT(ppGlobalConstsGPU);
+	_ASSERT(m_pRenderer);
+	
+	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	// 쉐이더와 일관성 유지 cbuffer GlobalConstants : register(b0).
 	pContext->VSSetConstantBuffers(0, 1, ppGlobalConstsGPU);

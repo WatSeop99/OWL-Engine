@@ -80,7 +80,8 @@ HRESULT ResourceManager::CreateTextureFromFile(const WCHAR* pszFileName, ID3D11T
 	int width = 0;
 	int height = 0;
 	std::vector<UINT8> imageData;
-	DXGI_FORMAT pixelFormat = (bUseSRGB ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM);
+	//DXGI_FORMAT pixelFormat = (bUseSRGB ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM);
+	DXGI_FORMAT pixelFormat;
 
 	if (GetFileExtension(pszFileName).compare(L"exr") == 0)
 	{
@@ -88,7 +89,7 @@ HRESULT ResourceManager::CreateTextureFromFile(const WCHAR* pszFileName, ID3D11T
 	}
 	else
 	{
-		hr = ReadImage(pszFileName, imageData, &width, &height);
+		hr = ReadImage(pszFileName, imageData, &width, &height, &pixelFormat);
 	}
 
 	if (FAILED(hr))
@@ -151,6 +152,30 @@ HRESULT ResourceManager::CreateTexture(const D3D11_TEXTURE2D_DESC& TEXTURE_DESC,
 	return hr;
 }
 
+void ResourceManager::SetPipelineState(const eGraphicsPSOType PSO_TYPE)
+{
+	_ASSERT(PSO_TYPE >= 0 && PSO_TYPE < GraphicsPSOType_Count);
+
+	m_pContext->VSSetShader(GraphicsPSOs[PSO_TYPE].pVertexShader, nullptr, 0);
+	m_pContext->PSSetShader(GraphicsPSOs[PSO_TYPE].pPixelShader, nullptr, 0);
+	m_pContext->HSSetShader(GraphicsPSOs[PSO_TYPE].pHullShader, nullptr, 0);
+	m_pContext->DSSetShader(GraphicsPSOs[PSO_TYPE].pDomainShader, nullptr, 0);
+	m_pContext->GSSetShader(GraphicsPSOs[PSO_TYPE].pGeometryShader, nullptr, 0);
+	m_pContext->CSSetShader(nullptr, nullptr, 0);
+	m_pContext->IASetInputLayout(GraphicsPSOs[PSO_TYPE].pInputLayout);
+	m_pContext->RSSetState(GraphicsPSOs[PSO_TYPE].pRasterizerState);
+	m_pContext->OMSetBlendState(GraphicsPSOs[PSO_TYPE].pBlendState, GraphicsPSOs[PSO_TYPE].BlendFactor, 0xffffffff);
+	m_pContext->OMSetDepthStencilState(GraphicsPSOs[PSO_TYPE].pDepthStencilState, GraphicsPSOs[PSO_TYPE].StencilRef);
+	m_pContext->IASetPrimitiveTopology(GraphicsPSOs[PSO_TYPE].PrimitiveTopology);
+}
+
+void ResourceManager::SetPipelineState(const eComputePSOType PSO_TYPE)
+{
+	_ASSERT(PSO_TYPE >= 0 && PSO_TYPE < ComputePSOType_Count);
+
+	m_pContext->CSSetShader(ComputePSOs[PSO_TYPE].pComputeShader, nullptr, 0);
+}
+
 void ResourceManager::Cleanup()
 {
 	// Sampler States
@@ -163,6 +188,7 @@ void ResourceManager::Cleanup()
 	SAFE_RELEASE(pShadowCompareSS);
 	SAFE_RELEASE(pPointWrapSS);
 	SAFE_RELEASE(pLinearMirrorSS);
+	SAFE_RELEASE(pSkyLUTSS);
 
 	// Rasterizer States
 	SAFE_RELEASE(pSolidRS);
@@ -179,6 +205,7 @@ void ResourceManager::Cleanup()
 	SAFE_RELEASE(pDrawDSS);
 	SAFE_RELEASE(pMaskDSS);
 	SAFE_RELEASE(pDrawMaskedDSS);
+	SAFE_RELEASE(pSkyDSS);
 
 	// Blend States
 	SAFE_RELEASE(pMirrorBS);
@@ -197,6 +224,9 @@ void ResourceManager::Cleanup()
 	SAFE_RELEASE(pBillboardVS);
 	SAFE_RELEASE(pGBufferVS);
 	SAFE_RELEASE(pGBufferSkinnedVS);
+	SAFE_RELEASE(pSkyLUTVS);
+	SAFE_RELEASE(pSkyVS);
+	SAFE_RELEASE(pSunVS);
 
 	SAFE_RELEASE(pBasicPS);
 	SAFE_RELEASE(pSkyboxPS);
@@ -214,9 +244,16 @@ void ResourceManager::Cleanup()
 	SAFE_RELEASE(pExplosionPS);
 	SAFE_RELEASE(pGBufferPS);
 	SAFE_RELEASE(pDeferredLightingPS);
+	SAFE_RELEASE(pSkyLUTPS);
+	SAFE_RELEASE(pSkyPS);
+	SAFE_RELEASE(pSunPS);
 
 	SAFE_RELEASE(pNormalGS);
 	SAFE_RELEASE(pBillboardGS);
+
+	SAFE_RELEASE(pAerialLUTCS);
+	SAFE_RELEASE(pMultiScatterLUTCS);
+	SAFE_RELEASE(pTransmittanceLUTCS);
 
 	// Input Layouts
 	SAFE_RELEASE(pBasicIL);
@@ -226,6 +263,7 @@ void ResourceManager::Cleanup()
 	SAFE_RELEASE(pPostProcessingIL);
 	SAFE_RELEASE(pGrassIL);
 	SAFE_RELEASE(pBillboardIL);
+	SAFE_RELEASE(pSunIL);
 
 	SAFE_RELEASE(pDepthOnlyCubeVS);
 	SAFE_RELEASE(pDepthOnlyCubeSkinnedVS);
@@ -319,6 +357,14 @@ void ResourceManager::initSamplers()
 	hr = m_pDevice->CreateSamplerState(&sampDesc, &pLinearMirrorSS);
 	BREAK_IF_FAILED(hr);
 	SET_DEBUG_INFO_TO_OBJECT(pLinearMirrorSS, "pLinearMirrorSS");
+
+	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	hr = m_pDevice->CreateSamplerState(&sampDesc, &pSkyLUTSS);
+	BREAK_IF_FAILED(hr);
+	SET_DEBUG_INFO_TO_OBJECT(pSkyLUTSS, "pSkyLUTSS");
 
 	// 샘플러 순서가 "Common.hlsli"에서와 일관성 있어야 함
 	SamplerStates.reserve(8);
@@ -514,6 +560,15 @@ void ResourceManager::initDepthStencilStates()
 	hr = m_pDevice->CreateDepthStencilState(&dsDesc, &pDrawMaskedDSS);
 	BREAK_IF_FAILED(hr);
 	SET_DEBUG_INFO_TO_OBJECT(pDrawMaskedDSS, "pDrawMaskedDSS");
+
+
+	dsDesc.DepthEnable = TRUE;
+	dsDesc.StencilEnable = FALSE;
+	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	hr = m_pDevice->CreateDepthStencilState(&dsDesc, &pSkyDSS);
+	BREAK_IF_FAILED(hr);
+	SET_DEBUG_INFO_TO_OBJECT(pSkyDSS, "pSkyDSS");
 }
 
 void ResourceManager::initShaders()
@@ -567,9 +622,13 @@ void ResourceManager::initShaders()
 		{ "WORLD", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 48,  D3D11_INPUT_PER_INSTANCE_DATA, 1 }, // 마지막 1은 instance step
 		{ "COLOR", 0, DXGI_FORMAT_R32_FLOAT, 1, 64, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
 	};
-	const D3D11_INPUT_ELEMENT_DESC pBILLBOARD_IEs[] =
+	const D3D11_INPUT_ELEMENT_DESC BILLBOARD_IEs[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+	const D3D11_INPUT_ELEMENT_DESC SUN_IEs[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 	const D3D_SHADER_MACRO pSKINNED_MACRO[] =
 	{
@@ -580,7 +639,8 @@ void ResourceManager::initShaders()
 	UINT numSamplingIEs = _countof(SAMPLING_IEs);
 	UINT numSkyboxIEs = _countof(SKYBOX_IEs);
 	UINT numGrassIEs = _countof(GRASS_IEs);
-	UINT numBillboardIEs = _countof(pBILLBOARD_IEs);
+	UINT numBillboardIEs = _countof(BILLBOARD_IEs);
+	UINT numSunIEs = _countof(SUN_IEs);
 
 	hr = createVertexShaderAndInputLayout(L"./Shaders/BasicVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pBasicVS, &pBasicIL);
 	BREAK_IF_FAILED(hr);
@@ -606,13 +666,22 @@ void ResourceManager::initShaders()
 	hr = createVertexShaderAndInputLayout(L"./Shaders/GrassVS.hlsl", GRASS_IEs, numGrassIEs, nullptr, &pGrassVS, &pGrassIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = createVertexShaderAndInputLayout(L"./Shaders/BillboardVS.hlsl", pBILLBOARD_IEs, numBillboardIEs, nullptr, &pBillboardVS, &pBillboardIL);
+	hr = createVertexShaderAndInputLayout(L"./Shaders/BillboardVS.hlsl", BILLBOARD_IEs, numBillboardIEs, nullptr, &pBillboardVS, &pBillboardIL);
 	BREAK_IF_FAILED(hr);
 
 	hr = createVertexShaderAndInputLayout(L"./Shaders/GBufferVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pGBufferVS, &pBasicIL);
 	BREAK_IF_FAILED(hr);
 
 	hr = createVertexShaderAndInputLayout(L"./Shaders/GBufferVS.hlsl", SKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO, &pGBufferSkinnedVS, &pSkinnedIL);
+	BREAK_IF_FAILED(hr);
+
+	hr = createVertexShaderAndInputLayout(L"./Shaders/Atmosphere/SkyLUTVS.hlsl", nullptr, 0, nullptr, &pSkyLUTVS, nullptr);
+	BREAK_IF_FAILED(hr);
+
+	hr = createVertexShaderAndInputLayout(L"./Shaders/Atmosphere/SkyVS.hlsl", nullptr, 0, nullptr, &pSkyVS, nullptr);
+	BREAK_IF_FAILED(hr);
+
+	hr = createVertexShaderAndInputLayout(L"./Shaders/Atmosphere/SunVS.hlsl", SUN_IEs, numSunIEs, nullptr, &pSunVS, &pSunIL);
 	BREAK_IF_FAILED(hr);
 
 	hr = createPixelShader(L"./Shaders/BasicPS.hlsl", &pBasicPS);
@@ -645,6 +714,12 @@ void ResourceManager::initShaders()
 	BREAK_IF_FAILED(hr);
 	hr = createPixelShader(L"./Shaders/DeferredLightingPS.hlsl", &pDeferredLightingPS);
 	BREAK_IF_FAILED(hr);
+	hr = createPixelShader(L"./Shaders/Atmosphere/SkyLUTPS.hlsl", &pSkyLUTPS);
+	BREAK_IF_FAILED(hr);
+	hr = createPixelShader(L"./Shaders/Atmosphere/SkyPS.hlsl", &pSkyPS);
+	BREAK_IF_FAILED(hr);
+	hr = createPixelShader(L"./Shaders/Atmosphere/SunPS.hlsl", &pSunPS);
+	BREAK_IF_FAILED(hr);
 
 	hr = createGeometryShader(L"./Shaders/NormalGS.hlsl", &pNormalGS);
 	BREAK_IF_FAILED(hr);
@@ -667,194 +742,215 @@ void ResourceManager::initShaders()
 	BREAK_IF_FAILED(hr);
 	hr = createPixelShader(L"./Shaders/DepthOnlyCascadePS.hlsl", &pDepthOnlyCascadePS);
 	BREAK_IF_FAILED(hr);
+
+	hr = createComputeShader(L"./Shaders/Atmosphere/AerialLUTCS.hlsl", &pAerialLUTCS);
+	BREAK_IF_FAILED(hr);
+	hr = createComputeShader(L"./Shaders/Atmosphere/MultiScatterLUTCS.hlsl", &pMultiScatterLUTCS);
+	BREAK_IF_FAILED(hr);
+	hr = createComputeShader(L"./Shaders/Atmosphere/TransmittanceLUTCS.hlsl", &pTransmittanceLUTCS);
+	BREAK_IF_FAILED(hr);
 }
 
 void ResourceManager::initPipelineStates()
 {
-	// g_DefaultSolidPSO;
-	DefaultSolidPSO.pVertexShader = pBasicVS;
-	DefaultSolidPSO.pInputLayout = pBasicIL;
-	DefaultSolidPSO.pPixelShader = pBasicPS;
-	DefaultSolidPSO.pRasterizerState = pSolidRS;
-	DefaultSolidPSO.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	// g_DefaultSolidPSO
+	GraphicsPSOs[GraphicsPSOType_DefaultSolid].pVertexShader = pBasicVS;
+	GraphicsPSOs[GraphicsPSOType_DefaultSolid].pInputLayout = pBasicIL;
+	GraphicsPSOs[GraphicsPSOType_DefaultSolid].pPixelShader = pBasicPS;
+	GraphicsPSOs[GraphicsPSOType_DefaultSolid].pRasterizerState = pSolidRS;
+	GraphicsPSOs[GraphicsPSOType_DefaultSolid].PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
 	// Skinned mesh solid
-	SkinnedSolidPSO = DefaultSolidPSO;
-	SkinnedSolidPSO.pVertexShader = pSkinnedVS;
-	SkinnedSolidPSO.pInputLayout = pSkinnedIL;
+	GraphicsPSOs[GraphicsPSOType_SkinnedSolid] = GraphicsPSOs[GraphicsPSOType_DefaultSolid];
+	GraphicsPSOs[GraphicsPSOType_SkinnedSolid].pVertexShader = pSkinnedVS;
+	GraphicsPSOs[GraphicsPSOType_SkinnedSolid].pInputLayout = pSkinnedIL;
 
 	// g_DefaultWirePSO
-	DefaultWirePSO = DefaultSolidPSO;
-	DefaultWirePSO.pRasterizerState = pWireRS;
+	GraphicsPSOs[GraphicsPSOType_DefaultWire] = GraphicsPSOs[GraphicsPSOType_DefaultSolid];
+	GraphicsPSOs[GraphicsPSOType_DefaultWire].pRasterizerState = pWireRS;
 
 	// Skinned mesh wire
-	SkinnedWirePSO = SkinnedSolidPSO;
-	SkinnedWirePSO.pRasterizerState = pWireRS;
+	GraphicsPSOs[GraphicsPSOType_SkinnedWire] = GraphicsPSOs[GraphicsPSOType_SkinnedSolid];
+	GraphicsPSOs[GraphicsPSOType_SkinnedWire].pRasterizerState = pWireRS;
 
 	// stencilMarkPSO;
-	StencilMaskPSO = DefaultSolidPSO;
-	StencilMaskPSO.pDepthStencilState = pMaskDSS;
-	StencilMaskPSO.StencilRef = 1;
-	StencilMaskPSO.pVertexShader = pDepthOnlyVS;
-	StencilMaskPSO.pPixelShader = pDepthOnlyPS;
+	GraphicsPSOs[GraphicsPSOType_StencilMask] = GraphicsPSOs[GraphicsPSOType_DefaultSolid];
+	GraphicsPSOs[GraphicsPSOType_StencilMask].pDepthStencilState = pMaskDSS;
+	GraphicsPSOs[GraphicsPSOType_StencilMask].StencilRef = 1;
+	GraphicsPSOs[GraphicsPSOType_StencilMask].pVertexShader = pDepthOnlyVS;
+	GraphicsPSOs[GraphicsPSOType_StencilMask].pPixelShader = pDepthOnlyPS;
 
 	// g_ReflectSolidPSO: 반사되면 Winding 반대
-	ReflectSolidPSO = DefaultSolidPSO;
-	ReflectSolidPSO.pDepthStencilState = pDrawMaskedDSS;
-	ReflectSolidPSO.pRasterizerState = pSolidCcwRS; // 반시계
-	ReflectSolidPSO.StencilRef = 1;
+	GraphicsPSOs[GraphicsPSOType_ReflectSolid] = GraphicsPSOs[GraphicsPSOType_DefaultSolid];
+	GraphicsPSOs[GraphicsPSOType_ReflectSolid].pDepthStencilState = pDrawMaskedDSS;
+	GraphicsPSOs[GraphicsPSOType_ReflectSolid].pRasterizerState = pSolidCcwRS; // 반시계
+	GraphicsPSOs[GraphicsPSOType_ReflectSolid].StencilRef = 1;
 
-	ReflectSkinnedSolidPSO = ReflectSolidPSO;
-	ReflectSkinnedSolidPSO.pVertexShader = pSkinnedVS;
-	ReflectSkinnedSolidPSO.pInputLayout = pSkinnedIL;
+	GraphicsPSOs[GraphicsPSOType_ReflectSkinnedSolid] = GraphicsPSOs[GraphicsPSOType_ReflectSolid];
+	GraphicsPSOs[GraphicsPSOType_ReflectSkinnedSolid].pVertexShader = pSkinnedVS;
+	GraphicsPSOs[GraphicsPSOType_ReflectSkinnedSolid].pInputLayout = pSkinnedIL;
 
 	// g_ReflectWirePSO: 반사되면 Winding 반대
-	ReflectWirePSO = ReflectSolidPSO;
-	ReflectWirePSO.pRasterizerState = pWireCcwRS; // 반시계
-	ReflectWirePSO.StencilRef = 1;
+	GraphicsPSOs[GraphicsPSOType_ReflectWire] = GraphicsPSOs[GraphicsPSOType_ReflectSolid];
+	GraphicsPSOs[GraphicsPSOType_ReflectWire].pRasterizerState = pWireCcwRS; // 반시계
+	GraphicsPSOs[GraphicsPSOType_ReflectWire].StencilRef = 1;
 
-	ReflectSkinnedWirePSO = ReflectSkinnedSolidPSO;
-	ReflectSkinnedWirePSO.pRasterizerState = pWireCcwRS; // 반시계
-	ReflectSkinnedWirePSO.StencilRef = 1;
+	GraphicsPSOs[GraphicsPSOType_ReflectSkinnedWire] = GraphicsPSOs[GraphicsPSOType_ReflectSkinnedSolid];
+	GraphicsPSOs[GraphicsPSOType_ReflectSkinnedWire].pRasterizerState = pWireCcwRS; // 반시계
+	GraphicsPSOs[GraphicsPSOType_ReflectSkinnedWire].StencilRef = 1;
 
 	// g_MirrorBlendSolidPSO;
-	MirrorBlendSolidPSO = DefaultSolidPSO;
-	MirrorBlendSolidPSO.pBlendState = pMirrorBS;
-	MirrorBlendSolidPSO.pDepthStencilState = pDrawMaskedDSS;
-	MirrorBlendSolidPSO.StencilRef = 1;
+	GraphicsPSOs[GraphicsPSOType_MirrorBlendSolid] = GraphicsPSOs[GraphicsPSOType_DefaultSolid];
+	GraphicsPSOs[GraphicsPSOType_MirrorBlendSolid].pBlendState = pMirrorBS;
+	GraphicsPSOs[GraphicsPSOType_MirrorBlendSolid].pDepthStencilState = pDrawMaskedDSS;
+	GraphicsPSOs[GraphicsPSOType_MirrorBlendSolid].StencilRef = 1;
 
 	// g_MirrorBlendWirePSO;
-	MirrorBlendWirePSO = DefaultWirePSO;
-	MirrorBlendWirePSO.pBlendState = pMirrorBS;
-	MirrorBlendWirePSO.pDepthStencilState = pDrawMaskedDSS;
-	MirrorBlendWirePSO.StencilRef = 1;
+	GraphicsPSOs[GraphicsPSOType_MirrorBlendWire] = GraphicsPSOs[GraphicsPSOType_DefaultWire];
+	GraphicsPSOs[GraphicsPSOType_MirrorBlendWire].pBlendState = pMirrorBS;
+	GraphicsPSOs[GraphicsPSOType_MirrorBlendWire].pDepthStencilState = pDrawMaskedDSS;
+	GraphicsPSOs[GraphicsPSOType_MirrorBlendWire].StencilRef = 1;
 
 	// g_SkyboxSolidPSO
-	SkyboxSolidPSO = DefaultSolidPSO;
-	SkyboxSolidPSO.pVertexShader = pSkyboxVS;
-	SkyboxSolidPSO.pPixelShader = pSkyboxPS;
-	SkyboxSolidPSO.pInputLayout = pSkyboxIL;
+	GraphicsPSOs[GraphicsPSOType_SkyboxSolid] = GraphicsPSOs[GraphicsPSOType_DefaultSolid];
+	GraphicsPSOs[GraphicsPSOType_SkyboxSolid].pVertexShader = pSkyboxVS;
+	GraphicsPSOs[GraphicsPSOType_SkyboxSolid].pPixelShader = pSkyboxPS;
+	GraphicsPSOs[GraphicsPSOType_SkyboxSolid].pInputLayout = pSkyboxIL;
 
 	// g_SkyboxWirePSO
-	SkyboxWirePSO = SkyboxSolidPSO;
-	SkyboxWirePSO.pRasterizerState = pWireRS;
+	GraphicsPSOs[GraphicsPSOType_SkyboxWire] = GraphicsPSOs[GraphicsPSOType_SkyboxSolid];
+	GraphicsPSOs[GraphicsPSOType_SkyboxWire].pRasterizerState = pWireRS;
 
 	// g_ReflectSkyboxSolidPSO
-	ReflectSkyboxSolidPSO = SkyboxSolidPSO;
-	ReflectSkyboxSolidPSO.pDepthStencilState = pDrawMaskedDSS;
-	ReflectSkyboxSolidPSO.pRasterizerState = pSolidCcwRS; // 반시계
-	ReflectSkyboxSolidPSO.StencilRef = 1;
+	GraphicsPSOs[GraphicsPSOType_ReflectSkyboxSolid] = GraphicsPSOs[GraphicsPSOType_SkyboxSolid];
+	GraphicsPSOs[GraphicsPSOType_ReflectSkyboxSolid].pDepthStencilState = pDrawMaskedDSS;
+	GraphicsPSOs[GraphicsPSOType_ReflectSkyboxSolid].pRasterizerState = pSolidCcwRS; // 반시계
+	GraphicsPSOs[GraphicsPSOType_ReflectSkyboxSolid].StencilRef = 1;
 
 	// g_ReflectSkyboxWirePSO
-	ReflectSkyboxWirePSO = ReflectSkyboxSolidPSO;
-	ReflectSkyboxWirePSO.pRasterizerState = pWireCcwRS;
-	ReflectSkyboxWirePSO.StencilRef = 1;
+	GraphicsPSOs[GraphicsPSOType_ReflectSkyboxWire] = GraphicsPSOs[GraphicsPSOType_ReflectSkyboxSolid];
+	GraphicsPSOs[GraphicsPSOType_ReflectSkyboxWire].pRasterizerState = pWireCcwRS;
+	GraphicsPSOs[GraphicsPSOType_ReflectSkyboxWire].StencilRef = 1;
 
 	// g_NormalsPSO
-	NormalsPSO = DefaultSolidPSO;
-	NormalsPSO.pVertexShader = pNormalVS;
-	NormalsPSO.pGeometryShader = pNormalGS;
-	NormalsPSO.pPixelShader = pNormalPS;
-	NormalsPSO.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
+	GraphicsPSOs[GraphicsPSOType_Normal] = GraphicsPSOs[GraphicsPSOType_DefaultSolid];
+	GraphicsPSOs[GraphicsPSOType_Normal] .pVertexShader = pNormalVS;
+	GraphicsPSOs[GraphicsPSOType_Normal] .pGeometryShader = pNormalGS;
+	GraphicsPSOs[GraphicsPSOType_Normal] .pPixelShader = pNormalPS;
+	GraphicsPSOs[GraphicsPSOType_Normal] .PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
 
 	// g_DepthOnlyPSO
-	DepthOnlyPSO = DefaultSolidPSO;
-	DepthOnlyPSO.pVertexShader = pDepthOnlyVS;
-	DepthOnlyPSO.pPixelShader = pDepthOnlyPS;
+	GraphicsPSOs[GraphicsPSOType_DepthOnly] = GraphicsPSOs[GraphicsPSOType_DefaultSolid];
+	GraphicsPSOs[GraphicsPSOType_DepthOnly].pVertexShader = pDepthOnlyVS;
+	GraphicsPSOs[GraphicsPSOType_DepthOnly].pPixelShader = pDepthOnlyPS;
 
 	// g_DepthOnlySkinnedPSO
-	DepthOnlySkinnedPSO = DepthOnlyPSO;
-	DepthOnlySkinnedPSO.pVertexShader = pDepthOnlySkinnedVS;
-	DepthOnlySkinnedPSO.pInputLayout = pSkinnedIL;
+	GraphicsPSOs[GraphicsPSOType_DepthOnlySkinned] = GraphicsPSOs[GraphicsPSOType_DepthOnly];
+	GraphicsPSOs[GraphicsPSOType_DepthOnlySkinned].pVertexShader = pDepthOnlySkinnedVS;
+	GraphicsPSOs[GraphicsPSOType_DepthOnlySkinned].pInputLayout = pSkinnedIL;
 
 	// g_DepthOnlyCubePSO
-	DepthOnlyCubePSO = DepthOnlyPSO;
-	DepthOnlyCubePSO.pVertexShader = pDepthOnlyCubeVS;
-	DepthOnlyCubePSO.pGeometryShader = pDepthOnlyCubeGS;
-	DepthOnlyCubePSO.pPixelShader = pDepthOnlyCubePS;
+	GraphicsPSOs[GraphicsPSOType_DepthOnlyCube] = GraphicsPSOs[GraphicsPSOType_DepthOnly];
+	GraphicsPSOs[GraphicsPSOType_DepthOnlyCube].pVertexShader = pDepthOnlyCubeVS;
+	GraphicsPSOs[GraphicsPSOType_DepthOnlyCube].pGeometryShader = pDepthOnlyCubeGS;
+	GraphicsPSOs[GraphicsPSOType_DepthOnlyCube].pPixelShader = pDepthOnlyCubePS;
 
 	// g_DepthOnlyCubeSkinnedPSO
-	DepthOnlyCubeSkinnedPSO = DepthOnlyCubePSO;
-	DepthOnlyCubeSkinnedPSO.pVertexShader = pDepthOnlyCubeSkinnedVS;
-	DepthOnlyCubeSkinnedPSO.pInputLayout = pSkinnedIL;
+	GraphicsPSOs[GraphicsPSOType_DepthOnlyCubeSkinned] = GraphicsPSOs[GraphicsPSOType_DepthOnlyCube];
+	GraphicsPSOs[GraphicsPSOType_DepthOnlyCubeSkinned].pVertexShader = pDepthOnlyCubeSkinnedVS;
+	GraphicsPSOs[GraphicsPSOType_DepthOnlyCubeSkinned].pInputLayout = pSkinnedIL;
 
 	// g_DepthOnlyCascadePSO
-	DepthOnlyCascadePSO = DepthOnlyPSO;
-	DepthOnlyCascadePSO.pVertexShader = pDepthOnlyCascadeVS;
-	DepthOnlyCascadePSO.pGeometryShader = pDepthOnlyCascadeGS;
-	DepthOnlyCascadePSO.pPixelShader = pDepthOnlyCascadePS;
+	GraphicsPSOs[GraphicsPSOType_DepthOnlyCascade] = GraphicsPSOs[GraphicsPSOType_DepthOnly];
+	GraphicsPSOs[GraphicsPSOType_DepthOnlyCascade].pVertexShader = pDepthOnlyCascadeVS;
+	GraphicsPSOs[GraphicsPSOType_DepthOnlyCascade].pGeometryShader = pDepthOnlyCascadeGS;
+	GraphicsPSOs[GraphicsPSOType_DepthOnlyCascade].pPixelShader = pDepthOnlyCascadePS;
 
 	// g_DepthOnlyCascadeSkinnedPSO
-	DepthOnlyCascadeSkinnedPSO = DepthOnlyCascadePSO;
-	DepthOnlyCascadeSkinnedPSO.pVertexShader = pDepthOnlyCascadeSkinnedVS;
-	DepthOnlyCascadeSkinnedPSO.pInputLayout = pSkinnedIL;
+	GraphicsPSOs[GraphicsPSOType_DepthOnlyCascadeSkinned] = GraphicsPSOs[GraphicsPSOType_DepthOnlyCascade];
+	GraphicsPSOs[GraphicsPSOType_DepthOnlyCascadeSkinned].pVertexShader = pDepthOnlyCascadeSkinnedVS;
+	GraphicsPSOs[GraphicsPSOType_DepthOnlyCascadeSkinned].pInputLayout = pSkinnedIL;
 
 	// g_PostEffectsPSO
-	PostEffectsPSO.pVertexShader = pSamplingVS;
-	PostEffectsPSO.pPixelShader = pPostEffectsPS;
-	PostEffectsPSO.pInputLayout = pSamplingIL;
-	PostEffectsPSO.pRasterizerState = pPostProcessingRS;
+	GraphicsPSOs[GraphicsPSOType_PostEffects].pVertexShader = pSamplingVS;
+	GraphicsPSOs[GraphicsPSOType_PostEffects].pPixelShader = pPostEffectsPS;
+	GraphicsPSOs[GraphicsPSOType_PostEffects].pInputLayout = pSamplingIL;
+	GraphicsPSOs[GraphicsPSOType_PostEffects].pRasterizerState = pPostProcessingRS;
 
 	// g_PostProcessingPSO
-	PostProcessingPSO.pVertexShader = pSamplingVS;
-	PostProcessingPSO.pPixelShader = pDepthOnlyPS; // dummy
-	PostProcessingPSO.pInputLayout = pSamplingIL;
-	PostProcessingPSO.pRasterizerState = pPostProcessingRS;
+	GraphicsPSOs[GraphicsPSOType_PostProcessing].pVertexShader = pSamplingVS;
+	GraphicsPSOs[GraphicsPSOType_PostProcessing].pPixelShader = pDepthOnlyPS; // dummy
+	GraphicsPSOs[GraphicsPSOType_PostProcessing].pInputLayout = pSamplingIL;
+	GraphicsPSOs[GraphicsPSOType_PostProcessing].pRasterizerState = pPostProcessingRS;
 
 	// g_BoundingBoxPSO
-	BoundingBoxPSO = DefaultWirePSO;
-	BoundingBoxPSO.pPixelShader = pColorPS;
-	BoundingBoxPSO.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
+	GraphicsPSOs[GraphicsPSOType_BoundingBox] = GraphicsPSOs[GraphicsPSOType_DefaultWire];
+	GraphicsPSOs[GraphicsPSOType_BoundingBox].pPixelShader = pColorPS;
+	GraphicsPSOs[GraphicsPSOType_BoundingBox].PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
 
 	// g_GrassSolidPSO
-	GrassSolidPSO = DefaultSolidPSO;
-	GrassSolidPSO.pVertexShader = pGrassVS;
-	GrassSolidPSO.pPixelShader = pGrassPS;
-	GrassSolidPSO.pInputLayout = pGrassIL;
-	GrassSolidPSO.pRasterizerState = pSolidBothRS; // 양면
-	GrassSolidPSO.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	GraphicsPSOs[GraphicsPSOType_GrassSolid] = GraphicsPSOs[GraphicsPSOType_DefaultSolid];
+	GraphicsPSOs[GraphicsPSOType_GrassSolid].pVertexShader = pGrassVS;
+	GraphicsPSOs[GraphicsPSOType_GrassSolid].pPixelShader = pGrassPS;
+	GraphicsPSOs[GraphicsPSOType_GrassSolid].pInputLayout = pGrassIL;
+	GraphicsPSOs[GraphicsPSOType_GrassSolid].pRasterizerState = pSolidBothRS; // 양면
+	GraphicsPSOs[GraphicsPSOType_GrassSolid].PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
 	// g_GrassWirePSO
-	GrassWirePSO = GrassSolidPSO;
-	GrassWirePSO.pRasterizerState = pWireBothRS; // 양면
+	GraphicsPSOs[GraphicsPSOType_GrassWire] = GraphicsPSOs[GraphicsPSOType_GrassSolid];
+	GraphicsPSOs[GraphicsPSOType_GrassWire].pRasterizerState = pWireBothRS; // 양면
 
 	// g_OceanPSO
-	OceanPSO = DefaultSolidPSO;
-	OceanPSO.pBlendState = pAlphaBS;
-	// g_OceanPSO.pRasterizerState = g_pSolidBothRS; // 양면
-	OceanPSO.pPixelShader = pOceanPS;
+	GraphicsPSOs[GraphicsPSOType_Ocean] = GraphicsPSOs[GraphicsPSOType_DefaultSolid];
+	GraphicsPSOs[GraphicsPSOType_Ocean].pBlendState = pAlphaBS;
+	// GraphicsPSOs[GraphicsPSOType_Ocean].pRasterizerState = g_pSolidBothRS; // 양면
+	GraphicsPSOs[GraphicsPSOType_Ocean].pPixelShader = pOceanPS;
 
 	// g_GBufferPSO
-	GBufferPSO = DefaultSolidPSO;
-	GBufferPSO.pVertexShader = pGBufferVS;
-	GBufferPSO.pPixelShader = pGBufferPS;
+	GraphicsPSOs[GraphicsPSOType_GBuffer] = GraphicsPSOs[GraphicsPSOType_DefaultSolid];
+	GraphicsPSOs[GraphicsPSOType_GBuffer].pVertexShader = pGBufferVS;
+	GraphicsPSOs[GraphicsPSOType_GBuffer].pPixelShader = pGBufferPS;
 
 	// g_GBufferWirePSO
-	GBufferWirePSO = GBufferPSO;
-	GBufferWirePSO.pRasterizerState = pWireRS;
+	GraphicsPSOs[GraphicsPSOType_GBufferWire] = GraphicsPSOs[GraphicsPSOType_GBuffer];
+	GraphicsPSOs[GraphicsPSOType_GBufferWire].pRasterizerState = pWireRS;
 
 	// g_GBufferSkinnedPSO
-	GBufferSkinnedPSO = GBufferPSO;
-	GBufferSkinnedPSO.pVertexShader = pGBufferSkinnedVS;
-	GBufferSkinnedPSO.pInputLayout = pSkinnedIL;
+	GraphicsPSOs[GraphicsPSOType_GBufferSkinned] = GraphicsPSOs[GraphicsPSOType_GBuffer];
+	GraphicsPSOs[GraphicsPSOType_GBufferSkinned].pVertexShader = pGBufferSkinnedVS;
+	GraphicsPSOs[GraphicsPSOType_GBufferSkinned].pInputLayout = pSkinnedIL;
 
 	// g_GBufferSKinnedWirePSO
-	GBufferSKinnedWirePSO = GBufferSkinnedPSO;
-	GBufferSkinnedPSO.pRasterizerState = pWireRS;
+	GraphicsPSOs[GraphicsPSOType_GBufferSkinnedWire] = GraphicsPSOs[GraphicsPSOType_GBufferSkinned];
+	GraphicsPSOs[GraphicsPSOType_GBufferSkinnedWire].pRasterizerState = pWireRS;
 
 	// g_DeferredRenderingPSO
-	DeferredRenderingPSO = PostProcessingPSO;
-	DeferredRenderingPSO.pPixelShader = pDeferredLightingPS;
-	DeferredRenderingPSO.pRasterizerState = pSolidRS;
+	GraphicsPSOs[GraphicsPSOType_DeferredRendering] = GraphicsPSOs[GraphicsPSOType_PostProcessing];
+	GraphicsPSOs[GraphicsPSOType_DeferredRendering].pPixelShader = pDeferredLightingPS;
+	GraphicsPSOs[GraphicsPSOType_DeferredRendering].pRasterizerState = pSolidRS;
+
+	GraphicsPSOs[GraphicsPSOType_SkyLUT].pVertexShader = pSkyLUTVS;
+	GraphicsPSOs[GraphicsPSOType_SkyLUT].pPixelShader = pSkyLUTPS;
+
+	GraphicsPSOs[GraphicsPSOType_Sky].pVertexShader = pSkyVS;
+	GraphicsPSOs[GraphicsPSOType_Sky].pPixelShader = pSkyPS;
+	GraphicsPSOs[GraphicsPSOType_Sky].pDepthStencilState = pSkyDSS;
+
+	GraphicsPSOs[GraphicsPSOType_Sun].pVertexShader = pSunVS;
+	GraphicsPSOs[GraphicsPSOType_Sun].pPixelShader = pSunPS;
+
+	ComputePSOs[ComputePSOType_AerialLUT].pComputeShader = pAerialLUTCS;
+	
+	ComputePSOs[ComputePSOType_MultiScatterLUT].pComputeShader = pMultiScatterLUTCS;
+
+	ComputePSOs[ComputePSOType_TransmittanceLUT].pComputeShader = pTransmittanceLUTCS;
 }
 
 HRESULT ResourceManager::createVertexShaderAndInputLayout(const WCHAR* pszFileName, const D3D11_INPUT_ELEMENT_DESC* pINPUT_ELEMENTS, const UINT ELEMENT_SIZE, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11VertexShader** ppOutVertexShader, ID3D11InputLayout** ppOutInputLayout)
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(pszFileName);
-	_ASSERT(pINPUT_ELEMENTS);
 	_ASSERT(ppOutVertexShader && !(*ppOutVertexShader));
-	_ASSERT(ppOutInputLayout);
 
 	HRESULT hr = S_OK;
 
@@ -884,8 +980,9 @@ HRESULT ResourceManager::createVertexShaderAndInputLayout(const WCHAR* pszFileNa
 		goto LB_RET;
 	}
 
-	if (!(*ppOutInputLayout))
+	if (ppOutInputLayout && !(*ppOutInputLayout))
 	{
+		_ASSERT(pINPUT_ELEMENTS);
 		hr = m_pDevice->CreateInputLayout(pINPUT_ELEMENTS, ELEMENT_SIZE, pShaderBlob->GetBufferPointer(), pShaderBlob->GetBufferSize(), ppOutInputLayout);
 	}
 	pShaderBlob->Release();

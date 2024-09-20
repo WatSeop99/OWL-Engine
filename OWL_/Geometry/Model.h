@@ -2,7 +2,7 @@
 
 // https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Model/Model.h
 
-#include "../Graphics/GraphicsCommon.h"
+#include "../Graphics/EnumData.h"
 #include "MeshInfo.h"
 
 using DirectX::SimpleMath::Matrix;
@@ -31,12 +31,12 @@ public:
 
 	void Cleanup();
 
-	virtual inline GraphicsPSO& GetPSO(const bool bWIRED) { return (bWIRED ? g_DefaultWirePSO : g_DefaultSolidPSO); }
-	virtual inline GraphicsPSO& GetGBufferPSO(const bool bWIRED) { return (bWIRED ? g_GBufferSkinnedPSO : g_GBufferPSO); }
-	virtual inline GraphicsPSO& GetDepthOnlyPSO() { return g_DepthOnlyPSO; }
-	virtual inline GraphicsPSO& GetDepthOnlyCubePSO() { return g_DepthOnlyCubePSO; }
-	virtual inline GraphicsPSO& GetDepthOnlyCascadePSO() { return g_DepthOnlyCascadePSO; }
-	virtual inline GraphicsPSO& GetReflectPSO(const bool bWIRED) { return (bWIRED ? g_ReflectWirePSO : g_ReflectSolidPSO); }
+	virtual inline eGraphicsPSOType GetPSO(const bool bWIRED) { return (bWIRED ? GraphicsPSOType_DefaultWire : GraphicsPSOType_DefaultSolid); }
+	virtual inline eGraphicsPSOType GetGBufferPSO(const bool bWIRED) { return (bWIRED ? GraphicsPSOType_GBufferWire : GraphicsPSOType_GBuffer); }
+	virtual inline eGraphicsPSOType GetDepthOnlyPSO() { return GraphicsPSOType_DepthOnly; }
+	virtual inline eGraphicsPSOType GetDepthOnlyCubePSO() { return  GraphicsPSOType_DepthOnlyCube; }
+	virtual inline eGraphicsPSOType GetDepthOnlyCascadePSO() { return GraphicsPSOType_DepthOnlyCascade; }
+	virtual inline eGraphicsPSOType GetReflectPSO(const bool bWIRED) { return (bWIRED ? GraphicsPSOType_ReflectWire : GraphicsPSOType_ReflectSolid); }
 
 public:
 	Matrix World;					// Model(Object) To World 행렬.
@@ -55,8 +55,9 @@ public:
 	std::string Name = "NoName";
 
 protected:
-	BaseRenderer* m_pRenderer = nullptr;
-
 	Mesh* m_pBoundingBoxMesh = nullptr;
 	Mesh* m_pBoundingSphereMesh = nullptr;
+
+	// DO NOT release directly.
+	BaseRenderer* m_pRenderer = nullptr;
 };

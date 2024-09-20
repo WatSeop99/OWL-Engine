@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 HRESULT ReadEXRImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWidth, int* pHeight, DXGI_FORMAT* pPixelFormat);
-HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWidth, int* pHeight);
+HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWidth, int* pHeight, DXGI_FORMAT* pPixelFormat, const bool bUSE_SRGB = false);
 HRESULT ReadImage(const WCHAR* pszAlbedoFileName, const WCHAR* pszOpacityFileName, std::vector<UINT8>& image, int* pWidth, int* pHeight);
 
 HRESULT CreateVertexShaderAndInputLayout(ID3D11Device* pDevice, const wchar_t* pszFileName, const D3D11_INPUT_ELEMENT_DESC* pINPUT_ELEMENTS, const UINT ELEMENTS_SIZE, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11VertexShader** ppVertexShader, ID3D11InputLayout** ppInputLayout);
@@ -101,33 +101,33 @@ void UpdateBuffer(ID3D11DeviceContext* pContext, const DATA& BUFFER_DATA, ID3D11
 	pContext->UpdateSubresource(pBuffer, 0, nullptr, &BUFFER_DATA, 0, 0);
 }
 
-HRESULT CreateTexture(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const wchar_t* pszFileName, const bool bUSE_SRGB, ID3D11Texture2D** ppTexture, ID3D11ShaderResourceView** ppTextureResourceView);
-HRESULT CreateTexture(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const wchar_t* pszAlbedoFileName, const wchar_t* pszOpacityFileName, const bool bUSE_SRGB, ID3D11Texture2D** ppTexture, ID3D11ShaderResourceView** ppTextureResourceView);
-HRESULT CreateTexture2D(ID3D11Device* pDevice, const int WIDTH, const int HEIGHT, const DXGI_FORMAT PIXEL_FORMAT, const bool bIS_DEPTH_STENCIL,
-						ID3D11Texture2D** ppTexture, ID3D11RenderTargetView** ppRTV, ID3D11ShaderResourceView** ppSRV, ID3D11DepthStencilView** ppDSV, ID3D11UnorderedAccessView** ppUAV);
-HRESULT CreateTexture2D(ID3D11Device* pDevice, D3D11_TEXTURE2D_DESC& desc, ID3D11Texture2D** ppTexture, ID3D11RenderTargetView** ppRTV, ID3D11ShaderResourceView** ppSRV, ID3D11DepthStencilView** ppDSV, ID3D11UnorderedAccessView** ppUAV);
-HRESULT CreateTexture3D(ID3D11Device* pDevice, const int WIDTH, const int HEIGHT, const int DEPTH, const DXGI_FORMAT PIXEL_FORMAT, const bool bIS_DEPTH_STENCIL, const std::vector<float>& INIT_DATA,
-						ID3D11Texture3D** ppTexture, ID3D11RenderTargetView** ppRTV, ID3D11ShaderResourceView** ppSRV, ID3D11DepthStencilView** ppDSV, ID3D11UnorderedAccessView** ppUAV);
-HRESULT CreateTexture3D(ID3D11Device* pDevice, D3D11_TEXTURE3D_DESC& desc, const std::vector<float>& INIT_DATA,
-						ID3D11Texture3D** ppTexture, ID3D11RenderTargetView** ppRTV, ID3D11ShaderResourceView** ppSRV, ID3D11DepthStencilView** ppDSV, ID3D11UnorderedAccessView** ppUAV);
+//HRESULT CreateTexture(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const wchar_t* pszFileName, const bool bUSE_SRGB, ID3D11Texture2D** ppTexture, ID3D11ShaderResourceView** ppTextureResourceView);
+//HRESULT CreateTexture(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const wchar_t* pszAlbedoFileName, const wchar_t* pszOpacityFileName, const bool bUSE_SRGB, ID3D11Texture2D** ppTexture, ID3D11ShaderResourceView** ppTextureResourceView);
+//HRESULT CreateTexture2D(ID3D11Device* pDevice, const int WIDTH, const int HEIGHT, const DXGI_FORMAT PIXEL_FORMAT, const bool bIS_DEPTH_STENCIL,
+//						ID3D11Texture2D** ppTexture, ID3D11RenderTargetView** ppRTV, ID3D11ShaderResourceView** ppSRV, ID3D11DepthStencilView** ppDSV, ID3D11UnorderedAccessView** ppUAV);
+//HRESULT CreateTexture2D(ID3D11Device* pDevice, D3D11_TEXTURE2D_DESC& desc, ID3D11Texture2D** ppTexture, ID3D11RenderTargetView** ppRTV, ID3D11ShaderResourceView** ppSRV, ID3D11DepthStencilView** ppDSV, ID3D11UnorderedAccessView** ppUAV);
+//HRESULT CreateTexture3D(ID3D11Device* pDevice, const int WIDTH, const int HEIGHT, const int DEPTH, const DXGI_FORMAT PIXEL_FORMAT, const bool bIS_DEPTH_STENCIL, const std::vector<float>& INIT_DATA,
+//						ID3D11Texture3D** ppTexture, ID3D11RenderTargetView** ppRTV, ID3D11ShaderResourceView** ppSRV, ID3D11DepthStencilView** ppDSV, ID3D11UnorderedAccessView** ppUAV);
+//HRESULT CreateTexture3D(ID3D11Device* pDevice, D3D11_TEXTURE3D_DESC& desc, const std::vector<float>& INIT_DATA,
+//						ID3D11Texture3D** ppTexture, ID3D11RenderTargetView** ppRTV, ID3D11ShaderResourceView** ppSRV, ID3D11DepthStencilView** ppDSV, ID3D11UnorderedAccessView** ppUAV);
+//
+//HRESULT CreateStagingBuffer(ID3D11Device* pDevice, const UINT NUM_ELEMENTS, const UINT SIZE_ELEMENT, const void* pINIT_DATA, ID3D11Buffer** ppBuffer);
+//void CopyFromStagingBuffer(ID3D11DeviceContext* pContext, ID3D11Buffer* pBuffer, UINT size, void* pDest);
+//void CopyToStagingBuffer(ID3D11DeviceContext* pContext, ID3D11Buffer* pBuffer, UINT size, void* pSrc);
+//
+//HRESULT CreateStructuredBuffer(ID3D11Device* pDevice, const UINT NUM_ELEMENTS, const UINT SIZE_ELEMENT, const void* pINIT_DATA, ID3D11Buffer** ppBuffer, ID3D11ShaderResourceView** ppSRV, ID3D11UnorderedAccessView** ppUAV);
+//
+//HRESULT CreateIndirectArgsBuffer(ID3D11Device* pDevice, const UINT NUM_ELEMENTS, const UINT SIZE_ELEMENT, const void* pINIT_DATA, ID3D11Buffer** ppBuffer);
+//
+//HRESULT CreateAppendBuffer(ID3D11Device* pDevice, const UINT NUM_ELEMENTS, const UINT SIZE_ELEMENT, const void* pINIT_DATA, ID3D11Buffer** ppBuffer, ID3D11ShaderResourceView** ppSRV, ID3D11UnorderedAccessView** ppUAV);
+//
+//HRESULT CreateMetallicRoughnessTexture(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const wchar_t* pszMetallicFileName, const wchar_t* pszRoughnessFileName, ID3D11Texture2D** ppTexture, ID3D11ShaderResourceView** ppSRV);
+//HRESULT CreateTextureArray(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const std::vector<std::wstring>& FILE_NAMES, ID3D11Texture2D** ppTexture, ID3D11ShaderResourceView** ppTextureResourceView);
+//HRESULT CreateDDSTexture(ID3D11Device* pDevice, const wchar_t* pszFileName, const bool bIsCubeMap, ID3D11ShaderResourceView** ppTextureResourceView);
+//
+//ID3D11Texture2D* CreateStagingTexture(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const int WIDTH, const int HEIGHT, const std::vector<uint8_t>& IMAGE, const DXGI_FORMAT PIXEL_FORMAT, const int MIP_LEVELS = 1, const int ARRAY_SIZE = 1);
+//ID3D11Texture3D* CreateStagingTexture3D(ID3D11Device* pDevice, const int WIDTH, const int HEIGHT, const int DEPTH, const DXGI_FORMAT PIXEL_FORMAT);
+//
+//void WriteToPngFile(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID3D11Texture2D* pTextureToWrite, const wchar_t* pszFileName);
 
-HRESULT CreateStagingBuffer(ID3D11Device* pDevice, const UINT NUM_ELEMENTS, const UINT SIZE_ELEMENT, const void* pINIT_DATA, ID3D11Buffer** ppBuffer);
-void CopyFromStagingBuffer(ID3D11DeviceContext* pContext, ID3D11Buffer* pBuffer, UINT size, void* pDest);
-void CopyToStagingBuffer(ID3D11DeviceContext* pContext, ID3D11Buffer* pBuffer, UINT size, void* pSrc);
-
-HRESULT CreateStructuredBuffer(ID3D11Device* pDevice, const UINT NUM_ELEMENTS, const UINT SIZE_ELEMENT, const void* pINIT_DATA, ID3D11Buffer** ppBuffer, ID3D11ShaderResourceView** ppSRV, ID3D11UnorderedAccessView** ppUAV);
-
-HRESULT CreateIndirectArgsBuffer(ID3D11Device* pDevice, const UINT NUM_ELEMENTS, const UINT SIZE_ELEMENT, const void* pINIT_DATA, ID3D11Buffer** ppBuffer);
-
-HRESULT CreateAppendBuffer(ID3D11Device* pDevice, const UINT NUM_ELEMENTS, const UINT SIZE_ELEMENT, const void* pINIT_DATA, ID3D11Buffer** ppBuffer, ID3D11ShaderResourceView** ppSRV, ID3D11UnorderedAccessView** ppUAV);
-
-HRESULT CreateMetallicRoughnessTexture(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const wchar_t* pszMetallicFileName, const wchar_t* pszRoughnessFileName, ID3D11Texture2D** ppTexture, ID3D11ShaderResourceView** ppSRV);
-HRESULT CreateTextureArray(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const std::vector<std::wstring>& FILE_NAMES, ID3D11Texture2D** ppTexture, ID3D11ShaderResourceView** ppTextureResourceView);
-HRESULT CreateDDSTexture(ID3D11Device* pDevice, const wchar_t* pszFileName, const bool bIsCubeMap, ID3D11ShaderResourceView** ppTextureResourceView);
-
-ID3D11Texture2D* CreateStagingTexture(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const int WIDTH, const int HEIGHT, const std::vector<uint8_t>& IMAGE, const DXGI_FORMAT PIXEL_FORMAT, const int MIP_LEVELS = 1, const int ARRAY_SIZE = 1);
-ID3D11Texture3D* CreateStagingTexture3D(ID3D11Device* pDevice, const int WIDTH, const int HEIGHT, const int DEPTH, const DXGI_FORMAT PIXEL_FORMAT);
-
-void WriteToPngFile(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID3D11Texture2D* pTextureToWrite, const wchar_t* pszFileName);
-
-size_t GetPixelSize(DXGI_FORMAT pixelFormat);
+UINT64 GetPixelSize(DXGI_FORMAT pixelFormat);

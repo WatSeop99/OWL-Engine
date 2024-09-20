@@ -2,7 +2,7 @@
 #include "../Graphics/GraphicsUtils.h"
 #include "Texture.h"
 
-void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE2D_DESC& DESC, void* pInitData)
+void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE2D_DESC& DESC, void* pInitData, bool bCreatingViews)
 {
 	_ASSERT(pDevice);
 	_ASSERT(pContext);
@@ -20,6 +20,12 @@ void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, c
 	m_pStagingTexture2D = nullptr;
 	createTexture();
 	createStagingTexture(pInitData);
+
+	if (!bCreatingViews)
+	{
+		return;
+	}
+
 	if (m_Texture2DDesc.BindFlags & D3D11_BIND_RENDER_TARGET)
 	{
 		createRenderTargetView();
@@ -38,7 +44,7 @@ void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, c
 	}
 }
 
-void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE3D_DESC& DESC, void* pInitData)
+void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE3D_DESC& DESC, void* pInitData, bool bCreatingViews)
 {
 	_ASSERT(pDevice);
 	_ASSERT(pContext);
@@ -56,6 +62,12 @@ void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, c
 	m_pStagingTexture3D = nullptr;
 	createTexture();
 	createStagingTexture(pInitData);
+
+	if (!bCreatingViews)
+	{
+		return;
+	}
+
 	if (m_Texture3DDesc.BindFlags & D3D11_BIND_RENDER_TARGET)
 	{
 		createRenderTargetView();
@@ -74,7 +86,25 @@ void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, c
 	}
 }
 
-void Texture::CreateCustomSRV(const D3D11_SHADER_RESOURCE_VIEW_DESC& SRV_DESC)
+void Texture::CreateRTV(const D3D11_RENDER_TARGET_VIEW_DESC& RTV_DESC)
+{
+	_ASSERT(m_pDevice);
+	_ASSERT(!pRTV);
+
+	HRESULT hr = S_OK;
+
+	if (m_eTextureType == TextureType_Texture2D)
+	{
+		hr = m_pDevice->CreateRenderTargetView(m_pTexture2D, &RTV_DESC, &pRTV);
+	}
+	else if (m_eTextureType == TextureType_Texture3D)
+	{
+		hr = m_pDevice->CreateRenderTargetView(m_pTexture3D, &RTV_DESC, &pRTV);
+	}
+	BREAK_IF_FAILED(hr);
+}
+
+void Texture::CreateSRV(const D3D11_SHADER_RESOURCE_VIEW_DESC& SRV_DESC)
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(!pSRV);
@@ -92,7 +122,7 @@ void Texture::CreateCustomSRV(const D3D11_SHADER_RESOURCE_VIEW_DESC& SRV_DESC)
 	BREAK_IF_FAILED(hr);
 }
 
-void Texture::CreateCustomDSV(const D3D11_DEPTH_STENCIL_VIEW_DESC& DSV_DESC)
+void Texture::CreateDSV(const D3D11_DEPTH_STENCIL_VIEW_DESC& DSV_DESC)
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(!pDSV);
@@ -106,6 +136,24 @@ void Texture::CreateCustomDSV(const D3D11_DEPTH_STENCIL_VIEW_DESC& DSV_DESC)
 	else if (m_eTextureType == TextureType_Texture3D)
 	{
 		hr = m_pDevice->CreateDepthStencilView(m_pTexture3D, &DSV_DESC, &pDSV);
+	}
+	BREAK_IF_FAILED(hr);
+}
+
+void Texture::CreateUAV(const D3D11_UNORDERED_ACCESS_VIEW_DESC& UAV_DESC)
+{
+	_ASSERT(m_pDevice);
+	_ASSERT(!pUAV);
+
+	HRESULT hr = S_OK;
+
+	if (m_eTextureType == TextureType_Texture2D)
+	{
+		hr = m_pDevice->CreateUnorderedAccessView(m_pTexture2D, &UAV_DESC, &pUAV);
+	}
+	else if (m_eTextureType == TextureType_Texture3D)
+	{
+		hr = m_pDevice->CreateUnorderedAccessView(m_pTexture3D, &UAV_DESC, &pUAV);
 	}
 	BREAK_IF_FAILED(hr);
 }
@@ -206,7 +254,7 @@ void Texture::createTexture()
 		{
 			DXGI_FORMAT originalFormat = m_Texture2DDesc.Format;
 			DXGI_FORMAT textureFormat = DXGI_FORMAT_UNKNOWN;
-			switch (m_Texture2DDesc.Format)
+			switch (m_Texture2DDesc.Format) // DSV format.
 			{
 				case DXGI_FORMAT_D32_FLOAT:
 					textureFormat = DXGI_FORMAT_R32_TYPELESS;
@@ -241,7 +289,7 @@ void Texture::createTexture()
 		{
 			DXGI_FORMAT originalFormat = m_Texture3DDesc.Format;
 			DXGI_FORMAT textureFormat = DXGI_FORMAT_UNKNOWN;
-			switch (m_Texture3DDesc.Format)
+			switch (m_Texture3DDesc.Format) // DSV format.
 			{
 				case DXGI_FORMAT_D32_FLOAT:
 					textureFormat = DXGI_FORMAT_R32_TYPELESS;
@@ -398,7 +446,7 @@ void Texture::createShaderResourceView()
 		if (m_Texture2DDesc.BindFlags & D3D11_BIND_DEPTH_STENCIL)
 		{
 			DXGI_FORMAT srvFormat = DXGI_FORMAT_UNKNOWN;
-			switch (m_Texture2DDesc.Format)
+			switch (m_Texture2DDesc.Format) // DSV format.
 			{
 				case DXGI_FORMAT_D32_FLOAT:
 					srvFormat = DXGI_FORMAT_R32_FLOAT;
@@ -434,7 +482,7 @@ void Texture::createShaderResourceView()
 		if (m_Texture3DDesc.BindFlags & D3D11_BIND_DEPTH_STENCIL)
 		{
 			DXGI_FORMAT srvFormat = DXGI_FORMAT_UNKNOWN;
-			switch (m_Texture3DDesc.Format)
+			switch (m_Texture3DDesc.Format) // DSV format.
 			{
 				case DXGI_FORMAT_D32_FLOAT:
 					srvFormat = DXGI_FORMAT_R32_FLOAT;
@@ -484,7 +532,7 @@ void Texture::createDepthStencilView()
 		_ASSERT(m_pTexture2D);
 
 		DXGI_FORMAT dsvFormat = DXGI_FORMAT_UNKNOWN;
-		switch (m_Texture2DDesc.Format)
+		switch (m_Texture2DDesc.Format) // DSV format.
 		{
 			case DXGI_FORMAT_D32_FLOAT:
 				dsvFormat = DXGI_FORMAT_D32_FLOAT;
@@ -513,7 +561,7 @@ void Texture::createDepthStencilView()
 		_ASSERT(m_pTexture3D);
 
 		DXGI_FORMAT dsvFormat = DXGI_FORMAT_UNKNOWN;
-		switch (m_Texture3DDesc.Format)
+		switch (m_Texture3DDesc.Format) // DSV format.
 		{
 			case DXGI_FORMAT_D32_FLOAT:
 				dsvFormat = DXGI_FORMAT_D32_FLOAT;

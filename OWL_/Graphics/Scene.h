@@ -1,30 +1,37 @@
 #pragma once
 
+#include "Atmosphere/AtmosphereProperty.h"
 #include "ConstantDataType.h"
 #include "../Renderer/ConstantBuffer.h"
 #include "../Renderer/GBuffer.h"
 #include "Light.h"
-#include "Texture.h"
+#include "../Renderer/Texture.h"
 
+class AerialLUT;
 class BaseRenderer;
 class Camera;
 class Mesh;
 class Model;
+class MultiScatteringLUT;
+class Sky;
+class SkyLUT;
+class Sun;
+class TransmittanceLUT;
 
 class Scene
 {
 public:
-	Scene(Camera& camera, Texture& floatBuffer, Texture& resolvedBuffer, UINT width = 1280, UINT height = 720) :
+	Scene(Camera& camera, Texture* pFloatBuffer, Texture* pResolvedBuffer, UINT width = 1280, UINT height = 720) :
 		m_Camera(camera),
-		m_FloatBuffer(floatBuffer),
-		m_ResolvedBuffer(resolvedBuffer),
+		m_pFloatBuffer(pFloatBuffer),
+		m_pResolvedBuffer(pResolvedBuffer),
 		m_ScreenWidth(width),
 		m_ScreenHeight(height),
-		m_GBuffer(floatBuffer, width, height)
+		m_GBuffer(pFloatBuffer, width, height)
 	{}
 	~Scene() { Cleanup(); }
 
-	void Initialize(BaseRenderer* pRenderer);
+	void Initialize(BaseRenderer* pRenderer, const bool bUSE_MSAA);
 
 	void Update(const float DELTA_TIME);
 
@@ -60,13 +67,13 @@ protected:
 
 	void renderDepthOnly();
 	void renderShadowMaps();
+	void renderSky();
 	void renderOpaqueObjects();
 	void renderGBuffer();
 	void renderDeferredLighting();
 	void renderOptions();
 	void renderMirror();
 
-	void setPipelineState(const GraphicsPSO& PSO);
 	void setScreenViewport();
 	void setGlobalConstants(ID3D11Buffer** ppGlobalConstants, UINT slot);
 
@@ -87,8 +94,8 @@ private:
 	UINT m_ScreenHeight;
 	Mesh* m_pScreenMesh = nullptr;
 	Camera& m_Camera;
-	Texture& m_FloatBuffer;
-	Texture& m_ResolvedBuffer;
+	Texture* m_pFloatBuffer = nullptr;
+	Texture* m_pResolvedBuffer = nullptr;
 
 	// g-buffer.
 	GBuffer m_GBuffer;
@@ -103,6 +110,10 @@ private:
 	ConstantBuffer m_LightConstants;
 
 	// 공통으로 사용하는 환경맵 리소스들.
+	Texture* m_pEnv = nullptr;
+	Texture* m_pIrradiance = nullptr;
+	Texture* m_pSpecular = nullptr;
+	Texture* m_pBRDF = nullptr;
 	ID3D11ShaderResourceView* m_pEnvSRV = nullptr;
 	ID3D11ShaderResourceView* m_pIrradianceSRV = nullptr;
 	ID3D11ShaderResourceView* m_pSpecularSRV = nullptr;
@@ -115,4 +126,16 @@ private:
 	Model* m_pMirror = nullptr; // 거울은 별도로 그림
 	DirectX::SimpleMath::Plane m_MirrorPlane;
 
+	// temp atmosphere data
+	LightProperty m_SunProperty;
+	Camera m_SunCamera;
+	ShadowMap m_ShadowMap = ShadowMap(2560, 2560);
+	AtmosphereProperty m_AtmosphereProperty;
+	ConstantBuffer* m_pAtmosphereConstantBuffer = nullptr;
+	Sky* m_pSky = nullptr;
+	SkyLUT* m_pSkyLUT = nullptr;
+	AerialLUT* m_pAerialLUT = nullptr;
+	TransmittanceLUT* m_pTransmittanceLUT = nullptr;
+	MultiScatteringLUT* m_pMultiScatteringLUT = nullptr;
+	Sun* m_pSun = nullptr;
 };

@@ -190,3 +190,13 @@ float Clamp(const float VAL, const float LOWER, const float UPPER)
 {
     return Min(Max(VAL, LOWER), UPPER);
 }
+
+float Lerp(const float A, const float B, const float F)
+{
+    return A + F * (B - A);
+}
+
+float DegreeToRadian(const float ANGLE)
+{
+    return ANGLE / 180.0f * DirectX::XM_PI;
+}

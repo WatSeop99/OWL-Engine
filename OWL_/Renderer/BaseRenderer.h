@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "../Graphics/Camera.h"
-#include "../Graphics/GraphicsCommon.h"
 #include "ResourceManager.h"
 #include "../Renderer/PostProcessor.h"
 #include "../Graphics/Scene.h"
@@ -37,12 +36,13 @@ public:
 	virtual void OnMouseClick(int mouseX, int mouseY);
 	virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-	inline float GetAspectRatio() const { return (float)m_ScreenWidth / (float)m_ScreenHeight; }
+	inline float GetAspectRatio() { return (float)m_ScreenWidth / (float)m_ScreenHeight; }
 	inline ID3D11Device* GetDevice() { return m_pDevice; }
 	inline ID3D11DeviceContext* GetDeviceContext() { return m_pContext; }
 	inline ResourceManager* GetResourceManager() { return m_pResourceManager; }
 
 	void SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU, UINT slot);
+	void SetViewport(const D3D11_VIEWPORT* pViewports, const UINT NUM_VIEWPORT);
 	void SetPipelineState(const GraphicsPSO& PSO);
 	void SetPipelineState(const ComputePSO& PSO);
 
@@ -65,7 +65,7 @@ protected:
 	UINT m_ScreenWidth = 1280;
 	UINT m_ScreenHeight = 720;
 	HWND m_hMainWindow = nullptr;
-	bool m_bUseMSAA = true;
+	bool m_bUseMSAA = false;
 	UINT m_NumQualityLevels = 0;
 
 	D3D_FEATURE_LEVEL m_FeatureLevel;

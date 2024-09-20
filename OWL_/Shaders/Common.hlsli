@@ -1,9 +1,6 @@
 #ifndef __COMMON_HLSLI__
 #define __COMMON_HLSLI__
 
-// 쉐이더에서 include할 내용들은 .hlsli 파일에 작성
-// Properties -> Item Type: Does not participate in build으로 설정
-
 #define MAX_LIGHTS 3 // 쉐이더에서도 #define 사용 가능
 #define LIGHT_OFF 0x00
 #define LIGHT_DIRECTIONAL 0x01
@@ -27,9 +24,9 @@ TextureCube g_SpecularIBLTex : register(t11);
 TextureCube g_IrradianceIBLTex : register(t12);
 Texture2D g_BRDFTex : register(t13);
 
-Texture2D g_ShadowMaps[MAX_LIGHTS] : register(t15);
-TextureCube g_PointLightShadowMap : register(t20);
-Texture2DArray g_CascadeShadowMap : register(t25);
+Texture2D g_ShadowMaps[MAX_LIGHTS] : register(t14);
+TextureCube g_PointLightShadowMap : register(t17);
+Texture2DArray g_CascadeShadowMap : register(t18);
 
 struct Light
 {
@@ -105,15 +102,8 @@ cbuffer MaterialConstants : register(b3)
 };
 
 #ifdef SKINNED
-
 // 관절 개수 제약을 없애게 위해 StructuredBuffer 사용
 StructuredBuffer<float4x4> g_BoneTransforms : register(t9);
-
-//cbuffer SkinnedConstants : register(b3)
-//{
-//    float4x4 boneTransforms[52]; // 관절 개수에 따라 조절
-//};
-
 #endif
 
 struct VertexShaderInput
@@ -141,4 +131,4 @@ struct PixelShaderInput
     float3 ModelPosition : POSITION1; // Volume casting 시작점
 };
 
-#endif // __COMMON_HLSLI__
+#endif

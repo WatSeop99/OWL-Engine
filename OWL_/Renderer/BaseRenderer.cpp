@@ -22,7 +22,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return g_pAppBase->MsgProc(hWnd, msg, wParam, lParam);
 }
 
-BaseRenderer::BaseRenderer() : m_Scene(m_Camera, m_FloatBuffer, m_ResolvedBuffer)
+BaseRenderer::BaseRenderer() : m_Scene(m_Camera, &m_FloatBuffer, &m_ResolvedBuffer)
 {
 	g_pAppBase = this;
 	m_Camera.SetAspectRatio(GetAspectRatio());
@@ -41,8 +41,6 @@ BaseRenderer::~BaseRenderer()
 	ImGui::DestroyContext();
 	m_pContext->OMSetRenderTargets(0, nullptr, nullptr);
 	m_pContext->Flush();
-
-	DestroyCommonStates();
 
 	if (m_pTimer)
 	{
@@ -108,7 +106,7 @@ void BaseRenderer::Initialize()
 	InitScene();
 
 	// postprocessor 초기화.
-	m_PostProcessor.Initialize(m_pDevice, m_pContext,
+	m_PostProcessor.Initialize(this,
 							   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *(m_FloatBuffer.GetTexture2DPtr()), *(m_ResolvedBuffer.GetTexture2DPtr()), *(m_PrevBuffer.GetTexture2DPtr()), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV()},
 							   m_ScreenWidth, m_ScreenHeight, 4);
 
@@ -122,8 +120,8 @@ void BaseRenderer::Initialize()
 // 여러 예제들이 공통적으로 사용하기 좋은 장면 설정
 void BaseRenderer::InitScene()
 {
-	m_Scene.Initialize(this);
-	m_Scene.ResetBuffers(m_bUseMSAA, m_NumQualityLevels);
+	m_Scene.Initialize(this, m_bUseMSAA);
+	// m_Scene.ResetBuffers(m_bUseMSAA, m_NumQualityLevels);
 
 	// 커서 표시 (Main sphere와의 충돌이 감지되면 월드 공간에 작게 그려지는 구).
 	{
@@ -171,7 +169,7 @@ void BaseRenderer::Update(float deltaTime)
 	m_Scene.Update(deltaTime);
 
 	// 후처리 프로세서 업데이트.
-	m_PostProcessor.Update(m_pContext);
+	m_PostProcessor.Update();
 }
 
 void BaseRenderer::RenderGUI()
@@ -189,7 +187,7 @@ void BaseRenderer::RenderGUI()
 void BaseRenderer::Render()
 {
 	m_Scene.Render();
-	m_PostProcessor.Render(m_pContext);
+	m_PostProcessor.Render();
 	RenderGUI(); // 추후 editor/game 모드를 설정하여 따로 렌더링하도록 구상.
 }
 
@@ -268,7 +266,7 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					m_Scene.ResetBuffers(m_bUseMSAA, m_NumQualityLevels);
 					setMainViewport();
 					m_Camera.SetAspectRatio(GetAspectRatio());
-					m_PostProcessor.Initialize(m_pDevice, m_pContext,
+					m_PostProcessor.Initialize(this,
 											   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *(m_FloatBuffer.GetTexture2DPtr()), *(m_ResolvedBuffer.GetTexture2DPtr()), *(m_PrevBuffer.GetTexture2DPtr()), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV()},
 											   m_ScreenWidth, m_ScreenHeight, 4);
 				}
@@ -343,13 +341,13 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			{
 				m_Camera.bUseFirstPersonView = !m_Camera.bUseFirstPersonView;
 			}
-			if (wParam == 'C') // c키 화면 캡쳐.
-			{
-				ID3D11Texture2D* pBackBuffer = nullptr;
-				m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
-				WriteToPngFile(m_pDevice, m_pContext, pBackBuffer, L"captured.png");
-				RELEASE(pBackBuffer);
-			}
+			//if (wParam == 'C') // c키 화면 캡쳐.
+			//{
+			//	ID3D11Texture2D* pBackBuffer = nullptr;
+			//	m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
+			//	WriteToPngFile(m_pDevice, m_pContext, pBackBuffer, L"captured.png");
+			//	RELEASE(pBackBuffer);
+			//}
 			if (wParam == 'P') // 애니메이션 일시중지할 때 사용.
 			{
 				m_bPauseAnimation = !m_bPauseAnimation;
@@ -384,6 +382,14 @@ void BaseRenderer::SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU, UINT slot)
 	m_pContext->VSSetConstantBuffers(slot, 1, ppGlobalConstsGPU);
 	m_pContext->PSSetConstantBuffers(slot, 1, ppGlobalConstsGPU);
 	m_pContext->GSSetConstantBuffers(slot, 1, ppGlobalConstsGPU);
+}
+
+void BaseRenderer::SetViewport(const D3D11_VIEWPORT* pViewports, const UINT NUM_VIEWPORT)
+{
+	_ASSERT(pViewports);
+	_ASSERT(NUM_VIEWPORT > 0);
+
+	m_pContext->RSSetViewports(NUM_VIEWPORT, pViewports);
 }
 
 void BaseRenderer::SetPipelineState(const GraphicsPSO& PSO)
@@ -696,7 +702,6 @@ LB_EXIT:
 		m_BackBufferFormat = swapChainDesc.Format;
 	}
 
-	InitCommonStates(m_pDevice);
 	createBuffers();
 	setMainViewport();
 
@@ -741,7 +746,7 @@ void BaseRenderer::createBuffers()
 	D3D11_TEXTURE2D_DESC desc = {};
 	m_pBackBuffer->GetDesc(&desc);
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-	m_PrevBuffer.Initialize(m_pDevice, m_pContext, desc, nullptr);
+	m_PrevBuffer.Initialize(m_pDevice, m_pContext, desc, nullptr, true);
 
 	// FLOAT MSAA RenderTargetView/ShaderResourceView.
 	hr = m_pDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_R16G16B16A16_FLOAT, 4, &m_NumQualityLevels);
@@ -763,15 +768,13 @@ void BaseRenderer::createBuffers()
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 	desc.MiscFlags = 0;
 	desc.CPUAccessFlags = 0;
-	m_FloatBuffer.Initialize(m_pDevice, m_pContext, desc, nullptr);
+	m_FloatBuffer.Initialize(m_pDevice, m_pContext, desc, nullptr, true);
 
 	// FLOAT MSAA를 Relsolve해서 저장할 SRV/RTV.
 	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET | D3D11_BIND_UNORDERED_ACCESS;
-	m_ResolvedBuffer.Initialize(m_pDevice, m_pContext, desc, nullptr);
-
-	//m_Scene.ResetBuffers(m_bUseMSAA, m_NumQualityLevels);
+	m_ResolvedBuffer.Initialize(m_pDevice, m_pContext, desc, nullptr, true);
 }
 
 void BaseRenderer::setMainViewport()

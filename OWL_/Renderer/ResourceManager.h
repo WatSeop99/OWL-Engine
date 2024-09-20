@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../Graphics/EnumData.h"
 #include "PipelineState.h"
 
 class ResourceManager
@@ -17,6 +18,9 @@ public:
 	HRESULT CreateTextureCubeFromFile(const WCHAR* pszFileName, ID3D11Texture2D** ppOutTexture, D3D11_TEXTURE2D_DESC* pOutDesc);
 	HRESULT CreateTexture(const D3D11_TEXTURE2D_DESC& TEXTURE_DESC, void* pInitData, ID3D11Texture2D** ppOutTexture);
 
+	void SetPipelineState(const eGraphicsPSOType PSO_TYPE);
+	void SetPipelineState(const eComputePSOType PSO_TYPE);
+	
 	void Cleanup();
 
 protected:
@@ -45,6 +49,7 @@ public:
 	ID3D11SamplerState* pShadowCompareSS = nullptr;
 	ID3D11SamplerState* pPointWrapSS = nullptr;
 	ID3D11SamplerState* pLinearMirrorSS = nullptr;
+	ID3D11SamplerState* pSkyLUTSS = nullptr;
 	std::vector<ID3D11SamplerState*> SamplerStates;
 
 	ID3D11RasterizerState* pSolidRS = nullptr; // front only
@@ -60,6 +65,7 @@ public:
 	ID3D11DepthStencilState* pDrawDSS = nullptr; // 일반적으로 그리기
 	ID3D11DepthStencilState* pMaskDSS = nullptr; // 스텐실버퍼에 표시
 	ID3D11DepthStencilState* pDrawMaskedDSS = nullptr; // 스텐실 표시된 곳만
+	ID3D11DepthStencilState* pSkyDSS = nullptr;
 
 	ID3D11VertexShader* pBasicVS = nullptr;
 	ID3D11VertexShader* pSkinnedVS = nullptr; // g_pBasicVS.hlsl에 SKINNED 매크로
@@ -76,6 +82,9 @@ public:
 	ID3D11VertexShader* pBillboardVS = nullptr;
 	ID3D11VertexShader* pGBufferVS = nullptr;
 	ID3D11VertexShader* pGBufferSkinnedVS = nullptr;
+	ID3D11VertexShader* pSkyLUTVS = nullptr;
+	ID3D11VertexShader* pSkyVS = nullptr;
+	ID3D11VertexShader* pSunVS = nullptr;
 	ID3D11PixelShader* pBasicPS = nullptr;
 	ID3D11PixelShader* pSkyboxPS = nullptr;
 	ID3D11PixelShader* pCombinePS = nullptr;
@@ -94,10 +103,16 @@ public:
 	ID3D11PixelShader* pExplosionPS = nullptr;
 	ID3D11PixelShader* pGBufferPS = nullptr;
 	ID3D11PixelShader* pDeferredLightingPS = nullptr;
+	ID3D11PixelShader* pSkyLUTPS = nullptr;
+	ID3D11PixelShader* pSkyPS = nullptr;
+	ID3D11PixelShader* pSunPS = nullptr;
 	ID3D11GeometryShader* pNormalGS = nullptr;
 	ID3D11GeometryShader* pBillboardGS = nullptr;
 	ID3D11GeometryShader* pDepthOnlyCubeGS = nullptr;
 	ID3D11GeometryShader* pDepthOnlyCascadeGS = nullptr;
+	ID3D11ComputeShader* pAerialLUTCS = nullptr;
+	ID3D11ComputeShader* pMultiScatterLUTCS = nullptr;
+	ID3D11ComputeShader* pTransmittanceLUTCS = nullptr;
 
 	ID3D11InputLayout* pBasicIL = nullptr;
 	ID3D11InputLayout* pSkinnedIL = nullptr;
@@ -106,45 +121,14 @@ public:
 	ID3D11InputLayout* pPostProcessingIL = nullptr;
 	ID3D11InputLayout* pGrassIL = nullptr;
 	ID3D11InputLayout* pBillboardIL = nullptr;
+	ID3D11InputLayout* pSunIL = nullptr;
 
 	ID3D11BlendState* pMirrorBS = nullptr;
 	ID3D11BlendState* pAccumulateBS = nullptr;
 	ID3D11BlendState* pAlphaBS = nullptr;
 
-	GraphicsPSO DefaultSolidPSO;
-	GraphicsPSO SkinnedSolidPSO;
-	GraphicsPSO DefaultWirePSO;
-	GraphicsPSO SkinnedWirePSO;
-	GraphicsPSO StencilMaskPSO;
-	GraphicsPSO ReflectSolidPSO;
-	GraphicsPSO ReflectSkinnedSolidPSO;
-	GraphicsPSO ReflectWirePSO;
-	GraphicsPSO ReflectSkinnedWirePSO;
-	GraphicsPSO MirrorBlendSolidPSO;
-	GraphicsPSO MirrorBlendWirePSO;
-	GraphicsPSO SkyboxSolidPSO;
-	GraphicsPSO SkyboxWirePSO;
-	GraphicsPSO ReflectSkyboxSolidPSO;
-	GraphicsPSO ReflectSkyboxWirePSO;
-	GraphicsPSO NormalsPSO;
-	GraphicsPSO DepthOnlyPSO;
-	GraphicsPSO DepthOnlySkinnedPSO;
-	GraphicsPSO DepthOnlyCubePSO;
-	GraphicsPSO DepthOnlyCubeSkinnedPSO;
-	GraphicsPSO DepthOnlyCascadePSO;
-	GraphicsPSO DepthOnlyCascadeSkinnedPSO;
-	GraphicsPSO PostEffectsPSO;
-	GraphicsPSO PostProcessingPSO;
-	GraphicsPSO BoundingBoxPSO;
-	GraphicsPSO GrassSolidPSO;
-	GraphicsPSO GrassWirePSO;
-	GraphicsPSO OceanPSO;
-	GraphicsPSO GBufferPSO;
-	GraphicsPSO GBufferWirePSO;
-	GraphicsPSO GBufferSkinnedPSO;
-	GraphicsPSO GBufferSKinnedWirePSO;
-	GraphicsPSO DeferredRenderingPSO;
-	GraphicsPSO VolumeSmokePSO;
+	GraphicsPSO GraphicsPSOs[GraphicsPSOType_Count] = {};
+	ComputePSO ComputePSOs[ComputePSOType_Count] = {};
 
 private:
 	ID3D11Device* m_pDevice = nullptr;
