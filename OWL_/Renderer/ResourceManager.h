@@ -66,6 +66,7 @@ public:
 	ID3D11DepthStencilState* pMaskDSS = nullptr; // 스텐실버퍼에 표시
 	ID3D11DepthStencilState* pDrawMaskedDSS = nullptr; // 스텐실 표시된 곳만
 	ID3D11DepthStencilState* pSkyDSS = nullptr;
+	ID3D11DepthStencilState* pSunDSS = nullptr;
 
 	ID3D11VertexShader* pBasicVS = nullptr;
 	ID3D11VertexShader* pSkinnedVS = nullptr; // g_pBasicVS.hlsl에 SKINNED 매크로

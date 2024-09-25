@@ -12,11 +12,11 @@ ALIGN(16) struct AerialLUTConstants
     Vector3 FrustumB;
     int PerSliceStepCount;
     Vector3 FrustumC;
-    int EnableMultiScattering;
+    BOOL bEnableMultiScattering;
     Vector3 FrustumD;
     float EyePositionY;
     Vector3 ShadowEyePosition;
-    int EnableShadow;
+    BOOL bEnableShadow;
 
     Matrix ShadowViewProj;
     float WorldScale;
@@ -27,6 +27,7 @@ ALIGN(16) struct AerialLUTConstants
 struct FrustumDirection;
 class BaseRenderer;
 //class CosntantBuffer;
+class ShadowMap;
 class Texture;
 
 class AerialLUT
@@ -39,7 +40,7 @@ public:
 
     void Update();
 
-    void Generate(Texture* pShadowMap);
+    void Generate();
 
     void Resize();
 
@@ -49,9 +50,12 @@ public:
 
     void SetCamera(const Vector3* const pEyePos, const float ATMOS_EYE_HEIGHT, const FrustumDirection* const pFrustumDirs);
     void SetSun(const Vector3* const pDirection);
+    void SetShadow(ShadowMap* const pShadowMap);
+    void SetMultiScatteringLUT(Texture* const pMultiScatteringLUT);
+    //inline void SetShadow(ShadowMap* const pShadowMap) { m_pShadowMap = pShadowMap; }
     inline void SetAtmosphere(ConstantBuffer* const pAtmos) { m_pAtmosphereConstantBuffer = pAtmos; }
     inline void SetTransmittanceLUT(Texture* const pTransmitLUT) { m_pTransmittanceLUT = pTransmitLUT; }
-    inline void SetMultiScatteringLUT(Texture* const pMultiScatteringLUT) { m_pMultiScatterLUT = pMultiScatteringLUT; }
+    //inline void SetMultiScatteringLUT(Texture* const pMultiScatteringLUT) { m_pMultiScatterLUT = pMultiScatteringLUT; }
 
 protected:
     void createAerialLUTBuffer();
@@ -70,5 +74,6 @@ private:
     ConstantBuffer* m_pAtmosphereConstantBuffer = nullptr;
     Texture* m_pTransmittanceLUT = nullptr;
     Texture* m_pMultiScatterLUT = nullptr;
+    ShadowMap* m_pShadowMap = nullptr;
 };
 

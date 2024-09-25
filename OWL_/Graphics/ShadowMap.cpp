@@ -125,7 +125,7 @@ void ShadowMap::Initialize(BaseRenderer* pRenderer, const UINT LIGHT_TYPE)
 	{
 		m_pShadowConstantsBuffers[i].Initialize(pDevice, pContext, sizeof(GlobalConstants), &initialGlobal);
 	}
-	if ((LIGHT_TYPE & m_TOTAL_LIGHT_TYPE) == LIGHT_DIRECTIONAL || (LIGHT_TYPE & m_TOTAL_LIGHT_TYPE) == LIGHT_POINT)
+	if ((LIGHT_TYPE & m_TOTAL_LIGHT_TYPE) & (LIGHT_DIRECTIONAL | LIGHT_POINT))
 	{
 		m_ShadowConstantsBufferForGS.Initialize(pDevice, pContext, sizeof(ShadowConstants), &initialShadow);
 	}
@@ -338,6 +338,7 @@ void ShadowMap::Render(std::vector<Model*>& pBasicList, Model* pMirror)
 
 			if (pMirror && pMirror->bCastShadow)
 			{
+				pResourceManager->SetPipelineState(GraphicsPSOType_DepthOnly);
 				pMirror->Render();
 			}
 		}

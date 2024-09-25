@@ -103,7 +103,7 @@ cbuffer MaterialConstants : register(b3)
 
 #ifdef SKINNED
 // 관절 개수 제약을 없애게 위해 StructuredBuffer 사용
-StructuredBuffer<float4x4> g_BoneTransforms : register(t9);
+StructuredBuffer<matrix> g_BoneTransforms : register(t9);
 #endif
 
 struct VertexShaderInput

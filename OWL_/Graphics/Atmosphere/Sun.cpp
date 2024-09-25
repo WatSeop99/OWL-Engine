@@ -19,11 +19,9 @@ void Sun::Update()
 	_ASSERT(m_pSunVSConstantBuffer);
 	_ASSERT(m_pSunPSConstantBuffer);
 
-
 	// Update sun data.
-
 	const float SUN_RAD_X = DegreeToRadian(SunAngle.x);
-	const float SUN_RAD_Y = DegreeToRadian(SunAngle.y);
+	const float SUN_RAD_Y = DegreeToRadian(-SunAngle.y);
 	SunDirection = Vector3(cos(SUN_RAD_X) * cos(SUN_RAD_Y), sin(SUN_RAD_Y), sin(SUN_RAD_X) * cos(SUN_RAD_Y));
 	SunDirection.Normalize();
 
@@ -53,13 +51,14 @@ void Sun::Update()
 	
 	Vector3 axisX = axisY.Cross(axisZ);
 
-	const Matrix WORLD = Matrix::CreateScale(SunRadius) *
-						 Matrix(axisX, axisY, axisZ) *
-						 Matrix::CreateTranslation(m_CameraEye) *
-						 Matrix::CreateTranslation(-SunDirection);
 	const float SUN_THETA = asin(-SunDirection.y);
+	SunWorld = Matrix::CreateScale(SunRadius) *
+		Matrix(axisX, axisY, axisZ) *
+		Matrix::CreateTranslation(m_CameraEye) *
+		Matrix::CreateTranslation(-SunDirection);
+	
 
-	pSunVSConstData->WorldViewProjection = WORLD * m_CameraViewProjection;
+	pSunVSConstData->WorldViewProjection = (SunWorld * m_CameraViewProjection).Transpose();
 	pSunVSConstData->SunTheta = SUN_THETA;
 	pSunVSConstData->EyeHeight = m_WorldScale * m_CameraEye.y;
 
@@ -94,7 +93,7 @@ void Sun::Render()
 
 	// Set resources.
 	ID3D11Buffer* ppVSConstantBufffers[2] = { m_pSunVSConstantBuffer->pBuffer, m_pAtmosphereConstantBuffer->pBuffer };
-	ID3D11Buffer* ppPSConstantBuffers[2] = { nullptr, m_pSunPSConstantBuffer->pBuffer };
+	ID3D11Buffer* ppPSConstantBuffers[2] = { m_pSunPSConstantBuffer->pBuffer, nullptr };
 	pContext->VSSetConstantBuffers(0, 2, ppVSConstantBufffers);
 	pContext->VSSetShaderResources(0, 1, &m_pTransmittanceLUT->pSRV);
 	pContext->VSSetSamplers(0, 1, &pResourceManager->pLinearClampSS);
@@ -105,6 +104,7 @@ void Sun::Render()
 	UINT stride = sizeof(Vector2);
 	UINT offset = 0;
 	pContext->IASetVertexBuffers(0, 1, &m_pSunDiskBuffer, &stride, &offset);
+	pContext->IASetIndexBuffer(nullptr, DXGI_FORMAT_R32_UINT, 0);
 	pContext->Draw((UINT)m_SunDiskVertices.size(), 0);
 
 
@@ -180,7 +180,7 @@ void Sun::createSunMesh(const int SEG_COUNT)
 		m_SunDiskVertices.push_back(C);
 	}
 
-	BREAK_IF_FAILED(pResourceManager->CreateVertexBuffer(sizeof(Vector2), m_SunDiskVertices.size(), &m_pSunDiskBuffer, m_SunDiskVertices.data()));
+	BREAK_IF_FAILED(pResourceManager->CreateVertexBuffer(sizeof(Vector2), (UINT)m_SunDiskVertices.size(), &m_pSunDiskBuffer, m_SunDiskVertices.data()));
 }
 
 void Sun::createConstantBuffers()

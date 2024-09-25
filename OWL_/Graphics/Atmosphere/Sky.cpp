@@ -69,7 +69,10 @@ void Sky::SetCamera(const FrustumDirection* pFrustumDirs)
 		__debugbreak();
 	}
 
-	memcpy(pSkyConstantData, pFrustumDirs, sizeof(FrustumDirection));
+	pSkyConstantData->FrustumA = pFrustumDirs->FrustumA;
+	pSkyConstantData->FrustumB = pFrustumDirs->FrustumB;
+	pSkyConstantData->FrustumC = pFrustumDirs->FrustumC;
+	pSkyConstantData->FrustumD = pFrustumDirs->FrustumD;
 }
 
 void Sky::createConstantBuffer()

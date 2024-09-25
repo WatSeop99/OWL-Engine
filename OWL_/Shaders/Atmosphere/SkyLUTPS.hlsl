@@ -13,7 +13,7 @@ cbuffer SkyLUTConstants : register(b0)
     int g_MarchStepCount;
 
     float3 g_SunDirection;
-    int g_EnableMultiScattering;
+    bool g_bEnableMultiScattering;
 
     float3 g_SunIntensity;
 }
@@ -45,7 +45,7 @@ void MarchStep(float phaseU, float3 ori, float3 dir, float thisT, float nextT, i
         inScattering += (nextT - thisT) * eyeTrans * sigmaS * rho * sunTrans;
     }
 
-    if (g_EnableMultiScattering)
+    if (g_bEnableMultiScattering)
     {
         float tx = h / (g_AtmosphereRadius - g_PlanetRadius);
         float ty = 0.5f + 0.5f * sin(sunTheta);

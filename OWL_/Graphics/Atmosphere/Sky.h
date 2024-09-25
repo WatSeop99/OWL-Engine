@@ -3,10 +3,13 @@
 ALIGN(16) struct SkyConstants
 {
 	Vector3 FrustumA;
+	float pad0;
 	Vector3 FrustumB;
+	float pad1;
 	Vector3 FrustumC;
+	float pad2;
 	Vector3 FrustumD;
-	float pad[4];
+	float pad3;
 };
 
 class BaseRenderer;

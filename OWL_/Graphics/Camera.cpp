@@ -133,20 +133,20 @@ Matrix Camera::GetProjection()
 
 FrustumDirection Camera::GetFrustumDirection()
 {
-	const Matrix VIEW = GetView();
-	const Matrix INVERSE_VIEW = VIEW.Invert();
+	const Matrix VIEW_PROJECTION = GetView() * GetProjection();
+	const Matrix INVERSE_VIEW_PROJECTION = VIEW_PROJECTION.Invert();
 
-	const Vector4 A0 = Vector4::Transform(Vector4(-1.0f, 1.0f, 0.2f, 1.0f), INVERSE_VIEW);
-	const Vector4 A1 = Vector4::Transform(Vector4(-1.0f, 1.0f, 0.5f, 1.0f), INVERSE_VIEW);
+	const Vector4 A0 = Vector4::Transform(Vector4(-1.0f, 1.0f, 0.2f, 1.0f), INVERSE_VIEW_PROJECTION);
+	const Vector4 A1 = Vector4::Transform(Vector4(-1.0f, 1.0f, 0.5f, 1.0f), INVERSE_VIEW_PROJECTION);
 
-	const Vector4 B0 = Vector4::Transform(Vector4(1.0f, 1.0f, 0.2f, 1.0f), INVERSE_VIEW);
-	const Vector4 B1 = Vector4::Transform(Vector4(1.0f, 1.0f, 0.5f, 1.0f), INVERSE_VIEW);
+	const Vector4 B0 = Vector4::Transform(Vector4(1.0f, 1.0f, 0.2f, 1.0f), INVERSE_VIEW_PROJECTION);
+	const Vector4 B1 = Vector4::Transform(Vector4(1.0f, 1.0f, 0.5f, 1.0f), INVERSE_VIEW_PROJECTION);
 
-	const Vector4 C0 = Vector4::Transform(Vector4(-1.0f, -1.0f, 0.2f, 1.0f), INVERSE_VIEW);
-	const Vector4 C1 = Vector4::Transform(Vector4(-1.0f, -1.0f, 0.5f, 1.0f), INVERSE_VIEW);
+	const Vector4 C0 = Vector4::Transform(Vector4(-1.0f, -1.0f, 0.2f, 1.0f), INVERSE_VIEW_PROJECTION);
+	const Vector4 C1 = Vector4::Transform(Vector4(-1.0f, -1.0f, 0.5f, 1.0f), INVERSE_VIEW_PROJECTION);
 
-	const Vector4 D0 = Vector4::Transform(Vector4(1.0f, -1.0f, 0.2f, 1.0f), INVERSE_VIEW);
-	const Vector4 D1 = Vector4::Transform(Vector4(1.0f, -1.0f, 0.5f, 1.0f), INVERSE_VIEW);
+	const Vector4 D0 = Vector4::Transform(Vector4(1.0f, -1.0f, 0.2f, 1.0f), INVERSE_VIEW_PROJECTION);
+	const Vector4 D1 = Vector4::Transform(Vector4(1.0f, -1.0f, 0.5f, 1.0f), INVERSE_VIEW_PROJECTION);
 
 	FrustumDirection result = {};
 	result.FrustumA = (Vector3(A1) / A1.w - Vector3(A0) / A0.w);

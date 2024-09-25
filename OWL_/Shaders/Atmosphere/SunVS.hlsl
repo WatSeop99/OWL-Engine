@@ -9,7 +9,7 @@ struct PixelShaderInput
 
 cbuffer SunVSConstants : register(b0)
 {
-    matrix g_WVP;
+    matrix g_WorldViewProjection;
 
     float g_SunTheta;
     float g_EyeHeight;
@@ -22,7 +22,7 @@ SamplerState g_TransmittanceSampler : register(s0);
 PixelShaderInput main(float2 position : POSITION)
 {
     PixelShaderInput output;
-    output.Position = mul(float4(position, 0.0f, 1.0f), g_WVP);
+    output.Position = mul(float4(position, 0.0f, 1.0f), g_WorldViewProjection);
     output.Position.z = output.Position.w;
     output.ClipPos = output.Position;
     output.Transmittance = GetTransmittance(g_Transmittance, g_TransmittanceSampler, g_EyeHeight, g_SunTheta);

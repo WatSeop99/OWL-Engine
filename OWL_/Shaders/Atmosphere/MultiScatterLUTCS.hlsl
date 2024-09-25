@@ -1,5 +1,6 @@
 #include "Intersection.hlsli"
 #include "AtmosphereUtil.hlsli"
+#include "../DiskSamples.hlsli"
 
 static const int THREAD_GROUP_SIZE_X = 16;
 static const int THREAD_GROUP_SIZE_Y = 16;
@@ -76,8 +77,8 @@ void Integrate(float3 worldOri, float3 worldDir, float sunTheta, float3 toSunDir
     if (bGroundInct)
     {
         float3 transmittance = exp(-sumSigmaT);
-        float3 sunTransmittance = GetTransmittance(g_TransmittanceLUT, g_TransmittanceSampler, 0, sunTheta);
-        sumL2 += transmittance * sunTransmittance * max(0, toSunDir.y) * g_SunIntensity * (g_TerrainAlbedo / PI);
+        float3 sunTransmittance = GetTransmittance(g_TransmittanceLUT, g_TransmittanceSampler, 0.0f, sunTheta);
+        sumL2 += transmittance * sunTransmittance * max(0.0f, toSunDir.y) * g_SunIntensity * (g_TerrainAlbedo / PI);
     }
 
     innerL2 = sumL2;
@@ -94,6 +95,7 @@ float3 ComputeM(float h, float sunTheta)
     for (int i = 0; i < g_DirSampleCount; ++i)
     {
         float2 rawSample = g_RawDirSamples[i];
+        //float2 rawSample = diskSamples64[i];
         float3 worldDir = UniformOnUnitSphere(rawSample.x, rawSample.y);
 
         float3 innerL2, innerF;
@@ -119,6 +121,7 @@ void main(int3 threadIdx : SV_DispatchThreadID)
     {
         return;
     }
+
     float sinSunTheta = lerp(-1.0f, 1.0f, (threadIdx.y + 0.5f) / height);
     float sunTheta = asin(sinSunTheta);
 

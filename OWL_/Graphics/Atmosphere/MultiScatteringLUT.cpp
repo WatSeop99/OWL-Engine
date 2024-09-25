@@ -2,6 +2,8 @@
 #include "../../Common.h"
 #include "../Renderer/BaseRenderer.h"
 #include "../Renderer/ConstantBuffer.h"
+#include "../External/cyCodeBase/cyVector.h"
+#include "../External/cyCodeBase/cySampleElim.h"
 #include "../Renderer/StructuredBuffer.h"
 #include "../Renderer/Texture.h"
 #include "MultiScatteringLUT.h"
@@ -11,25 +13,28 @@ void GetPoissonDiskSamples(std::vector<Vector2>& samples, const int COUNT)
 	std::default_random_engine rng{ std::random_device()() };
 	std::uniform_real_distribution<float> dis(0, 1);
 
-	std::vector<Vector2> rawPoints;
+	std::vector<cy::Vec2f> rawPoints;
 	rawPoints.reserve(COUNT * 10);
 	for (int i = 0, endI = COUNT * 10; i < endI; ++i)
 	{
 		const float U = dis(rng);
 		const float V = dis(rng);
-		rawPoints.push_back(Vector2(U, V));
+		rawPoints.push_back({ U, V });
 	}
 
-	std::vector<Vector2> outputPoints(COUNT);
+	std::vector<cy::Vec2f> outputPoints(COUNT);
 
-	cy::WeightedSampleElimination<Vector2, float, 2> wse;
+	cy::WeightedSampleElimination<cy::Vec2f, float, 2> wse;
 	wse.SetTiling(true);
 	wse.Eliminate(rawPoints.data(), rawPoints.size(),
 				  outputPoints.data(), outputPoints.size());
 
 	samples.reserve(outputPoints.size());
-	for (auto& p : outputPoints)
-		samples.push_back(p);
+	for (UINT64 i = 0, size = outputPoints.size(); i < size; ++i)
+	{
+		cy::Vec2f& p = outputPoints[i];
+		samples.push_back(Vector2(p.x, p.y));
+	}
 }
 
 
@@ -198,4 +203,5 @@ void MultiScatteringLUT::createRawDiskSamples()
 
 	m_pRawSamples = New StructuredBuffer;
 	m_pRawSamples->Initialize(pDevice, pContext, sizeof(Vector2), (UINT)rawSamples.size(), rawSamples.data());
+	m_pRawSamples->Upload();
 }

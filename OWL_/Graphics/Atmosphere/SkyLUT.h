@@ -24,7 +24,7 @@ ALIGN(16) struct SkyLUTConstants
 	int LowResMarchStepCount;
 
 	Vector3 SunDirection;
-	int EnableMultiScattering;
+	BOOL EnableMultiScattering;
 
 	Vector3 SunIntensity;
 	float pad;

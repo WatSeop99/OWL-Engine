@@ -156,6 +156,7 @@ void SkyLUT::createConstantBuffers()
 
 	pSkyData = (SkyLUTConstants*)m_pSkyLUTConstantBuffer->pSystemMem;
 	pSkyData->LowResMarchStepCount = 40;
+	pSkyData->EnableMultiScattering = TRUE;
 }
 
 void SkyLUT::setViewport()

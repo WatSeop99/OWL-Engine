@@ -52,6 +52,7 @@ public:
 	Vector3 SunColor = Vector3(1.0f);
 	Vector3 SunDirection;
 	Vector3 SunRadiance;
+	Matrix SunWorld;
 	Matrix SunViewProjection;
 
 private:

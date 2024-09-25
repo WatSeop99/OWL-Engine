@@ -207,50 +207,6 @@ void Scene::Initialize(BaseRenderer* pRenderer, const bool bUSE_MSAA)
 	m_pSun = New Sun;
 	m_pSun->Initialize(pRenderer);
 
-	/*m_pTransmittanceLUT->SetAtmosphere(m_pAtmosphereConstantBuffer);
-	m_pTransmittanceLUT->Generate();
-
-	Vector3 terrainColor(0.3f);
-	m_pMultiScatteringLUT->SetAtmosphere(m_pAtmosphereConstantBuffer);
-	m_pMultiScatteringLUT->Update(&terrainColor);
-	m_pMultiScatteringLUT->Generate(m_pTransmittanceLUT->GetTransmittanceLUT());
-
-	m_pSkyLUT->SetAtmosphere(m_pAtmosphereConstantBuffer);
-	m_pSkyLUT->SetMultiScatteringLUT(m_pMultiScatteringLUT->GetMultiScatteringLUT());
-	m_pSkyLUT->SetTransmittanceLUT(m_pTransmittanceLUT->GetTransmittanceLUT());
-
-	m_pAerialLUT->SetAtmosphere(m_pAtmosphereConstantBuffer);
-	m_pAerialLUT->SetMultiScatteringLUT(m_pMultiScatteringLUT->GetMultiScatteringLUT());
-	m_pAerialLUT->SetTransmittanceLUT(m_pTransmittanceLUT->GetTransmittanceLUT());
-
-	m_pSun->SetAtmosphere(m_pAtmosphereConstantBuffer);
-	m_pSun->SetTransmittanceLUT(m_pTransmittanceLUT->GetTransmittanceLUT());*/
-}
-
-void Scene::Update(const float DELTA_TIME)
-{
-	updateLights(DELTA_TIME);
-	updateGlobalConstants(DELTA_TIME);
-
-	if (m_pMirror)
-	{
-		m_pMirror->UpdateConstantBuffers();
-	}
-
-	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
-	{
-		Model* const pCurModel = RenderObjects[i];
-		pCurModel->UpdateConstantBuffers();
-	}
-
-	const Vector3 CAMERA_POS = m_Camera.GetEyePos();
-	const Matrix CAMERA_VIEWPROJECTION = m_Camera.GetView() * m_Camera.GetProjection();
-	const float ATMOS_EYE_HEIGHT = m_pAerialLUT->pAerialData->WorldScale * CAMERA_POS.y;
-
-	// Update shadow map.
-	m_ShadowMap.Update(m_SunProperty, m_SunCamera, m_Camera);
-
-
 	m_pTransmittanceLUT->SetAtmosphere(m_pAtmosphereConstantBuffer);
 	m_pTransmittanceLUT->Generate();
 
@@ -266,31 +222,65 @@ void Scene::Update(const float DELTA_TIME)
 	m_pAerialLUT->SetAtmosphere(m_pAtmosphereConstantBuffer);
 	m_pAerialLUT->SetMultiScatteringLUT(m_pMultiScatteringLUT->GetMultiScatteringLUT());
 	m_pAerialLUT->SetTransmittanceLUT(m_pTransmittanceLUT->GetTransmittanceLUT());
+	m_pAerialLUT->SetShadow(&m_ShadowMap);
 
 	m_pSun->SetAtmosphere(m_pAtmosphereConstantBuffer);
 	m_pSun->SetTransmittanceLUT(m_pTransmittanceLUT->GetTransmittanceLUT());
+	m_pSun->Update();
+}
 
+void Scene::Update(const float DELTA_TIME)
+{
+	updateLights(DELTA_TIME);
+	updateGlobalConstants(DELTA_TIME);
+
+	const Vector3 CAMERA_POS = m_Camera.GetEyePos();
+	const Matrix CAMERA_VIEWPROJECTION = m_Camera.GetView() * m_Camera.GetProjection();
+	const float ATMOS_EYE_HEIGHT = m_pAerialLUT->pAerialData->WorldScale * CAMERA_POS.y;
+	const FrustumDirection CAMERA_FRUSTUM = m_Camera.GetFrustumDirection();
+
+	// Update Sun predata.
+	// m_pSun->SunAngle.x = Clamp(sin(m_pSun->SunAngle.x + DELTA_TIME), 0.0f, 360.0f);
+	m_pSun->SunAngle.y = 12.0f;
+
+	m_pSun->SetCamera(&CAMERA_POS, &CAMERA_VIEWPROJECTION);
+	m_pSun->Update();
+
+	// Update shadow map.
+	m_SunProperty.Radiance = m_pSun->SunRadiance;
+	m_SunProperty.Direction = m_pSun->SunDirection;
+	m_SunProperty.Position = m_pSun->SunWorld.Translation();
+	m_SunProperty.Radius = m_pSun->SunRadius;
+	m_ShadowMap.Update(m_SunProperty, m_SunCamera, m_Camera);
+
+	// Update aerial LUT.
+	m_pAerialLUT->SetCamera(&CAMERA_POS, ATMOS_EYE_HEIGHT, &CAMERA_FRUSTUM);
+	m_pAerialLUT->SetSun(&m_pSun->SunDirection);
+	m_pAerialLUT->Update();
 
 	// Update sky view LUT.
 	m_pSkyLUT->SetCamera(&(CAMERA_POS * m_pAerialLUT->pAerialData->WorldScale));
 	m_pSkyLUT->SetSun(&m_pSun->SunDirection, &(m_pSun->SunIntensity * m_pSun->SunColor));
 	m_pSkyLUT->Update();
-	m_pSkyLUT->Generate();
-
-	// Update aerial LUT.
-	m_pAerialLUT->SetCamera(&CAMERA_POS, ATMOS_EYE_HEIGHT, &m_Camera.GetFrustumDirection());
-	m_pAerialLUT->SetSun(&m_pSun->SunDirection);
-	m_pAerialLUT->Update();
-	m_pAerialLUT->Generate(m_ShadowMap.GetSpotLightShadowBuffer());
 
 	// Update Sky.
-	m_pSky->SetCamera(&m_Camera.GetFrustumDirection());
+	m_pSky->SetCamera(&CAMERA_FRUSTUM);
 	m_pSky->Update();
 
 	// Update Sun.
 	m_pSun->SetWorldScale(m_pAerialLUT->pAerialData->WorldScale);
-	m_pSun->SetCamera(&CAMERA_POS, &CAMERA_VIEWPROJECTION);
-	m_pSun->Update();
+
+
+	if (m_pMirror)
+	{
+		m_pMirror->UpdateConstantBuffers();
+	}
+
+	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
+	{
+		Model* const pCurModel = RenderObjects[i];
+		pCurModel->UpdateConstantBuffers();
+	}
 }
 
 void Scene::Render()
@@ -313,6 +303,9 @@ void Scene::Render()
 
 	renderDepthOnly();
 	renderShadowMaps();
+
+	m_pSkyLUT->Generate();
+	m_pAerialLUT->Generate();
 
 	if (m_GBuffer.bIsEnabled)
 	{
@@ -603,10 +596,10 @@ void Scene::renderDepthOnly()
 		pCurModel->Render();
 	}
 
-	if (m_pSkybox)
+	/*if (m_pSkybox)
 	{
 		m_pSkybox->Render();
-	}
+	}*/
 	if (m_pMirror)
 	{
 		m_pMirror->Render();
@@ -623,10 +616,10 @@ void Scene::renderShadowMaps()
 	ID3D11ShaderResourceView* ppNulls[3] = { nullptr, };
 	pContext->PSSetShaderResources(14, 3, ppNulls);
 
-	for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
-	{
-		Lights[i].RenderShadowMap(RenderObjects, m_pMirror);
-	}
+	 for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
+	 {
+	 	Lights[i].RenderShadowMap(RenderObjects, m_pMirror);
+	 }
 	m_ShadowMap.Render(RenderObjects, m_pMirror);
 }
 
@@ -880,8 +873,8 @@ void Scene::renderMirror()
 			pCurModel->Render();
 		}
 
-		pResourceManager->SetPipelineState(bDrawAsWire ? GraphicsPSOType_ReflectSkyboxWire : GraphicsPSOType_ReflectSkyboxSolid);
-		m_pSkybox->Render();
+		/*pResourceManager->SetPipelineState(bDrawAsWire ? GraphicsPSOType_ReflectSkyboxWire : GraphicsPSOType_ReflectSkyboxSolid);
+		m_pSkybox->Render();*/
 
 		// 거울 자체의 재질을 "Blend"로 그림.
 		setGlobalConstants(&m_GlobalConstants.pBuffer, 0);

@@ -206,6 +206,7 @@ void ResourceManager::Cleanup()
 	SAFE_RELEASE(pMaskDSS);
 	SAFE_RELEASE(pDrawMaskedDSS);
 	SAFE_RELEASE(pSkyDSS);
+	SAFE_RELEASE(pSunDSS);
 
 	// Blend States
 	SAFE_RELEASE(pMirrorBS);
@@ -291,7 +292,7 @@ void ResourceManager::initSamplers()
 	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	sampDesc.MinLOD = 0;
+	sampDesc.MinLOD = 0.0f;
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	hr = m_pDevice->CreateSamplerState(&sampDesc, &pLinearWrapSS);
 	BREAK_IF_FAILED(hr);
@@ -352,8 +353,7 @@ void ResourceManager::initSamplers()
 	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_MIRROR;
 	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_MIRROR;
 	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	sampDesc.MinLOD = 0;
-	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	sampDesc.BorderColor[4] = { 0.0f, };
 	hr = m_pDevice->CreateSamplerState(&sampDesc, &pLinearMirrorSS);
 	BREAK_IF_FAILED(hr);
 	SET_DEBUG_INFO_TO_OBJECT(pLinearMirrorSS, "pLinearMirrorSS");
@@ -529,6 +529,22 @@ void ResourceManager::initDepthStencilStates()
 	BREAK_IF_FAILED(hr);
 	SET_DEBUG_INFO_TO_OBJECT(pDrawDSS, "pDrawDSS");
 
+	dsDesc.DepthEnable = TRUE;
+	dsDesc.StencilEnable = FALSE;
+	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	hr = m_pDevice->CreateDepthStencilState(&dsDesc, &pSkyDSS);
+	BREAK_IF_FAILED(hr);
+	SET_DEBUG_INFO_TO_OBJECT(pSkyDSS, "pSkyDSS");
+
+	dsDesc.DepthEnable = TRUE;
+	dsDesc.StencilEnable = FALSE;
+	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	dsDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	hr = m_pDevice->CreateDepthStencilState(&dsDesc, &pSunDSS);
+	BREAK_IF_FAILED(hr);
+	SET_DEBUG_INFO_TO_OBJECT(pSunDSS, "pSunDSS");
+
 	// Stencil에 1로 표기해주는 DSS.
 	dsDesc.DepthEnable = TRUE; // 이미 그려진 물체 유지.
 	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
@@ -560,15 +576,6 @@ void ResourceManager::initDepthStencilStates()
 	hr = m_pDevice->CreateDepthStencilState(&dsDesc, &pDrawMaskedDSS);
 	BREAK_IF_FAILED(hr);
 	SET_DEBUG_INFO_TO_OBJECT(pDrawMaskedDSS, "pDrawMaskedDSS");
-
-
-	dsDesc.DepthEnable = TRUE;
-	dsDesc.StencilEnable = FALSE;
-	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-	dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
-	hr = m_pDevice->CreateDepthStencilState(&dsDesc, &pSkyDSS);
-	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pSkyDSS, "pSkyDSS");
 }
 
 void ResourceManager::initShaders()
@@ -938,6 +945,8 @@ void ResourceManager::initPipelineStates()
 
 	GraphicsPSOs[GraphicsPSOType_Sun].pVertexShader = pSunVS;
 	GraphicsPSOs[GraphicsPSOType_Sun].pPixelShader = pSunPS;
+	GraphicsPSOs[GraphicsPSOType_Sun].pDepthStencilState = pSunDSS;
+	GraphicsPSOs[GraphicsPSOType_Sun].pInputLayout = pSunIL;
 
 	ComputePSOs[ComputePSOType_AerialLUT].pComputeShader = pAerialLUTCS;
 	

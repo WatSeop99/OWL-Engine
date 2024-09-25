@@ -20,7 +20,7 @@ cbuffer AerialLUTConstants : register(b0)
 
     float3 g_EyePosition;
     int g_EnableShadow;
-    float4x4 g_ShadowViewProj;
+    matrix g_ShadowViewProj;
     float g_WorldScale;
 }
 
@@ -47,6 +47,7 @@ void main(int3 threadIdx : SV_DispatchThreadID)
     {
         return;
     }
+
     float xf = (threadIdx.x + 0.5f) / width;
     float yf = (threadIdx.y + 0.5f) / height;
 

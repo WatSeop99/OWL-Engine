@@ -1,7 +1,7 @@
 #include "../../Common.h"
 #include "../../Renderer/BaseRenderer.h"
 #include "../Camera.h"
-
+#include "../ShadowMap.h"
 #include "../../Renderer/Texture.h"
 #include "AerialLUT.h"
 
@@ -18,17 +18,26 @@ void AerialLUT::Initialize(BaseRenderer* pRenderer)
 void AerialLUT::Update()
 {
 	_ASSERT(m_pAerialConstantBuffer);
+	_ASSERT(m_pShadowMap);
+
+	GlobalConstants* pShadowConstData = (GlobalConstants*)(m_pShadowMap->GetShadowConstantBuffers()[0].pSystemMem);
+	if (!pShadowConstData)
+	{
+		__debugbreak();
+	}
+	pAerialData->ShadowViewProj = pShadowConstData->ViewProjection;
+
 	m_pAerialConstantBuffer->Upload();
 }
 
-void AerialLUT::Generate(Texture* pShadowMap)
+void AerialLUT::Generate()
 {
 	_ASSERT(m_pRenderer);
 	_ASSERT(m_pAerialConstantBuffer);
 	_ASSERT(m_pAtmosphereConstantBuffer);
 	_ASSERT(m_pMultiScatterLUT);
 	_ASSERT(m_pTransmittanceLUT);
-	_ASSERT(pShadowMap);
+	_ASSERT(m_pShadowMap);
 
 	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
@@ -38,7 +47,7 @@ void AerialLUT::Generate(Texture* pShadowMap)
 
 	// Set resources.
 	ID3D11Buffer* ppConstantBuffers[2] = { m_pAerialConstantBuffer->pBuffer, m_pAtmosphereConstantBuffer->pBuffer };
-	ID3D11ShaderResourceView* ppSRVs[3] = { m_pMultiScatterLUT->pSRV, m_pTransmittanceLUT->pSRV, pShadowMap->pSRV };
+	ID3D11ShaderResourceView* ppSRVs[3] = { m_pMultiScatterLUT->pSRV, m_pTransmittanceLUT->pSRV, m_pShadowMap->GetSpotLightShadowBuffer()->pSRV };
 	ID3D11SamplerState* ppSamplers[2] = { pResourceManager->pLinearClampSS, pResourceManager->pPointClampSS };
 	pContext->CSSetConstantBuffers(0, 2, ppConstantBuffers);
 	pContext->CSSetShaderResources(0, 3, ppSRVs);
@@ -128,6 +137,22 @@ void AerialLUT::SetSun(const Vector3* const pDirection)
 
 	pAerialConstData->SunDirection = *pDirection;
 	pAerialConstData->SunTheta = (float)asin(-pAerialConstData->SunDirection.y);
+}
+
+void AerialLUT::SetShadow(ShadowMap* const pShadowMap)
+{
+	_ASSERT(pShadowMap);
+
+	m_pShadowMap = pShadowMap;
+	pAerialData->bEnableShadow = TRUE;
+}
+
+void AerialLUT::SetMultiScatteringLUT(Texture* const pMultiScatteringLUT)
+{
+	_ASSERT(pMultiScatteringLUT);
+
+	m_pMultiScatterLUT = pMultiScatteringLUT;
+	pAerialData->bEnableMultiScattering = TRUE;
 }
 
 void AerialLUT::createAerialLUTBuffer()
