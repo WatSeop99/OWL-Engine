@@ -17,6 +17,21 @@
 #define VECTOR __vectorcall
 #define ALIGN(size) __declspec(align(size))
 
+#include <Windows.h>
+//#include <wrl.h>
+//#include <wrl/client.h>
+//#include <comdef.h>
+#include <errhandlingapi.h>
+#include <stringapiset.h>
+#include <minwindef.h>
+
+#include <d3d11_4.h>
+#include <dxgi1_3.h>
+#include <dxgi1_5.h>
+#include <d3dcompiler.h>
+#include <DirectXColors.h>
+#include <DirectXPackedVector.h>
+
 #include <assert.h>
 #include <float.h>
 #include <stddef.h>
@@ -36,21 +51,9 @@
 #include <unordered_map>
 #include <locale>
 
-#include <Windows.h>
-#include <wrl.h>
-#include <wrl/client.h>
-#include <comdef.h>
-#include <errhandlingapi.h>
-#include <stringapiset.h>
-#include <minwindef.h>
-
-#include <d3d11_4.h>
-#include <dxgi1_5.h>
-#include <dxgi1_3.h>
-#include <d3dcompiler.h>
-#include <dxgidebug.h>
-#include <DirectXColors.h>
-#include <DirectXPackedVector.h>
+#include <imgui.h>
+#include <imgui_impl_dx11.h>
+#include <imgui_impl_win32.h>
 
 // 수학함수
 #include <directxtk/SimpleMath.h>

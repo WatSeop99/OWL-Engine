@@ -18,7 +18,7 @@ void StructuredBuffer::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pC
 	m_ElemCount = elemCount;
 
 
-	pSystemMem = Malloc(sizePerElem * elemCount);
+	pSystemMem = malloc(sizePerElem * elemCount);
 	if (!pSystemMem)
 	{
 		__debugbreak();

@@ -74,7 +74,7 @@ void Scene::Initialize(BaseRenderer* pRenderer, const bool bUSE_MSAA)
 			MeshInfo sphere;
 			MakeSphere(&sphere, 1.0f, 20, 20);
 
-			m_ppLightSpheres[i] = New Model;
+			m_ppLightSpheres[i] = new Model;
 			m_ppLightSpheres[i]->Initialize(pRenderer, { sphere });
 			m_ppLightSpheres[i]->UpdateWorld(Matrix::CreateTranslation(Lights[i].Property.Position));
 
@@ -116,7 +116,7 @@ void Scene::Initialize(BaseRenderer* pRenderer, const bool bUSE_MSAA)
 		mesh.szNormalTextureFileName = path + L"stringy_marble_Normal-dx.png";
 		mesh.szRoughnessTextureFileName = path + L"stringy_marble_Roughness.png";
 
-		m_pGround = New Model;
+		m_pGround = new Model;
 		m_pGround->Initialize(pRenderer, { mesh });
 
 		MaterialConstants* pMatertialConstData = (MaterialConstants*)m_pGround->Meshes[0]->MaterialConstant.pSystemMem;
@@ -157,7 +157,7 @@ void Scene::Initialize(BaseRenderer* pRenderer, const bool bUSE_MSAA)
 	MakeBox(&skyboxMeshInfo, 40.0f);
 
 	std::reverse(skyboxMeshInfo.Indices.begin(), skyboxMeshInfo.Indices.end());
-	m_pSkybox = New Model;
+	m_pSkybox = new Model;
 	m_pSkybox->Initialize(pRenderer, { skyboxMeshInfo });
 	m_pSkybox->Name = "SkyBox";
 
@@ -167,7 +167,7 @@ void Scene::Initialize(BaseRenderer* pRenderer, const bool bUSE_MSAA)
 		MeshInfo meshInfo;
 		MakeSquare(&meshInfo);
 
-		m_pScreenMesh = New Mesh;
+		m_pScreenMesh = new Mesh;
 		m_pScreenMesh->Initialize(pDevice, pContext);
 
 		HRESULT hr = pResourceManager->CreateVertexBuffer(sizeof(Vertex), (UINT)meshInfo.Vertices.size(), &m_pScreenMesh->pVertexBuffer, meshInfo.Vertices.data());
@@ -192,19 +192,19 @@ void Scene::Initialize(BaseRenderer* pRenderer, const bool bUSE_MSAA)
 	m_ShadowMap.Initialize(pRenderer, LIGHT_SUN);
 
 	AtmosphereProperty STDUnitAtmosphereProperty = m_AtmosphereProperty.ToStdUnit();
-	m_pAtmosphereConstantBuffer = New ConstantBuffer;
+	m_pAtmosphereConstantBuffer = new ConstantBuffer;
 	m_pAtmosphereConstantBuffer->Initialize(pDevice, pContext, sizeof(AtmosphereProperty), &STDUnitAtmosphereProperty);
-	m_pSky = New Sky;
+	m_pSky = new Sky;
 	m_pSky->Initialize(pRenderer);
-	m_pSkyLUT = New SkyLUT;
+	m_pSkyLUT = new SkyLUT;
 	m_pSkyLUT->Initialize(pRenderer);
-	m_pAerialLUT = New AerialLUT;
+	m_pAerialLUT = new AerialLUT;
 	m_pAerialLUT->Initialize(pRenderer);
-	m_pTransmittanceLUT = New TransmittanceLUT;
+	m_pTransmittanceLUT = new TransmittanceLUT;
 	m_pTransmittanceLUT->Initialize(pRenderer);
-	m_pMultiScatteringLUT = New MultiScatteringLUT;
+	m_pMultiScatteringLUT = new MultiScatteringLUT;
 	m_pMultiScatteringLUT->Initialize(pRenderer);
-	m_pSun = New Sun;
+	m_pSun = new Sun;
 	m_pSun->Initialize(pRenderer);
 
 	m_pTransmittanceLUT->SetAtmosphere(m_pAtmosphereConstantBuffer);

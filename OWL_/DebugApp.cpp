@@ -47,7 +47,7 @@ void DebugApp::InitScene()
 		meshInfos[0].szRoughnessTextureFileName = path + L"/angel_armor_roughness.jpg";
 
 		Vector3 center(0.0f, -0.05f, 2.0f);
-		Model* newModel = New Model;
+		Model* newModel = new Model;
 		newModel->Initialize(this, meshInfos);
 
 		MaterialConstants* pMaterialConstData = (MaterialConstants*)newModel->Meshes[0]->MaterialConstant.pSystemMem;
@@ -69,7 +69,7 @@ void DebugApp::InitScene()
 		MakeSphere(&meshInfo, 0.2f, 200, 200);
 
 		Vector3 center(0.5f, 0.5f, 2.0f);
-		Model* newModel = New Model;
+		Model* newModel = new Model;
 		newModel->Initialize(this, { meshInfo });
 		newModel->UpdateWorld(Matrix::CreateTranslation(center));
 		for (UINT64 i = 0, size = newModel->Meshes.size(); i < size; ++i)
@@ -95,7 +95,7 @@ void DebugApp::InitScene()
 		MakeBox(&meshInfo, 0.3f);
 
 		Vector3 center(0.0f, 0.5f, 2.5f);
-		Model* newModel = New Model;
+		Model* newModel = new Model;
 		newModel->Initialize(this, { meshInfo });
 		newModel->UpdateWorld(Matrix::CreateTranslation(center));
 		for (UINT64 i = 0, size = newModel->Meshes.size(); i < size; ++i)
@@ -121,7 +121,7 @@ void DebugApp::InitScene()
 		MakeSphere(&meshInfo, 0.2f, 200, 200);
 
 		Vector3 center(0.5f, 0.2f, -1.0f);
-		Model* newModel = New Model;
+		Model* newModel = new Model;
 		newModel->Initialize(this, { meshInfo });
 		newModel->UpdateWorld(Matrix::CreateTranslation(center));
 		for (UINT64 i = 0, size = newModel->Meshes.size(); i < size; ++i)

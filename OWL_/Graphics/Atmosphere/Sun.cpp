@@ -192,9 +192,9 @@ void Sun::createConstantBuffers()
 	ID3D11Device* pDevice = m_pRenderer->GetDevice();
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
-	m_pSunVSConstantBuffer = New ConstantBuffer;
+	m_pSunVSConstantBuffer = new ConstantBuffer;
 	m_pSunVSConstantBuffer->Initialize(pDevice, pContext, sizeof(SunVSConstants), nullptr);
 
-	m_pSunPSConstantBuffer = New ConstantBuffer;
+	m_pSunPSConstantBuffer = new ConstantBuffer;
 	m_pSunPSConstantBuffer->Initialize(pDevice, pContext, sizeof(SunPSConstants), nullptr);
 }

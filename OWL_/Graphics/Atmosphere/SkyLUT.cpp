@@ -139,7 +139,7 @@ void SkyLUT::createSkyLUTBuffer()
 	resourceDesc.CPUAccessFlags = 0;
 	resourceDesc.MiscFlags = 0;
 
-	m_pSkyLUT = New Texture;
+	m_pSkyLUT = new Texture;
 	m_pSkyLUT->Initialize(pDevice, pContext, resourceDesc, nullptr, true);
 }
 
@@ -151,7 +151,7 @@ void SkyLUT::createConstantBuffers()
 	ID3D11Device* pDevice = m_pRenderer->GetDevice();
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
-	m_pSkyLUTConstantBuffer = New ConstantBuffer;
+	m_pSkyLUTConstantBuffer = new ConstantBuffer;
 	m_pSkyLUTConstantBuffer->Initialize(pDevice, pContext, sizeof(SkyLUTConstants), nullptr);
 
 	pSkyData = (SkyLUTConstants*)m_pSkyLUTConstantBuffer->pSystemMem;

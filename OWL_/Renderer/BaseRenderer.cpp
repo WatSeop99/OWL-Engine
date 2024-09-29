@@ -1,7 +1,4 @@
 ﻿#include "../Common.h"
-#include <imgui.h>
-#include <imgui_impl_dx11.h>
-#include <imgui_impl_win32.h>
 #include "../Geometry/GeometryGenerator.h"
 #include "../Graphics/Light.h"
 #include "../Geometry/Mesh.h"
@@ -95,9 +92,9 @@ void BaseRenderer::Initialize()
 	initGUI();
 
 	// Timer setting.
-	m_pTimer = New Timer(m_pDevice);
+	m_pTimer = new Timer(m_pDevice);
 
-	m_pResourceManager = New ResourceManager();
+	m_pResourceManager = new ResourceManager();
 	m_pResourceManager->Initialize(m_pDevice, m_pContext);
 
 	/*_ASSERT(m_pTimer);
@@ -128,7 +125,7 @@ void BaseRenderer::InitScene()
 		MeshInfo sphere;
 		MakeSphere(&sphere, 0.01f, 10, 10);
 
-		m_pCursorSphere = New Model;
+		m_pCursorSphere = new Model;
 		m_pCursorSphere->Initialize(this, { sphere });
 		m_pCursorSphere->bIsVisible = false; // 마우스가 눌렸을 때만 보임
 		m_pCursorSphere->bCastShadow = false; // 그림자 X

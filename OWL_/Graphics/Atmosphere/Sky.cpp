@@ -83,6 +83,6 @@ void Sky::createConstantBuffer()
 	ID3D11Device* pDevice = m_pRenderer->GetDevice();
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
-	m_pSkyConstantBuffer = New ConstantBuffer;
+	m_pSkyConstantBuffer = new ConstantBuffer;
 	m_pSkyConstantBuffer->Initialize(pDevice, pContext, sizeof(SkyConstants), nullptr);
 }

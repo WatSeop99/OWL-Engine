@@ -174,7 +174,7 @@ void AerialLUT::createAerialLUTBuffer()
 	resourceDesc.CPUAccessFlags = 0;
 	resourceDesc.MiscFlags = 0;
 
-	m_pAerialLUT = New Texture;
+	m_pAerialLUT = new Texture;
 	m_pAerialLUT->Initialize(pDevice, pContext, resourceDesc, nullptr, false);
 
 	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
@@ -201,7 +201,7 @@ void AerialLUT::createConstantBuffer()
 	ID3D11Device* pDevice = m_pRenderer->GetDevice();
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
-	m_pAerialConstantBuffer = New ConstantBuffer;
+	m_pAerialConstantBuffer = new ConstantBuffer;
 	m_pAerialConstantBuffer->Initialize(pDevice, pContext, sizeof(AerialLUTConstants), nullptr);
 	pAerialData = (AerialLUTConstants*)m_pAerialConstantBuffer->pSystemMem;
 

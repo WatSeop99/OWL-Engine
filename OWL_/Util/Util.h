@@ -22,11 +22,11 @@ using DirectX::SimpleMath::Vector2;
 #include <crtdbg.h>
 
 #define DBG_MALLOC(size) _malloc_dbg((size), _NORMAL_BLOCK, __FILE__, __LINE__)
-#define Malloc(size) DBG_MALLOC(size)
+#define malloc(size) DBG_MALLOC(size)
 
 #ifdef __cplusplus
 #define DBG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
-#define New DBG_NEW
+#define new DBG_NEW
 #endif
 
 #define BREAK_IF_FAILED(hr) if (FAILED(hr)) { __debugbreak(); }

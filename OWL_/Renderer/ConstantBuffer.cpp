@@ -15,7 +15,7 @@ void ConstantBuffer::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCon
 
 	m_CBSize = CBSize;
 
-	pSystemMem = Malloc(CBSize);
+	pSystemMem = malloc(CBSize);
 	if (!pSystemMem)
 	{
 		__debugbreak();

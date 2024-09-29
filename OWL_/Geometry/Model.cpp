@@ -73,7 +73,7 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 	{
 		const MeshInfo& MESH_DATA = MESH_INFOS[i];
 
-		Mesh* pNewMesh = New Mesh;
+		Mesh* pNewMesh = new Mesh;
 		pNewMesh->Initialize(pDevice, pContext);
 		InitMeshBuffers(MESH_DATA, pNewMesh);
 		
@@ -355,7 +355,7 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 
 		MeshInfo meshData;
 		MakeWireBox(&meshData, BoundingBox.Center, Vector3(BoundingBox.Extents) + Vector3(1e-3f));
-		m_pBoundingBoxMesh = New Mesh;
+		m_pBoundingBoxMesh = new Mesh;
 		m_pBoundingBoxMesh->Initialize(pDevice, pContext);
 
 		MeshConstants* pMeshConstData = (MeshConstants*)m_pBoundingBoxMesh->MeshConstant.pSystemMem;
@@ -390,7 +390,7 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 
 		MeshInfo meshData;
 		MakeWireSphere(&meshData, BoundingSphere.Center, BoundingSphere.Radius);
-		m_pBoundingSphereMesh = New Mesh;
+		m_pBoundingSphereMesh = new Mesh;
 		m_pBoundingSphereMesh->Initialize(pDevice, pContext);
 
 		MeshConstants* pMeshConstData = (MeshConstants*)m_pBoundingSphereMesh->MeshConstant.pSystemMem;
@@ -610,5 +610,6 @@ void Model::Cleanup()
 		Meshes[i] = nullptr;
 	}
 	Meshes.clear();
+
 	m_pRenderer = nullptr;
 }

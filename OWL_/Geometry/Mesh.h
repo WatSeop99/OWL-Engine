@@ -31,7 +31,7 @@ public:
 		_ASSERT(pDevice);
 		_ASSERT(pContext);
 
-		pMaterialBuffer = New Material;
+		pMaterialBuffer = new Material;
 		ZeroMemory(pMaterialBuffer, sizeof(Material));
 		
 		MeshConstants initMeshConst;

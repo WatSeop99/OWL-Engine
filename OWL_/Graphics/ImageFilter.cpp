@@ -19,7 +19,7 @@ void ImageFilter::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContex
 	m_Viewport.MaxDepth = 1.0f;
 
 	ImageFilterConstData initialData;
-	m_pConstantBuffer = New ConstantBuffer;
+	m_pConstantBuffer = new ConstantBuffer;
 	m_pConstantBuffer->Initialize(pDevice, pContext, sizeof(ImageFilterConstData), &initialData);
 
 	ImageFilterConstData* pConstData = (ImageFilterConstData*)m_pConstantBuffer->pSystemMem;

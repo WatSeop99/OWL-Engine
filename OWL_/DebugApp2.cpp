@@ -59,7 +59,7 @@ void DebugApp2::InitScene()
 		}
 
 		Vector3 center(0.0f, 0.0f, 2.0f);
-		m_pCharacter = New SkinnedMeshModel;
+		m_pCharacter = new SkinnedMeshModel;
 		m_pCharacter->Initialize(this, meshInfos, aniData);
 		for (UINT64 i = 0, size = m_pCharacter->Meshes.size(); i < size; ++i)
 		{

@@ -27,7 +27,7 @@ void PostProcessor::Initialize(BaseRenderer* pRenderer, const PostProcessingBuff
 	MeshInfo meshInfo;
 	MakeSquare(&meshInfo);
 
-	pMesh = New Mesh;
+	pMesh = new Mesh;
 	pMesh->Initialize(pDevice, pContext);
 
 	hr = CreateVertexBuffer(pDevice, meshInfo.Vertices, &pMesh->pVertexBuffer);

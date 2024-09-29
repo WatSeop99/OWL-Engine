@@ -87,7 +87,7 @@ void TransmittanceLUT::createTransmittanceLUTBuffer()
 	textureDesc.CPUAccessFlags = 0;
 	textureDesc.MiscFlags = 0;
 
-	m_pTransmittanceLUT = New Texture;
+	m_pTransmittanceLUT = new Texture;
 	m_pTransmittanceLUT->Initialize(pDevice, pContext, textureDesc, nullptr, false);
 
 

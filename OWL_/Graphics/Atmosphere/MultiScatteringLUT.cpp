@@ -138,7 +138,7 @@ void MultiScatteringLUT::createConstantBuffer()
 	ID3D11Device* pDevice = m_pRenderer->GetDevice();
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
-	m_pMultiScatteringConstantBuffer = New ConstantBuffer;
+	m_pMultiScatteringConstantBuffer = new ConstantBuffer;
 	m_pMultiScatteringConstantBuffer->Initialize(pDevice, pContext, sizeof(MultiScatteringConstants), nullptr);
 
 	MultiScatteringConstants* pMultiScatterConstData = (MultiScatteringConstants*)m_pMultiScatteringConstantBuffer->pSystemMem;
@@ -172,7 +172,7 @@ void MultiScatteringLUT::createMultiScatteringLUTBuffer()
 	textureDesc.CPUAccessFlags = 0;
 	textureDesc.MiscFlags = 0;
 
-	m_pMultiScatteringLUT = New Texture;
+	m_pMultiScatteringLUT = new Texture;
 	m_pMultiScatteringLUT->Initialize(pDevice, pContext, textureDesc, nullptr, false);
 
 
@@ -201,7 +201,7 @@ void MultiScatteringLUT::createRawDiskSamples()
 	std::vector<Vector2> rawSamples;
 	GetPoissonDiskSamples(rawSamples, DIR_SAMPLE_COUNT);
 
-	m_pRawSamples = New StructuredBuffer;
+	m_pRawSamples = new StructuredBuffer;
 	m_pRawSamples->Initialize(pDevice, pContext, sizeof(Vector2), (UINT)rawSamples.size(), rawSamples.data());
 	m_pRawSamples->Upload();
 }
