@@ -199,7 +199,7 @@ void DebugApp2::UpdateGUI()
 		ImGui::TreePop();
 	}
 
-	ImGui::End();
+	BaseRenderer::endGUI();
 }
 
 void DebugApp2::Update(float deltaTime)

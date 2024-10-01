@@ -140,13 +140,17 @@ void BaseRenderer::InitScene()
 
 void BaseRenderer::UpdateGUI()
 {
-	ImGui_ImplDX11_NewFrame();
-	ImGui_ImplWin32_NewFrame();
+	beginGUI();
 
-	ImGui::NewFrame();
+	ImGui::Begin("Scene");
+
+	ImVec2 wsize = ImGui::GetWindowSize();
+	ImGui::Image((ImTextureID)(intptr_t)m_PrevBuffer.pSRV, wsize, ImVec2(0, 0), ImVec2(1, 1));
+
+	ImGui::End();
+
+
 	ImGui::Begin("Scene Control");
-
-	// ImGui::DockSpaceOverViewport();
 
 	// ImGui가 측정해주는 Framerate 출력.
 	ImGui::Text("Average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -181,6 +185,13 @@ void BaseRenderer::RenderGUI()
 	// GUI 렌더링.
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	if (IMGUI_IO.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		//GLFWwindow* backup_current_context = glfwGetCurrentContext();
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
+		//glfwMakeContextCurrent(backup_current_context);
+	}
 }
 
 void BaseRenderer::Render()
@@ -697,9 +708,11 @@ void BaseRenderer::initGUI()
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+
 	ImGuiIO& io = ImGui::GetIO();
-	(void)io;
 	io.DisplaySize = ImVec2((float)m_ScreenWidth, (float)m_ScreenHeight);
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
 	ImGui::StyleColorsLight();
 
 	// Setup Platform/Renderer backends
@@ -707,7 +720,6 @@ void BaseRenderer::initGUI()
 	{
 		__debugbreak();
 	}
-
 	if (!ImGui_ImplWin32_Init(m_hMainWindow))
 	{
 		__debugbreak();
@@ -793,4 +805,19 @@ void BaseRenderer::destroyBuffersForRendering()
 	m_FloatBuffer.Cleanup();
 	m_ResolvedBuffer.Cleanup();
 	m_PostProcessor.Cleanup();
+}
+
+void BaseRenderer::beginGUI()
+{
+	ImGui_ImplWin32_NewFrame();
+	ImGui_ImplDX11_NewFrame();
+
+	ImGui::NewFrame();
+
+	ImGui::DockSpaceOverViewport();
+}
+
+void BaseRenderer::endGUI()
+{
+	ImGui::End();
 }

@@ -61,6 +61,9 @@ protected:
 
 	void destroyBuffersForRendering();
 
+	void beginGUI();
+	void endGUI();
+
 protected:
 	UINT m_ScreenWidth = 1280;
 	UINT m_ScreenHeight = 720;
