@@ -1,7 +1,8 @@
-Texture2D g_Texture0 : register(t0);
-Texture2D g_Texture1 : register(t1);
-Texture2D g_PrevFrame : register(t2);
-SamplerState g_Sampler : register(s0);
+struct SamplingPixelShaderInput
+{
+    float4 ProjectedPosition : SV_POSITION;
+    float2 Texcoord : TEXCOORD;
+};
 
 cbuffer ImageFilterConstData : register(b0)
 {
@@ -15,11 +16,11 @@ cbuffer ImageFilterConstData : register(b0)
     float Option4;
 };
 
-struct SamplingPixelShaderInput
-{
-    float4 ProjectedPosition : SV_POSITION;
-    float2 Texcoord : TEXCOORD;
-};
+Texture2D g_Texture0 : register(t0);
+Texture2D g_Texture1 : register(t1);
+Texture2D g_PrevFrame : register(t2);
+
+SamplerState g_Sampler : register(s0);
 
 float3 FilmicToneMapping(float3 color)
 {

@@ -62,7 +62,7 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 	m_pRenderer = pRenderer;
 
 	HRESULT hr = S_OK;
-	struct _stat64 sourceFileStat;
+	struct _stat64 sourceFileStat = {};
 
 	ResourceManager* pResourceManager = pRenderer->GetResourceManager();
 	ID3D11Device* pDevice = pRenderer->GetDevice();
@@ -349,7 +349,7 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 		BoundingBox = GetBoundingBox(MESH_INFOS[0].Vertices);
 		for (UINT64 i = 1, size = MESH_INFOS.size(); i < size; ++i)
 		{
-			DirectX::BoundingBox bb = GetBoundingBox(MESH_INFOS[0].Vertices);
+			DirectX::BoundingBox bb = GetBoundingBox(MESH_INFOS[i].Vertices);
 			ExtendBoundingBox(bb, &BoundingBox);
 		}
 
@@ -464,6 +464,10 @@ void Model::UpdateWorld(const Matrix& WORLD)
 
 	MeshConstants* pBoxMeshConstData = (MeshConstants*)m_pBoundingBoxMesh->MeshConstant.pSystemMem;
 	MeshConstants* pSphereMeshConstData = (MeshConstants*)m_pBoundingSphereMesh->MeshConstant.pSystemMem;
+	if (!pBoxMeshConstData || !pSphereMeshConstData)
+	{
+		__debugbreak();
+	}
 	
 	pBoxMeshConstData->World = World.Transpose();
 	pBoxMeshConstData->WorldInverseTranspose = WorldInverseTranspose.Transpose();

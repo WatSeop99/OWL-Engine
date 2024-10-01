@@ -73,7 +73,7 @@ HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWid
 	HRESULT hr = S_OK;
 	int channels = 0;
 
-	char pFileName[MAX_PATH];
+	char pFileName[256];
 	if (!WideCharToMultiByte(CP_ACP, 0, pszFileName, -1, pFileName, MAX_PATH, nullptr, nullptr))
 	{
 		pFileName[0] = '\0';
@@ -82,7 +82,7 @@ HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWid
 	BYTE* pImg = stbi_load(pFileName, pWidth, pHeight, &channels, 0);
 
 	// 4채널로 만들어 복사.
-	image.resize((*pWidth) * (*pHeight) * 4);
+	image.resize((*pWidth) * (*pHeight) * 4, 255);
 	switch (channels)
 	{
 		case 1:
@@ -103,8 +103,8 @@ HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWid
 				{
 					image[4 * i + c] = pImg[i * channels + c];
 				}
-				image[4 * i + 2] = 255;
-				image[4 * i + 3] = 255;
+				//image[4 * i + 2] = 255;
+				//image[4 * i + 3] = 255;
 			}
 			break;
 
@@ -115,7 +115,7 @@ HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWid
 				{
 					image[4 * i + c] = pImg[i * channels + c];
 				}
-				image[4 * i + 3] = 255;
+				//image[4 * i + 3] = 255;
 			}
 			break;
 
@@ -138,6 +138,7 @@ HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWid
 
 //	DirectX::TexMetadata metaData;
 //	DirectX::ScratchImage scratchImage;
+//	DirectX::ScratchImage convertImage;
 //
 //	std::wstring fileExtension = GetFileExtension(pszFileName);
 //
@@ -189,9 +190,17 @@ HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWid
 //	*pWidth = (int)metaData.width;
 //	*pHeight = (int)metaData.height;
 //	*pPixelFormat = metaData.format;
-//
 //	image.resize(scratchImage.GetPixelsSize(), 255);
-//	memcpy(image.data(), scratchImage.GetPixels(), image.size());
+//
+//	if (DirectX::IsBGR(*pPixelFormat))
+//	{
+//		DirectX::Convert(scratchImage.GetImages(), scratchImage.GetImageCount(), scratchImage.GetMetadata(), DXGI_FORMAT_R8G8B8A8_UNORM, DirectX::TEX_FILTER_DEFAULT, DirectX::TEX_THRESHOLD_DEFAULT, convertImage);
+//		memcpy(image.data(), convertImage.GetPixels(), image.size());
+//	}
+//	else
+//	{
+//		memcpy(image.data(), scratchImage.GetPixels(), image.size());
+//	}
 //
 //LB_RET:
 	return hr;

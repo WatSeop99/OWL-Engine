@@ -1,11 +1,5 @@
 #include "Common.hlsli"
 
-#define PI 3.141592f
-
-Texture3D<float> g_DensityTex : register(t7); // t5 부터 시작
-Texture3D<float> g_LightingTex : register(t8);
-Texture3D<float> g_TemperatureTex : register(t9);
-
 cbuffer Consts : register(b3) // b3 주의
 {
     float3 g_UVWOffset; // 미사용
@@ -15,6 +9,12 @@ cbuffer Consts : register(b3) // b3 주의
     float3 g_LightColor = float3(1.0f, 1.0f, 1.0f) * 40.0f;
     float g_Aniso = 0.3f;
 }
+
+Texture3D<float> g_DensityTex : register(t7); // t5 부터 시작
+Texture3D<float> g_LightingTex : register(t8);
+Texture3D<float> g_TemperatureTex : register(t9);
+
+static const float PI = 3.141592f;
 
 // 박스 가장자리 좌표로부터 3D 텍스춰 좌표 계산
 float3 GetUVW(float3 modelPos)

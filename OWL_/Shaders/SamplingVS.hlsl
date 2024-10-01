@@ -5,7 +5,6 @@ struct SamplingVertexShaderInput
     float3 ModelPosition : POSITION;
     float2 Texcoord : TEXCOORD;
 };
-
 struct SamplingPixelShaderInput
 {
     float4 ScreenPosition : SV_POSITION;

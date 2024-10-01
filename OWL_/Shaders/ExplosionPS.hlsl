@@ -1,14 +1,3 @@
-cbuffer BillboardModelConstantData : register(b1)
-{
-    float3 EyeWorld;
-    float Width;
-    Matrix Model; // For vertex shader
-    Matrix View; // For vertex shader
-    Matrix Projection; // For vertex shader
-    float ObjectTime;
-    float3 padding;
-};
-
 struct PixelShaderInput
 {
     float4 ProjectedPosition : SV_POSITION; // Screen position
@@ -22,7 +11,19 @@ struct PixelShaderOutput
     float4 PixelColor : SV_TARGET0;
 };
 
+cbuffer BillboardModelConstantData : register(b1)
+{
+    float3 g_EyeWorld;
+    float g_Width;
+    Matrix g_Model; // For vertex shader
+    Matrix g_View; // For vertex shader
+    Matrix g_Projection; // For vertex shader
+    float g_ObjectTime;
+    float3 padding;
+};
+
 Texture2DArray g_TexArray : register(t5);
+
 SamplerState g_Sampler : register(s0);
 
 // Game Explosion
@@ -49,7 +50,7 @@ float Circle(float radius, float2 pos)
 
 PixelShaderOutput main(PixelShaderInput input)
 {
-    float time = ObjectTime * 1.5f;
+    float time = g_ObjectTime * 1.5f;
     float2 uv = (input.Texcoord * 2.0f - 1.0f) * 4.0f;
     float2 puv = float2(length(uv), atan2(uv.x, uv.y)); //polar coordinates.
 

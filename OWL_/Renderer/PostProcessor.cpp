@@ -307,7 +307,6 @@ void PostProcessor::setViewport()
 	_ASSERT(m_pRenderer);
 
 	// Set the viewport
-	m_Viewport = { 0, };
 	m_Viewport.TopLeftX = 0;
 	m_Viewport.TopLeftY = 0;
 	m_Viewport.Width = (float)m_ScreenWidth;

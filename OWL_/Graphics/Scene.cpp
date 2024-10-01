@@ -25,7 +25,7 @@ void Scene::Initialize(BaseRenderer* pRenderer, const bool bUSE_MSAA)
 	LoadScene();
 
 	createBuffers();
-	m_GBuffer.bIsEnabled = false;
+	m_GBuffer.bIsEnabled = true;
 	if (m_GBuffer.bIsEnabled && !bUSE_MSAA)
 	{
 		m_GBuffer.Initialize(pDevice, pContext);
@@ -189,7 +189,7 @@ void Scene::Initialize(BaseRenderer* pRenderer, const bool bUSE_MSAA)
 	m_SunCamera.SetFarZ(50.0f);
 	m_ShadowMap.SetShadowWidth(2560);
 	m_ShadowMap.SetShadowHeight(2560);
-	m_ShadowMap.Initialize(pRenderer, LIGHT_SUN);
+	m_ShadowMap.Initialize(pRenderer, LIGHT_SUN | LIGHT_SHADOW);
 
 	AtmosphereProperty STDUnitAtmosphereProperty = m_AtmosphereProperty.ToStdUnit();
 	m_pAtmosphereConstantBuffer = new ConstantBuffer;
@@ -317,9 +317,9 @@ void Scene::Render()
 		renderOpaqueObjects();
 	}
 
+	renderMirror();
 	renderSky();
 	renderOptions();
-	renderMirror();
 }
 
 void Scene::Cleanup()
@@ -631,7 +631,6 @@ void Scene::renderSky()
 	_ASSERT(m_pSkyLUT);
 
 	m_pSky->Render(m_pSkyLUT->GetSkyLUT());
-	
 	m_pSun->Render();
 }
 
@@ -806,9 +805,8 @@ void Scene::renderDeferredLighting()
 	pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_GBuffer.DepthBuffer.pDSV);
 
 	// 스카이박스 그리기.
-	pResourceManager->SetPipelineState(bDrawAsWire ? GraphicsPSOType_SkyboxWire : GraphicsPSOType_SkyboxSolid);
-	m_pSkybox->Render();
-
+	/*pResourceManager->SetPipelineState(bDrawAsWire ? GraphicsPSOType_SkyboxWire : GraphicsPSOType_SkyboxSolid);
+	m_pSkybox->Render();*/
 }
 
 void Scene::renderOptions()
@@ -816,6 +814,8 @@ void Scene::renderOptions()
 	_ASSERT(m_pRenderer);
 
 	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
+
+	setGlobalConstants(&m_GlobalConstants.pBuffer, 0);
 
 	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
 	{
@@ -852,7 +852,6 @@ void Scene::renderMirror()
 
 	if (MirrorAlpha == 1.0f) // 불투명하면 거울만 그림.
 	{
-		//setPipelineState(bDrawAsWire ? g_DefaultWirePSO : g_DefaultSolidPSO);
 		pResourceManager->SetPipelineState(bDrawAsWire ? GraphicsPSOType_DefaultWire : GraphicsPSOType_DefaultSolid);
 		m_pMirror->Render();
 	}
@@ -887,6 +886,8 @@ void Scene::setScreenViewport()
 {
 	_ASSERT(m_pRenderer);
 
+	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
+
 	D3D11_VIEWPORT screenViewport = { 0, };
 	screenViewport.TopLeftX = 0;
 	screenViewport.TopLeftY = 0;
@@ -895,7 +896,7 @@ void Scene::setScreenViewport()
 	screenViewport.MinDepth = 0.0f;
 	screenViewport.MaxDepth = 1.0f;
 
-	m_pRenderer->SetViewport(&screenViewport, 1);
+	pContext->RSSetViewports(1, &screenViewport);
 }
 
 void Scene::setGlobalConstants(ID3D11Buffer** ppGlobalConstants, UINT slot)

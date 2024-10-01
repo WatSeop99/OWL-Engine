@@ -132,6 +132,9 @@
     <ClInclude Include="Util\cySampleElim.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Util\BVHTree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OWL_.rc">
@@ -240,6 +243,9 @@
     <ClCompile Include="Graphics\Atmosphere\MultiScatteringLUT.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Util\BVHTree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\BasicVS.hlsl" />
@@ -300,5 +306,6 @@
     <None Include="Shaders\Atmosphere\AtmosphereUtil.hlsli" />
     <None Include="Shaders\ShadingUtil.hlsli" />
     <None Include="Shaders\Atmosphere\PostColor.hlsli" />
+    <None Include="Shaders\ShadowUtil.hlsli" />
   </ItemGroup>
 </Project>

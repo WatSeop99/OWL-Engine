@@ -132,6 +132,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Util\BVHTree.h" />
     <ClInclude Include="Graphics\Atmosphere\AtmosphereProperty.h" />
     <ClInclude Include="Graphics\Atmosphere\AerialLUT.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -192,6 +193,7 @@
     <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Util\BVHTree.cpp" />
     <ClCompile Include="Graphics\Atmosphere\AtmosphereProperty.cpp" />
     <ClCompile Include="Graphics\Atmosphere\AerialLUT.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -588,6 +590,7 @@
     <None Include="Shaders\DiskSamples.hlsli" />
     <None Include="Shaders\Quaternion.hlsli" />
     <None Include="Shaders\ShadingUtil.hlsli" />
+    <None Include="Shaders\ShadowUtil.hlsli" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

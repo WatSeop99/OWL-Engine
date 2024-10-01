@@ -5,7 +5,6 @@ struct SkyboxPixelShaderInput
     float4 ProjectedPosition : SV_POSITION;
     float3 ModelPosition : POSITION;
 };
-
 struct PixelShaderOutput
 {
     float4 PixelColor : SV_TARGET0;

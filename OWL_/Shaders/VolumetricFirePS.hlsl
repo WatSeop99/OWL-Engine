@@ -1,12 +1,6 @@
 #include "common.hlsli"
 #include "Quaternion.hlsli"
 
-cbuffer BillboardContsts : register(b3)
-{
-    float g_WidthWorld;
-    float3 g_DirWorld;
-};
-
 struct BillboardPixelShaderInput
 {
     float4 ProjectedPosition : SV_POSITION;
@@ -18,6 +12,12 @@ struct BillboardPixelShaderInput
 struct PixelShaderOutput
 {
     float4 PixelColor : SV_Target0;
+};
+
+cbuffer BillboardContsts : register(b3)
+{
+    float g_WidthWorld;
+    float3 g_DirWorld;
 };
 
 // BRADY'S VOLUMETRIC FIRE
@@ -40,7 +40,7 @@ float Noise(float3 P)
     float4 hash_highz = frac(Pt * hash_mod.yyyy);
     float3 blend = Pf * Pf * Pf * (Pf * (Pf * 6.0f - 15.0f) + 10.0f);
     float4 res0 = lerp(hash_lowz, hash_highz, blend.z);
-    float4 blend2 = float4(blend.xy, float2(1.0 - blend.xy));
+    float4 blend2 = float4(blend.xy, float2(1.0f - blend.xy));
     return dot(res0, blend2.zxzx * blend2.wwyy);
 }
 

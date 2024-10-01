@@ -79,6 +79,7 @@ void Sun::Update()
 void Sun::Render()
 {
 	_ASSERT(m_pRenderer);
+	_ASSERT(m_pSunDiskBuffer);
 	_ASSERT(m_pSunVSConstantBuffer);
 	_ASSERT(m_pSunPSConstantBuffer);
 	_ASSERT(m_pAtmosphereConstantBuffer);
@@ -103,6 +104,10 @@ void Sun::Render()
 	// Draw.
 	UINT stride = sizeof(Vector2);
 	UINT offset = 0;
+	if (!m_pSunDiskBuffer)
+	{
+		__debugbreak();
+	}
 	pContext->IASetVertexBuffers(0, 1, &m_pSunDiskBuffer, &stride, &offset);
 	pContext->IASetIndexBuffer(nullptr, DXGI_FORMAT_R32_UINT, 0);
 	pContext->Draw((UINT)m_SunDiskVertices.size(), 0);
@@ -164,23 +169,22 @@ void Sun::createSunMesh(const int SEG_COUNT)
 	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
 
 	m_SunDiskVertices.clear();
-
 	m_SunDiskVertices.reserve(3 * SEG_COUNT);
 	for (int i = 0; i < SEG_COUNT; ++i)
 	{
 		const float PHI_START = Lerp(0.0f, 2.0f * DirectX::XM_PI, (float)i / SEG_COUNT);
 		const float PHI_END = Lerp(0.0f, 2.0f * DirectX::XM_PI, (float)(i + 1) / SEG_COUNT);
 
-		const Vector2 A;
-		const Vector2 B(cos(PHI_START), sin(PHI_START));
-		const Vector2 C(cos(PHI_END), sin(PHI_END));
+		const Vector2 A(cos(PHI_START), sin(PHI_START));
+		const Vector2 B(cos(PHI_END), sin(PHI_END));
 
+		m_SunDiskVertices.push_back(Vector2::Zero);
 		m_SunDiskVertices.push_back(A);
 		m_SunDiskVertices.push_back(B);
-		m_SunDiskVertices.push_back(C);
 	}
 
-	BREAK_IF_FAILED(pResourceManager->CreateVertexBuffer(sizeof(Vector2), (UINT)m_SunDiskVertices.size(), &m_pSunDiskBuffer, m_SunDiskVertices.data()));
+	HRESULT hr = pResourceManager->CreateVertexBuffer(sizeof(Vector2), (UINT)m_SunDiskVertices.size(), &m_pSunDiskBuffer, m_SunDiskVertices.data());
+	BREAK_IF_FAILED(hr);
 }
 
 void Sun::createConstantBuffers()

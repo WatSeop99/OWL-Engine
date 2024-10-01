@@ -1,17 +1,5 @@
 #include "Common.hlsli"
 
-// Geometry-Shader Object
-// https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-geometry-shader
-
-// Stream-Output Object
-// https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-so-type
-
-cbuffer BillboardContsts : register(b4)
-{
-    float g_WidthWorld;
-    float3 g_DirWorld;
-};
-
 struct GeometryShaderInput
 {
     float4 WorldPosition : SV_POSITION;
@@ -24,6 +12,19 @@ struct BillboardPixelShaderInput
     float4 Center : POSITION1;
     float2 Texcoord : TEXCOORD;
     uint PrimID : SV_PrimitiveID;
+};
+
+
+// Geometry-Shader Object
+// https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-geometry-shader
+
+// Stream-Output Object
+// https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-so-type
+
+cbuffer BillboardContsts : register(b4)
+{
+    float g_WidthWorld;
+    float3 g_DirWorld;
 };
 
 [maxvertexcount(4)]

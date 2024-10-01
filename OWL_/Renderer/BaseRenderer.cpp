@@ -131,8 +131,6 @@ void BaseRenderer::InitScene()
 		m_pCursorSphere->bCastShadow = false; // 그림자 X
 
 		MaterialConstants* pMaterialConstData = (MaterialConstants*)m_pCursorSphere->Meshes[0]->MaterialConstant.pSystemMem;
-		/*m_pCursorSphere->Meshes[0]->MaterialConstant.CPU.AlbedoFactor = Vector3(0.0f);
-		m_pCursorSphere->Meshes[0]->MaterialConstant.CPU.EmissionFactor = Vector3(0.0f, 1.0f, 0.0f);*/
 		pMaterialConstData->AlbedoFactor = Vector3(0.0f);
 		pMaterialConstData->EmissionFactor = Vector3(0.0f, 1.0f, 0.0f);
 
@@ -147,6 +145,7 @@ void BaseRenderer::UpdateGUI()
 
 	ImGui::NewFrame();
 	ImGui::Begin("Scene Control");
+
 
 	// ImGui가 측정해주는 Framerate 출력.
 	ImGui::Text("Average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -171,6 +170,8 @@ void BaseRenderer::Update(float deltaTime)
 
 void BaseRenderer::RenderGUI()
 {
+	const ImGuiIO& IMGUI_IO = ImGui::GetIO();
+
 	// Example의 Render()에서 RT 설정을 해주지 않았을 경우에도
 	// 백 버퍼에 GUI를 그리기위해 RT 설정.
 	// 예) Render()에서 ComputeShader만 사용
@@ -238,23 +239,18 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				if (m_ScreenWidth && m_ScreenHeight)
 				{
 #ifdef _DEBUG
-					char debugString[256] = { 0, };
-					OutputDebugStringA("Resize SwapChain to ");
-					sprintf(debugString, "%d", m_ScreenWidth);
+					char debugString[256];
+					sprintf(debugString, "Resize SwapChain to %d %d\n", m_ScreenWidth, m_ScreenHeight);
 					OutputDebugStringA(debugString);
-					OutputDebugStringA(" ");
-					sprintf(debugString, "%d", m_ScreenHeight);
-					OutputDebugStringA(debugString);
-					OutputDebugStringA("\n");
 #endif 
 
 					// 기존 버퍼 초기화.
 					destroyBuffersForRendering();
-					m_pSwapChain->ResizeBuffers(0,                  // 현재 개수 유지.
-												 m_ScreenWidth,		 // 해상도 변경.
-												 m_ScreenHeight,
-												 DXGI_FORMAT_UNKNOWN, // 현재 포맷 유지.
-												 0);
+					m_pSwapChain->ResizeBuffers(0,					 // 현재 개수 유지.
+												m_ScreenWidth,		 // 해상도 변경.
+												m_ScreenHeight,
+												DXGI_FORMAT_UNKNOWN, // 현재 포맷 유지.
+												0);
 
 
 					createBuffers();
@@ -264,7 +260,7 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					setMainViewport();
 					m_Camera.SetAspectRatio(GetAspectRatio());
 					m_PostProcessor.Initialize(this,
-											   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *(m_FloatBuffer.GetTexture2DPtr()), *(m_ResolvedBuffer.GetTexture2DPtr()), *(m_PrevBuffer.GetTexture2DPtr()), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV()},
+											   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *(m_FloatBuffer.GetTexture2DPtr()), *(m_ResolvedBuffer.GetTexture2DPtr()), *(m_PrevBuffer.GetTexture2DPtr()), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV() },
 											   m_ScreenWidth, m_ScreenHeight, 4);
 				}
 			}
@@ -666,16 +662,6 @@ LB_EXIT:
 		//swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT | DXGI_USAGE_UNORDERED_ACCESS;
 		swapChainDesc.BufferCount = 2;
-		/*if (m_bUseMSAA && m_NumQualityLevels > 0)
-		{
-			swapChainDesc.SampleDesc.Count = 4;
-			swapChainDesc.SampleDesc.Quality = m_NumQualityLevels - 1;
-		}
-		else
-		{
-			swapChainDesc.SampleDesc.Count = 1;
-			swapChainDesc.SampleDesc.Quality = 0;
-		}*/
 		swapChainDesc.SampleDesc.Count = 1;
 		swapChainDesc.SampleDesc.Quality = 0;
 		swapChainDesc.Scaling = DXGI_SCALING_NONE;

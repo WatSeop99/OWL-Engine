@@ -1,14 +1,5 @@
 #include "Common.hlsli"
 
-// 메쉬 재질 텍스춰들 t0 부터 시작.
-Texture2D g_AlbedoTex : register(t0);
-Texture2D g_EmissiveTex : register(t1);
-Texture2D g_NormalTex : register(t2);
-Texture2D g_AOTex : register(t3);
-Texture2D g_MetallicTex : register(t4);
-Texture2D g_RoughnessTex : register(t5);
-Texture2D g_HeightTexture : register(t6);
-
 struct PixelShaderOutput
 {
     float4 Albedo : SV_Target0;
@@ -17,6 +8,15 @@ struct PixelShaderOutput
     float4 Emission : SV_Target3;
     float4 Extra : SV_Target4;
 };
+
+// 메쉬 재질 텍스춰들 t0 부터 시작.
+Texture2D g_AlbedoTex : register(t0);
+Texture2D g_EmissiveTex : register(t1);
+Texture2D g_NormalTex : register(t2);
+Texture2D g_AOTex : register(t3);
+Texture2D g_MetallicTex : register(t4);
+Texture2D g_RoughnessTex : register(t5);
+Texture2D g_HeightTexture : register(t6);
 
 float3 GetNormal(PixelShaderInput input)
 {

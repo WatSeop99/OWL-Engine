@@ -29,9 +29,6 @@ using DirectX::SimpleMath::Vector2;
 #define new DBG_NEW
 #endif
 
-#define BREAK_IF_FAILED(hr) if (FAILED(hr)) { __debugbreak(); }
-#define SET_DEBUG_INFO_TO_OBJECT(ptr, name) if (ptr) { (ptr)->SetPrivateData(WKPDID_D3DDebugObjectName, sizeof(name) - 1, (name)); }
-
 #else
 
 #define Malloc(size) malloc(size)
@@ -39,10 +36,10 @@ using DirectX::SimpleMath::Vector2;
 #define New new
 #endif
 
-#define BREAK_IF_FAILED(hr)
-#define SET_DEBUG_INFO_TO_OBJECT(ptr, name)
-
 #endif
+
+#define BREAK_IF_FAILED(hr) if (FAILED(hr)) { __debugbreak(); }
+#define SET_DEBUG_INFO_TO_OBJECT(ptr, name) if (ptr) { (ptr)->SetPrivateData(WKPDID_D3DDebugObjectName, sizeof(name) - 1, (name)); }
 
 #define SAFE_RELEASE(p)	if (p) { (p)->Release(); (p) = nullptr; }
 #define RELEASE(p) { (p)->Release(); (p) = nullptr; }

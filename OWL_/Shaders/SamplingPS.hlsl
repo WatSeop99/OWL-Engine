@@ -1,5 +1,8 @@
-Texture2D g_Texture0 : register(t0);
-SamplerState g_Sampler : register(s0);
+struct SamplingPixelShaderInput
+{
+    float4 ScreenPosition : SV_POSITION;
+    float2 Texcoord : TEXCOORD;
+};
 
 cbuffer SamplingPixelConstantData : register(b0)
 {
@@ -10,11 +13,10 @@ cbuffer SamplingPixelConstantData : register(b0)
     float4 Options;
 };
 
-struct SamplingPixelShaderInput
-{
-    float4 ScreenPosition : SV_POSITION;
-    float2 Texcoord : TEXCOORD;
-};
+Texture2D g_Texture0 : register(t0);
+
+SamplerState g_Sampler : register(s0);
+
 
 float4 main(SamplingPixelShaderInput input) : SV_TARGET
 {

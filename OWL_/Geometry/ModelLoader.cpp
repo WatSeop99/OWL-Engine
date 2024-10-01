@@ -361,7 +361,7 @@ void ModelLoader::processMesh(aiMesh* pMesh, const aiScene* pScene, MeshInfo* pM
 		int maxBones = 0;
 		for (UINT64 i = 0, boneWeightSize = boneWeights.size(); i < boneWeightSize; ++i)
 		{
-			maxBones = Max(maxBones, (int)(boneWeights[i].size()));
+			maxBones = Max(maxBones, (int)boneWeights[i].size());
 		}
 
 		char debugString[256];
@@ -437,7 +437,7 @@ HRESULT ModelLoader::readTextureFileName(const aiScene* pSCENE, aiMaterial* pMat
 		pMaterial->GetTexture(type, 0, &filePath);
 
 		std::string fullPath = szBasePath + RemoveBasePath(filePath.C_Str());
-		struct _stat64 sourceFileStat;
+		struct _stat64 sourceFileStat = {};
 
 		// 실제로 파일이 존재하는지 확인.
 		if (_stat64(fullPath.c_str(), &sourceFileStat) == -1)
@@ -479,46 +479,8 @@ void ModelLoader::updateTangents()
 {
 	using namespace DirectX;
 
-	// https://github.com/microsoft/DirectXMesh/wiki/ComputeTangentFrame
-	// 추후 시간 체크 해볼 것.
 	for (UINT64 i = 0, size = pMeshInfos.size(); i < size; ++i)
 	{
-		// 방법 1.
-		/*MeshInfo& m = pMeshInfos[i];
-
-		std::vector<XMFLOAT3> positions(m.vertices.endI());
-		std::vector<XMFLOAT3> normals(m.vertices.endI());
-		std::vector<XMFLOAT2> texcoords(m.vertices.endI());
-		std::vector<XMFLOAT3> tangents(m.vertices.endI());
-		std::vector<XMFLOAT3> bitangents(m.vertices.endI());
-
-		for (size_t j = 0, vertSize = m.vertices.endI(); j < vertSize; ++j)
-		{
-			Vertex& v = m.vertices[j];
-			positions[j] = v.Position;
-			normals[i] = v.Normal;
-			texcoords[j] = v.Texcoord;
-		}
-
-		ComputeTangentFrame(m.indices.data(), m.indices.endI() / 3,
-							positions.data(), normals.data(), texcoords.data(),
-							m.vertices.endI(), tangents.data(),
-							bitangents.data());
-
-		for (size_t j = 0, vertSize = m.vertices.endI(); j < vertSize; ++j)
-		{
-			m.vertices[j].Tangent = tangents[j];
-		}
-
-		if (m.skinnedVertices.endI() > 0)
-		{
-			for (size_t j = 0, skinnedVertSize = m.skinnedVertices.endI(); j < skinnedVertSize; ++j)
-			{
-				m.skinnedVertices[j].Tangent = tangents[j];
-			}
-		}*/
-
-		// 방법 2.
 		MeshInfo& curMeshInfo = pMeshInfos[i];
 		std::vector<Vertex>& curVertices = curMeshInfo.Vertices;
 		std::vector<SkinnedVertex>& curSkinnedVertices = curMeshInfo.SkinnedVertices;
@@ -575,15 +537,15 @@ void ModelLoader::calculateTangentBitangent(const Vertex& V1, const Vertex& V2, 
 	DirectX::XMStoreFloat2(&tuVector, V2.Texcoord - V1.Texcoord);
 	DirectX::XMStoreFloat2(&tvVector, V2.Texcoord - V3.Texcoord);
 
-	float den = 1.0f / (tuVector.x * tvVector.y - tuVector.y * tvVector.x);
+	const float DEN = 1.0f / (tuVector.x * tvVector.y - tuVector.y * tvVector.x);
 
-	pTangent->x = (tvVector.y * vector1.x - tvVector.x * vector2.x) * den;
-	pTangent->y = (tvVector.y * vector1.y - tvVector.x * vector2.y) * den;
-	pTangent->z = (tvVector.y * vector1.z - tvVector.x * vector2.z) * den;
+	pTangent->x = (tvVector.y * vector1.x - tvVector.x * vector2.x) * DEN;
+	pTangent->y = (tvVector.y * vector1.y - tvVector.x * vector2.y) * DEN;
+	pTangent->z = (tvVector.y * vector1.z - tvVector.x * vector2.z) * DEN;
 
-	pBitangent->x = (tuVector.x * vector2.x - tuVector.y * vector1.x) * den;
-	pBitangent->y = (tuVector.x * vector2.y - tuVector.y * vector1.y) * den;
-	pBitangent->z = (tuVector.x * vector2.z - tuVector.y * vector1.z) * den;
+	pBitangent->x = (tuVector.x * vector2.x - tuVector.y * vector1.x) * DEN;
+	pBitangent->y = (tuVector.x * vector2.y - tuVector.y * vector1.y) * DEN;
+	pBitangent->z = (tuVector.x * vector2.z - tuVector.y * vector1.z) * DEN;
 
 	float length = sqrt((pTangent->x * pTangent->x) + (pTangent->y * pTangent->y) + (pTangent->z * pTangent->z));
 	pTangent->x = pTangent->x / length;
