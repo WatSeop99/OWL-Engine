@@ -146,6 +146,7 @@ void BaseRenderer::UpdateGUI()
 	ImGui::NewFrame();
 	ImGui::Begin("Scene Control");
 
+	// ImGui::DockSpaceOverViewport();
 
 	// ImGui가 측정해주는 Framerate 출력.
 	ImGui::Text("Average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);

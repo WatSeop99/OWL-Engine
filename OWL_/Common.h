@@ -52,8 +52,8 @@
 #include <locale>
 
 #include <imgui.h>
-#include <imgui_impl_dx11.h>
-#include <imgui_impl_win32.h>
+#include <backends/imgui_impl_dx11.h>
+#include <backends/imgui_impl_win32.h>
 
 // 수학함수
 #include <directxtk/SimpleMath.h>

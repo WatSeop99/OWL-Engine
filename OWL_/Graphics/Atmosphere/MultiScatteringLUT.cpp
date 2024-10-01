@@ -1,9 +1,9 @@
 #include <random>
+#include <cyVector.h>
+#include <cySampleElim.h>
 #include "../../Common.h"
 #include "../Renderer/BaseRenderer.h"
 #include "../Renderer/ConstantBuffer.h"
-#include "../External/cyCodeBase/cyVector.h"
-#include "../External/cyCodeBase/cySampleElim.h"
 #include "../Renderer/StructuredBuffer.h"
 #include "../Renderer/Texture.h"
 #include "MultiScatteringLUT.h"
