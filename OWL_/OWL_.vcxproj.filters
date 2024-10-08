@@ -280,8 +280,6 @@
     <FxCompile Include="Shaders\NormalGS.hlsl" />
     <FxCompile Include="Shaders\NormalPS.hlsl" />
     <FxCompile Include="Shaders\PostEffectPS.hlsl" />
-    <FxCompile Include="Shaders\SamplingVS.hlsl" />
-    <FxCompile Include="Shaders\SamplingPS.hlsl" />
     <FxCompile Include="Shaders\SkyboxVS.hlsl" />
     <FxCompile Include="Shaders\SkyboxPS.hlsl" />
     <FxCompile Include="Shaders\BillboardVS.hlsl" />
@@ -311,6 +309,7 @@
     <FxCompile Include="Shaders\Atmosphere\SkyPS.hlsl" />
     <FxCompile Include="Shaders\Atmosphere\SunVS.hlsl" />
     <FxCompile Include="Shaders\Atmosphere\SunPS.hlsl" />
+    <FxCompile Include="Shaders\ScreenQuadVS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Common.hlsli" />

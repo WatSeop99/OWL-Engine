@@ -4,6 +4,7 @@
 #include "../Graphics/ImageFilter.h"
 
 class BaseRenderer;
+class ConstantBuffer;
 class Mesh;
 
 class PostProcessor
@@ -34,6 +35,8 @@ public:
 
 	void Cleanup();
 
+	inline ConstantBuffer* GetPostEffectConstantBuffer() { return m_pPostEffectsConstantBuffer; }
+
 protected:
 	void createPostBackBuffers();
 	void createImageResources(int width, int height, ID3D11ShaderResourceView** ppSrv, ID3D11RenderTargetView** ppRtv);
@@ -47,22 +50,19 @@ protected:
 	void setGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU);
 
 public:
-	PostEffectsConstants PostEffectsConstsCPU;
+	// PostEffectsConstants PostEffectsConstsCPU;
 	int PostEffectsUpdateFlag = 0;
 
 	ImageFilter CombineFilter;
 	int CombineUpdateFlag = 0;
 
-	Mesh* pMesh = nullptr;
-
 private:
-	BaseRenderer* m_pRenderer = nullptr;
-
 	D3D11_VIEWPORT m_Viewport = { 0, };
 	UINT m_ScreenWidth = 0;
 	UINT m_ScreenHeight = 0;
 
-	ID3D11Buffer* m_pPostEffectsConstsGPU = nullptr;
+	// ID3D11Buffer* m_pPostEffectsConstsGPU = nullptr;
+	ConstantBuffer* m_pPostEffectsConstantBuffer = nullptr;
 
 	ID3D11Texture2D* m_pPostEffectsBuffer = nullptr;
 	ID3D11RenderTargetView* m_pPostEffectsRTV = nullptr;
@@ -74,6 +74,7 @@ private:
 	std::vector<ID3D11RenderTargetView*> m_pBloomRTVs;
 
 	// Do not delete these pointer.
+	BaseRenderer* m_pRenderer = nullptr;
 	ID3D11Buffer* m_pGlobalConstsGPU = nullptr;
 	ID3D11Texture2D* m_pBackBuffer = nullptr;
 	ID3D11Texture2D* m_pFloatBuffer = nullptr;

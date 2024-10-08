@@ -188,12 +188,17 @@ void DebugApp::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Post Effects"))
 	{
-		// 갱신된 내용은 Update()에서 처리.
-		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Render", &(m_PostProcessor.PostEffectsConstsCPU.Mode), 1);
+		PostEffectsConstants* pPostEffectConstData = (PostEffectsConstants*)m_PostProcessor.GetPostEffectConstantBuffer();
+		if (!pPostEffectConstData)
+		{
+			__debugbreak();
+		}
+
+		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Render", &pPostEffectConstData->Mode, 1);
 		ImGui::SameLine();
-		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Depth", &(m_PostProcessor.PostEffectsConstsCPU.Mode), 2);
-		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("DepthScale", &(m_PostProcessor.PostEffectsConstsCPU.DepthScale), 0.0f, 1.0f);
-		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("Fog", &(m_PostProcessor.PostEffectsConstsCPU.FogStrength), 0.0f, 10.0f);
+		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Depth", &pPostEffectConstData->Mode, 2);
+		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("DepthScale", &pPostEffectConstData->DepthScale, 0.0f, 1.0f);
+		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("Fog", &pPostEffectConstData->FogStrength, 0.0f, 10.0f);
 
 		ImGui::TreePop();
 	}

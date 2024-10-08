@@ -217,7 +217,7 @@ void ResourceManager::Cleanup()
 	SAFE_RELEASE(pBasicVS);
 	SAFE_RELEASE(pSkinnedVS);
 	SAFE_RELEASE(pSkyboxVS);
-	SAFE_RELEASE(pSamplingVS);
+	SAFE_RELEASE(pScreenQuadVS);
 	SAFE_RELEASE(pNormalVS);
 	SAFE_RELEASE(pDepthOnlyVS);
 	SAFE_RELEASE(pDepthOnlySkinnedVS);
@@ -259,7 +259,6 @@ void ResourceManager::Cleanup()
 	// Input Layouts
 	SAFE_RELEASE(pBasicIL);
 	SAFE_RELEASE(pSkinnedIL);
-	SAFE_RELEASE(pSamplingIL);
 	SAFE_RELEASE(pSkyboxIL);
 	SAFE_RELEASE(pPostProcessingIL);
 	SAFE_RELEASE(pGrassIL);
@@ -658,7 +657,7 @@ void ResourceManager::initShaders()
 	hr = createVertexShaderAndInputLayout(L"./Shaders/NormalVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pNormalVS, &pBasicIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = createVertexShaderAndInputLayout(L"./Shaders/SamplingVS.hlsl", SAMPLING_IEs, numSamplingIEs, nullptr, &pSamplingVS, &pSamplingIL);
+	hr = createVertexShaderAndInputLayout(L"./Shaders/ScreenQuadVS.hlsl", nullptr, 0, nullptr, &pScreenQuadVS, nullptr);
 	BREAK_IF_FAILED(hr);
 
 	hr = createVertexShaderAndInputLayout(L"./Shaders/SkyboxVS.hlsl", SKYBOX_IEs, numSkyboxIEs, nullptr, &pSkyboxVS, &pSkyboxIL);
@@ -879,15 +878,13 @@ void ResourceManager::initPipelineStates()
 	GraphicsPSOs[GraphicsPSOType_DepthOnlyCascadeSkinned].pInputLayout = pSkinnedIL;
 
 	// g_PostEffectsPSO
-	GraphicsPSOs[GraphicsPSOType_PostEffects].pVertexShader = pSamplingVS;
+	GraphicsPSOs[GraphicsPSOType_PostEffects].pVertexShader = pScreenQuadVS;
 	GraphicsPSOs[GraphicsPSOType_PostEffects].pPixelShader = pPostEffectsPS;
-	GraphicsPSOs[GraphicsPSOType_PostEffects].pInputLayout = pSamplingIL;
 	GraphicsPSOs[GraphicsPSOType_PostEffects].pRasterizerState = pPostProcessingRS;
 
 	// g_PostProcessingPSO
-	GraphicsPSOs[GraphicsPSOType_PostProcessing].pVertexShader = pSamplingVS;
+	GraphicsPSOs[GraphicsPSOType_PostProcessing].pVertexShader = pScreenQuadVS;
 	GraphicsPSOs[GraphicsPSOType_PostProcessing].pPixelShader = pDepthOnlyPS; // dummy
-	GraphicsPSOs[GraphicsPSOType_PostProcessing].pInputLayout = pSamplingIL;
 	GraphicsPSOs[GraphicsPSOType_PostProcessing].pRasterizerState = pPostProcessingRS;
 
 	// g_BoundingBoxPSO

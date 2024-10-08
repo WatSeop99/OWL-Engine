@@ -161,23 +161,6 @@ void Scene::Initialize(BaseRenderer* pRenderer, const bool bUSE_MSAA)
 	m_pSkybox->Initialize(pRenderer, { skyboxMeshInfo });
 	m_pSkybox->Name = "SkyBox";
 
-	// deferred rendering을 위한 스크린 공간 생성.
-	if (m_GBuffer.bIsEnabled)
-	{
-		MeshInfo meshInfo;
-		MakeSquare(&meshInfo);
-
-		m_pScreenMesh = new Mesh;
-		m_pScreenMesh->Initialize(pDevice, pContext);
-
-		HRESULT hr = pResourceManager->CreateVertexBuffer(sizeof(Vertex), (UINT)meshInfo.Vertices.size(), &m_pScreenMesh->pVertexBuffer, meshInfo.Vertices.data());
-		BREAK_IF_FAILED(hr);
-
-		m_pScreenMesh->IndexCount = (UINT)meshInfo.Indices.size();
-		hr = pResourceManager->CreateIndexBuffer(sizeof(UINT), (UINT)meshInfo.Indices.size(), &m_pScreenMesh->pIndexBuffer, meshInfo.Indices.data());
-		BREAK_IF_FAILED(hr);
-	}
-
 
 	m_SunProperty.LightType = LIGHT_SUN | LIGHT_SHADOW;
 	m_SunCamera.bUseFirstPersonView = true;
@@ -382,12 +365,6 @@ void Scene::Cleanup()
 	SAFE_RELEASE(m_pEnvSRV);
 
 	SAFE_RELEASE(m_pDefaultDSV);
-
-	if (m_pScreenMesh)
-	{
-		delete m_pScreenMesh;
-		m_pScreenMesh = nullptr;
-	}
 
 	Lights.clear();
 	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
@@ -796,11 +773,7 @@ void Scene::renderDeferredLighting()
 
 	pResourceManager->SetPipelineState(GraphicsPSOType_DeferredRendering);
 
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-	pContext->IASetVertexBuffers(0, 1, &m_pScreenMesh->pVertexBuffer, &stride, &offset);
-	pContext->IASetIndexBuffer(m_pScreenMesh->pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-	pContext->DrawIndexed(m_pScreenMesh->IndexCount, 0, 0);
+	pContext->Draw(6, 0);
 
 	pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_GBuffer.DepthBuffer.pDSV);
 

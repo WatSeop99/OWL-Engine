@@ -71,7 +71,7 @@ public:
 	ID3D11VertexShader* pBasicVS = nullptr;
 	ID3D11VertexShader* pSkinnedVS = nullptr; // g_pBasicVS.hlsl에 SKINNED 매크로
 	ID3D11VertexShader* pSkyboxVS = nullptr;
-	ID3D11VertexShader* pSamplingVS = nullptr;
+	ID3D11VertexShader* pScreenQuadVS = nullptr;
 	ID3D11VertexShader* pNormalVS = nullptr;
 	ID3D11VertexShader* pDepthOnlyVS = nullptr;
 	ID3D11VertexShader* pDepthOnlySkinnedVS = nullptr;
@@ -117,7 +117,6 @@ public:
 
 	ID3D11InputLayout* pBasicIL = nullptr;
 	ID3D11InputLayout* pSkinnedIL = nullptr;
-	ID3D11InputLayout* pSamplingIL = nullptr;
 	ID3D11InputLayout* pSkyboxIL = nullptr;
 	ID3D11InputLayout* pPostProcessingIL = nullptr;
 	ID3D11InputLayout* pGrassIL = nullptr;

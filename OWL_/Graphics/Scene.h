@@ -92,7 +92,6 @@ private:
 
 	UINT m_ScreenWidth;
 	UINT m_ScreenHeight;
-	Mesh* m_pScreenMesh = nullptr;
 	Camera& m_Camera;
 	Texture* m_pFloatBuffer = nullptr;
 	Texture* m_pResolvedBuffer = nullptr;

@@ -1,5 +1,6 @@
 #include "../Common.h"
 #include "BaseRenderer.h"
+#include "ConstantBuffer.h"
 #include "../Graphics/ConstantDataType.h"
 #include "../Geometry/GeometryGenerator.h"
 #include "../Graphics/GraphicsUtils.h"
@@ -7,7 +8,6 @@
 #include "../Geometry/MeshInfo.h"
 #include "../Geometry/Model.h"
 #include "PostProcessor.h"
-
 
 void PostProcessor::Initialize(BaseRenderer* pRenderer, const PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS)
 {
@@ -23,27 +23,14 @@ void PostProcessor::Initialize(BaseRenderer* pRenderer, const PostProcessingBuff
 	ID3D11Device* pDevice = pRenderer->GetDevice();
 	ID3D11DeviceContext* pContext = pRenderer->GetDeviceContext();
 
-	// 스크린 공간 설정.
-	MeshInfo meshInfo;
-	MakeSquare(&meshInfo);
-
-	pMesh = new Mesh;
-	pMesh->Initialize(pDevice, pContext);
-
-	hr = CreateVertexBuffer(pDevice, meshInfo.Vertices, &pMesh->pVertexBuffer);
-	BREAK_IF_FAILED(hr);
-
-	pMesh->IndexCount = (UINT)meshInfo.Indices.size();
-	hr = CreateIndexBuffer(pDevice, meshInfo.Indices, &pMesh->pIndexBuffer);
-	BREAK_IF_FAILED(hr);
-
 	// 후처리 효과용 버퍼 생성.
 	setRenderConfig(CONFIG);
 	createPostBackBuffers();
 
 	// 후처리 효과용 constBuffer.
-	hr = CreateConstBuffer(pDevice, PostEffectsConstsCPU, &m_pPostEffectsConstsGPU);
-	BREAK_IF_FAILED(hr);
+	PostEffectsConstants initData;
+	m_pPostEffectsConstantBuffer = new ConstantBuffer;
+	m_pPostEffectsConstantBuffer->Initialize(pDevice, pContext, sizeof(PostEffectsConstants), &initData);
 
 	// Bloom Down/Up.
 	m_pBloomSRVs.resize(BLOOMLEVELS);
@@ -101,20 +88,20 @@ void PostProcessor::Initialize(BaseRenderer* pRenderer, const PostProcessingBuff
 	pCombineFilterConstData->Option2 = 2.2f;	// gamma.
 
 	// 주의: float render target에서는 gamma correction 하지 않음. (gamma = 1.0)
-	UpdateBuffer(pContext, PostEffectsConstsCPU, m_pPostEffectsConstsGPU);
+	m_pPostEffectsConstantBuffer->Upload();
 	CombineFilter.UpdateConstantBuffers(pContext);
 }
 
 void PostProcessor::Update()
 {
 	_ASSERT(m_pRenderer);
-	_ASSERT(m_pPostEffectsConstsGPU);
+	_ASSERT(m_pPostEffectsConstantBuffer);
 
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
 	if (PostEffectsUpdateFlag > 0)
 	{
-		UpdateBuffer(pContext, PostEffectsConstsCPU, m_pPostEffectsConstsGPU);
+		m_pPostEffectsConstantBuffer->Upload();
 		PostEffectsUpdateFlag = 0;
 	}
 
@@ -133,12 +120,6 @@ void PostProcessor::Render()
 
 	// Resolve MSAA texture.
 	pContext->ResolveSubresource(m_pResolvedBuffer, 0, m_pFloatBuffer, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
-
-	// 스크린 렌더링을 위한 정점 버퍼와 인텍스 버퍼를 미리 설정.
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-	pContext->IASetVertexBuffers(0, 1, &pMesh->pVertexBuffer, &stride, &offset);
-	pContext->IASetIndexBuffer(pMesh->pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	// post effecting 후 post processing.
 	renderPostEffects();
@@ -170,17 +151,16 @@ void PostProcessor::Cleanup()
 
 	CombineFilter.Cleanup();
 
-	SAFE_RELEASE(m_pPostEffectsConstsGPU);
+	//SAFE_RELEASE(m_pPostEffectsConstsGPU);
+	if (m_pPostEffectsConstantBuffer)
+	{
+		delete m_pPostEffectsConstantBuffer;
+		m_pPostEffectsConstantBuffer = nullptr;
+	}
 
 	SAFE_RELEASE(m_pPostEffectsBuffer);
 	SAFE_RELEASE(m_pPostEffectsRTV);
 	SAFE_RELEASE(m_pPostEffectsSRV);
-
-	if (pMesh)
-	{
-		delete pMesh;
-		pMesh = nullptr;
-	}
 }
 
 void PostProcessor::createPostBackBuffers()
@@ -242,6 +222,7 @@ void PostProcessor::createImageResources(int width, int height, ID3D11ShaderReso
 void PostProcessor::renderPostEffects()
 {
 	_ASSERT(m_pRenderer);
+	_ASSERT(m_pPostEffectsConstantBuffer);
 
 	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext(); 
@@ -254,8 +235,8 @@ void PostProcessor::renderPostEffects()
 	ID3D11ShaderResourceView* ppPostEffectsSRVs[2] = { m_pResolvedSRV, m_pDepthOnlySRV };
 	pContext->PSSetShaderResources(20, 2, ppPostEffectsSRVs);
 	pContext->OMSetRenderTargets(1, &m_pPostEffectsRTV, nullptr);
-	pContext->PSSetConstantBuffers(5, 1, &m_pPostEffectsConstsGPU);
-	pContext->DrawIndexed(pMesh->IndexCount, 0, 0);
+	pContext->PSSetConstantBuffers(5, 1, &m_pPostEffectsConstantBuffer->pBuffer);
+	pContext->Draw(6, 0);
 
 	ID3D11ShaderResourceView* ppNulls[2] = { nullptr, };
 	pContext->PSSetShaderResources(20, 2, ppNulls);
@@ -297,9 +278,8 @@ void PostProcessor::renderImageFilter(const ImageFilter& IMAGE_FILTER)
 	_ASSERT(m_pRenderer);
 
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
-
 	IMAGE_FILTER.Render(pContext);
-	pContext->DrawIndexed(pMesh->IndexCount, 0, 0);
+	pContext->Draw(6, 0);
 }
 
 void PostProcessor::setViewport()
