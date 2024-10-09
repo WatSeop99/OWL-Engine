@@ -50,7 +50,6 @@ protected:
 	void setGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU);
 
 public:
-	// PostEffectsConstants PostEffectsConstsCPU;
 	int PostEffectsUpdateFlag = 0;
 
 	ImageFilter CombineFilter;
@@ -61,7 +60,6 @@ private:
 	UINT m_ScreenWidth = 0;
 	UINT m_ScreenHeight = 0;
 
-	// ID3D11Buffer* m_pPostEffectsConstsGPU = nullptr;
 	ConstantBuffer* m_pPostEffectsConstantBuffer = nullptr;
 
 	ID3D11Texture2D* m_pPostEffectsBuffer = nullptr;

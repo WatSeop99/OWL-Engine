@@ -1,9 +1,14 @@
 ﻿#include "../Common.h"
+#include "../Graphics/Atmosphere/AerialLUT.h"
+#include "GBuffer.h"
 #include "../Geometry/GeometryGenerator.h"
 #include "../Graphics/Light.h"
 #include "../Geometry/Mesh.h"
 #include "../Geometry/MeshInfo.h"
 #include "../Geometry/Model.h"
+#include "../Graphics/Atmosphere/Sky.h"
+#include "../Graphics/Atmosphere/SkyLUT.h"
+#include "../Graphics/Atmosphere/Sun.h"
 #include "Timer.h"
 #include "BaseRenderer.h"
 
@@ -24,9 +29,6 @@ BaseRenderer::BaseRenderer() : m_Scene(m_Camera, &m_FloatBuffer, &m_ResolvedBuff
 	g_pAppBase = this;
 	m_Camera.SetAspectRatio(GetAspectRatio());
 	m_Camera.SetFarZ(500.0f);
-
-	m_Scene.SetScreenWidth(m_ScreenWidth);
-	m_Scene.SetScreenHeight(m_ScreenHeight);
 }
 
 BaseRenderer::~BaseRenderer()
@@ -43,6 +45,11 @@ BaseRenderer::~BaseRenderer()
 	{
 		delete m_pTimer;
 		m_pTimer = nullptr;
+	}
+	if (m_pGBuffer)
+	{
+		delete m_pGBuffer;
+		m_pGBuffer = nullptr;
 	}
 	if (m_pResourceManager)
 	{
@@ -94,7 +101,7 @@ void BaseRenderer::Initialize()
 	// Timer setting.
 	m_pTimer = new Timer(m_pDevice);
 
-	m_pResourceManager = new ResourceManager();
+	m_pResourceManager = new ResourceManager;
 	m_pResourceManager->Initialize(m_pDevice, m_pContext);
 
 	/*_ASSERT(m_pTimer);
@@ -104,7 +111,7 @@ void BaseRenderer::Initialize()
 
 	// postprocessor 초기화.
 	m_PostProcessor.Initialize(this,
-							   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *(m_FloatBuffer.GetTexture2DPtr()), *(m_ResolvedBuffer.GetTexture2DPtr()), *(m_PrevBuffer.GetTexture2DPtr()), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV()},
+							   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *m_FloatBuffer.GetTexture2DPtr(), *m_ResolvedBuffer.GetTexture2DPtr(), *m_PrevBuffer.GetTexture2DPtr(), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_pGBuffer->DepthBuffer.pSRV },
 							   m_ScreenWidth, m_ScreenHeight, 4);
 
 	// 콘솔창이 렌더링 창을 덮는 것을 방지.
@@ -117,8 +124,7 @@ void BaseRenderer::Initialize()
 // 여러 예제들이 공통적으로 사용하기 좋은 장면 설정
 void BaseRenderer::InitScene()
 {
-	m_Scene.Initialize(this, m_bUseMSAA);
-	// m_Scene.ResetBuffers(m_bUseMSAA, m_NumQualityLevels);
+	m_Scene.Initialize(this);
 
 	// 커서 표시 (Main sphere와의 충돌이 감지되면 월드 공간에 작게 그려지는 구).
 	{
@@ -196,7 +202,21 @@ void BaseRenderer::RenderGUI()
 
 void BaseRenderer::Render()
 {
-	m_Scene.Render();
+	//m_Scene.Render();
+
+	m_pContext->VSSetSamplers(0, (UINT)m_pResourceManager->SamplerStates.size(), m_pResourceManager->SamplerStates.data());
+	m_pContext->PSSetSamplers(0, (UINT)m_pResourceManager->SamplerStates.size(), m_pResourceManager->SamplerStates.data());
+
+	passGBuffer();
+	passShadow();
+
+	m_Scene.GetSkyLUTPtr()->Generate();
+	m_Scene.GetAerialLUTPtr()->Generate();
+
+	passDeferredLighting();
+	passSky();
+	passDebug();
+
 	m_PostProcessor.Render();
 	RenderGUI(); // 추후 editor/game 모드를 설정하여 따로 렌더링하도록 구상.
 }
@@ -258,21 +278,12 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 					// 기존 버퍼 초기화.
 					destroyBuffersForRendering();
-					m_pSwapChain->ResizeBuffers(0,					 // 현재 개수 유지.
-												m_ScreenWidth,		 // 해상도 변경.
-												m_ScreenHeight,
-												DXGI_FORMAT_UNKNOWN, // 현재 포맷 유지.
-												0);
-
+					m_pSwapChain->ResizeBuffers(0, m_ScreenWidth, m_ScreenHeight, DXGI_FORMAT_UNKNOWN, 0);
 
 					createBuffers();
-					m_Scene.SetScreenWidth(m_ScreenWidth);
-					m_Scene.SetScreenHeight(m_ScreenHeight);
-					m_Scene.ResetBuffers(m_bUseMSAA, m_NumQualityLevels);
-					setMainViewport();
 					m_Camera.SetAspectRatio(GetAspectRatio());
 					m_PostProcessor.Initialize(this,
-											   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *(m_FloatBuffer.GetTexture2DPtr()), *(m_ResolvedBuffer.GetTexture2DPtr()), *(m_PrevBuffer.GetTexture2DPtr()), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV() },
+											   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *m_FloatBuffer.GetTexture2DPtr(), *m_ResolvedBuffer.GetTexture2DPtr(), *m_PrevBuffer.GetTexture2DPtr(), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_pGBuffer->DepthBuffer.pSRV },
 											   m_ScreenWidth, m_ScreenHeight, 4);
 				}
 			}
@@ -346,13 +357,6 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			{
 				m_Camera.bUseFirstPersonView = !m_Camera.bUseFirstPersonView;
 			}
-			//if (wParam == 'C') // c키 화면 캡쳐.
-			//{
-			//	ID3D11Texture2D* pBackBuffer = nullptr;
-			//	m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
-			//	WriteToPngFile(m_pDevice, m_pContext, pBackBuffer, L"captured.png");
-			//	RELEASE(pBackBuffer);
-			//}
 			if (wParam == 'P') // 애니메이션 일시중지할 때 사용.
 			{
 				m_bPauseAnimation = !m_bPauseAnimation;
@@ -750,16 +754,8 @@ void BaseRenderer::createBuffers()
 
 	desc.MipLevels = desc.ArraySize = 1;
 	desc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	if (m_bUseMSAA && m_NumQualityLevels > 0)
-	{
-		desc.SampleDesc.Count = 4;
-		desc.SampleDesc.Quality = m_NumQualityLevels - 1;
-	}
-	else
-	{
-		desc.SampleDesc.Count = 1;
-		desc.SampleDesc.Quality = 0;
-	}
+	desc.SampleDesc.Count = 1;
+	desc.SampleDesc.Quality = 0;
 	desc.Usage = D3D11_USAGE_DEFAULT; // 스테이징 텍스춰로부터 복사 가능.
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 	desc.MiscFlags = 0;
@@ -771,6 +767,9 @@ void BaseRenderer::createBuffers()
 	desc.SampleDesc.Quality = 0;
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET | D3D11_BIND_UNORDERED_ACCESS;
 	m_ResolvedBuffer.Initialize(m_pDevice, m_pContext, desc, nullptr, true);
+
+	m_pGBuffer = new GBuffer;
+	m_pGBuffer->Initialize(m_pDevice, m_pContext, m_ScreenWidth, m_ScreenHeight);
 }
 
 void BaseRenderer::setMainViewport()
@@ -799,8 +798,14 @@ void BaseRenderer::setComputeShaderBarrier()
 void BaseRenderer::destroyBuffersForRendering()
 {
 	// swap chain에 사용될 back bufffer와 관련된 모든 버퍼를 초기화.
-	RELEASE(m_pBackBuffer);
-	RELEASE(m_pBackBufferRTV);
+	SAFE_RELEASE(m_pBackBuffer);
+	SAFE_RELEASE(m_pBackBufferRTV);
+	if (m_pGBuffer)
+	{
+		delete m_pGBuffer;
+		m_pGBuffer = nullptr;
+	}
+
 	m_PrevBuffer.Cleanup();
 	m_FloatBuffer.Cleanup();
 	m_ResolvedBuffer.Cleanup();
@@ -813,11 +818,135 @@ void BaseRenderer::beginGUI()
 	ImGui_ImplDX11_NewFrame();
 
 	ImGui::NewFrame();
-
 	ImGui::DockSpaceOverViewport();
 }
 
 void BaseRenderer::endGUI()
 {
 	ImGui::End();
+}
+
+void BaseRenderer::passGBuffer()
+{
+	_ASSERT(m_pGBuffer);
+
+	setMainViewport();
+	SetGlobalConsts(&m_Scene.GetGlobalConstantBufferPtr()->pBuffer, 0);
+	m_pGBuffer->PrepareRender();
+
+	for (UINT64 i = 0, size = m_Scene.RenderObjects.size(); i < size; ++i)
+	{
+		Model* const pModel = m_Scene.RenderObjects[i];
+		m_pResourceManager->SetPipelineState(pModel->GetGBufferPSO(false));
+		pModel->Render();
+	}
+
+	m_pGBuffer->AfterRender();
+}
+
+void BaseRenderer::passShadow()
+{
+	for (UINT64 i = 0, size = m_Scene.Lights.size(); i < size; ++i)
+	{
+		m_Scene.Lights[i].RenderShadowMap(m_Scene.RenderObjects, nullptr);
+	}
+}
+
+void BaseRenderer::passDeferredLighting()
+{
+	setMainViewport();
+	m_pResourceManager->SetPipelineState(GraphicsPSOType_DeferredRendering);
+	SetGlobalConsts(&m_Scene.GetGlobalConstantBufferPtr()->pBuffer, 0);
+
+	const float CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	m_pContext->ClearRenderTargetView(m_FloatBuffer.pRTV, CLEAR_COLOR);
+	m_pContext->OMSetRenderTargets(1, &m_FloatBuffer.pRTV, nullptr);
+
+	ID3D11ShaderResourceView* ppSRVs[5] = { m_pGBuffer->AlbedoBuffer.pSRV, m_pGBuffer->NormalBuffer.pSRV, m_pGBuffer->PositionBuffer.pSRV, m_pGBuffer->EmissionBuffer.pSRV, m_pGBuffer->ExtraBuffer.pSRV };
+	m_pContext->PSSetShaderResources(0, 5, ppSRVs);
+
+	ConstantBuffer* pLightConstantBuffer = m_Scene.GetLightConstantBufferPtr();
+	if (!pLightConstantBuffer)
+	{
+		__debugbreak();
+	}
+
+	LightConstants* pLightConstsData = (LightConstants*)pLightConstantBuffer->pSystemMem;
+	if (!pLightConstsData)
+	{
+		__debugbreak();
+	}
+
+	for (UINT64 i = 0, size = m_Scene.Lights.size(); i < size; ++i)
+	{
+		Light& curLight = m_Scene.Lights[i];
+
+		memcpy(&pLightConstsData->Lights, &m_Scene.Lights[i].Property, sizeof(LightProperty));
+		pLightConstantBuffer->Upload();
+
+		SetGlobalConsts(&pLightConstantBuffer->pBuffer, 1);
+		switch (curLight.Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
+		{
+			case LIGHT_DIRECTIONAL:
+				m_pContext->PSSetShaderResources(7, 1, &curLight.GetShadowMapPtr()->GetDirectionalLightShadowBuffer()->pSRV);
+				break;
+
+			case LIGHT_POINT:
+				m_pContext->PSSetShaderResources(6, 1, &curLight.GetShadowMapPtr()->GetPointLightShadowBuffer()->pSRV);
+				break;
+
+			case LIGHT_SPOT:
+				m_pContext->PSSetShaderResources(5, 1, &curLight.GetShadowMapPtr()->GetSpotLightShadowBuffer()->pSRV);
+				break;
+
+			default:
+				break;
+		}
+
+		m_pContext->Draw(6, 0);
+	}
+}
+
+void BaseRenderer::passSky()
+{
+	setMainViewport();
+	m_pContext->OMSetRenderTargets(1, &m_FloatBuffer.pRTV, m_pGBuffer->DepthBuffer.pDSV);
+
+	m_Scene.GetSkyPtr()->Render(m_Scene.GetSkyLUTPtr()->GetSkyLUT());
+	m_Scene.GetSunPtr()->Render();
+
+	ID3D11RenderTargetView* pNullRTV = nullptr;
+	ID3D11DepthStencilView* pNullDSV = nullptr;
+	m_pContext->OMSetRenderTargets(1, &pNullRTV, pNullDSV);
+}
+
+void BaseRenderer::passDebug()
+{
+	setMainViewport();
+	SetGlobalConsts(&m_Scene.GetGlobalConstantBufferPtr()->pBuffer, 0);
+	m_pContext->OMSetRenderTargets(1, &m_FloatBuffer.pRTV, m_pGBuffer->DepthBuffer.pDSV);
+
+	for (UINT64 i = 0, size = m_Scene.RenderObjects.size(); i < size; ++i)
+	{
+		Model* const pModel = m_Scene.RenderObjects[i];
+		if (pModel->bDrawNormals)
+		{
+			m_pResourceManager->SetPipelineState(GraphicsPSOType_Normal);
+			pModel->RenderNormals();
+		}
+		if (m_Scene.bDrawOBB)
+		{
+			m_pResourceManager->SetPipelineState(GraphicsPSOType_BoundingBox);
+			pModel->RenderWireBoundingBox();
+		}
+		if (m_Scene.bDrawBS)
+		{
+			m_pResourceManager->SetPipelineState(GraphicsPSOType_BoundingBox);
+			pModel->RenderWireBoundingSphere();
+		}
+	}
+
+	ID3D11RenderTargetView* pNullRTV = nullptr;
+	ID3D11DepthStencilView* pNullDSV = nullptr;
+	m_pContext->OMSetRenderTargets(1, &pNullRTV, pNullDSV);
 }

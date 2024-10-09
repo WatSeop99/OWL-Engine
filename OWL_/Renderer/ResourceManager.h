@@ -124,7 +124,7 @@ public:
 	ID3D11InputLayout* pSunIL = nullptr;
 
 	ID3D11BlendState* pMirrorBS = nullptr;
-	ID3D11BlendState* pAccumulateBS = nullptr;
+	ID3D11BlendState* pAdditiveBS = nullptr;
 	ID3D11BlendState* pAlphaBS = nullptr;
 
 	GraphicsPSO GraphicsPSOs[GraphicsPSOType_Count] = {};

@@ -210,7 +210,7 @@ void ResourceManager::Cleanup()
 
 	// Blend States
 	SAFE_RELEASE(pMirrorBS);
-	SAFE_RELEASE(pAccumulateBS);
+	SAFE_RELEASE(pAdditiveBS);
 	SAFE_RELEASE(pAlphaBS);
 
 	// Shaders
@@ -469,19 +469,19 @@ void ResourceManager::initBlendStates()
 
 
 	D3D11_BLEND_DESC blendDesc = {};
-	blendDesc.AlphaToCoverageEnable = TRUE;
+	blendDesc.AlphaToCoverageEnable = FALSE;
 	blendDesc.IndependentBlendEnable = FALSE;
 	blendDesc.RenderTarget[0].BlendEnable = TRUE;
-	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_BLEND_FACTOR;
-	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_BLEND_FACTOR; // INV 아님
+	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
 	blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
 	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
 	blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
 	blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-	hr = m_pDevice->CreateBlendState(&blendDesc, &pAccumulateBS);
+	hr = m_pDevice->CreateBlendState(&blendDesc, &pAdditiveBS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pAccumulateBS, "pAccumulateBS");
+	SET_DEBUG_INFO_TO_OBJECT(pAdditiveBS, "pAdditiveBS");
 
 	// Dst: 현재 백버퍼, Src: 새로 픽셀 쉐이더에서 출력.
 	ZeroMemory(&blendDesc, sizeof(blendDesc));
@@ -510,7 +510,8 @@ void ResourceManager::initDepthStencilStates()
 	D3D11_DEPTH_STENCIL_DESC dsDesc = {};
 	dsDesc.DepthEnable = TRUE;
 	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	//dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	dsDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 	dsDesc.StencilEnable = FALSE; // Stencil 불필요.
 	dsDesc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
 	dsDesc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
@@ -531,7 +532,7 @@ void ResourceManager::initDepthStencilStates()
 	dsDesc.DepthEnable = TRUE;
 	dsDesc.StencilEnable = FALSE;
 	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-	dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	dsDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 	hr = m_pDevice->CreateDepthStencilState(&dsDesc, &pSkyDSS);
 	BREAK_IF_FAILED(hr);
 	SET_DEBUG_INFO_TO_OBJECT(pSkyDSS, "pSkyDSS");
@@ -602,12 +603,6 @@ void ResourceManager::initShaders()
 		{ "BLENDINDICES", 0, DXGI_FORMAT_R8G8B8A8_UINT, 0, 76, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "BLENDINDICES", 1, DXGI_FORMAT_R8G8B8A8_UINT, 0, 80, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
-	const D3D11_INPUT_ELEMENT_DESC SAMPLING_IEs[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 4 * 3, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 4 * 3 + 4 * 3, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
 	const D3D11_INPUT_ELEMENT_DESC SKYBOX_IEs[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -642,7 +637,6 @@ void ResourceManager::initShaders()
 	};
 	UINT numBasicIEs = _countof(BASIC_IEs);
 	UINT numSkinnedIEs = _countof(SKINNED_IEs);
-	UINT numSamplingIEs = _countof(SAMPLING_IEs);
 	UINT numSkyboxIEs = _countof(SKYBOX_IEs);
 	UINT numGrassIEs = _countof(GRASS_IEs);
 	UINT numBillboardIEs = _countof(BILLBOARD_IEs);
@@ -690,8 +684,8 @@ void ResourceManager::initShaders()
 	hr = createVertexShaderAndInputLayout(L"./Shaders/Atmosphere/SunVS.hlsl", SUN_IEs, numSunIEs, nullptr, &pSunVS, &pSunIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = createPixelShader(L"./Shaders/BasicPS.hlsl", &pBasicPS);
-	BREAK_IF_FAILED(hr);
+	/*hr = createPixelShader(L"./Shaders/BasicPS.hlsl", &pBasicPS);
+	BREAK_IF_FAILED(hr);*/
 	hr = createPixelShader(L"./Shaders/NormalPS.hlsl", &pNormalPS);
 	BREAK_IF_FAILED(hr);
 	hr = createPixelShader(L"./Shaders/SkyboxPS.hlsl", &pSkyboxPS);
@@ -931,6 +925,7 @@ void ResourceManager::initPipelineStates()
 	// g_DeferredRenderingPSO
 	GraphicsPSOs[GraphicsPSOType_DeferredRendering] = GraphicsPSOs[GraphicsPSOType_PostProcessing];
 	GraphicsPSOs[GraphicsPSOType_DeferredRendering].pPixelShader = pDeferredLightingPS;
+	GraphicsPSOs[GraphicsPSOType_DeferredRendering].pBlendState = pAdditiveBS;
 	GraphicsPSOs[GraphicsPSOType_DeferredRendering].pRasterizerState = pSolidRS;
 
 	GraphicsPSOs[GraphicsPSOType_SkyLUT].pVertexShader = pSkyLUTVS;

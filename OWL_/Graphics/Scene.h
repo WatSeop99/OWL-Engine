@@ -26,27 +26,26 @@ public:
 		m_pFloatBuffer(pFloatBuffer),
 		m_pResolvedBuffer(pResolvedBuffer),
 		m_ScreenWidth(width),
-		m_ScreenHeight(height),
-		m_GBuffer(pFloatBuffer, width, height)
+		m_ScreenHeight(height)
 	{}
 	~Scene() { Cleanup(); }
 
-	void Initialize(BaseRenderer* pRenderer, const bool bUSE_MSAA);
+	void Initialize(BaseRenderer* pRenderer);
 
 	void Update(const float DELTA_TIME);
 
-	void Render();
-
 	void Cleanup();
-	void ResetBuffers(const bool bUSE_MSAA = false, const UINT NUM_QUALITY_LEVELS = 0);
 
-	inline void SetScreenWidth(const UINT WIDTH) { m_ScreenWidth = WIDTH; m_GBuffer.SetScreenWidth(WIDTH); }
-	inline void SetScreenHeight(const UINT HEIGHT) { m_ScreenHeight = HEIGHT; m_GBuffer.SetScreenHeight(HEIGHT); }
+	inline ConstantBuffer* GetGlobalConstantBufferPtr() { return &m_GlobalConstants; }
+	inline ConstantBuffer* GetLightConstantBufferPtr() { return &m_LightConstants; }
 
-	inline bool SupportDeferred() const { return m_GBuffer.bIsEnabled; }
+	inline AerialLUT* GetAerialLUTPtr() { return m_pAerialLUT; }
+	inline SkyLUT* GetSkyLUTPtr() { return m_pSkyLUT; }
+	inline Sky* GetSkyPtr() { return m_pSky; }
+	inline Sun* GetSunPtr() { return m_pSun; }
+
 	inline GlobalConstants* GetGlobalConstantsCPU() { return (GlobalConstants*)m_GlobalConstants.pSystemMem; }
 	inline ID3D11Buffer* GetGlobalConstantsGPU() const { return m_GlobalConstants.pBuffer; }
-	inline ID3D11ShaderResourceView* GetDepthOnlyBufferSRV() const { return m_DepthOnlyBuffer.pSRV; }
 	inline Model* GetMirror() { return m_pMirror; }
 
 	void LoadScene()
@@ -59,23 +58,8 @@ public:
 protected:
 	void initCubemaps(std::wstring&& basePath, std::wstring&& envFileName, std::wstring&& specularFileName, std::wstring&& irradianceFileName, std::wstring&& brdfFileName);
 
-	void createBuffers(const bool bUSE_MSAA = false, const UINT NUM_QUALITY_LEVELS = 0);
-	void createDepthBuffers(const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVELS);
-
 	void updateLights(const float DELTA_TIME);
 	void updateGlobalConstants(const float DELTA_TIME);
-
-	void renderDepthOnly();
-	void renderShadowMaps();
-	void renderSky();
-	void renderOpaqueObjects();
-	void renderGBuffer();
-	void renderDeferredLighting();
-	void renderOptions();
-	void renderMirror();
-
-	void setScreenViewport();
-	void setGlobalConstants(ID3D11Buffer** ppGlobalConstants, UINT slot);
 
 public:
 	std::vector<Model*> RenderObjects; // opaque.
@@ -95,13 +79,6 @@ private:
 	Camera& m_Camera;
 	Texture* m_pFloatBuffer = nullptr;
 	Texture* m_pResolvedBuffer = nullptr;
-
-	// g-buffer.
-	GBuffer m_GBuffer;
-
-	// depth buffer 관련.
-	ID3D11DepthStencilView* m_pDefaultDSV = nullptr;
-	Texture m_DepthOnlyBuffer; // No MSAA
 
 	// 렌더링을 위한 여러 상수 퍼버들.
 	ConstantBuffer m_GlobalConstants;

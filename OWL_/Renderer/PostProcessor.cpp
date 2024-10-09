@@ -151,7 +151,6 @@ void PostProcessor::Cleanup()
 
 	CombineFilter.Cleanup();
 
-	//SAFE_RELEASE(m_pPostEffectsConstsGPU);
 	if (m_pPostEffectsConstantBuffer)
 	{
 		delete m_pPostEffectsConstantBuffer;
@@ -256,6 +255,11 @@ void PostProcessor::renderPostProcessing()
 
 	// 블룸이 필요한 경우에만 계산.
 	ImageFilterConstData* pCombineFilterConstData = (ImageFilterConstData*)CombineFilter.GetConstantBufferPtr()->pSystemMem;
+	if (!pCombineFilterConstData)
+	{
+		__debugbreak();
+	}
+	
 	if (pCombineFilterConstData->Strength > 0.0f)
 	{
 		for (UINT64 i = 0, size = m_pBloomDownFilters.size(); i < size; ++i)

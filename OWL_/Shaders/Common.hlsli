@@ -70,7 +70,7 @@ cbuffer GlobalConstants : register(b0)
 
 cbuffer LightConstants : register(b1)
 {
-    Light lights[MAX_LIGHTS];
+    Light lights;
 }
 
 cbuffer MeshConstants : register(b2)

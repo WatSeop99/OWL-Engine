@@ -5,20 +5,17 @@
 class GBuffer
 {
 public:
-	GBuffer(Texture* pFloatBuffer, UINT width = 1280, UINT height = 720) : pFinalBuffer(pFloatBuffer), m_ScreenWidth(width), m_ScreenHeight(height) {}
+	GBuffer() = default;
 	~GBuffer() { Cleanup(); }
 
-	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
+	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const UINT WIDTH, const UINT HEIGHT);
 
 	void Update(); // 추후 GUI 업데이트.
 
-	void PrepareRender(ID3D11DepthStencilView* pDSV);
+	void PrepareRender();
 	void AfterRender();
 
 	void Cleanup();
-
-	inline void SetScreenWidth(const UINT WIDTH) { m_ScreenWidth = WIDTH; }
-	inline void SetScreenHeight(const UINT HEIGHT) { m_ScreenHeight = HEIGHT; }
 
 public:
 	bool bIsEnabled = true;
@@ -30,12 +27,8 @@ public:
 	Texture DepthBuffer;
 	Texture EmissionBuffer;
 	Texture ExtraBuffer; // float4 => { metallic, roughness, ao, height }
-	Texture* pFinalBuffer = nullptr; // float buffer임.
 
 private:
 	ID3D11Device* m_pDevice = nullptr;
 	ID3D11DeviceContext* m_pContext = nullptr;
-
-	UINT m_ScreenWidth;
-	UINT m_ScreenHeight;
 };

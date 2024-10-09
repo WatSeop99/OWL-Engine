@@ -12,6 +12,7 @@ using DirectX::SimpleMath::Ray;
 using DirectX::SimpleMath::Vector3;
 
 struct MeshInfo;
+class GBuffer;
 class Model;
 class Timer;
 
@@ -64,11 +65,16 @@ protected:
 	void beginGUI();
 	void endGUI();
 
+	void passGBuffer();
+	void passShadow();
+	void passDeferredLighting();
+	void passSky();
+	void passDebug();
+
 protected:
 	UINT m_ScreenWidth = 1280;
 	UINT m_ScreenHeight = 720;
 	HWND m_hMainWindow = nullptr;
-	bool m_bUseMSAA = false;
 	UINT m_NumQualityLevels = 0;
 
 	D3D_FEATURE_LEVEL m_FeatureLevel;
@@ -85,11 +91,10 @@ protected:
 	ID3D11Texture2D* m_pBackBuffer = nullptr;
 	ID3D11RenderTargetView* m_pBackBufferRTV = nullptr;
 
-	// 삼각형 레스터화 -> float(MSAA) -> resolved(No MSAA)
-	// -> 후처리(블룸, 톤매핑) -> backBuffer(최종 SwapChain Present)
 	Texture m_FloatBuffer;
 	Texture m_ResolvedBuffer;
 	Texture m_PrevBuffer; // 간단한 모션 블러 효과를 위함.
+	GBuffer* m_pGBuffer = nullptr;
 
 	// 레벨.
 	Scene m_Scene;

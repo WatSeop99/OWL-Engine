@@ -2,7 +2,7 @@
 #include "../Graphics/GraphicsUtils.h"
 #include "GBuffer.h"
 
-void GBuffer::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
+void GBuffer::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const UINT WIDTH, const UINT HEIGHT)
 {
 	_ASSERT(pDevice);
 	_ASSERT(pContext);
@@ -15,8 +15,8 @@ void GBuffer::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	HRESULT hr = S_OK;
 
 	D3D11_TEXTURE2D_DESC desc = {};
-	desc.Width = m_ScreenWidth;
-	desc.Height = m_ScreenHeight;
+	desc.Width = WIDTH;
+	desc.Height = HEIGHT;
 	desc.MipLevels = desc.ArraySize = 1;
 	desc.Format = DXGI_FORMAT_R16G16B16A16_UNORM;
 	desc.SampleDesc.Count = 1;
@@ -46,22 +46,20 @@ void GBuffer::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 void GBuffer::Update()
 {}
 
-void GBuffer::PrepareRender(ID3D11DepthStencilView* pDSV)
+void GBuffer::PrepareRender()
 {
 	_ASSERT(m_pContext);
-	_ASSERT(pDSV);
 
 	const float CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	ID3D11RenderTargetView* ppRTVs[5] = { AlbedoBuffer.pRTV, NormalBuffer.pRTV, PositionBuffer.pRTV, EmissionBuffer.pRTV, ExtraBuffer.pRTV };
+	
 	m_pContext->ClearRenderTargetView(AlbedoBuffer.pRTV, CLEAR_COLOR);
 	m_pContext->ClearRenderTargetView(NormalBuffer.pRTV, CLEAR_COLOR);
 	m_pContext->ClearRenderTargetView(PositionBuffer.pRTV, CLEAR_COLOR);
 	m_pContext->ClearRenderTargetView(EmissionBuffer.pRTV, CLEAR_COLOR);
 	m_pContext->ClearRenderTargetView(ExtraBuffer.pRTV, CLEAR_COLOR);
 	m_pContext->ClearDepthStencilView(DepthBuffer.pDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-	// m_pContext->ClearDepthStencilView(pDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	m_pContext->OMSetRenderTargets(5, ppRTVs, DepthBuffer.pDSV);
-	// m_pContext->OMSetRenderTargets(5, ppRTVs, pDSV);
 }
 
 void GBuffer::AfterRender()
@@ -83,6 +81,4 @@ void GBuffer::Cleanup()
 
 	SAFE_RELEASE(m_pContext);
 	SAFE_RELEASE(m_pDevice);
-
-	pFinalBuffer = nullptr;
 }

@@ -86,15 +86,6 @@ void DebugApp2::UpdateGUI()
 		ImGui::Checkbox("Wireframe", &m_Scene.bDrawAsWire);
 		ImGui::Checkbox("DrawOBB", &m_Scene.bDrawOBB);
 		ImGui::Checkbox("DrawBSphere", &m_Scene.bDrawBS);
-		if (ImGui::Checkbox("MSAA ON", &m_bUseMSAA))
-		{
-			BaseRenderer::destroyBuffersForRendering();
-			BaseRenderer::createBuffers();
-			m_Scene.ResetBuffers(m_bUseMSAA, m_NumQualityLevels);
-			m_PostProcessor.Initialize(this,
-									   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *m_FloatBuffer.GetTexture2DPtr(), *m_ResolvedBuffer.GetTexture2DPtr(), *m_PrevBuffer.GetTexture2DPtr(), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_Scene.GetDepthOnlyBufferSRV()},
-									   m_ScreenWidth, m_ScreenHeight, 4);
-		}
 		ImGui::TreePop();
 	}
 

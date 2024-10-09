@@ -67,7 +67,7 @@ float HaloEmission(float3 posView, float radius)
     float3 rayStart = float3(0.0f, 0.0f, 0.0f); // View space
     float3 dir = normalize(posView - rayStart);
 
-    float3 center = mul(float4(lights[1].Position, 1.0f), g_View).xyz; // View 공간으로 변환
+    float3 center = mul(float4(lights.Position, 1.0f), g_View).xyz; // View 공간으로 변환
 
     float t1 = 0.0f;
     float t2 = 0.0f;
@@ -107,8 +107,8 @@ float4 main(SamplingPixelShaderInput input) : SV_TARGET
 
         // Halo
         float3 haloColor = float3(0.96f, 0.94f, 0.82f);
-        float radius = lights[1].HaloRadius;
-        color += HaloEmission(posView.xyz, radius) * haloColor * lights[1].HaloStrength;
+        float radius = lights.HaloRadius;
+        color += HaloEmission(posView.xyz, radius) * haloColor * lights.HaloStrength;
 
         // Fog
         float dist = length(posView.xyz); // 눈의 위치가 원점인 좌표계.

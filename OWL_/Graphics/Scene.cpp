@@ -12,7 +12,7 @@
 #include "Atmosphere/TransmittanceLUT.h"
 #include "Scene.h"
 
-void Scene::Initialize(BaseRenderer* pRenderer, const bool bUSE_MSAA)
+void Scene::Initialize(BaseRenderer* pRenderer)
 {
 	_ASSERT(pRenderer);
 
@@ -23,13 +23,6 @@ void Scene::Initialize(BaseRenderer* pRenderer, const bool bUSE_MSAA)
 	ID3D11DeviceContext* pContext = pRenderer->GetDeviceContext();
 
 	LoadScene();
-
-	createBuffers();
-	m_GBuffer.bIsEnabled = true;
-	if (m_GBuffer.bIsEnabled && !bUSE_MSAA)
-	{
-		m_GBuffer.Initialize(pDevice, pContext);
-	}
 
 	Lights.resize(MAX_LIGHTS);
 	m_ppLightSpheres.resize(MAX_LIGHTS);
@@ -58,7 +51,7 @@ void Scene::Initialize(BaseRenderer* pRenderer, const bool bUSE_MSAA)
 		// Lights[1].Property.LightType = LIGHT_OFF;
 
 		// 조명 2.
-		Lights[2].Property.Radiance = Vector3(4.0f);
+		Lights[2].Property.Radiance = Vector3(1.0f);
 		Lights[2].Property.Position = Vector3(5.0f);
 		Lights[2].Property.Direction = Vector3(-1.0f, -1.0f, -1.0f);
 		Lights[2].Property.Direction.Normalize();
@@ -129,6 +122,7 @@ void Scene::Initialize(BaseRenderer* pRenderer, const bool bUSE_MSAA)
 		Vector3 position = Vector3(0.0f, -0.5f, 0.0f);
 		m_pGround->UpdateWorld(Matrix::CreateRotationX(DirectX::XM_PI * 0.5f) * Matrix::CreateTranslation(position));
 		m_pGround->bCastShadow = false; // 바닥은 그림자 만들기 생략.
+		RenderObjects.push_back(m_pGround);
 
 		m_MirrorPlane = DirectX::SimpleMath::Plane(position, Vector3(0.0f, 1.0f, 0.0f));
 		m_pMirror = m_pGround; // 바닥에 거울처럼 반사 구현.
@@ -266,45 +260,6 @@ void Scene::Update(const float DELTA_TIME)
 	}
 }
 
-void Scene::Render()
-{
-	_ASSERT(m_pRenderer);
-
-	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
-	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
-
-	setScreenViewport();
-
-	// 공통으로 사용하는 샘플러들 설정.
-	pContext->VSSetSamplers(0, (UINT)pResourceManager->SamplerStates.size(), pResourceManager->SamplerStates.data());
-	pContext->PSSetSamplers(0, (UINT)pResourceManager->SamplerStates.size(), pResourceManager->SamplerStates.data());
-
-	// 공통으로 사용할 텍스춰들: "Common.hlsli"에서 register(t10)부터 시작
-	ID3D11ShaderResourceView* ppCommonSRVs[] = { m_pEnvSRV, m_pSpecularSRV, m_pIrradianceSRV, m_pBrdfSRV };
-	UINT numCommonSRVs = _countof(ppCommonSRVs);
-	pContext->PSSetShaderResources(10, numCommonSRVs, ppCommonSRVs);
-
-	renderDepthOnly();
-	renderShadowMaps();
-
-	m_pSkyLUT->Generate();
-	m_pAerialLUT->Generate();
-
-	if (m_GBuffer.bIsEnabled)
-	{
-		renderGBuffer();
-		renderDeferredLighting();
-	}
-	else
-	{
-		renderOpaqueObjects();
-	}
-
-	renderMirror();
-	renderSky();
-	renderOptions();
-}
-
 void Scene::Cleanup()
 {
 	// SaveScene();
@@ -348,11 +303,6 @@ void Scene::Cleanup()
 
 	m_pMirror = nullptr;
 	m_ppLightSpheres.clear();
-	if (m_pGround)
-	{
-		delete m_pGround;
-		m_pGround = nullptr;
-	}
 	if (m_pSkybox)
 	{
 		delete m_pSkybox;
@@ -363,8 +313,6 @@ void Scene::Cleanup()
 	SAFE_RELEASE(m_pSpecularSRV);
 	SAFE_RELEASE(m_pIrradianceSRV);
 	SAFE_RELEASE(m_pEnvSRV);
-
-	SAFE_RELEASE(m_pDefaultDSV);
 
 	Lights.clear();
 	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
@@ -377,27 +325,6 @@ void Scene::Cleanup()
 	m_pRenderer = nullptr;
 	m_pFloatBuffer = nullptr;
 	m_pResolvedBuffer = nullptr;
-}
-
-void Scene::ResetBuffers(const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVELS)
-{
-	_ASSERT(m_pRenderer);
-
-	ID3D11Device* pDevice = m_pRenderer->GetDevice();
-	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
-
-	SAFE_RELEASE(m_pDefaultDSV);
-	m_DepthOnlyBuffer.Cleanup();
-
-	if (m_GBuffer.bIsEnabled && !bUSE_MSAA)
-	{
-		m_GBuffer.Cleanup();
-		m_GBuffer.SetScreenWidth(m_ScreenWidth);
-		m_GBuffer.SetScreenHeight(m_ScreenHeight);
-		m_GBuffer.Initialize(pDevice, pContext);
-	}
-
-	createDepthBuffers(bUSE_MSAA, NUM_QUALITY_LEVELS);
 }
 
 void Scene::initCubemaps(std::wstring&& basePath, std::wstring&& envFileName, std::wstring&& specularFileName, std::wstring&& irradianceFileName, std::wstring&& brdfFileName)
@@ -450,73 +377,13 @@ void Scene::initCubemaps(std::wstring&& basePath, std::wstring&& envFileName, st
 	pResourceManager->CreateTextureCubeFromFile((basePath + brdfFileName).c_str(), m_pBRDF->GetTexture2DPtr(), &textureDesc);*/
 }
 
-void Scene::createBuffers(const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVELS)
-{
-	createDepthBuffers(bUSE_MSAA, NUM_QUALITY_LEVELS);
-}
-
-void Scene::createDepthBuffers(const bool bUSE_MSAA, const UINT NUM_QUALITY_LEVELS)
-{
-	_ASSERT(m_pRenderer);
-
-	HRESULT hr = S_OK;
-	ID3D11Device* pDevice = m_pRenderer->GetDevice();
-	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
-
-	// depth buffers.
-	D3D11_TEXTURE2D_DESC desc = {};
-	desc.Width = m_ScreenWidth;
-	desc.Height = m_ScreenHeight;
-	desc.MipLevels = 1;
-	desc.ArraySize = 1;
-	desc.Usage = D3D11_USAGE_DEFAULT;
-	desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	desc.CPUAccessFlags = 0;
-	desc.MiscFlags = 0;
-	if (!m_GBuffer.bIsEnabled && bUSE_MSAA && NUM_QUALITY_LEVELS > 0)
-	{
-		desc.SampleDesc.Count = 4;
-		desc.SampleDesc.Quality = NUM_QUALITY_LEVELS - 1;
-	}
-	else
-	{
-		desc.SampleDesc.Count = 1;
-		desc.SampleDesc.Quality = 0;
-	}
-	desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // DSV 기준.
-
-	ID3D11Texture2D* pDepthStencilBuffer = nullptr;
-	hr = pDevice->CreateTexture2D(&desc, nullptr, &pDepthStencilBuffer);
-	BREAK_IF_FAILED(hr);
-
-	if (!m_GBuffer.bIsEnabled && bUSE_MSAA && NUM_QUALITY_LEVELS > 0)
-	{
-		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
-		hr = pDevice->CreateDepthStencilView(pDepthStencilBuffer, &dsvDesc, &m_pDefaultDSV);
-	}
-	else
-	{
-		hr = pDevice->CreateDepthStencilView(pDepthStencilBuffer, nullptr, &m_pDefaultDSV);
-	}
-	RELEASE(pDepthStencilBuffer);
-	BREAK_IF_FAILED(hr);
-
-	// Depth 전용.
-	desc.Format = DXGI_FORMAT_D32_FLOAT; // DSV 기준 포맷.
-	desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
-	desc.SampleDesc.Count = 1;
-	desc.SampleDesc.Quality = 0;
-	m_DepthOnlyBuffer.Initialize(pDevice, pContext, desc, nullptr, true);
-}
-
 void Scene::updateLights(const float DELTA_TIME)
 {
 	for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
 	{
 		Lights[i].Update(DELTA_TIME, m_Camera);
 		m_ppLightSpheres[i]->UpdateWorld(Matrix::CreateScale(Max(0.01f, Lights[i].Property.Radius)) * Matrix::CreateTranslation(Lights[i].Property.Position));
-		memcpy(&((LightConstants*)m_LightConstants.pSystemMem)->Lights[i], &Lights[i].Property, sizeof(LightProperty));
+		//memcpy(&((LightConstants*)m_LightConstants.pSystemMem)->Lights[i], &Lights[i].Property, sizeof(LightProperty));
 	}
 
 	m_LightConstants.Upload();
@@ -531,6 +398,10 @@ void Scene::updateGlobalConstants(const float DELTA_TIME)
 
 	GlobalConstants* pGlobalConstData = (GlobalConstants*)m_GlobalConstants.pSystemMem;
 	GlobalConstants* pReflectionConstData = (GlobalConstants*)m_ReflectionGlobalConstants.pSystemMem;
+	if (!pGlobalConstData || !pReflectionConstData)
+	{
+		__debugbreak();
+	}
 
 	pGlobalConstData->GlobalTime += DELTA_TIME;
 	pGlobalConstData->EyeWorld = EYE_WORLD;
@@ -551,335 +422,4 @@ void Scene::updateGlobalConstants(const float DELTA_TIME)
 
 	m_GlobalConstants.Upload();
 	m_ReflectionGlobalConstants.Upload();
-}
-
-void Scene::renderDepthOnly()
-{
-	_ASSERT(m_pRenderer);
-	
-	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
-	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
-
-	pContext->OMSetRenderTargets(0, nullptr, m_DepthOnlyBuffer.pDSV);
-	pContext->ClearDepthStencilView(m_DepthOnlyBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
-
-	setGlobalConstants(&m_GlobalConstants.pBuffer, 0);
-	//setPipelineState(g_DepthOnlyPSO);
-	pResourceManager->SetPipelineState(GraphicsPSOType_DepthOnly);
-
-	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
-	{
-		Model* pCurModel = RenderObjects[i];
-		pCurModel->Render();
-	}
-
-	/*if (m_pSkybox)
-	{
-		m_pSkybox->Render();
-	}*/
-	if (m_pMirror)
-	{
-		m_pMirror->Render();
-	}
-}
-
-void Scene::renderShadowMaps()
-{
-	_ASSERT(m_pRenderer);
-
-	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
-
-	// 쉐도우 맵을 다른 쉐이더에서 SRV 해제.
-	ID3D11ShaderResourceView* ppNulls[3] = { nullptr, };
-	pContext->PSSetShaderResources(14, 3, ppNulls);
-
-	 for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
-	 {
-	 	Lights[i].RenderShadowMap(RenderObjects, m_pMirror);
-	 }
-	m_ShadowMap.Render(RenderObjects, m_pMirror);
-}
-
-void Scene::renderSky()
-{
-	_ASSERT(m_pRenderer);
-	_ASSERT(m_pSky);
-	_ASSERT(m_pSun);
-	_ASSERT(m_pSkyLUT);
-
-	m_pSky->Render(m_pSkyLUT->GetSkyLUT());
-	m_pSun->Render();
-}
-
-void Scene::renderOpaqueObjects()
-{
-	_ASSERT(m_pRenderer);
-
-	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
-	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
-
-	// 다시 렌더링 해상도로 되돌리기.
-	setScreenViewport();
-
-	// 거울은 빼고 원래 대로 그리기.
-	const float CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	pContext->ClearRenderTargetView(m_pFloatBuffer->pRTV, CLEAR_COLOR);
-	pContext->ClearDepthStencilView(m_pDefaultDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-	pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_pDefaultDSV);
-
-	// 그림자맵들도 공용 텍스춰들 이후에 추가.
-	// 주의: 마지막 shadowDSV를 RenderTarget에서 해제한 후 설정.
-	ID3D11ShaderResourceView* ppShadowSRVs[MAX_LIGHTS] = { nullptr, };
-	UINT pointLightIndex = -1;
-	UINT directionalLightIndex = -1;
-	for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
-	{
-		ShadowMap& curShadowMap = Lights[i].GetShadowMap();
-
-		switch (Lights[i].Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
-		{
-			case LIGHT_DIRECTIONAL:
-				directionalLightIndex = (UINT)i;
-				break;
-
-			case LIGHT_POINT:
-				pointLightIndex = (UINT)i;
-				break;
-
-			case LIGHT_SPOT:
-			{
-				Texture* pCurShadowBuffer = curShadowMap.GetSpotLightShadowBuffer();
-				ppShadowSRVs[i] = pCurShadowBuffer->pSRV;
-			}
-			break;
-
-			default:
-				break;
-		}
-	}
-	pContext->PSSetShaderResources(14, (UINT)Lights.size(), ppShadowSRVs);
-
-	if (pointLightIndex != -1)
-	{
-		ShadowMap& curShadowMap = Lights[pointLightIndex].GetShadowMap();
-		Texture* pCurShadowCubeBuffer = curShadowMap.GetPointLightShadowBuffer();
-		pContext->PSSetShaderResources(17, 1, &pCurShadowCubeBuffer->pSRV);
-	}
-	if (directionalLightIndex != -1)
-	{
-		ShadowMap& curShadowMap = Lights[directionalLightIndex].GetShadowMap();
-		Texture* pCurShadowCascadeBuffer = curShadowMap.GetDirectionalLightShadowBuffer();
-		pContext->PSSetShaderResources(18, 1, &pCurShadowCascadeBuffer->pSRV);
-	}
-
-	setGlobalConstants(&m_GlobalConstants.pBuffer, 0);
-	setGlobalConstants(&m_LightConstants.pBuffer, 1);
-
-	// 스카이박스 그리기.
-	// 최적화를 하고 싶다면 투명한 물체들만 따로 마지막에 그리면 됨.
-	/*pResourceManager->SetPipelineState(bDrawAsWire ? GraphicsPSOType_SkyboxWire : GraphicsPSOType_SkyboxSolid);
-	m_pSkybox->Render();*/
-
-	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
-	{
-		Model* pCurModel = RenderObjects[i];
-		pResourceManager->SetPipelineState(pCurModel->GetPSO(bDrawAsWire));
-		pCurModel->Render();
-	}
-}
-
-void Scene::renderGBuffer()
-{
-	_ASSERT(m_pRenderer);
-
-	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
-
-	// 다시 렌더링 해상도로 되돌리기.
-	setScreenViewport();
-
-	setGlobalConstants(&m_GlobalConstants.pBuffer, 0);
-
-	m_GBuffer.PrepareRender(m_pDefaultDSV);
-
-	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
-	{
-		Model* pCurModel = RenderObjects[i];
-		pResourceManager->SetPipelineState(pCurModel->GetGBufferPSO(bDrawAsWire));
-		pCurModel->Render();
-	}
-
-	m_GBuffer.AfterRender();
-}
-
-void Scene::renderDeferredLighting()
-{
-	_ASSERT(m_pRenderer);
-
-	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
-	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
-
-	// 그림자맵들도 공용 텍스춰들 이후에 추가.
-	ID3D11ShaderResourceView* ppShadowSRVs[MAX_LIGHTS] = { nullptr, };
-	UINT pointLightIndex = -1;
-	UINT directionalLightIndex = -1;
-	for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
-	{
-		ShadowMap& curShadowMap = Lights[i].GetShadowMap();
-		switch (Lights[i].Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
-		{
-			case LIGHT_DIRECTIONAL:
-				directionalLightIndex = (UINT)i;
-				break;
-
-			case LIGHT_POINT:
-				pointLightIndex = (UINT)i;
-				break;
-
-			case LIGHT_SPOT:
-			{
-				Texture* pCurShadowBuffer = curShadowMap.GetSpotLightShadowBuffer();
-				ppShadowSRVs[i] = pCurShadowBuffer->pSRV;
-			}
-			break;
-
-			default:
-				break;
-		}
-	}
-	pContext->PSSetShaderResources(14, (UINT)Lights.size(), ppShadowSRVs);
-
-	if (pointLightIndex != -1)
-	{
-		ShadowMap& curShadowMap = Lights[pointLightIndex].GetShadowMap();
-		Texture* pCurShadowCubeBuffer = curShadowMap.GetPointLightShadowBuffer();
-		pContext->PSSetShaderResources(17, 1, &pCurShadowCubeBuffer->pSRV);
-	}
-	if (directionalLightIndex != -1)
-	{
-		ShadowMap& curShadowMap = Lights[directionalLightIndex].GetShadowMap();
-		Texture* pCurShadowCascadeBuffer = curShadowMap.GetDirectionalLightShadowBuffer();
-		pContext->PSSetShaderResources(18, 1, &pCurShadowCascadeBuffer->pSRV);
-	}
-
-	setGlobalConstants(&m_LightConstants.pBuffer, 1);
-
-	const float CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	pContext->ClearRenderTargetView(m_pFloatBuffer->pRTV, CLEAR_COLOR);
-	pContext->ClearDepthStencilView(m_pDefaultDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-	pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_pDefaultDSV);
-
-	ID3D11ShaderResourceView* ppSRVs[5] = { m_GBuffer.AlbedoBuffer.pSRV, m_GBuffer.NormalBuffer.pSRV, m_GBuffer.PositionBuffer.pSRV, m_GBuffer.EmissionBuffer.pSRV, m_GBuffer.ExtraBuffer.pSRV };
-	pContext->PSSetShaderResources(0, 5, ppSRVs);
-
-	pResourceManager->SetPipelineState(GraphicsPSOType_DeferredRendering);
-
-	pContext->Draw(6, 0);
-
-	pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_GBuffer.DepthBuffer.pDSV);
-
-	// 스카이박스 그리기.
-	/*pResourceManager->SetPipelineState(bDrawAsWire ? GraphicsPSOType_SkyboxWire : GraphicsPSOType_SkyboxSolid);
-	m_pSkybox->Render();*/
-}
-
-void Scene::renderOptions()
-{
-	_ASSERT(m_pRenderer);
-
-	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
-
-	setGlobalConstants(&m_GlobalConstants.pBuffer, 0);
-
-	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
-	{
-		Model* pCurModel = RenderObjects[i];
-		if (pCurModel->bDrawNormals)
-		{
-			pResourceManager->SetPipelineState(GraphicsPSOType_Normal);
-			pCurModel->RenderNormals();
-		}
-		if (bDrawOBB)
-		{
-			pResourceManager->SetPipelineState(GraphicsPSOType_BoundingBox);
-			pCurModel->RenderWireBoundingBox();
-		}
-		if (bDrawBS)
-		{
-			pResourceManager->SetPipelineState(GraphicsPSOType_BoundingBox);
-			pCurModel->RenderWireBoundingSphere();
-		}
-	}
-}
-
-void Scene::renderMirror()
-{
-	_ASSERT(m_pRenderer);
-
-	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
-	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
-
-	if (!m_pMirror)
-	{
-		return;
-	}
-
-	if (MirrorAlpha == 1.0f) // 불투명하면 거울만 그림.
-	{
-		pResourceManager->SetPipelineState(bDrawAsWire ? GraphicsPSOType_DefaultWire : GraphicsPSOType_DefaultSolid);
-		m_pMirror->Render();
-	}
-	else if (MirrorAlpha < 1.0f) // 투명도가 조금이라도 있으면 처리.
-	{
-		// 거울 위치만 StencilBuffer에 1로 표기.
-		pResourceManager->SetPipelineState(GraphicsPSOType_StencilMask);
-		m_pMirror->Render();
-
-		// 거울 위치에 반사된 물체들을 렌더링.
-		setGlobalConstants(&m_ReflectionGlobalConstants.pBuffer, 0);
-		pContext->ClearDepthStencilView(m_pDefaultDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
-
-		for (size_t i = 0, size = RenderObjects.size(); i < size; ++i)
-		{
-			Model* pCurModel = RenderObjects[i];
-			pResourceManager->SetPipelineState(pCurModel->GetPSO(bDrawAsWire));
-			pCurModel->Render();
-		}
-
-		/*pResourceManager->SetPipelineState(bDrawAsWire ? GraphicsPSOType_ReflectSkyboxWire : GraphicsPSOType_ReflectSkyboxSolid);
-		m_pSkybox->Render();*/
-
-		// 거울 자체의 재질을 "Blend"로 그림.
-		setGlobalConstants(&m_GlobalConstants.pBuffer, 0);
-		pResourceManager->SetPipelineState(bDrawAsWire ? GraphicsPSOType_MirrorBlendWire : GraphicsPSOType_MirrorBlendSolid);
-		m_pMirror->Render();
-	}
-}
-
-void Scene::setScreenViewport()
-{
-	_ASSERT(m_pRenderer);
-
-	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
-
-	D3D11_VIEWPORT screenViewport = { 0, };
-	screenViewport.TopLeftX = 0;
-	screenViewport.TopLeftY = 0;
-	screenViewport.Width = (float)m_ScreenWidth;
-	screenViewport.Height = (float)m_ScreenHeight;
-	screenViewport.MinDepth = 0.0f;
-	screenViewport.MaxDepth = 1.0f;
-
-	pContext->RSSetViewports(1, &screenViewport);
-}
-
-void Scene::setGlobalConstants(ID3D11Buffer** ppGlobalConstants, UINT slot)
-{
-	_ASSERT(m_pRenderer);
-
-	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
-
-	// 쉐이더와 일관성 유지 cbuffer GlobalConstants : register(slot).
-	pContext->VSSetConstantBuffers(slot, 1, ppGlobalConstants);
-	pContext->PSSetConstantBuffers(slot, 1, ppGlobalConstants);
-	pContext->GSSetConstantBuffers(slot, 1, ppGlobalConstants);
 }

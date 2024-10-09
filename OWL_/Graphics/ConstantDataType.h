@@ -67,7 +67,7 @@ ALIGN(16) struct LightProperty
 };
 ALIGN(16) struct LightConstants
 {
-	LightProperty Lights[MAX_LIGHTS];
+	LightProperty Lights;
 };
 ALIGN(16) struct ShadowConstants
 {
