@@ -20,7 +20,7 @@ void ShadowMap::Initialize(BaseRenderer* pRenderer, const UINT LIGHT_TYPE)
 
 	switch (LIGHT_TYPE & m_TOTAL_LIGHT_TYPE)
 	{
-		case LIGHT_DIRECTIONAL:
+		case LIGHT_SUN:
 		{
 			D3D11_TEXTURE2D_DESC textureDesc = {};
 			textureDesc.Width = m_ShadowWidth;
@@ -34,7 +34,7 @@ void ShadowMap::Initialize(BaseRenderer* pRenderer, const UINT LIGHT_TYPE)
 			textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
 			textureDesc.CPUAccessFlags = 0;
 			textureDesc.MiscFlags = 0;
-			m_DirectionalLightShadowBuffer.Initialize(pDevice, pContext, textureDesc, nullptr, false);
+			m_CascadeShadowBuffer.Initialize(pDevice, pContext, textureDesc, nullptr, false);
 
 			D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 			dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
@@ -43,7 +43,7 @@ void ShadowMap::Initialize(BaseRenderer* pRenderer, const UINT LIGHT_TYPE)
 			dsvDesc.Texture2DArray.FirstArraySlice = 0;
 			dsvDesc.Texture2DArray.ArraySize = 4;
 			dsvDesc.Texture2DArray.MipSlice = 0;
-			m_DirectionalLightShadowBuffer.CreateDSV(dsvDesc);
+			m_CascadeShadowBuffer.CreateDSV(dsvDesc);
 
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 			srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
@@ -52,7 +52,7 @@ void ShadowMap::Initialize(BaseRenderer* pRenderer, const UINT LIGHT_TYPE)
 			srvDesc.Texture2DArray.ArraySize = 4;
 			srvDesc.Texture2DArray.MipLevels = 1;
 			srvDesc.Texture2DArray.MostDetailedMip = 0;
-			m_DirectionalLightShadowBuffer.CreateSRV(srvDesc);
+			m_CascadeShadowBuffer.CreateSRV(srvDesc);
 
 			shadowBufferCount = 4;
 		}
@@ -73,14 +73,14 @@ void ShadowMap::Initialize(BaseRenderer* pRenderer, const UINT LIGHT_TYPE)
 			cubeDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
 			cubeDesc.CPUAccessFlags = 0;
 			cubeDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
-			m_PointLightShadowBuffer.Initialize(pDevice, pContext, cubeDesc, nullptr, false);
+			m_ShadowCubeBuffer.Initialize(pDevice, pContext, cubeDesc, nullptr, false);
 
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 			srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
 			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
 			srvDesc.TextureCube.MipLevels = cubeDesc.MipLevels;
 			srvDesc.TextureCube.MostDetailedMip = 0;
-			m_PointLightShadowBuffer.CreateSRV(srvDesc);
+			m_ShadowCubeBuffer.CreateSRV(srvDesc);
 
 			D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 			dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
@@ -88,14 +88,14 @@ void ShadowMap::Initialize(BaseRenderer* pRenderer, const UINT LIGHT_TYPE)
 			dsvDesc.Texture2DArray.MipSlice = 0;
 			dsvDesc.Texture2DArray.FirstArraySlice = 0;
 			dsvDesc.Texture2DArray.ArraySize = 6;
-			m_PointLightShadowBuffer.CreateDSV(dsvDesc);
+			m_ShadowCubeBuffer.CreateDSV(dsvDesc);
 
 			shadowBufferCount = 6;
 		}
 			break;
 
+		case LIGHT_DIRECTIONAL:
 		case LIGHT_SPOT:
-		case LIGHT_SUN:
 		{
 			D3D11_TEXTURE2D_DESC textureDesc = {};
 			textureDesc.Width = m_ShadowWidth;
@@ -109,7 +109,7 @@ void ShadowMap::Initialize(BaseRenderer* pRenderer, const UINT LIGHT_TYPE)
 			textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
 			textureDesc.CPUAccessFlags = 0;
 			textureDesc.MiscFlags = 0;
-			m_SpotLightShadowBuffer.Initialize(pDevice, pContext, textureDesc, nullptr, true);
+			m_Shadow2DBuffer.Initialize(pDevice, pContext, textureDesc, nullptr, true);
 
 			shadowBufferCount = 1;
 		}
@@ -125,26 +125,26 @@ void ShadowMap::Initialize(BaseRenderer* pRenderer, const UINT LIGHT_TYPE)
 	{
 		m_pShadowConstantsBuffers[i].Initialize(pDevice, pContext, sizeof(GlobalConstants), &initialGlobal);
 	}
-	if ((LIGHT_TYPE & m_TOTAL_LIGHT_TYPE) & (LIGHT_DIRECTIONAL | LIGHT_POINT))
+	if ((LIGHT_TYPE & m_TOTAL_LIGHT_TYPE) & (LIGHT_SUN | LIGHT_POINT))
 	{
 		m_ShadowConstantsBufferForGS.Initialize(pDevice, pContext, sizeof(ShadowConstants), &initialShadow);
 	}
 }
 
-void ShadowMap::Update(const LightProperty& PROPERTY, Camera& lightCam, Camera& mainCamera)
+void ShadowMap::Update(const LightProperty& PROPERTY, Camera* pLightCam, Camera* pMainCamera)
 {
 	Matrix lightView;
-	Matrix lightProjection = lightCam.GetProjection();
+	Matrix lightProjection = pLightCam->GetProjection();
 
 	switch (m_LightType & m_TOTAL_LIGHT_TYPE)
 	{
-		case LIGHT_DIRECTIONAL:
+		case LIGHT_SUN:
 		{
-			bool bOriginalFPS = mainCamera.bUseFirstPersonView;
-			mainCamera.bUseFirstPersonView = true;
+			bool bOriginalFPS = pMainCamera->bUseFirstPersonView;
+			pMainCamera->bUseFirstPersonView = true;
 
-			Matrix camView = mainCamera.GetView();
-			Matrix camProjection = mainCamera.GetProjection();
+			Matrix camView = pMainCamera->GetView();
+			Matrix camProjection = pMainCamera->GetProjection();
 			Matrix lightSectionView;
 			Matrix lightSectionProjection;
 			Vector3 lightSectionPosition;
@@ -169,7 +169,7 @@ void ShadowMap::Update(const LightProperty& PROPERTY, Camera& lightCam, Camera& 
 
 			m_ShadowConstantsBufferForGS.Upload();
 
-			mainCamera.bUseFirstPersonView = bOriginalFPS;
+			pMainCamera->bUseFirstPersonView = bOriginalFPS;
 		}
 		break;
 
@@ -217,9 +217,10 @@ void ShadowMap::Update(const LightProperty& PROPERTY, Camera& lightCam, Camera& 
 		}
 		break;
 
+
 		case LIGHT_SPOT:
 		{
-			lightView = DirectX::XMMatrixLookAtLH(PROPERTY.Position, PROPERTY.Position + PROPERTY.Direction, lightCam.GetUpDir());
+			lightView = DirectX::XMMatrixLookAtLH(PROPERTY.Position, PROPERTY.Position + PROPERTY.Direction, pLightCam->GetUpDir());
 
 			GlobalConstants* pShadowGlobalConstData = (GlobalConstants*)m_pShadowConstantsBuffers[0].pSystemMem;
 			pShadowGlobalConstData->EyeWorld = PROPERTY.Position;
@@ -232,13 +233,13 @@ void ShadowMap::Update(const LightProperty& PROPERTY, Camera& lightCam, Camera& 
 		}
 		break;
 
-		case LIGHT_SUN:
+		case LIGHT_DIRECTIONAL:
 		{
-			bool bOriginalFPS = mainCamera.bUseFirstPersonView;
-			mainCamera.bUseFirstPersonView = true;
+			bool bOriginalFPS = pMainCamera->bUseFirstPersonView;
+			pMainCamera->bUseFirstPersonView = true;
 
-			lightProjection = lightCam.GetProjection();
-			lightView = DirectX::XMMatrixLookAtLH(PROPERTY.Position, PROPERTY.Position + PROPERTY.Direction, lightCam.GetUpDir());
+			lightProjection = pLightCam->GetProjection();
+			lightView = DirectX::XMMatrixLookAtLH(PROPERTY.Position, PROPERTY.Position + PROPERTY.Direction, pLightCam->GetUpDir());
 
 			GlobalConstants* pShadowGlobalConstData = (GlobalConstants*)m_pShadowConstantsBuffers[0].pSystemMem;
 			pShadowGlobalConstData->EyeWorld = PROPERTY.Position;
@@ -249,7 +250,7 @@ void ShadowMap::Update(const LightProperty& PROPERTY, Camera& lightCam, Camera& 
 
 			m_pShadowConstantsBuffers[0].Upload();
 
-			mainCamera.bUseFirstPersonView = bOriginalFPS;
+			pMainCamera->bUseFirstPersonView = bOriginalFPS;
 		}
 		break;
 
@@ -269,10 +270,10 @@ void ShadowMap::Render(std::vector<Model*>& pBasicList, Model* pMirror)
 
 	switch (m_LightType & m_TOTAL_LIGHT_TYPE)
 	{
-		case LIGHT_DIRECTIONAL:
+		case LIGHT_SUN:
 		{
-			pContext->ClearDepthStencilView(m_DirectionalLightShadowBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
-			pContext->OMSetRenderTargets(0, nullptr, m_DirectionalLightShadowBuffer.pDSV);
+			pContext->ClearDepthStencilView(m_CascadeShadowBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
+			pContext->OMSetRenderTargets(0, nullptr, m_CascadeShadowBuffer.pDSV);
 			pContext->GSSetConstantBuffers(0, 1, &m_ShadowConstantsBufferForGS.pBuffer);
 
 			for (UINT64 i = 0, size = pBasicList.size(); i < size; ++i)
@@ -295,8 +296,8 @@ void ShadowMap::Render(std::vector<Model*>& pBasicList, Model* pMirror)
 
 		case LIGHT_POINT:
 		{
-			pContext->ClearDepthStencilView(m_PointLightShadowBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
-			pContext->OMSetRenderTargets(0, nullptr, m_PointLightShadowBuffer.pDSV);
+			pContext->ClearDepthStencilView(m_ShadowCubeBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
+			pContext->OMSetRenderTargets(0, nullptr, m_ShadowCubeBuffer.pDSV);
 			pContext->GSSetConstantBuffers(0, 1, &m_ShadowConstantsBufferForGS.pBuffer);
 
 			for (UINT64 i = 0, size = pBasicList.size(); i < size; ++i)
@@ -317,14 +318,12 @@ void ShadowMap::Render(std::vector<Model*>& pBasicList, Model* pMirror)
 		}
 		break;
 
+		case LIGHT_DIRECTIONAL:
 		case LIGHT_SPOT:
-		case LIGHT_SUN:
 		{
-			pContext->ClearDepthStencilView(m_SpotLightShadowBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
-			pContext->OMSetRenderTargets(0, nullptr, m_SpotLightShadowBuffer.pDSV);
-			pContext->VSSetConstantBuffers(0, 1, &m_pShadowConstantsBuffers[0].pBuffer);
-			pContext->PSSetConstantBuffers(0, 1, &m_pShadowConstantsBuffers[0].pBuffer);
-			pContext->GSSetConstantBuffers(0, 1, &m_pShadowConstantsBuffers[0].pBuffer);
+			pContext->ClearDepthStencilView(m_Shadow2DBuffer.pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
+			pContext->OMSetRenderTargets(0, nullptr, m_Shadow2DBuffer.pDSV);
+			m_pRenderer->SetGlobalConsts(&m_pShadowConstantsBuffers[0].pBuffer, 0);
 
 			for (UINT64 i = 0, size = pBasicList.size(); i < size; ++i)
 			{
@@ -351,9 +350,9 @@ void ShadowMap::Render(std::vector<Model*>& pBasicList, Model* pMirror)
 
 void ShadowMap::Cleanup()
 {
-	m_SpotLightShadowBuffer.Cleanup();
-	m_PointLightShadowBuffer.Cleanup();
-	m_DirectionalLightShadowBuffer.Cleanup();
+	m_Shadow2DBuffer.Cleanup();
+	m_ShadowCubeBuffer.Cleanup();
+	m_CascadeShadowBuffer.Cleanup();
 	m_ShadowConstantsBufferForGS.Cleanup();
 	for (int i = 0; i < 6; ++i)
 	{
@@ -371,7 +370,7 @@ void ShadowMap::setShadowViewport()
 
 	switch (m_LightType & m_TOTAL_LIGHT_TYPE)
 	{
-		case LIGHT_DIRECTIONAL:
+		case LIGHT_SUN:
 		{
 			const D3D11_VIEWPORT pViewports[4] =
 			{
@@ -399,8 +398,8 @@ void ShadowMap::setShadowViewport()
 		}
 		break;
 
+		case LIGHT_DIRECTIONAL:
 		case LIGHT_SPOT:
-		case LIGHT_SUN:
 		{
 			D3D11_VIEWPORT shadowViewport = { 0, };
 			shadowViewport.TopLeftX = 0;

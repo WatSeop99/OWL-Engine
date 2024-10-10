@@ -15,6 +15,7 @@ public:
 
 	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE2D_DESC& DESC, void* pInitData, bool bCreatingViews);
 	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, const D3D11_TEXTURE3D_DESC& DESC, void* pInitData, bool bCreatingViews);
+	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID3D11Texture2D* pTexture, bool bCreatingViews);
 
 	void CreateRTV(const D3D11_RENDER_TARGET_VIEW_DESC& RTV_DESC);
 	void CreateSRV(const D3D11_SHADER_RESOURCE_VIEW_DESC& SRV_DESC);
@@ -25,8 +26,8 @@ public:
 
 	void Cleanup();
 
-	inline ID3D11Texture2D** GetTexture2DPtr() { return &m_pTexture2D; }
-	inline ID3D11Texture3D** GetTexture3DPtr() { return &m_pTexture3D; }
+	inline ID3D11Texture2D** GetTexture2DPPtr() { return &m_pTexture2D; }
+	inline ID3D11Texture3D** GetTexture3DPPtr() { return &m_pTexture3D; }
 
 protected:
 	void createTexture();

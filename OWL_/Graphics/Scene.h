@@ -21,10 +21,8 @@ class TransmittanceLUT;
 class Scene
 {
 public:
-	Scene(Camera& camera, Texture* pFloatBuffer, Texture* pResolvedBuffer, UINT width = 1280, UINT height = 720) :
-		m_Camera(camera),
-		m_pFloatBuffer(pFloatBuffer),
-		m_pResolvedBuffer(pResolvedBuffer),
+	Scene(Camera* pCamera, UINT width = 1280, UINT height = 720) :
+		m_pMainCamera(pCamera),
 		m_ScreenWidth(width),
 		m_ScreenHeight(height)
 	{}
@@ -72,13 +70,8 @@ public:
 	float MirrorAlpha = 1.0f; // Opacity
 
 private:
-	BaseRenderer* m_pRenderer = nullptr;
-
 	UINT m_ScreenWidth;
 	UINT m_ScreenHeight;
-	Camera& m_Camera;
-	Texture* m_pFloatBuffer = nullptr;
-	Texture* m_pResolvedBuffer = nullptr;
 
 	// 렌더링을 위한 여러 상수 퍼버들.
 	ConstantBuffer m_GlobalConstants;
@@ -114,4 +107,8 @@ private:
 	TransmittanceLUT* m_pTransmittanceLUT = nullptr;
 	MultiScatteringLUT* m_pMultiScatteringLUT = nullptr;
 	Sun* m_pSun = nullptr;
+
+	// DO NOT release directly.
+	BaseRenderer* m_pRenderer = nullptr;
+	Camera* m_pMainCamera = nullptr;
 };

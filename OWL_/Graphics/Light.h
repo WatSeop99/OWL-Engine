@@ -8,13 +8,16 @@ class Model;
 
 class Light
 {
+private:
+	const UINT m_TOTAL_LIGHT_TYPE = (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT);
+
 public:
 	Light(UINT width = 1280, UINT height = 1280);
 	~Light() { Cleanup(); }
 
 	void Initialize(BaseRenderer* pRenderer);
 
-	void Update(float deltaTime, Camera& mainCamera);
+	void Update(float deltaTime, Camera* pMainCamera);
 
 	void RenderShadowMap(std::vector<Model*>& pBasicList, Model* pMirror);
 
@@ -31,12 +34,8 @@ public:
 	bool bRotated = false;
 	bool bVisible = true;
 	LightProperty Property;
-
-private:
-	const UINT m_TOTAL_LIGHT_TYPE = (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT);
 	
+private:
 	Camera m_LightViewCamera;
 	ShadowMap m_ShadowMap;
-	
-
 };

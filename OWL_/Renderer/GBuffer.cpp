@@ -39,7 +39,7 @@ void GBuffer::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, c
 
 	// depth buffers.
 	desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // DSV ±‚¡ÿ.
-	desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
 	DepthBuffer.Initialize(pDevice, pContext, desc, nullptr, true);
 }
 

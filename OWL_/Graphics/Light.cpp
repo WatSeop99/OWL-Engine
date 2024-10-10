@@ -22,7 +22,7 @@ void Light::Initialize(BaseRenderer* pRenderer)
 	switch (Property.LightType & m_TOTAL_LIGHT_TYPE)
 	{
 		case LIGHT_DIRECTIONAL:
-			m_LightViewCamera.SetFarZ(500.0f);
+			//m_LightViewCamera.SetFarZ(500.0f);
 			m_ShadowMap.SetShadowWidth(2560);
 			m_ShadowMap.SetShadowHeight(2560);
 			break;
@@ -39,7 +39,7 @@ void Light::Initialize(BaseRenderer* pRenderer)
 	m_ShadowMap.Initialize(pRenderer, Property.LightType);
 }
 
-void Light::Update(float deltaTime, Camera& mainCamera)
+void Light::Update(float deltaTime, Camera* pMainCamera)
 {
 	static Vector3 s_LightDev = Vector3::UnitX;
 	if (bRotated)
@@ -71,20 +71,23 @@ void Light::Update(float deltaTime, Camera& mainCamera)
 	// 그림자 맵 생성시 필요.
 	Matrix lightView = DirectX::XMMatrixLookAtLH(Property.Position, Property.Position + Property.Direction, up); // 카메라를 이용하면 pitch, yaw를 고려하게됨. 이를 방지하기 위함.
 	Matrix lightProjection = m_LightViewCamera.GetProjection();
-	m_ShadowMap.Update(Property, m_LightViewCamera, mainCamera);
+	m_ShadowMap.Update(Property, &m_LightViewCamera, pMainCamera);
 
 	switch (Property.LightType & m_TOTAL_LIGHT_TYPE)
 	{
 		case LIGHT_DIRECTIONAL:
 		{
-			ConstantBuffer* const pShadowConstants = m_ShadowMap.GetShadowConstantBuffers();
+			/*ConstantBuffer* const pShadowConstants = m_ShadowMap.GetShadowConstantBuffers();
 			for (int i = 0; i < 4; ++i)
 			{
 				GlobalConstants* const pConstantData = (GlobalConstants*)pShadowConstants[i].pSystemMem;
 				Property.ViewProjections[i] = pConstantData->ViewProjection;
 				Property.Projections[i] = pConstantData->Projection;
 				Property.InverseProjections[i] = pConstantData->InverseProjection;
-			}
+			}*/
+			Property.ViewProjections[0] = (lightView * lightProjection).Transpose();
+			Property.Projections[0] = lightProjection.Transpose();
+			Property.InverseProjections[0] = lightProjection.Invert().Transpose();
 		}
 		break;
 
@@ -103,8 +106,6 @@ void Light::Update(float deltaTime, Camera& mainCamera)
 
 		case LIGHT_SPOT:
 		{
-			// 그림자를 실제로 렌더링할 때 필요.
-			// 반사된 장면에서도 그림자를 그리고 싶다면 조명도 반사시켜서 넣어주면 됨.
 			Property.ViewProjections[0] = (lightView * lightProjection).Transpose();
 			Property.Projections[0] = lightProjection.Transpose();
 			Property.InverseProjections[0] = lightProjection.Invert().Transpose();

@@ -6,6 +6,7 @@
 class BaseRenderer;
 class ConstantBuffer;
 class Mesh;
+class Texture;
 
 class PostProcessor
 {
@@ -13,14 +14,10 @@ public:
 	struct PostProcessingBuffers
 	{
 		ID3D11Buffer* pGlobalConstsGPU = nullptr;
-		ID3D11Texture2D* pBackBuffer = nullptr;
-		ID3D11Texture2D* pFloatBuffer = nullptr;
-		ID3D11Texture2D* pResolvedBuffer = nullptr;
-		ID3D11Texture2D* pPrevBuffer = nullptr;
-		ID3D11RenderTargetView* pBackBufferRTV = nullptr;
-		ID3D11ShaderResourceView* pResolvedSRV = nullptr;
-		ID3D11ShaderResourceView* pPrevSRV = nullptr;
-		ID3D11ShaderResourceView* pDepthOnlySRV = nullptr;
+		Texture* pBackBuffer = nullptr;
+		Texture* pFloatBuffer = nullptr;
+		Texture* pPrevBuffer = nullptr;
+		Texture* pDepthBuffer = nullptr;
 	};
 
 public:
@@ -61,10 +58,7 @@ private:
 	UINT m_ScreenHeight = 0;
 
 	ConstantBuffer* m_pPostEffectsConstantBuffer = nullptr;
-
-	ID3D11Texture2D* m_pPostEffectsBuffer = nullptr;
-	ID3D11RenderTargetView* m_pPostEffectsRTV = nullptr;
-	ID3D11ShaderResourceView* m_pPostEffectsSRV = nullptr;
+	Texture* m_pPostEffectsBuffer = nullptr;
 
 	std::vector<ImageFilter> m_pBloomDownFilters;
 	std::vector<ImageFilter> m_pBloomUpFilters;
@@ -74,12 +68,8 @@ private:
 	// Do not delete these pointer.
 	BaseRenderer* m_pRenderer = nullptr;
 	ID3D11Buffer* m_pGlobalConstsGPU = nullptr;
-	ID3D11Texture2D* m_pBackBuffer = nullptr;
-	ID3D11Texture2D* m_pFloatBuffer = nullptr;
-	ID3D11Texture2D* m_pResolvedBuffer = nullptr;
-	ID3D11Texture2D* m_pPrevBuffer = nullptr; // 간단한 모션 블러 효과
-	ID3D11RenderTargetView* m_pBackBufferRTV = nullptr;
-	ID3D11ShaderResourceView* m_pResolvedSRV = nullptr;
-	ID3D11ShaderResourceView* m_pPrevSRV = nullptr;
-	ID3D11ShaderResourceView* m_pDepthOnlySRV = nullptr;
+	Texture* m_pBackBuffer = nullptr;
+	Texture* m_pFloatBuffer = nullptr;
+	Texture* m_pPrevBuffer = nullptr;
+	Texture* m_pDepthBuffer = nullptr;
 };

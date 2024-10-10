@@ -1,240 +1,240 @@
-#include "Common.hlsli"
-#include "ShadingUtil.hlsli"
+//#include "Common.hlsli"
+//#include "ShadingUtil.hlsli"
 
-// https://github.com/Nadrin/PBR/blob/master/data/shaders/hlsl/pbr.hlsl
+//// https://github.com/Nadrin/PBR/blob/master/data/shaders/hlsl/pbr.hlsl
 
-// 메쉬 재질 텍스춰들 t0 부터 시작.
-Texture2D g_AlbedoTex : register(t0);
-Texture2D g_EmissiveTex : register(t1);
-Texture2D g_NormalTex : register(t2);
-Texture2D g_AmbientOcclusionTex : register(t3);
-Texture2D g_MetallicTex : register(t4);
-Texture2D g_RoughnessTex : register(t5);
+//// 메쉬 재질 텍스춰들 t0 부터 시작.
+//Texture2D g_AlbedoTex : register(t0);
+//Texture2D g_EmissiveTex : register(t1);
+//Texture2D g_NormalTex : register(t2);
+//Texture2D g_AmbientOcclusionTex : register(t3);
+//Texture2D g_MetallicTex : register(t4);
+//Texture2D g_RoughnessTex : register(t5);
 
-struct PixelShaderOutput
-{
-    float4 PixelColor : SV_TARGET0;
-};
+//struct PixelShaderOutput
+//{
+//    float4 PixelColor : SV_TARGET0;
+//};
 
 
-// Assuming that LIGHT_FRUSTUM_WIDTH == LIGHT_FRUSTUM_HEIGHT
-// #define LIGHT_RADIUS_UV (LIGHT_WORLD_RADIUS / LIGHT_FRUSTUM_WIDTH)
+//// Assuming that LIGHT_FRUSTUM_WIDTH == LIGHT_FRUSTUM_HEIGHT
+//// #define LIGHT_RADIUS_UV (LIGHT_WORLD_RADIUS / LIGHT_FRUSTUM_WIDTH)
 
-float3 GetNormal(PixelShaderInput input)
-{
-    float3 normalWorld = normalize(input.WorldNormal);
+//float3 GetNormal(PixelShaderInput input)
+//{
+//    float3 normalWorld = normalize(input.WorldNormal);
     
-    if (bUseNormalMap)
-    {
-        float3 normal = g_NormalTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).rgb;
-        normal = 2.0f * normal - 1.0f; // 범위 조절 [-1.0, 1.0]
+//    if (bUseNormalMap)
+//    {
+//        float3 normal = g_NormalTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).rgb;
+//        normal = 2.0f * normal - 1.0f; // 범위 조절 [-1.0, 1.0]
 
-        // OpenGL 용 노멀맵일 경우에는 y 방향을 뒤집어줌.
-        normal.y = (bInvertNormalMapY ? -normal.y : normal.y);
+//        // OpenGL 용 노멀맵일 경우에는 y 방향을 뒤집어줌.
+//        normal.y = (bInvertNormalMapY ? -normal.y : normal.y);
         
-        float3 N = normalWorld;
-        float3 T = normalize(input.WorldTangent - dot(input.WorldTangent, N) * N);
-        float3 B = cross(N, T);
+//        float3 N = normalWorld;
+//        float3 T = normalize(input.WorldTangent - dot(input.WorldTangent, N) * N);
+//        float3 B = cross(N, T);
         
-        // matrix는 float4x4, 여기서는 벡터 변환용이라서 3x3 사용.
-        float3x3 TBN = float3x3(T, B, N);
-        normalWorld = normalize(mul(normal, TBN));
-    }
+//        // matrix는 float4x4, 여기서는 벡터 변환용이라서 3x3 사용.
+//        float3x3 TBN = float3x3(T, B, N);
+//        normalWorld = normalize(mul(normal, TBN));
+//    }
     
-    return normalWorld;
-}
+//    return normalWorld;
+//}
 
-// 참고: https://github.com/opengl-tutorials/ogl/blob/master/tutorial16_shadowmaps/ShadowMapping.fragmentshader
-float random(float3 seed, int i)
-{
-    float4 seed4 = float4(seed, i);
-    float dotProduct = dot(seed4, float4(12.9898f, 78.233f, 45.164f, 94.673f));
+//// 참고: https://github.com/opengl-tutorials/ogl/blob/master/tutorial16_shadowmaps/ShadowMapping.fragmentshader
+//float random(float3 seed, int i)
+//{
+//    float4 seed4 = float4(seed, i);
+//    float dotProduct = dot(seed4, float4(12.9898f, 78.233f, 45.164f, 94.673f));
     
-    return frac(sin(dotProduct) * 43758.5453f);
-}
+//    return frac(sin(dotProduct) * 43758.5453f);
+//}
 
-float3 LightRadiance(Light light, int shadowMapIndex, float3 representativePoint, float3 posWorld, float3 normalWorld)
-{
-    // Directional light.
-    float3 lightVec = (light.Type & LIGHT_DIRECTIONAL ? -light.Direction : representativePoint - posWorld); // light.position - posWorld;
-    float lightDist = length(lightVec);
-    lightVec /= lightDist;
+//float3 LightRadiance(Light light, int shadowMapIndex, float3 representativePoint, float3 posWorld, float3 normalWorld)
+//{
+//    // Directional light.
+//    float3 lightVec = (light.Type & LIGHT_DIRECTIONAL ? -light.Direction : representativePoint - posWorld); // light.position - posWorld;
+//    float lightDist = length(lightVec);
+//    lightVec /= lightDist;
 
-    // Spot light.
-    float spotFator = (light.Type & LIGHT_SPOT ? pow(max(-dot(lightVec, light.Direction), 0.0f), light.SpotPower) : 1.0f);
+//    // Spot light.
+//    float spotFator = (light.Type & LIGHT_SPOT ? pow(max(-dot(lightVec, light.Direction), 0.0f), light.SpotPower) : 1.0f);
         
-    // Distance attenuation.
-    float att = saturate((light.FallOffEnd - lightDist) / (light.FallOffEnd - light.FallOffStart));
+//    // Distance attenuation.
+//    float att = saturate((light.FallOffEnd - lightDist) / (light.FallOffEnd - light.FallOffStart));
 
-    // Shadow map.
-    float shadowFactor = 1.0f;
+//    // Shadow map.
+//    float shadowFactor = 1.0f;
 
-    if (light.Type & LIGHT_SHADOW)
-    {
-        float4 lightScreen = float4(0.0f, 0.0f, 0.0f, 0.0f);
-        float3 lightTexcoord = float3(0.0f, 0.0f, 0.0f);
-        float radiusScale = 0.5f; // 광원의 반지름을 키웠을 때 깨지는 것 방지.
+//    if (light.Type & LIGHT_SHADOW)
+//    {
+//        float4 lightScreen = float4(0.0f, 0.0f, 0.0f, 0.0f);
+//        float3 lightTexcoord = float3(0.0f, 0.0f, 0.0f);
+//        float radiusScale = 0.5f; // 광원의 반지름을 키웠을 때 깨지는 것 방지.
         
-        switch (light.Type & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
-        {
-            case LIGHT_DIRECTIONAL:
-                {
-                    int index = -1;
-                    lightScreen = float4(0.0f, 0.0f, 0.0f, 0.0f);
+//        switch (light.Type & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
+//        {
+//            case LIGHT_DIRECTIONAL:
+//                {
+//                    int index = -1;
+//                    lightScreen = float4(0.0f, 0.0f, 0.0f, 0.0f);
                     
-                    for (int i = 0; i < 4; ++i)
-                    {
-                        lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[i]);
-                        lightScreen.xyz /= lightScreen.w;
-                        if (lightScreen.z > 1.0f)
-                        {
-                            continue;
-                        }
+//                    for (int i = 0; i < 4; ++i)
+//                    {
+//                        lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[i]);
+//                        lightScreen.xyz /= lightScreen.w;
+//                        if (lightScreen.z > 1.0f)
+//                        {
+//                            continue;
+//                        }
                     
-                        lightTexcoord.xy = float2(lightScreen.x, -lightScreen.y);
-                        lightTexcoord.xy += 1.0f;
-                        lightTexcoord.xy *= 0.5f;
+//                        lightTexcoord.xy = float2(lightScreen.x, -lightScreen.y);
+//                        lightTexcoord.xy += 1.0f;
+//                        lightTexcoord.xy *= 0.5f;
                     
-                        float depth = g_CascadeShadowMap.SampleLevel(g_ShadowPointSampler, float3(lightTexcoord.xy, i), 0.0f).r;
-                        if (depth <= lightScreen.z - 0.005f || depth >= lightScreen.z + 0.005f)
-                        {
-                            index = i;
-                            break;
-                        }
-                    }
+//                        float depth = g_CascadeShadowMap.SampleLevel(g_ShadowPointSampler, float3(lightTexcoord.xy, i), 0.0f).r;
+//                        if (depth <= lightScreen.z - 0.005f || depth >= lightScreen.z + 0.005f)
+//                        {
+//                            index = i;
+//                            break;
+//                        }
+//                    }
                     
-                    if (index != -1)
-                    {
-                        shadowFactor = PCSSForDirectionalLight(g_CascadeShadowMap, g_ShadowPointSampler, g_ShadowCompareSampler, index, lightTexcoord.xy, lightScreen.z - 0.001f, light.InverseProjections[index], light.Radius * radiusScale);
-                    }
-                }
-                break;
+//                    if (index != -1)
+//                    {
+//                        shadowFactor = PCSSForDirectionalLight(g_CascadeShadowMap, g_ShadowPointSampler, g_ShadowCompareSampler, index, lightTexcoord.xy, lightScreen.z - 0.001f, light.InverseProjections[index], light.Radius * radiusScale);
+//                    }
+//                }
+//                break;
             
-            case LIGHT_POINT:
-                {
-                    const float3 VIEW_DIRs[6] =
-                    {
-                        float3(1.0f, 0.0f, 0.0f),  // right
-			            float3(-1.0f, 0.0f, 0.0f), // left
-			            float3(0.0f, 1.0f, 0.0f),  // up
-			            float3(0.0f, -1.0f, 0.0f), // down
-			            float3(0.0f, 0.0f, 1.0f),  // front
-			            float3(0.0f, 0.0f, -1.0f)  // back 
-                    };
-                    int index = 0;
-                    float maxDotProduct = -2.0f;
-                    float3 lightToPos = normalize(posWorld - light.Position);
+//            case LIGHT_POINT:
+//                {
+//                    const float3 VIEW_DIRs[6] =
+//                    {
+//                        float3(1.0f, 0.0f, 0.0f), // right
+//			            float3(-1.0f, 0.0f, 0.0f), // left
+//			            float3(0.0f, 1.0f, 0.0f), // up
+//			            float3(0.0f, -1.0f, 0.0f), // down
+//			            float3(0.0f, 0.0f, 1.0f), // front
+//			            float3(0.0f, 0.0f, -1.0f) // back 
+//                    };
+//                    int index = 0;
+//                    float maxDotProduct = -2.0f;
+//                    float3 lightToPos = normalize(posWorld - light.Position);
                     
-                    for (int i = 0; i < 6; ++i)
-                    {
-                        float curDot = dot(lightToPos, VIEW_DIRs[i]);
-                        if (maxDotProduct < curDot)
-                        {
-                            maxDotProduct = curDot;
-                            index = i;
-                        }
-                    }
+//                    for (int i = 0; i < 6; ++i)
+//                    {
+//                        float curDot = dot(lightToPos, VIEW_DIRs[i]);
+//                        if (maxDotProduct < curDot)
+//                        {
+//                            maxDotProduct = curDot;
+//                            index = i;
+//                        }
+//                    }
         
-                    lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[index]);
-                    lightScreen.xyz /= lightScreen.w;
+//                    lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[index]);
+//                    lightScreen.xyz /= lightScreen.w;
         
-                    lightTexcoord = lightToPos;
+//                    lightTexcoord = lightToPos;
         
-                    shadowFactor = PCSSForPointLight(g_PointLightShadowMap, g_ShadowPointSampler, g_ShadowCompareSampler, lightTexcoord, lightScreen.z - 0.001f, light.InverseProjections[0], light.Radius * radiusScale);
-                }
-                break;
+//                    shadowFactor = PCSSForPointLight(g_PointLightShadowMap, g_ShadowPointSampler, g_ShadowCompareSampler, lightTexcoord, lightScreen.z - 0.001f, light.InverseProjections[0], light.Radius * radiusScale);
+//                }
+//                break;
             
-            case LIGHT_SPOT:
-                {
-                    // Project posWorld to light screen.  
-                    lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[0]);
-                    lightScreen.xyz /= lightScreen.w;
+//            case LIGHT_SPOT:
+//                {
+//                    // Project posWorld to light screen.  
+//                    lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[0]);
+//                    lightScreen.xyz /= lightScreen.w;
         
-                    // 카메라(광원)에서 볼 때의 텍스춰 좌표 계산. ([-1, 1], [-1, 1]) ==> ([0, 1], [0, 1])
-                    lightTexcoord.xy = float2(lightScreen.x, -lightScreen.y);
-                    lightTexcoord.xy += 1.0f;
-                    lightTexcoord.xy *= 0.5f;
+//                    // 카메라(광원)에서 볼 때의 텍스춰 좌표 계산. ([-1, 1], [-1, 1]) ==> ([0, 1], [0, 1])
+//                    lightTexcoord.xy = float2(lightScreen.x, -lightScreen.y);
+//                    lightTexcoord.xy += 1.0f;
+//                    lightTexcoord.xy *= 0.5f;
        
-                    shadowFactor = PCSSForSpotLight(g_ShadowMaps[shadowMapIndex], g_ShadowPointSampler, g_ShadowCompareSampler, lightTexcoord.xy, lightScreen.z - 0.001f, light.InverseProjections[0], light.Radius * radiusScale);
-                }
-                break;
+//                    shadowFactor = PCSSForSpotLight(g_ShadowMaps[shadowMapIndex], g_ShadowPointSampler, g_ShadowCompareSampler, lightTexcoord.xy, lightScreen.z - 0.001f, light.InverseProjections[0], light.Radius * radiusScale);
+//                }
+//                break;
             
-            default:
-                break;
-        }
-    }
+//            default:
+//                break;
+//        }
+//    }
 
-    float3 radiance = light.Radiance * spotFator * att * shadowFactor;
-    return radiance;
-}
+//    float3 radiance = light.Radiance * spotFator * att * shadowFactor;
+//    return radiance;
+//}
 
-PixelShaderOutput main(PixelShaderInput input)
-{
-    float3 pixelToEye = normalize(g_EyeWorld - input.WorldPosition);
-    float3 normalWorld = GetNormal(input);
+//PixelShaderOutput main(PixelShaderInput input)
+//{
+//    float3 pixelToEye = normalize(g_EyeWorld - input.WorldPosition);
+//    float3 normalWorld = GetNormal(input);
     
-    float4 albedo = (bUseAlbedoMap ? g_AlbedoTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias) * float4(g_AlbedoFactor, 1.0f) : float4(g_AlbedoFactor, 1.0f));
-    clip(albedo.a - 0.5f); // Tree leaves. 투명한 부분의 픽셀은 그리지 않음.
+//    float4 albedo = (bUseAlbedoMap ? g_AlbedoTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias) * float4(g_AlbedoFactor, 1.0f) : float4(g_AlbedoFactor, 1.0f));
+//    clip(albedo.a - 0.5f); // Tree leaves. 투명한 부분의 픽셀은 그리지 않음.
     
-    float ao = (bUseAOMap ? g_AmbientOcclusionTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).r : 1.0f);
-    float metallic = (bUseMetallicMap ? g_MetallicTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).b * g_MetallicFactor : g_MetallicFactor);
-    float roughness = (bUseRoughnessMap ? g_RoughnessTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).g * g_RoughnessFactor : g_RoughnessFactor);
-    float3 emission = (bUseEmissiveMap ? g_EmissiveTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).rgb : g_EmissionFactor);
+//    float ao = (bUseAOMap ? g_AmbientOcclusionTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).r : 1.0f);
+//    float metallic = (bUseMetallicMap ? g_MetallicTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).b * g_MetallicFactor : g_MetallicFactor);
+//    float roughness = (bUseRoughnessMap ? g_RoughnessTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).g * g_RoughnessFactor : g_RoughnessFactor);
+//    float3 emission = (bUseEmissiveMap ? g_EmissiveTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).rgb : g_EmissionFactor);
 
-    float3 ambientLighting = AmbientLightingByIBL(g_IrradianceIBLTex, g_SpecularIBLTex, g_BRDFTex, g_LinearClampSampler, g_LinearWrapSampler, albedo.rgb, normalWorld, pixelToEye, ao, metallic, roughness) * g_StrengthIBL;
-    float3 directLighting = float3(0.0f, 0.0f, 0.0f);
+//    float3 ambientLighting = AmbientLightingByIBL(g_IrradianceIBLTex, g_SpecularIBLTex, g_BRDFTex, g_LinearClampSampler, g_LinearWrapSampler, albedo.rgb, normalWorld, pixelToEye, ao, metallic, roughness) * g_StrengthIBL;
+//    float3 directLighting = float3(0.0f, 0.0f, 0.0f);
     
-    [unroll] // warning X3550: sampler array index must be a literal expression, forcing loop to unroll
-    for (int i = 0; i < MAX_LIGHTS; ++i)
-    {
-        if (lights[i].Type & LIGHT_OFF)
-        {
-            continue;
-        }
+//    [unroll] // warning X3550: sampler array index must be a literal expression, forcing loop to unroll
+//    for (int i = 0; i < MAX_LIGHTS; ++i)
+//    {
+//        if (lights[i].Type & LIGHT_OFF)
+//        {
+//            continue;
+//        }
         
-        float3 L = lights[i].Position - input.WorldPosition; // 렌더링 지점에서 광원 중심으로의 벡터.
-        float3 r = normalize(reflect(g_EyeWorld - input.WorldPosition, normalWorld)); // 시점의 반사벡터.
-        float3 centerToRay = dot(L, r) * r - L; // 광원 중심에서 반사벡터 r로의 벡터.
-        float3 representativePoint = L + centerToRay * clamp(lights[i].Radius / length(centerToRay), 0.0f, 1.0f); // 볼륨이 커진 광원과 빛 계산 시 사용하는 광원의 대표 점.
-        representativePoint += input.WorldPosition; // world space로 변환을 위해 input.posWorld를 더해줌. 위에서 계산한 벡터들은 input.posWorld를 원점으로 하는 좌표계에서 정의됨.
+//        float3 L = lights[i].Position - input.WorldPosition; // 렌더링 지점에서 광원 중심으로의 벡터.
+//        float3 r = normalize(reflect(g_EyeWorld - input.WorldPosition, normalWorld)); // 시점의 반사벡터.
+//        float3 centerToRay = dot(L, r) * r - L; // 광원 중심에서 반사벡터 r로의 벡터.
+//        float3 representativePoint = L + centerToRay * clamp(lights[i].Radius / length(centerToRay), 0.0f, 1.0f); // 볼륨이 커진 광원과 빛 계산 시 사용하는 광원의 대표 점.
+//        representativePoint += input.WorldPosition; // world space로 변환을 위해 input.posWorld를 더해줌. 위에서 계산한 벡터들은 input.posWorld를 원점으로 하는 좌표계에서 정의됨.
         
-        float3 lightVec = representativePoint - input.WorldPosition;
-        //float3 lightVec = lights[i].Position - input.WorldPosition;
-        float lightDist = length(lightVec);
-        lightVec /= lightDist;
-        float3 halfway = normalize(pixelToEye + lightVec);
+//        float3 lightVec = representativePoint - input.WorldPosition;
+//        //float3 lightVec = lights[i].Position - input.WorldPosition;
+//        float lightDist = length(lightVec);
+//        lightVec /= lightDist;
+//        float3 halfway = normalize(pixelToEye + lightVec);
         
-        float NdotI = max(0.0f, dot(normalWorld, lightVec));
-        float NdotH = max(0.0f, dot(normalWorld, halfway));
-        float NdotO = max(0.0f, dot(normalWorld, pixelToEye));
+//        float NdotI = max(0.0f, dot(normalWorld, lightVec));
+//        float NdotH = max(0.0f, dot(normalWorld, halfway));
+//        float NdotO = max(0.0f, dot(normalWorld, pixelToEye));
         
-        // const float3 F_DIELECTRIC = 0.04f; // 비금속(Dielectric) 재질의 F0
-        float3 F0 = lerp(F_DIELECTRIC, albedo.rgb, metallic);
-        float3 F = SchlickFresnel(F0, max(0.0f, dot(halfway, pixelToEye)));
-        float3 kd = lerp(float3(1.0f, 1.0f, 1.0f) - F, float3(0.0f, 0.0f, 0.0f), metallic);
-        float3 diffuseBRDF = kd * albedo.rgb;
+//        // const float3 F_DIELECTRIC = 0.04f; // 비금속(Dielectric) 재질의 F0
+//        float3 F0 = lerp(F_DIELECTRIC, albedo.rgb, metallic);
+//        float3 F = SchlickFresnel(F0, max(0.0f, dot(halfway, pixelToEye)));
+//        float3 kd = lerp(float3(1.0f, 1.0f, 1.0f) - F, float3(0.0f, 0.0f, 0.0f), metallic);
+//        float3 diffuseBRDF = kd * albedo.rgb;
 
-       // Sphere Normalization
-        float alpha = roughness * roughness;
-        float alphaPrime = saturate(alpha + lights[i].Radius / (2.0f * lightDist));
+//       // Sphere Normalization
+//        float alpha = roughness * roughness;
+//        float alphaPrime = saturate(alpha + lights[i].Radius / (2.0f * lightDist));
 
-        float D = NdfGGX(NdotH, roughness, alphaPrime);
-        float3 G = SchlickGGX(NdotI, NdotO, roughness);
-        float3 specularBRDF = (F * D * G) / max(1e-5, 4.0f * NdotI * NdotO);
+//        float D = NdfGGX(NdotH, roughness, alphaPrime);
+//        float3 G = SchlickGGX(NdotI, NdotO, roughness);
+//        float3 specularBRDF = (F * D * G) / max(1e-5, 4.0f * NdotI * NdotO);
 
-        float3 radiance = float3(0.0f, 0.0f, 0.0f);
-        radiance = LightRadiance(lights[i], i, representativePoint, input.WorldPosition, normalWorld);
+//        float3 radiance = float3(0.0f, 0.0f, 0.0f);
+//        radiance = LightRadiance(lights[i], i, representativePoint, input.WorldPosition, normalWorld);
             
-        // 오류 임시 수정 (radiance가 (0,0,0)일 경우, directLighting += ... 인데도 0 벡터가 되어버림.
-        if (abs(dot(radiance, float3(1.0f, 1.0f, 1.0f))) > 1e-5)
-        {
-            directLighting += (diffuseBRDF + specularBRDF) * radiance * NdotI;
-        }
-    }
+//        // 오류 임시 수정 (radiance가 (0,0,0)일 경우, directLighting += ... 인데도 0 벡터가 되어버림.
+//        if (abs(dot(radiance, float3(1.0f, 1.0f, 1.0f))) > 1e-5)
+//        {
+//            directLighting += (diffuseBRDF + specularBRDF) * radiance * NdotI;
+//        }
+//    }
     
-    PixelShaderOutput output;
-    output.PixelColor = float4(ambientLighting + directLighting + emission, 1.0f);
-    output.PixelColor = clamp(output.PixelColor, 0.0f, 1000.0f);
+//    PixelShaderOutput output;
+//    output.PixelColor = float4(ambientLighting + directLighting + emission, 1.0f);
+//    output.PixelColor = clamp(output.PixelColor, 0.0f, 1000.0f);
     
-    return output;
-}
+//    return output;
+//}

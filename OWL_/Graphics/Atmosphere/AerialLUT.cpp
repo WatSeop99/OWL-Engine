@@ -47,7 +47,7 @@ void AerialLUT::Generate()
 
 	// Set resources.
 	ID3D11Buffer* ppConstantBuffers[2] = { m_pAerialConstantBuffer->pBuffer, m_pAtmosphereConstantBuffer->pBuffer };
-	ID3D11ShaderResourceView* ppSRVs[3] = { m_pMultiScatterLUT->pSRV, m_pTransmittanceLUT->pSRV, m_pShadowMap->GetSpotLightShadowBuffer()->pSRV };
+	ID3D11ShaderResourceView* ppSRVs[3] = { m_pMultiScatterLUT->pSRV, m_pTransmittanceLUT->pSRV, m_pShadowMap->GetShadow2DBufferPtr()->pSRV };
 	ID3D11SamplerState* ppSamplers[2] = { pResourceManager->pLinearClampSS, pResourceManager->pPointClampSS };
 	pContext->CSSetConstantBuffers(0, 2, ppConstantBuffers);
 	pContext->CSSetShaderResources(0, 3, ppSRVs);
@@ -207,6 +207,7 @@ void AerialLUT::createConstantBuffer()
 
 	pAerialData->MaxDistance = 2000.0f;
 	pAerialData->PerSliceStepCount = 1;
+	pAerialData->bEnableShadow = TRUE;
 	pAerialData->ShadowViewProj = Matrix();
 	pAerialData->WorldScale = 200.0f;
 }

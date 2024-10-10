@@ -23,7 +23,7 @@ Texture2DArray g_CascadeShadowMaps : register(t7);
 float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, float3 normalWorld)
 {
     // Directional light.
-    float3 lightVec = (light.Type & LIGHT_DIRECTIONAL ? -light.Direction : representativePoint - posWorld); // light.position - posWorld;
+    float3 lightVec = (light.Type & (LIGHT_DIRECTIONAL | LIGHT_SUN) ? -light.Direction : representativePoint - posWorld); // light.position - posWorld;
     float lightDist = length(lightVec);
     lightVec /= lightDist;
 
@@ -42,9 +42,9 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
         float3 lightTexcoord = float3(0.0f, 0.0f, 0.0f);
         float radiusScale = 0.5f; // 광원의 반지름을 키웠을 때 깨지는 것 방지.
         
-        switch (light.Type & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
+        switch (light.Type & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT | LIGHT_SUN))
         {
-            case LIGHT_DIRECTIONAL:
+            case LIGHT_SUN:
                 {
                     int index = -1;
                     
@@ -61,7 +61,7 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
                         lightTexcoord.xy += 1.0f;
                         lightTexcoord.xy *= 0.5f;
                     
-                        float depth = g_CascadeShadowMap.SampleLevel(g_ShadowPointSampler, float3(lightTexcoord.xy, i), 0.0f);
+                        float depth = g_CascadeShadowMaps.SampleLevel(g_ShadowPointSampler, float3(lightTexcoord.xy, i), 0.0f);
                         if (depth <= lightScreen.z - 0.005f || depth >= lightScreen.z + 0.005f)
                         {
                             index = i;
@@ -110,6 +110,7 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
                 }
                 break;
             
+            case LIGHT_DIRECTIONAL:
             case LIGHT_SPOT:
                 {
                     // Project posWorld to light screen.  

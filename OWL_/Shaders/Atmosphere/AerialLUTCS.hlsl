@@ -19,7 +19,7 @@ cbuffer AerialLUTConstants : register(b0)
     float g_AtmosEyeHeight;
 
     float3 g_EyePosition;
-    int g_EnableShadow;
+    bool g_bEnableShadow;
     matrix g_ShadowViewProj;
     float g_WorldScale;
 }
@@ -100,12 +100,12 @@ void main(int3 threadIdx : SV_DispatchThreadID)
                 float2 shadowNDC = shadowClip.xy / shadowClip.w;
                 float2 shadowUV = 0.5f + float2(0.5f, -0.5f) * shadowNDC;
 
-                bool bInShadow = g_EnableShadow;
-                if (g_EnableShadow && all(saturate(shadowUV) == shadowUV))
+                bool bInShadow = g_bEnableShadow;
+                if (g_bEnableShadow && all(saturate(shadowUV) == shadowUV))
                 {
                     float rayZ = shadowClip.z;
                     float smZ = g_ShadowMap.SampleLevel(g_ShadowSampler, shadowUV, 0.0f);
-                    bInShadow = rayZ >= smZ;
+                    bInShadow = (rayZ >= smZ);
                 }
 
                 if (!bInShadow)

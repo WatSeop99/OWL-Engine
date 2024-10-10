@@ -24,7 +24,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return g_pAppBase->MsgProc(hWnd, msg, wParam, lParam);
 }
 
-BaseRenderer::BaseRenderer() : m_Scene(m_Camera, &m_FloatBuffer, &m_ResolvedBuffer)
+BaseRenderer::BaseRenderer() : m_Scene(&m_Camera)
 {
 	g_pAppBase = this;
 	m_Camera.SetAspectRatio(GetAspectRatio());
@@ -34,33 +34,35 @@ BaseRenderer::BaseRenderer() : m_Scene(m_Camera, &m_FloatBuffer, &m_ResolvedBuff
 BaseRenderer::~BaseRenderer()
 {
 	g_pAppBase = nullptr;
+	m_pCursorSphere = nullptr;
 
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 	m_pContext->OMSetRenderTargets(0, nullptr, nullptr);
 	m_pContext->Flush();
-
-	if (m_pTimer)
-	{
-		delete m_pTimer;
-		m_pTimer = nullptr;
-	}
+	
 	if (m_pGBuffer)
 	{
 		delete m_pGBuffer;
 		m_pGBuffer = nullptr;
+	}
+	if (m_pBackBuffer)
+	{
+		delete m_pBackBuffer;
+		m_pBackBuffer = nullptr;
 	}
 	if (m_pResourceManager)
 	{
 		delete m_pResourceManager;
 		m_pResourceManager = nullptr;
 	}
+	if (m_pTimer)
+	{
+		delete m_pTimer;
+		m_pTimer = nullptr;
+	}
 
-	m_pCursorSphere = nullptr;
-
-	SAFE_RELEASE(m_pBackBufferRTV);
-	SAFE_RELEASE(m_pBackBuffer);
 	SAFE_RELEASE(m_pSwapChain);
 	SAFE_RELEASE(m_pContext);
 	SAFE_RELEASE(m_pDevice);
@@ -84,7 +86,6 @@ int BaseRenderer::Run()
 			Update(ImGui::GetIO().DeltaTime);
 			Render();
 
-			// GUI 렌더링 후에 Present() 호출.
 			m_pSwapChain->Present(1, 0);
 		}
 	}
@@ -111,7 +112,7 @@ void BaseRenderer::Initialize()
 
 	// postprocessor 초기화.
 	m_PostProcessor.Initialize(this,
-							   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *m_FloatBuffer.GetTexture2DPtr(), *m_ResolvedBuffer.GetTexture2DPtr(), *m_PrevBuffer.GetTexture2DPtr(), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_pGBuffer->DepthBuffer.pSRV },
+							   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, &m_FloatBuffer, &m_PrevBuffer, &m_pGBuffer->DepthBuffer },
 							   m_ScreenWidth, m_ScreenHeight, 4);
 
 	// 콘솔창이 렌더링 창을 덮는 것을 방지.
@@ -121,7 +122,6 @@ void BaseRenderer::Initialize()
 	m_pTimer->End(m_pContext);*/
 }
 
-// 여러 예제들이 공통적으로 사용하기 좋은 장면 설정
 void BaseRenderer::InitScene()
 {
 	m_Scene.Initialize(this);
@@ -149,10 +149,8 @@ void BaseRenderer::UpdateGUI()
 	beginGUI();
 
 	ImGui::Begin("Scene");
-
 	ImVec2 wsize = ImGui::GetWindowSize();
 	ImGui::Image((ImTextureID)(intptr_t)m_PrevBuffer.pSRV, wsize, ImVec2(0, 0), ImVec2(1, 1));
-
 	ImGui::End();
 
 
@@ -191,19 +189,10 @@ void BaseRenderer::RenderGUI()
 	// GUI 렌더링.
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-	if (IMGUI_IO.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-	{
-		//GLFWwindow* backup_current_context = glfwGetCurrentContext();
-		ImGui::UpdatePlatformWindows();
-		ImGui::RenderPlatformWindowsDefault();
-		//glfwMakeContextCurrent(backup_current_context);
-	}
 }
 
 void BaseRenderer::Render()
 {
-	//m_Scene.Render();
-
 	m_pContext->VSSetSamplers(0, (UINT)m_pResourceManager->SamplerStates.size(), m_pResourceManager->SamplerStates.data());
 	m_pContext->PSSetSamplers(0, (UINT)m_pResourceManager->SamplerStates.size(), m_pResourceManager->SamplerStates.data());
 
@@ -218,6 +207,7 @@ void BaseRenderer::Render()
 	passDebug();
 
 	m_PostProcessor.Render();
+
 	RenderGUI(); // 추후 editor/game 모드를 설정하여 따로 렌더링하도록 구상.
 }
 
@@ -283,7 +273,7 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					createBuffers();
 					m_Camera.SetAspectRatio(GetAspectRatio());
 					m_PostProcessor.Initialize(this,
-											   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, *m_FloatBuffer.GetTexture2DPtr(), *m_ResolvedBuffer.GetTexture2DPtr(), *m_PrevBuffer.GetTexture2DPtr(), m_pBackBufferRTV, m_ResolvedBuffer.pSRV, m_PrevBuffer.pSRV, m_pGBuffer->DepthBuffer.pSRV },
+											   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, &m_FloatBuffer, &m_PrevBuffer, &m_pGBuffer->DepthBuffer },
 											   m_ScreenWidth, m_ScreenHeight, 4);
 				}
 			}
@@ -673,7 +663,8 @@ LB_EXIT:
 		DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
 		swapChainDesc.Width = m_ScreenWidth;
 		swapChainDesc.Height = m_ScreenHeight;
-		swapChainDesc.Format = DXGI_FORMAT_R10G10B10A2_UNORM;
+		//swapChainDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+		swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		//swapChainDesc.BufferDesc.RefreshRate.Numerator = m_uiRefreshRate;
 		//swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT | DXGI_USAGE_UNORDERED_ACCESS;
@@ -732,27 +723,28 @@ void BaseRenderer::initGUI()
 
 void BaseRenderer::createBuffers()
 {
-	// 레스터화 -> float/depthBuffer(MSAA) -> resolved -> backBuffer
+	_ASSERT(!m_pBackBuffer);
+	_ASSERT(!m_pGBuffer);
+
 	HRESULT hr = S_OK;
 
-	// BackBuffer는 화면으로 최종 출력. (SRV는 불필요)
-	hr = m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&m_pBackBuffer));
+	ID3D11Texture2D* pTexture = nullptr;
+	D3D11_TEXTURE2D_DESC desc = {};
+	hr = m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pTexture));
 	BREAK_IF_FAILED(hr);
 
-	hr = m_pDevice->CreateRenderTargetView(m_pBackBuffer, nullptr, &m_pBackBufferRTV);
-	BREAK_IF_FAILED(hr);
+	m_pBackBuffer = new Texture;
+	pTexture->GetDesc(&desc);
+	m_pBackBuffer->Initialize(m_pDevice, m_pContext, pTexture, true);
+	RELEASE(pTexture);
 
 	// 이전 프레임 저장용.
-	D3D11_TEXTURE2D_DESC desc = {};
-	m_pBackBuffer->GetDesc(&desc);
+	(*m_pBackBuffer->GetTexture2DPPtr())->GetDesc(&desc);
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 	m_PrevBuffer.Initialize(m_pDevice, m_pContext, desc, nullptr, true);
 
-	// FLOAT MSAA RenderTargetView/ShaderResourceView.
-	hr = m_pDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_R16G16B16A16_FLOAT, 4, &m_NumQualityLevels);
-	BREAK_IF_FAILED(hr);
-
-	desc.MipLevels = desc.ArraySize = 1;
+	desc.MipLevels = 1;
+	desc.ArraySize = 1;
 	desc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
 	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
@@ -761,12 +753,6 @@ void BaseRenderer::createBuffers()
 	desc.MiscFlags = 0;
 	desc.CPUAccessFlags = 0;
 	m_FloatBuffer.Initialize(m_pDevice, m_pContext, desc, nullptr, true);
-
-	// FLOAT MSAA를 Relsolve해서 저장할 SRV/RTV.
-	desc.SampleDesc.Count = 1;
-	desc.SampleDesc.Quality = 0;
-	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET | D3D11_BIND_UNORDERED_ACCESS;
-	m_ResolvedBuffer.Initialize(m_pDevice, m_pContext, desc, nullptr, true);
 
 	m_pGBuffer = new GBuffer;
 	m_pGBuffer->Initialize(m_pDevice, m_pContext, m_ScreenWidth, m_ScreenHeight);
@@ -798,8 +784,11 @@ void BaseRenderer::setComputeShaderBarrier()
 void BaseRenderer::destroyBuffersForRendering()
 {
 	// swap chain에 사용될 back bufffer와 관련된 모든 버퍼를 초기화.
-	SAFE_RELEASE(m_pBackBuffer);
-	SAFE_RELEASE(m_pBackBufferRTV);
+	if (m_pBackBuffer)
+	{
+		delete m_pBackBuffer;
+		m_pBackBuffer = nullptr;
+	}
 	if (m_pGBuffer)
 	{
 		delete m_pGBuffer;
@@ -808,7 +797,6 @@ void BaseRenderer::destroyBuffersForRendering()
 
 	m_PrevBuffer.Cleanup();
 	m_FloatBuffer.Cleanup();
-	m_ResolvedBuffer.Cleanup();
 	m_PostProcessor.Cleanup();
 }
 
@@ -846,6 +834,7 @@ void BaseRenderer::passGBuffer()
 
 void BaseRenderer::passShadow()
 {
+	m_Scene.GetSunPtr()->RenderShadowMap(m_Scene.RenderObjects, nullptr);
 	for (UINT64 i = 0, size = m_Scene.Lights.size(); i < size; ++i)
 	{
 		m_Scene.Lights[i].RenderShadowMap(m_Scene.RenderObjects, nullptr);
@@ -877,26 +866,30 @@ void BaseRenderer::passDeferredLighting()
 		__debugbreak();
 	}
 
+	Sun* pSun = m_Scene.GetSunPtr();
+	memcpy(&pLightConstsData->Lights, &pSun->SunProperty, sizeof(LightProperty));
+	pLightConstantBuffer->Upload();
+	SetGlobalConsts(&pLightConstantBuffer->pBuffer, 1);
+	m_pContext->PSSetShaderResources(7, 1, &pSun->GetShadowMapPtr()->GetCascadeShadowBufferPtr()->pSRV);
+	m_pContext->Draw(6, 0);
+
 	for (UINT64 i = 0, size = m_Scene.Lights.size(); i < size; ++i)
 	{
 		Light& curLight = m_Scene.Lights[i];
 
 		memcpy(&pLightConstsData->Lights, &m_Scene.Lights[i].Property, sizeof(LightProperty));
 		pLightConstantBuffer->Upload();
-
 		SetGlobalConsts(&pLightConstantBuffer->pBuffer, 1);
+
 		switch (curLight.Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
 		{
 			case LIGHT_DIRECTIONAL:
-				m_pContext->PSSetShaderResources(7, 1, &curLight.GetShadowMapPtr()->GetDirectionalLightShadowBuffer()->pSRV);
+			case LIGHT_SPOT:
+				m_pContext->PSSetShaderResources(5, 1, &curLight.GetShadowMapPtr()->GetShadow2DBufferPtr()->pSRV);
 				break;
 
 			case LIGHT_POINT:
-				m_pContext->PSSetShaderResources(6, 1, &curLight.GetShadowMapPtr()->GetPointLightShadowBuffer()->pSRV);
-				break;
-
-			case LIGHT_SPOT:
-				m_pContext->PSSetShaderResources(5, 1, &curLight.GetShadowMapPtr()->GetSpotLightShadowBuffer()->pSRV);
+				m_pContext->PSSetShaderResources(6, 1, &curLight.GetShadowMapPtr()->GetShadowCubeBufferPtr()->pSRV);
 				break;
 
 			default:

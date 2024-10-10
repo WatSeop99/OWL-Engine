@@ -1,11 +1,11 @@
 #ifndef __COMMON_HLSLI__
 #define __COMMON_HLSLI__
 
-#define MAX_LIGHTS 3 // 쉐이더에서도 #define 사용 가능
 #define LIGHT_OFF 0x00
 #define LIGHT_DIRECTIONAL 0x01
 #define LIGHT_POINT 0x02
 #define LIGHT_SPOT 0x04
+#define LIGHT_SUN 0x08
 #define LIGHT_SHADOW 0x10
 
 // 샘플러들을 모든 쉐이더에서 공통으로 사용
@@ -23,10 +23,6 @@ TextureCube g_EnvIBLTex : register(t10);
 TextureCube g_SpecularIBLTex : register(t11);
 TextureCube g_IrradianceIBLTex : register(t12);
 Texture2D g_BRDFTex : register(t13);
-
-Texture2D g_ShadowMaps[MAX_LIGHTS] : register(t14);
-TextureCube g_PointLightShadowMap : register(t17);
-Texture2DArray g_CascadeShadowMap : register(t18);
 
 struct Light
 {
@@ -67,12 +63,10 @@ cbuffer GlobalConstants : register(b0)
     
     int dummy[4];
 };
-
 cbuffer LightConstants : register(b1)
 {
     Light lights;
-}
-
+};
 cbuffer MeshConstants : register(b2)
 {
     matrix g_World; // Model(또는 Object) 좌표계 -> World로 변환
@@ -83,7 +77,6 @@ cbuffer MeshConstants : register(b2)
     float g_WindTrunk;
     float g_WindLeaves;
 };
-
 cbuffer MaterialConstants : register(b3)
 {
     float3 g_AlbedoFactor; // baseColor

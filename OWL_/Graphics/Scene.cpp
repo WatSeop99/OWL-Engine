@@ -24,23 +24,23 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 
 	LoadScene();
 
-	Lights.resize(MAX_LIGHTS);
-	m_ppLightSpheres.resize(MAX_LIGHTS);
+	Lights.resize(3);
+	m_ppLightSpheres.resize(3);
 
 	// 조명 설정.
 	{
 		// 조명 0.
-		Lights[0].Property.Radiance = Vector3(3.0f);
+		Lights[0].Property.Radiance = Vector3(1.0f);
 		Lights[0].Property.FallOffEnd = 10.0f;
 		Lights[0].Property.Position = Vector3(0.0f);
 		Lights[0].Property.Direction = Vector3(0.0f, 0.0f, 1.0f);
 		Lights[0].Property.SpotPower = 3.0f;
 		Lights[0].Property.LightType = LIGHT_POINT | LIGHT_SHADOW;
 		Lights[0].Property.Radius = 0.04f;
-		// Lights[0].Property.LightType = LIGHT_OFF;
+		Lights[0].Property.LightType = LIGHT_OFF;
 
 		// 조명 1.
-		Lights[1].Property.Radiance = Vector3(3.0f);
+		Lights[1].Property.Radiance = Vector3(1.0f);
 		Lights[1].Property.FallOffEnd = 10.0f;
 		Lights[1].Property.Position = Vector3(1.0f, 1.1f, 2.0f);
 		Lights[1].Property.SpotPower = 2.0f;
@@ -48,21 +48,21 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 		Lights[1].Property.Direction.Normalize();
 		Lights[1].Property.LightType = LIGHT_SPOT | LIGHT_SHADOW;
 		Lights[1].Property.Radius = 0.02f;
-		// Lights[1].Property.LightType = LIGHT_OFF;
+		Lights[1].Property.LightType = LIGHT_OFF;
 
 		// 조명 2.
 		Lights[2].Property.Radiance = Vector3(1.0f);
-		Lights[2].Property.Position = Vector3(5.0f);
+		Lights[2].Property.Position = Vector3(4.0f);
 		Lights[2].Property.Direction = Vector3(-1.0f, -1.0f, -1.0f);
 		Lights[2].Property.Direction.Normalize();
 		Lights[2].Property.LightType = LIGHT_DIRECTIONAL | LIGHT_SHADOW;
 		Lights[2].Property.Radius = 0.05f;
-		// Lights[2].Property.LightType = LIGHT_OFF;
+		Lights[2].Property.LightType = LIGHT_OFF;
 	}
 
 	// 조명 위치 표시.
 	{
-		for (int i = 0; i < MAX_LIGHTS; ++i)
+		for (int i = 0; i < 3; ++i)
 		{
 			MeshInfo sphere;
 			MakeSphere(&sphere, 1.0f, 20, 20);
@@ -135,14 +135,17 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 	m_LightConstants.Initialize(pDevice, pContext, sizeof(LightConstants), &initialLight);
 
 	GlobalConstants* pGlobalConstData = (GlobalConstants*)m_GlobalConstants.pSystemMem;
+	if (!pGlobalConstData)
+	{
+		__debugbreak();
+	}
 	pGlobalConstData->StrengthIBL = 0.2f;
 	//m_GlobalConstants.CPU.StrengthIBL = 0.1f;
-	// m_GlobalConstants.CPU.StrengthIBL = 1.0f;
+	//m_GlobalConstants.CPU.StrengthIBL = 1.0f;
 
 	// 광원마다 shadow map 설정.
 	for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
 	{
-		// Lights[i].SetShadowSize(1280, 1280); // 사이즈 변경 가능.
 		Lights[i].Initialize(pRenderer);
 	}
 
@@ -156,7 +159,7 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 	m_pSkybox->Name = "SkyBox";
 
 
-	m_SunProperty.LightType = LIGHT_SUN | LIGHT_SHADOW;
+	/*m_SunProperty.LightType = LIGHT_SUN | LIGHT_SHADOW;
 	m_SunCamera.bUseFirstPersonView = true;
 	m_SunCamera.SetAspectRatio(2560.0f / 2560.0f);
 	m_SunCamera.SetEyePos(m_SunProperty.Position);
@@ -166,7 +169,7 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 	m_SunCamera.SetFarZ(50.0f);
 	m_ShadowMap.SetShadowWidth(2560);
 	m_ShadowMap.SetShadowHeight(2560);
-	m_ShadowMap.Initialize(pRenderer, LIGHT_SUN | LIGHT_SHADOW);
+	m_ShadowMap.Initialize(pRenderer, LIGHT_SUN | LIGHT_SHADOW);*/
 
 	AtmosphereProperty STDUnitAtmosphereProperty = m_AtmosphereProperty.ToStdUnit();
 	m_pAtmosphereConstantBuffer = new ConstantBuffer;
@@ -182,7 +185,7 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 	m_pMultiScatteringLUT = new MultiScatteringLUT;
 	m_pMultiScatteringLUT->Initialize(pRenderer);
 	m_pSun = new Sun;
-	m_pSun->Initialize(pRenderer);
+	m_pSun->Initialize(pRenderer, m_pMainCamera);
 
 	m_pTransmittanceLUT->SetAtmosphere(m_pAtmosphereConstantBuffer);
 	m_pTransmittanceLUT->Generate();
@@ -199,7 +202,7 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 	m_pAerialLUT->SetAtmosphere(m_pAtmosphereConstantBuffer);
 	m_pAerialLUT->SetMultiScatteringLUT(m_pMultiScatteringLUT->GetMultiScatteringLUT());
 	m_pAerialLUT->SetTransmittanceLUT(m_pTransmittanceLUT->GetTransmittanceLUT());
-	m_pAerialLUT->SetShadow(&m_ShadowMap);
+	m_pAerialLUT->SetShadow(m_pSun->GetShadowMapPtr());
 
 	m_pSun->SetAtmosphere(m_pAtmosphereConstantBuffer);
 	m_pSun->SetTransmittanceLUT(m_pTransmittanceLUT->GetTransmittanceLUT());
@@ -211,42 +214,35 @@ void Scene::Update(const float DELTA_TIME)
 	updateLights(DELTA_TIME);
 	updateGlobalConstants(DELTA_TIME);
 
-	const Vector3 CAMERA_POS = m_Camera.GetEyePos();
-	const Matrix CAMERA_VIEWPROJECTION = m_Camera.GetView() * m_Camera.GetProjection();
+	const Vector3 CAMERA_POS = m_pMainCamera->GetEyePos();
+	const Matrix CAMERA_VIEWPROJECTION = m_pMainCamera->GetView() * m_pMainCamera->GetProjection();
 	const float ATMOS_EYE_HEIGHT = m_pAerialLUT->pAerialData->WorldScale * CAMERA_POS.y;
-	const FrustumDirection CAMERA_FRUSTUM = m_Camera.GetFrustumDirection();
+	const FrustumDirection CAMERA_FRUSTUM = m_pMainCamera->GetFrustumDirection();
 
 	// Update Sun predata.
 	// m_pSun->SunAngle.x = Clamp(sin(m_pSun->SunAngle.x + DELTA_TIME), 0.0f, 360.0f);
-	m_pSun->SunAngle.y = 12.0f;
-
+	m_pSun->SunAngle.y = 45.0f;
 	m_pSun->SetCamera(&CAMERA_POS, &CAMERA_VIEWPROJECTION);
+	m_pSun->SetWorldScale(m_pAerialLUT->pAerialData->WorldScale);
 	m_pSun->Update();
 
 	// Update shadow map.
-	m_SunProperty.Radiance = m_pSun->SunRadiance;
-	m_SunProperty.Direction = m_pSun->SunDirection;
-	m_SunProperty.Position = m_pSun->SunWorld.Translation();
-	m_SunProperty.Radius = m_pSun->SunRadius;
-	m_ShadowMap.Update(m_SunProperty, m_SunCamera, m_Camera);
+	/*m_SunProperty.Position = m_pSun->SunWorld.Translation();
+	m_ShadowMap.Update(m_SunProperty, m_SunCamera, m_Camera);*/
 
 	// Update aerial LUT.
 	m_pAerialLUT->SetCamera(&CAMERA_POS, ATMOS_EYE_HEIGHT, &CAMERA_FRUSTUM);
-	m_pAerialLUT->SetSun(&m_pSun->SunDirection);
+	m_pAerialLUT->SetSun(&m_pSun->SunProperty.Direction);
 	m_pAerialLUT->Update();
 
 	// Update sky view LUT.
 	m_pSkyLUT->SetCamera(&(CAMERA_POS * m_pAerialLUT->pAerialData->WorldScale));
-	m_pSkyLUT->SetSun(&m_pSun->SunDirection, &(m_pSun->SunIntensity * m_pSun->SunColor));
+	m_pSkyLUT->SetSun(&m_pSun->SunProperty.Direction, &(m_pSun->SunIntensity * m_pSun->SunColor));
 	m_pSkyLUT->Update();
 
 	// Update Sky.
 	m_pSky->SetCamera(&CAMERA_FRUSTUM);
 	m_pSky->Update();
-
-	// Update Sun.
-	m_pSun->SetWorldScale(m_pAerialLUT->pAerialData->WorldScale);
-
 
 	if (m_pMirror)
 	{
@@ -300,7 +296,6 @@ void Scene::Cleanup()
 		m_pSun = nullptr;
 	}
 
-
 	m_pMirror = nullptr;
 	m_ppLightSpheres.clear();
 	if (m_pSkybox)
@@ -322,9 +317,8 @@ void Scene::Cleanup()
 	}
 	RenderObjects.clear();
 
+	m_pMainCamera = nullptr;
 	m_pRenderer = nullptr;
-	m_pFloatBuffer = nullptr;
-	m_pResolvedBuffer = nullptr;
 }
 
 void Scene::initCubemaps(std::wstring&& basePath, std::wstring&& envFileName, std::wstring&& specularFileName, std::wstring&& irradianceFileName, std::wstring&& brdfFileName)
@@ -347,7 +341,7 @@ void Scene::initCubemaps(std::wstring&& basePath, std::wstring&& envFileName, st
 	pTexture = nullptr;
 	/*D3D11_TEXTURE2D_DESC textureDesc = {};
 	m_pEnv = new Texture;
-	pResourceManager->CreateTextureCubeFromFile((basePath + envFileName).c_str(), m_pEnv->GetTexture2DPtr(), &textureDesc);*/
+	pResourceManager->CreateTextureCubeFromFile((basePath + envFileName).c_str(), m_pEnv->GetTexture2DPPtr(), &textureDesc);*/
 
 	hr = pResourceManager->CreateTextureCubeFromFile((basePath + specularFileName).c_str(), &pTexture, &textureDesc);
 	BREAK_IF_FAILED(hr);
@@ -356,7 +350,7 @@ void Scene::initCubemaps(std::wstring&& basePath, std::wstring&& envFileName, st
 	pTexture->Release();
 	pTexture = nullptr;
 	/*m_pSpecular = new Texture;
-	pResourceManager->CreateTextureCubeFromFile((basePath + specularFileName).c_str(), m_pSpecular->GetTexture2DPtr(), &textureDesc);*/
+	pResourceManager->CreateTextureCubeFromFile((basePath + specularFileName).c_str(), m_pSpecular->GetTexture2DPPtr(), &textureDesc);*/
 
 	hr = pResourceManager->CreateTextureCubeFromFile((basePath + irradianceFileName).c_str(), &pTexture, &textureDesc);
 	BREAK_IF_FAILED(hr);
@@ -365,7 +359,7 @@ void Scene::initCubemaps(std::wstring&& basePath, std::wstring&& envFileName, st
 	pTexture->Release();
 	pTexture = nullptr;
 	/*m_pIrradiance = new Texture;
-	pResourceManager->CreateTextureCubeFromFile((basePath + irradianceFileName).c_str(), m_pIrradiance->GetTexture2DPtr(), &textureDesc);*/
+	pResourceManager->CreateTextureCubeFromFile((basePath + irradianceFileName).c_str(), m_pIrradiance->GetTexture2DPPtr(), &textureDesc);*/
 
 	hr = pResourceManager->CreateTextureCubeFromFile((basePath + brdfFileName).c_str(), &pTexture, &textureDesc);
 	BREAK_IF_FAILED(hr);
@@ -374,27 +368,24 @@ void Scene::initCubemaps(std::wstring&& basePath, std::wstring&& envFileName, st
 	pTexture->Release();
 	pTexture = nullptr;
 	/*m_pBRDF = new Texture;
-	pResourceManager->CreateTextureCubeFromFile((basePath + brdfFileName).c_str(), m_pBRDF->GetTexture2DPtr(), &textureDesc);*/
+	pResourceManager->CreateTextureCubeFromFile((basePath + brdfFileName).c_str(), m_pBRDF->GetTexture2DPPtr(), &textureDesc);*/
 }
 
 void Scene::updateLights(const float DELTA_TIME)
 {
 	for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
 	{
-		Lights[i].Update(DELTA_TIME, m_Camera);
+		Lights[i].Update(DELTA_TIME, m_pMainCamera);
 		m_ppLightSpheres[i]->UpdateWorld(Matrix::CreateScale(Max(0.01f, Lights[i].Property.Radius)) * Matrix::CreateTranslation(Lights[i].Property.Position));
-		//memcpy(&((LightConstants*)m_LightConstants.pSystemMem)->Lights[i], &Lights[i].Property, sizeof(LightProperty));
 	}
-
-	m_LightConstants.Upload();
 }
 
 void Scene::updateGlobalConstants(const float DELTA_TIME)
 {
-	const Vector3 EYE_WORLD = m_Camera.GetEyePos();
+	const Vector3 EYE_WORLD = m_pMainCamera->GetEyePos();
 	const Matrix REFLECTION = Matrix::CreateReflection(m_MirrorPlane);
-	const Matrix VIEW = m_Camera.GetView();
-	const Matrix PROJECTION = m_Camera.GetProjection();
+	const Matrix VIEW = m_pMainCamera->GetView();
+	const Matrix PROJECTION = m_pMainCamera->GetProjection();
 
 	GlobalConstants* pGlobalConstData = (GlobalConstants*)m_GlobalConstants.pSystemMem;
 	GlobalConstants* pReflectionConstData = (GlobalConstants*)m_ReflectionGlobalConstants.pSystemMem;

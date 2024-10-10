@@ -1,17 +1,34 @@
 #include "../../Common.h"
 #include "../Renderer/BaseRenderer.h"
+#include "../Camera.h"
 #include "../Renderer/ConstantBuffer.h"
+#include "../ShadowMap.h"
 #include "../Renderer/Texture.h"
 #include "Sun.h"
 
-void Sun::Initialize(BaseRenderer* pRenderer)
+void Sun::Initialize(BaseRenderer* pRenderer, Camera* pMainCamera)
 {
 	_ASSERT(pRenderer);
+	_ASSERT(pMainCamera);
 
 	m_pRenderer = pRenderer;
+	m_pMainCamera = pMainCamera;
 
 	createSunMesh(SunDiskSegments);
 	createConstantBuffers();
+
+	SunProperty.Radius = 0.004649f;
+	SunProperty.LightType = LIGHT_SUN | LIGHT_SHADOW;
+
+	m_pSunCamera = new Camera;
+	m_pSunCamera->bUseFirstPersonView = true;
+	m_pSunCamera->SetAspectRatio(1.0f);
+	m_pSunCamera->SetProjectionFovAngleY(120.0f);
+	m_pSunCamera->SetNearZ(0.1f);
+	m_pSunCamera->SetFarZ(1000.0f);
+
+	m_pSunShadowMap = new ShadowMap(3840, 3840);
+	m_pSunShadowMap->Initialize(pRenderer, LIGHT_SUN | LIGHT_SHADOW);
 }
 
 void Sun::Update()
@@ -22,12 +39,25 @@ void Sun::Update()
 	// Update sun data.
 	const float SUN_RAD_X = DegreeToRadian(SunAngle.x);
 	const float SUN_RAD_Y = DegreeToRadian(-SunAngle.y);
-	SunDirection = Vector3(cos(SUN_RAD_X) * cos(SUN_RAD_Y), sin(SUN_RAD_Y), sin(SUN_RAD_X) * cos(SUN_RAD_Y));
-	SunDirection.Normalize();
+	SunProperty.Direction = Vector3(cos(SUN_RAD_X) * cos(SUN_RAD_Y), sin(SUN_RAD_Y), sin(SUN_RAD_X) * cos(SUN_RAD_Y));
+	SunProperty.Direction.Normalize();
+	SunProperty.Position = -SunProperty.Direction * 30.0f;
+	SunProperty.Radiance = SunIntensity * SunColor * 0.5f;
+	SunViewProjection = Matrix::CreateLookAt(SunProperty.Position, Vector3::Zero, Vector3::UnitY) * Matrix::CreateOrthographic(20.0f, 20.0f, 0.1f, 80.0f);
 
-	SunRadiance = SunIntensity * SunColor;
-	SunViewProjection = Matrix::CreateLookAt(-SunDirection * 20.0f, Vector3::Zero, Vector3::UnitY) * Matrix::CreateOrthographic(20.0f, 20.0f, 0.1f, 80.0f);
+	m_pSunCamera->SetEyePos(SunProperty.Position);
+	m_pSunCamera->SetViewDir(SunProperty.Direction);
 
+	m_pSunShadowMap->Update(SunProperty, m_pSunCamera, m_pMainCamera);
+
+	ConstantBuffer* const pShadowConstantBuffer = m_pSunShadowMap->GetShadowConstantBuffers();
+	for (int i = 0; i < 4; ++i)
+	{
+		GlobalConstants* const pConstantData = (GlobalConstants*)pShadowConstantBuffer[i].pSystemMem;
+		SunProperty.ViewProjections[i] = pConstantData->ViewProjection;
+		SunProperty.Projections[i] = pConstantData->Projection;
+		SunProperty.InverseProjections[i] = pConstantData->InverseProjection;
+	}
 
 	// Update VS constant buffer.
 	SunVSConstants* pSunVSConstData = (SunVSConstants*)m_pSunVSConstantBuffer->pSystemMem;
@@ -36,7 +66,7 @@ void Sun::Update()
 		__debugbreak();
 	}
 
-	Vector3 axisZ(SunDirection);
+	Vector3 axisZ(SunProperty.Direction);
 	axisZ.Normalize();
 
 	Vector3 axisY;
@@ -51,11 +81,11 @@ void Sun::Update()
 	
 	Vector3 axisX = axisY.Cross(axisZ);
 
-	const float SUN_THETA = asin(-SunDirection.y);
-	SunWorld = Matrix::CreateScale(SunRadius) *
+	const float SUN_THETA = asin(-SunProperty.Direction.y);
+	SunWorld = Matrix::CreateScale(SunProperty.Radius) *
 		Matrix(axisX, axisY, axisZ) *
 		Matrix::CreateTranslation(m_CameraEye) *
-		Matrix::CreateTranslation(-SunDirection);
+		Matrix::CreateTranslation(-SunProperty.Direction);
 	
 
 	pSunVSConstData->WorldViewProjection = (SunWorld * m_CameraViewProjection).Transpose();
@@ -69,8 +99,7 @@ void Sun::Update()
 	{
 		__debugbreak();
 	}
-	pSunPSConstData->Radiance = SunRadiance;
-
+	pSunPSConstData->Radiance = SunProperty.Radiance;
 
 	m_pSunVSConstantBuffer->Upload();
 	m_pSunPSConstantBuffer->Upload();
@@ -126,6 +155,13 @@ void Sun::Render()
 	pContext->IASetVertexBuffers(0, 1, &pNullVertexBuffer, &offset, &offset);
 }
 
+void Sun::RenderShadowMap(std::vector<Model*>& basicList, Model* pMirror)
+{
+	_ASSERT(m_pSunShadowMap);
+
+	m_pSunShadowMap->Render(basicList, pMirror);
+}
+
 void Sun::ResetSunDisk()
 {
 	SAFE_RELEASE(m_pSunDiskBuffer);
@@ -135,6 +171,7 @@ void Sun::ResetSunDisk()
 void Sun::Cleanup()
 {
 	m_SunDiskVertices.clear();
+
 	SAFE_RELEASE(m_pSunDiskBuffer);
 	if (m_pSunVSConstantBuffer)
 	{
@@ -146,8 +183,19 @@ void Sun::Cleanup()
 		delete m_pSunPSConstantBuffer;
 		m_pSunPSConstantBuffer = nullptr;
 	}
+	if (m_pSunCamera)
+	{
+		delete m_pSunCamera;
+		m_pSunCamera = nullptr;
+	}
+	if (m_pSunShadowMap)
+	{
+		delete m_pSunShadowMap;
+		m_pSunShadowMap = nullptr;
+	}
 
 	m_pRenderer = nullptr;
+	m_pMainCamera = nullptr;
 	m_pAtmosphereConstantBuffer = nullptr;
 	m_pTransmittanceLUT = nullptr;
 }

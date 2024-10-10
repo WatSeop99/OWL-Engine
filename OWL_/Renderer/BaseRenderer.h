@@ -72,8 +72,8 @@ protected:
 	void passDebug();
 
 protected:
-	UINT m_ScreenWidth = 1280;
-	UINT m_ScreenHeight = 720;
+	UINT m_ScreenWidth = 1920;
+	UINT m_ScreenHeight = 1080;
 	HWND m_hMainWindow = nullptr;
 	UINT m_NumQualityLevels = 0;
 
@@ -88,11 +88,8 @@ protected:
 
 	ResourceManager* m_pResourceManager = nullptr;
 
-	ID3D11Texture2D* m_pBackBuffer = nullptr;
-	ID3D11RenderTargetView* m_pBackBufferRTV = nullptr;
-
+	Texture* m_pBackBuffer = nullptr;
 	Texture m_FloatBuffer;
-	Texture m_ResolvedBuffer;
 	Texture m_PrevBuffer; // 간단한 모션 블러 효과를 위함.
 	GBuffer* m_pGBuffer = nullptr;
 

@@ -18,7 +18,7 @@ public:
 
 	void Initialize(BaseRenderer* pRenderer, const UINT LIGHT_TYPE);
 
-	void Update(const LightProperty& PROPERTY, Camera& lightCam, Camera& mainCamera);
+	void Update(const LightProperty& PROPERTY, Camera* pLightCam, Camera* pMainCamera);
 
 	void Render(std::vector<Model*>& pBasicList, Model* pMirror);
 
@@ -27,9 +27,9 @@ public:
 	inline UINT GetShadowWidth() { return m_ShadowWidth; }
 	inline UINT GetShadowHeight() { return m_ShadowHeight; }
 
-	inline Texture* GetSpotLightShadowBuffer() { return &m_SpotLightShadowBuffer; }
-	inline Texture* GetPointLightShadowBuffer() { return &m_PointLightShadowBuffer; }
-	inline Texture* GetDirectionalLightShadowBuffer() { return &m_DirectionalLightShadowBuffer; }
+	inline Texture* GetShadow2DBufferPtr() { return &m_Shadow2DBuffer; }
+	inline Texture* GetShadowCubeBufferPtr() { return &m_ShadowCubeBuffer; }
+	inline Texture* GetCascadeShadowBufferPtr() { return &m_CascadeShadowBuffer; }
 
 	inline ConstantBuffer* GetShadowConstantBuffers() { return m_pShadowConstantsBuffers; }
 
@@ -48,9 +48,9 @@ private:
 	UINT m_ShadowHeight = 0;
 	UINT m_LightType = LIGHT_OFF;
 
-	Texture m_SpotLightShadowBuffer;
-	Texture m_PointLightShadowBuffer;
-	Texture m_DirectionalLightShadowBuffer;
+	Texture m_Shadow2DBuffer;
+	Texture m_ShadowCubeBuffer;
+	Texture m_CascadeShadowBuffer;
 	ConstantBuffer m_pShadowConstantsBuffers[6]; // spot, point, direc => 0, 6, 4개씩 사용.
 	ConstantBuffer m_ShadowConstantsBufferForGS; // 2개 이상의 view 행렬을 사용하는 광원을 위한  geometry용 상수버퍼.
 	

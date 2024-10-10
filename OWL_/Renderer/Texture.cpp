@@ -86,6 +86,46 @@ void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, c
 	}
 }
 
+void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID3D11Texture2D* pTexture, bool bCreatingViews)
+{
+	_ASSERT(pDevice);
+	_ASSERT(pContext);
+	_ASSERT(pTexture);
+
+	m_pDevice = pDevice;
+	m_pDevice->AddRef();
+	m_pContext = pContext;
+	m_pContext->AddRef();
+	m_pTexture2D = pTexture;
+	m_pTexture2D->AddRef();
+	m_pStagingTexture2D = nullptr;
+
+	m_eTextureType = TextureType_Texture2D;
+	m_pTexture2D->GetDesc(&m_Texture2DDesc);
+
+	if (!bCreatingViews)
+	{
+		return;
+	}
+	
+	if (m_Texture2DDesc.BindFlags & D3D11_BIND_RENDER_TARGET)
+	{
+		createRenderTargetView();
+	}
+	if (m_Texture2DDesc.BindFlags & D3D11_BIND_SHADER_RESOURCE)
+	{
+		createShaderResourceView();
+	}
+	if (m_Texture2DDesc.BindFlags & D3D11_BIND_DEPTH_STENCIL)
+	{
+		createDepthStencilView();
+	}
+	if (m_Texture2DDesc.BindFlags & D3D11_BIND_UNORDERED_ACCESS)
+	{
+		createUnorderedAccessView();
+	}
+}
+
 void Texture::CreateRTV(const D3D11_RENDER_TARGET_VIEW_DESC& RTV_DESC)
 {
 	_ASSERT(m_pDevice);
