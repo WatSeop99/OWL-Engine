@@ -70,29 +70,6 @@ BaseRenderer::~BaseRenderer()
 	DestroyWindow(m_hMainWindow);
 }
 
-int BaseRenderer::Run()
-{
-	// 메인 루프.
-	MSG msg = { 0, };
-	while (msg.message != WM_QUIT)
-	{
-		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-		else
-		{
-			Update(ImGui::GetIO().DeltaTime);
-			Render();
-
-			m_pSwapChain->Present(1, 0);
-		}
-	}
-
-	return (int)(msg.wParam);
-}
-
 void BaseRenderer::Initialize()
 {
 	initMainWindow();
@@ -100,15 +77,14 @@ void BaseRenderer::Initialize()
 	initGUI();
 
 	// Timer setting.
-	m_pTimer = new Timer(m_pDevice);
+	m_pTimer = new Timer;
+	m_pTimer->Initialize(m_pDevice, m_pContext);
 
 	m_pResourceManager = new ResourceManager;
 	m_pResourceManager->Initialize(m_pDevice, m_pContext);
 
 	/*_ASSERT(m_pTimer);
 	m_pTimer->Start(m_pContext, false);*/
-
-	InitScene();
 
 	// postprocessor 초기화.
 	m_PostProcessor.Initialize(this,
@@ -146,26 +122,22 @@ void BaseRenderer::InitScene()
 
 void BaseRenderer::UpdateGUI()
 {
-	beginGUI();
+	/*ImGui_ImplWin32_NewFrame();
+	ImGui_ImplDX11_NewFrame();
 
-	ImGui::Begin("Scene");
+	ImGui::NewFrame();
+	ImGui::DockSpaceOverViewport();*/
+
+	/*ImGui::Begin("Scene");
 	ImVec2 wsize = ImGui::GetWindowSize();
 	ImGui::Image((ImTextureID)(intptr_t)m_PrevBuffer.pSRV, wsize, ImVec2(0, 0), ImVec2(1, 1));
-	ImGui::End();
-
-
-	ImGui::Begin("Scene Control");
-
-	// ImGui가 측정해주는 Framerate 출력.
-	ImGui::Text("Average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	ImGui::End();*/
 }
 
 void BaseRenderer::Update(float deltaTime)
 {
-	UpdateGUI();
-
 	// 카메라의 이동.
-	m_Camera.UpdateKeyboard(deltaTime, m_pbKeyPressed);
+	m_Camera.UpdateKeyboard(deltaTime, &m_Keyboard);
 
 	// 마우스 처리.
 	ProcessMouseControl();
@@ -179,6 +151,12 @@ void BaseRenderer::Update(float deltaTime)
 
 void BaseRenderer::RenderGUI()
 {
+	ImGui::Begin("Scene");
+	ImVec2 wsize = ImGui::GetWindowSize();
+	ImGui::Image((ImTextureID)(intptr_t)m_PrevBuffer.pSRV, wsize, ImVec2(0, 0), ImVec2(1, 1));
+	ImGui::End();
+
+
 	const ImGuiIO& IMGUI_IO = ImGui::GetIO();
 
 	// Example의 Render()에서 RT 설정을 해주지 않았을 경우에도
@@ -209,35 +187,36 @@ void BaseRenderer::Render()
 	m_PostProcessor.Render();
 
 	RenderGUI(); // 추후 editor/game 모드를 설정하여 따로 렌더링하도록 구상.
+
+	m_pSwapChain->Present(1, 0);
 }
 
 void BaseRenderer::OnMouseMove(int mouseX, int mouseY)
 {
-	m_MouseX = mouseX;
-	m_MouseY = mouseY;
+	m_Mouse.MouseX = mouseX;
+	m_Mouse.MouseY = mouseY;
 
 	// 마우스 커서의 위치를 NDC로 변환.
 	// 마우스 커서는 좌측 상단 (0, 0), 우측 하단(width-1, height-1).
 	// NDC는 좌측 하단이 (-1, -1), 우측 상단(1, 1).
-	m_MouseNDCX = mouseX * 2.0f / m_ScreenWidth - 1.0f;
-	m_MouseNDCY = -mouseY * 2.0f / m_ScreenHeight + 1.0f;
+	m_Mouse.MouseNDCX = mouseX * 2.0f / m_ScreenWidth - 1.0f;
+	m_Mouse.MouseNDCY = -mouseY * 2.0f / m_ScreenHeight + 1.0f;
 
 	// 커서가 화면 밖으로 나갔을 경우 범위 조절.
-	// 게임에서는 클램프를 안할 수도 있습니다..
-	m_MouseNDCX = Clamp(m_MouseNDCX, -1.0f, 1.0f);
-	m_MouseNDCY = Clamp(m_MouseNDCY, -1.0f, 1.0f);
+	m_Mouse.MouseNDCX = Clamp(m_Mouse.MouseNDCX, -1.0f, 1.0f);
+	m_Mouse.MouseNDCY = Clamp(m_Mouse.MouseNDCY, -1.0f, 1.0f);
 
 	// 카메라 시점 회전.
-	m_Camera.UpdateMouse(m_MouseNDCX, m_MouseNDCY);
+	m_Camera.UpdateMouse(m_Mouse.MouseNDCX, m_Mouse.MouseNDCY);
 }
 
 void BaseRenderer::OnMouseClick(int mouseX, int mouseY)
 {
-	m_MouseX = mouseX;
-	m_MouseY = mouseY;
+	m_Mouse.MouseX = mouseX;
+	m_Mouse.MouseY = mouseY;
 
-	m_MouseNDCX = mouseX * 2.0f / m_ScreenWidth - 1.0f;
-	m_MouseNDCY = -mouseY * 2.0f / m_ScreenHeight + 1.0f;
+	m_Mouse.MouseNDCX = mouseX * 2.0f / m_ScreenWidth - 1.0f;
+	m_Mouse.MouseNDCY = -mouseY * 2.0f / m_ScreenHeight + 1.0f;
 }
 
 LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -297,45 +276,41 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		case WM_LBUTTONDOWN:
 		{
-			if (!m_bLeftButton)
+			if (!m_Mouse.bMouseLeftButton)
 			{
-				m_bDragStartFlag = true; // 드래그를 새로 시작하는지 확인.
+				m_Mouse.bMouseDragStartFlag = true; // 드래그를 새로 시작하는지 확인.
 			}
-			m_bLeftButton = true;
+			m_Mouse.bMouseLeftButton = true;
 			OnMouseClick(LOWORD(lParam), HIWORD(lParam));
 
 			break;
 		}
 
 		case WM_LBUTTONUP:
-			m_bLeftButton = false;
+			m_Mouse.bMouseLeftButton = false;
 			break;
 
 		case WM_RBUTTONDOWN:
 		{
-			if (!m_bRightButton)
+			if (!m_Mouse.bMouseRightButton)
 			{
-				m_bDragStartFlag = true; // 드래그를 새로 시작하는지 확인.
+				m_Mouse.bMouseDragStartFlag = true; // 드래그를 새로 시작하는지 확인.
 			}
-			m_bRightButton = true;
+			m_Mouse.bMouseRightButton = true;
 
 			break;
 		}
 
 		case WM_RBUTTONUP:
-			m_bRightButton = false;
+			m_Mouse.bMouseRightButton = false;
 			break;
 
 		case WM_KEYDOWN:
 		{
-			m_pbKeyPressed[wParam] = true;
+			m_Keyboard.bPressed[wParam] = true;
 			if (wParam == VK_ESCAPE) // ESC키 종료.
 			{
 				DestroyWindow(hwnd);
-			}
-			if (wParam == VK_SPACE)
-			{
-				m_Scene.Lights[1].bRotated = !(m_Scene.Lights[1].bRotated);
 			}
 
 			break;
@@ -356,12 +331,12 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				m_Camera.PrintView();
 			}
 
-			m_pbKeyPressed[wParam] = false;
+			m_Keyboard.bPressed[wParam] = false;
 			break;
 		}
 
 		case WM_MOUSEWHEEL:
-			m_WheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+			m_Mouse.WheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
 			break;
 
 		case WM_DESTROY:
@@ -451,12 +426,12 @@ void BaseRenderer::ProcessMouseControl()
 	float dist = 0.0f;
 
 	// 사용자가 두 버튼 중 하나만 누른다고 가정.
-	if (m_bLeftButton || m_bRightButton)
+	if (m_Mouse.bMouseLeftButton || m_Mouse.bMouseRightButton)
 	{
 		const Matrix VIEW = m_Camera.GetView();
 		const Matrix PROJECTION = m_Camera.GetProjection();
-		const Vector3 NDC_NEAR = Vector3(m_MouseNDCX, m_MouseNDCY, 0.0f);
-		const Vector3 NDC_FAR = Vector3(m_MouseNDCX, m_MouseNDCY, 1.0f);
+		const Vector3 NDC_NEAR = Vector3(m_Mouse.MouseNDCX, m_Mouse.MouseNDCY, 0.0f);
+		const Vector3 NDC_FAR = Vector3(m_Mouse.MouseNDCX, m_Mouse.MouseNDCY, 1.0f);
 		const Matrix INV_PROJECTION_VIEW = (VIEW * PROJECTION).Invert();
 		const Vector3 WORLD_NEAR = Vector3::Transform(NDC_NEAR, INV_PROJECTION_VIEW);
 		const Vector3 WORLD_FAR = Vector3::Transform(NDC_FAR, INV_PROJECTION_VIEW);
@@ -469,21 +444,24 @@ void BaseRenderer::ProcessMouseControl()
 			Model* pSelectedModel = PickClosest(CUR_RAY, &dist);
 			if (pSelectedModel)
 			{
-				OutputDebugStringA("Newly selected model: ");
-				OutputDebugStringA(pSelectedModel->Name.c_str());
-				OutputDebugStringA("\n");
+#ifdef _DEBUG
+				char szDebugString[256];
+				sprintf_s(szDebugString, 256, "newly selected model: %s\n", pSelectedModel->Name.c_str());
+				OutputDebugStringA(szDebugString);
+#endif
 
 				s_pActiveModel = pSelectedModel;
 				m_pPickedModel = pSelectedModel; // GUI 조작용 포인터.
 				pickPoint = CUR_RAY.position + dist * CUR_RAY.direction;
-				if (m_bLeftButton) // 왼쪽 버튼 회전 준비.
+				if (m_Mouse.bMouseLeftButton) // 왼쪽 버튼 회전 준비.
 				{
 					s_PrevVector = pickPoint - s_pActiveModel->BoundingSphere.Center;
 					s_PrevVector.Normalize();
 				}
 				else
-				{ // 오른쪽 버튼 이동 준비
-					m_bDragStartFlag = false;
+				{ 
+					// 오른쪽 버튼 이동 준비
+					m_Mouse.bMouseDragStartFlag = false;
 					s_PrevRatio = dist / (WORLD_FAR - WORLD_NEAR).Length();
 					s_PrevPos = pickPoint;
 				}
@@ -491,7 +469,7 @@ void BaseRenderer::ProcessMouseControl()
 		}
 		else // 이미 선택된 물체가 있었던 경우.
 		{
-			if (m_bLeftButton) // 왼쪽 버튼으로 계속 회전.
+			if (m_Mouse.bMouseLeftButton) // 왼쪽 버튼으로 계속 회전.
 			{
 				if (CUR_RAY.Intersects(s_pActiveModel->BoundingSphere, dist))
 				{
@@ -800,20 +778,6 @@ void BaseRenderer::destroyBuffersForRendering()
 	m_PostProcessor.Cleanup();
 }
 
-void BaseRenderer::beginGUI()
-{
-	ImGui_ImplWin32_NewFrame();
-	ImGui_ImplDX11_NewFrame();
-
-	ImGui::NewFrame();
-	ImGui::DockSpaceOverViewport();
-}
-
-void BaseRenderer::endGUI()
-{
-	ImGui::End();
-}
-
 void BaseRenderer::passGBuffer()
 {
 	_ASSERT(m_pGBuffer);
@@ -865,6 +829,8 @@ void BaseRenderer::passDeferredLighting()
 	{
 		__debugbreak();
 	}
+
+	// Draw obejct for each light.
 
 	Sun* pSun = m_Scene.GetSunPtr();
 	memcpy(&pLightConstsData->Lights, &pSun->SunProperty, sizeof(LightProperty));

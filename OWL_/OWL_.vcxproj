@@ -168,7 +168,10 @@
     <ClInclude Include="Common.h" />
     <ClInclude Include="Graphics\ConstantDataType.h" />
     <ClInclude Include="Graphics\GraphicsUtils.h" />
-    <ClInclude Include="DebugApp.h" />
+    <ClInclude Include="DebugApp.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Geometry\GeometryGenerator.h" />
     <ClInclude Include="Renderer\PipelineState.h" />
     <ClInclude Include="Graphics\ImageFilter.h" />
@@ -192,6 +195,7 @@
     <ClInclude Include="Renderer\Texture.h" />
     <ClInclude Include="Graphics\Atmosphere\TransmittanceLUT.h" />
     <ClInclude Include="Util\cySampleElim.h" />
+    <ClInclude Include="Util\KnM.h" />
     <ClInclude Include="Util\Util.h" />
     <ClInclude Include="Geometry\Vertex.h" />
   </ItemGroup>
@@ -233,7 +237,10 @@
     <ClCompile Include="Graphics\ShadowMap.cpp" />
     <ClCompile Include="Renderer\StructuredBuffer.cpp" />
     <ClCompile Include="Renderer\Timer.cpp" />
-    <ClCompile Include="DebugApp.cpp" />
+    <ClCompile Include="DebugApp.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Geometry\Animation.cpp" />
     <ClCompile Include="DebugApp2.cpp" />
     <ClCompile Include="Geometry\GeometryGenerator.cpp" />

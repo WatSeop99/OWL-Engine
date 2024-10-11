@@ -1,5 +1,4 @@
 #include "Common.h"
-#include "DebugApp.h"
 #include "DebugApp2.h"
 
 using namespace std;
@@ -32,14 +31,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
-	BaseRenderer* app = new DebugApp2;
-	app->Initialize();
-	app->Run();
+	DebugApp2* pApp = new DebugApp2;
+	pApp->Initialize();
+	pApp->Run();
 
-	if (app)
+	if (pApp)
 	{
-		delete app;
-		app = nullptr;
+		delete pApp;
+		pApp = nullptr;
 	}
 
 #ifdef _DEBUG

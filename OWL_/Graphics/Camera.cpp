@@ -1,4 +1,5 @@
 ﻿#include "../Common.h"
+#include "../Util/KnM.h"
 #include "Camera.h"
 
 void Camera::Reset(const Vector3& POS, const float YAW, const float PITCH)
@@ -16,31 +17,33 @@ void Camera::UpdateViewDir()
 	m_RightDirection = m_UpDirection.Cross(m_ViewDirection);
 }
 
-void Camera::UpdateKeyboard(const float DELTA_TIME, bool const bKEY_PRESSED[256])
+void Camera::UpdateKeyboard(const float DELTA_TIME, Keyboard* const pKeyboard)
 {
+	_ASSERT(pKeyboard);
+
 	if (bUseFirstPersonView)
 	{
-		if (bKEY_PRESSED['W'])
+		if (pKeyboard->bPressed['W'])
 		{
 			MoveForward(DELTA_TIME);
 		}
-		if (bKEY_PRESSED['S'])
+		if (pKeyboard->bPressed['S'])
 		{
 			MoveForward(-DELTA_TIME);
 		}
-		if (bKEY_PRESSED['D'])
+		if (pKeyboard->bPressed['D'])
 		{
 			MoveRight(DELTA_TIME);
 		}
-		if (bKEY_PRESSED['A'])
+		if (pKeyboard->bPressed['A'])
 		{
 			MoveRight(-DELTA_TIME);
 		}
-		if (bKEY_PRESSED['E'])
+		if (pKeyboard->bPressed['E'])
 		{
 			MoveUp(DELTA_TIME);
 		}
-		if (bKEY_PRESSED['Q'])
+		if (pKeyboard->bPressed['Q'])
 		{
 			MoveUp(-DELTA_TIME);
 		}

@@ -1,11 +1,16 @@
-
 #include "../Common.h"
 #include "Timer.h"
 
-
-Timer::Timer(ID3D11Device* pDevice)
+void Timer::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 {
 	_ASSERT(pDevice);
+	_ASSERT(pContext);
+
+	m_pDevice = pDevice;
+	m_pDevice->AddRef();
+	m_pContext = pContext;
+	m_pContext->AddRef();
+
 
 	HRESULT hr = S_OK;
 
@@ -26,9 +31,9 @@ Timer::Timer(ID3D11Device* pDevice)
 	SET_DEBUG_INFO_TO_OBJECT(m_pDisjointQuery, "Timer::m_pDisjointQuery");
 }
 
-void Timer::Start(ID3D11DeviceContext* pContext, bool bMeasureGPU)
+void Timer::Start(bool bMeasureGPU)
 {
-	_ASSERT(pContext);
+	_ASSERT(m_pContext);
 
 	m_bMeasureGPU = bMeasureGPU;
 
@@ -39,29 +44,29 @@ void Timer::Start(ID3D11DeviceContext* pContext, bool bMeasureGPU)
 
 	if (m_bMeasureGPU)
 	{
-		pContext->Begin(m_pDisjointQuery);
-		pContext->End(m_pStartQuery);
+		m_pContext->Begin(m_pDisjointQuery);
+		m_pContext->End(m_pStartQuery);
 	}
 }
 
-void Timer::End(ID3D11DeviceContext* pContext)
+void Timer::End()
 {
-	_ASSERT(pContext);
+	_ASSERT(m_pContext);
 
 	if (m_bMeasureGPU)
 	{
 		// GPU Profiling in DX11 with Queries.
 		// https://therealmjp.github.io/posts/profiling-in-dx11-with-queries/
 
-		pContext->End(m_pStopQuery);
-		pContext->End(m_pDisjointQuery);
+		m_pContext->End(m_pStopQuery);
+		m_pContext->End(m_pDisjointQuery);
 
-		while (pContext->GetData(m_pDisjointQuery, nullptr, 0, 0) == S_FALSE)
+		while (m_pContext->GetData(m_pDisjointQuery, nullptr, 0, 0) == S_FALSE)
 		{
 			continue;
 		}
 		D3D11_QUERY_DATA_TIMESTAMP_DISJOINT tsDisjoint;
-		pContext->GetData(m_pDisjointQuery, &tsDisjoint, sizeof(tsDisjoint), 0);
+		m_pContext->GetData(m_pDisjointQuery, &tsDisjoint, sizeof(tsDisjoint), 0);
 
 		// The timestamp returned by ID3D11DeviceContext::GetData for a
 		// timestamp query is only reliable if Disjoint is FALSE.
@@ -70,10 +75,10 @@ void Timer::End(ID3D11DeviceContext* pContext)
 		if (tsDisjoint.Disjoint == FALSE)
 		{
 			UINT64 startTime, stopTime;
-			pContext->GetData(m_pStartQuery, &startTime, sizeof(UINT64), 0);
-			pContext->GetData(m_pStopQuery, &stopTime, sizeof(UINT64), 0);
+			m_pContext->GetData(m_pStartQuery, &startTime, sizeof(UINT64), 0);
+			m_pContext->GetData(m_pStopQuery, &stopTime, sizeof(UINT64), 0);
 
-			ElapsedTimeGPU = ((double)(stopTime - startTime) / (double)(tsDisjoint.Frequency)) * 1000.0;
+			ElapsedTimeGPU = ((double)(stopTime - startTime) / (double)(tsDisjoint.Frequency)) * 1000.0f;
 		}
 		else
 		{
@@ -86,18 +91,12 @@ void Timer::End(ID3D11DeviceContext* pContext)
 	char debugString[256] = { 0, };
 	if (m_bMeasureGPU)
 	{
-		sprintf(debugString, "%lf", ElapsedTimeGPU);
-
-		OutputDebugStringA("GPU: ");
+		sprintf(debugString, "GPU: %lf milliSec, ", ElapsedTimeGPU);
 		OutputDebugStringA(debugString);
-		OutputDebugStringA(" milliSec, ");
 	}
 
-	sprintf(debugString, "%lf", ElapsedTimeCPU);
-
-	OutputDebugStringA("CPU: ");
+	sprintf(debugString, "CPU: %lf milliSec\n", ElapsedTimeCPU);
 	OutputDebugStringA(debugString);
-	OutputDebugStringA(" milliSec\n");
 }
 
 void Timer::Cleanup()
@@ -105,4 +104,6 @@ void Timer::Cleanup()
 	SAFE_RELEASE(m_pDisjointQuery);
 	SAFE_RELEASE(m_pStopQuery);
 	SAFE_RELEASE(m_pStartQuery);
+	SAFE_RELEASE(m_pContext);
+	SAFE_RELEASE(m_pDevice);
 }

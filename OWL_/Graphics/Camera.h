@@ -12,6 +12,8 @@ struct FrustumDirection
 	Vector3 FrustumD;
 };
 
+struct Keyboard;
+
 class Camera
 {
 public:
@@ -21,7 +23,7 @@ public:
 	void Reset(const Vector3& POS, const float YAW, const float PITCH);
 
 	void UpdateViewDir();
-	void UpdateKeyboard(const float DELTA_TIME, bool const bKEY_PRESSED[256]);
+	void UpdateKeyboard(const float DELTA_TIME, Keyboard* const pKeyboard);
 	void UpdateMouse(const float mouseNDCX, const float mouseNDCY);
 
 	void MoveForward(const float DELTA_TIME);

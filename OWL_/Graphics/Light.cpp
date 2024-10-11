@@ -76,20 +76,10 @@ void Light::Update(float deltaTime, Camera* pMainCamera)
 	switch (Property.LightType & m_TOTAL_LIGHT_TYPE)
 	{
 		case LIGHT_DIRECTIONAL:
-		{
-			/*ConstantBuffer* const pShadowConstants = m_ShadowMap.GetShadowConstantBuffers();
-			for (int i = 0; i < 4; ++i)
-			{
-				GlobalConstants* const pConstantData = (GlobalConstants*)pShadowConstants[i].pSystemMem;
-				Property.ViewProjections[i] = pConstantData->ViewProjection;
-				Property.Projections[i] = pConstantData->Projection;
-				Property.InverseProjections[i] = pConstantData->InverseProjection;
-			}*/
 			Property.ViewProjections[0] = (lightView * lightProjection).Transpose();
 			Property.Projections[0] = lightProjection.Transpose();
 			Property.InverseProjections[0] = lightProjection.Invert().Transpose();
-		}
-		break;
+			break;
 
 		case LIGHT_POINT:
 		{
@@ -105,12 +95,10 @@ void Light::Update(float deltaTime, Camera* pMainCamera)
 		break;
 
 		case LIGHT_SPOT:
-		{
 			Property.ViewProjections[0] = (lightView * lightProjection).Transpose();
 			Property.Projections[0] = lightProjection.Transpose();
 			Property.InverseProjections[0] = lightProjection.Invert().Transpose();
-		}
-		break;
+			break;
 
 		default:
 			break;

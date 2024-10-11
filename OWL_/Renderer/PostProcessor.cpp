@@ -115,7 +115,6 @@ void PostProcessor::Update()
 
 void PostProcessor::Render()
 {
-	// post effecting ÈÄ post processing.
 	renderPostEffects();
 	renderPostProcessing();
 }

@@ -14,13 +14,48 @@ DebugApp2::~DebugApp2()
 		delete m_pGround;
 		m_pGround = nullptr;
 	}
+	if (m_pRenderer)
+	{
+		delete m_pRenderer;
+		m_pRenderer = nullptr;
+	}
+}
+
+int DebugApp2::Run()
+{
+	// 메인 루프.
+	MSG msg = { 0, };
+	while (msg.message != WM_QUIT)
+	{
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		else
+		{
+			Update(ImGui::GetIO().DeltaTime);
+			Render();
+		}
+	}
+
+	return (int)(msg.wParam);;
+}
+
+void DebugApp2::Initialize()
+{
+	m_pRenderer = new BaseRenderer;
+	m_pRenderer->Initialize();
+
+	InitScene();
 }
 
 void DebugApp2::InitScene()
 {
-	BaseRenderer::m_Camera.Reset(Vector3(3.74966f, 5.03645f, -2.54918f), -0.819048f, 0.741502f);
+	_ASSERT(m_pRenderer);
 
-	BaseRenderer::InitScene();
+	m_pRenderer->GetCamera()->Reset(Vector3(3.74966f, 5.03645f, -2.54918f), -0.819048f, 0.741502f);
+	m_pRenderer->InitScene();
 
 	// Main Object.
 	{
@@ -57,7 +92,7 @@ void DebugApp2::InitScene()
 
 		Vector3 center(0.0f, 0.0f, 2.0f);
 		m_pCharacter = new SkinnedMeshModel;
-		m_pCharacter->Initialize(this, meshInfos, aniData);
+		m_pCharacter->Initialize(m_pRenderer, meshInfos, aniData);
 		for (UINT64 i = 0, size = m_pCharacter->Meshes.size(); i < size; ++i)
 		{
 			Mesh* pCurMesh = m_pCharacter->Meshes[i];
@@ -69,23 +104,40 @@ void DebugApp2::InitScene()
 		}
 		m_pCharacter->UpdateWorld(Matrix::CreateScale(1.0f) * Matrix::CreateTranslation(center));
 
-		m_Scene.RenderObjects.push_back(m_pCharacter); // 리스트에 등록
-		m_pPickedModel = m_pCharacter;
+		m_pRenderer->GetScene()->RenderObjects.push_back(m_pCharacter); // 리스트에 등록
+		m_pRenderer->SetPickedModel(m_pCharacter);
 	}
 }
 
 void DebugApp2::UpdateGUI()
 {
-	BaseRenderer::UpdateGUI();
-	GlobalConstants* pGlobalConstsCPU = m_Scene.GetGlobalConstantsCPU();
+	_ASSERT(m_pRenderer);
+
+	Scene* pScene = m_pRenderer->GetScene();
+	Camera* pMainCamera = m_pRenderer->GetCamera();
+	PostProcessor* pPostProcessor = m_pRenderer->GetPostProcessor();
+	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
+	GlobalConstants* pGlobalConstsCPU = m_pRenderer->GetScene()->GetGlobalConstantsCPU();
+
+	ImGui_ImplWin32_NewFrame();
+	ImGui_ImplDX11_NewFrame();
+
+	ImGui::NewFrame();
+	ImGui::DockSpaceOverViewport();
+
+	m_pRenderer->UpdateGUI();
+
+	ImGui::Begin("Scene Control");
+	// ImGui가 측정해주는 Framerate 출력.
+	ImGui::Text("Average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
 	ImGui::SetNextItemOpen(false, ImGuiCond_Once);
 	if (ImGui::TreeNode("General"))
 	{
-		ImGui::Checkbox("Use FPV", &m_Camera.bUseFirstPersonView);
-		ImGui::Checkbox("Wireframe", &m_Scene.bDrawAsWire);
-		ImGui::Checkbox("DrawOBB", &m_Scene.bDrawOBB);
-		ImGui::Checkbox("DrawBSphere", &m_Scene.bDrawBS);
+		ImGui::Checkbox("Use FPV", &pMainCamera->bUseFirstPersonView);
+		ImGui::Checkbox("Wireframe", &pScene->bDrawAsWire);
+		ImGui::Checkbox("DrawOBB", &pScene->bDrawOBB);
+		ImGui::Checkbox("DrawBSphere", &pScene->bDrawBS);
 		ImGui::TreePop();
 	}
 
@@ -105,46 +157,51 @@ void DebugApp2::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Post Effects"))
 	{
-		PostEffectsConstants* pPostEffectConstData = (PostEffectsConstants*)m_PostProcessor.GetPostEffectConstantBuffer()->pSystemMem;
+		PostEffectsConstants* pPostEffectConstData = (PostEffectsConstants*)pPostProcessor->GetPostEffectConstantBuffer()->pSystemMem;
 		if (!pPostEffectConstData)
 		{
 			__debugbreak();
 		}
 
-		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Render", &pPostEffectConstData->Mode, 1);
+		pPostProcessor->PostEffectsUpdateFlag += ImGui::RadioButton("Render", &pPostEffectConstData->Mode, 1);
 		ImGui::SameLine();
-		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Depth", &pPostEffectConstData->Mode, 2);
-		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("DepthScale", &pPostEffectConstData->DepthScale, 0.0f, 1.0f);
-		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("Fog", &pPostEffectConstData->FogStrength, 0.0f, 10.0f);
+		pPostProcessor->PostEffectsUpdateFlag += ImGui::RadioButton("Depth", &pPostEffectConstData->Mode, 2);
+		pPostProcessor->PostEffectsUpdateFlag += ImGui::SliderFloat("DepthScale", &pPostEffectConstData->DepthScale, 0.0f, 1.0f);
+		pPostProcessor->PostEffectsUpdateFlag += ImGui::SliderFloat("Fog", &pPostEffectConstData->FogStrength, 0.0f, 10.0f);
 
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNode("Post Processing"))
 	{
-		ImageFilterConstData* pCombineFilterConstData = (ImageFilterConstData*)m_PostProcessor.CombineFilter.GetConstantBufferPtr()->pSystemMem;
-		m_PostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Bloom Strength", &pCombineFilterConstData->Strength, 0.0f, 1.0f);
-		m_PostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Exposure", &pCombineFilterConstData->Option1, 0.0f, 10.0f);
-		m_PostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Gamma", &pCombineFilterConstData->Option2, 0.1f, 5.0f);
+		ImageFilterConstData* pCombineFilterConstData = (ImageFilterConstData*)pPostProcessor->CombineFilter.GetConstantBufferPtr()->pSystemMem;
+		pPostProcessor->CombineUpdateFlag += ImGui::SliderFloat("Bloom Strength", &pCombineFilterConstData->Strength, 0.0f, 1.0f);
+		pPostProcessor->CombineUpdateFlag += ImGui::SliderFloat("Exposure", &pCombineFilterConstData->Option1, 0.0f, 10.0f);
+		pPostProcessor->CombineUpdateFlag += ImGui::SliderFloat("Gamma", &pCombineFilterConstData->Option2, 0.1f, 5.0f);
 		ImGui::TreePop();
 	}
 
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Mirror"))
 	{
-		ImGui::SliderFloat("Alpha", &(m_Scene.MirrorAlpha), 0.0f, 1.0f);
-		const float BLEND_COLOR[4] = { m_Scene.MirrorAlpha, m_Scene.MirrorAlpha, m_Scene.MirrorAlpha, 1.0f };
-		if (m_Scene.bDrawAsWire)
+		ImGui::SliderFloat("Alpha", &pScene->MirrorAlpha, 0.0f, 1.0f);
+		const float BLEND_COLOR[4] = { pScene->MirrorAlpha, pScene->MirrorAlpha, pScene->MirrorAlpha, 1.0f };
+		if (pScene->bDrawAsWire)
 		{
-			m_pResourceManager->GraphicsPSOs[GraphicsPSOType_MirrorBlendWire].SetBlendFactor(BLEND_COLOR);
+			pResourceManager->GraphicsPSOs[GraphicsPSOType_MirrorBlendWire].SetBlendFactor(BLEND_COLOR);
 		}
 		else
 		{
-			m_pResourceManager->GraphicsPSOs[GraphicsPSOType_MirrorBlendSolid].SetBlendFactor(BLEND_COLOR);
+			pResourceManager->GraphicsPSOs[GraphicsPSOType_MirrorBlendSolid].SetBlendFactor(BLEND_COLOR);
 		}
 
-		Model* pMirror = m_Scene.GetMirror();
+		Model* pMirror = pScene->GetMirror();
 		MaterialConstants* pMaterialConstData = (MaterialConstants*)pMirror->Meshes[0]->MaterialConstant.pSystemMem;
+		if (!pMaterialConstData)
+		{
+			__debugbreak();
+		}
+
 		ImGui::SliderFloat("Metallic", &pMaterialConstData->MetallicFactor, 0.0f, 1.0f);
 		ImGui::SliderFloat("Roughness", &pMaterialConstData->RoughnessFactor, 0.0f, 1.0f);
 
@@ -154,9 +211,9 @@ void DebugApp2::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Light"))
 	{
-		ImGui::SliderFloat("Halo Radius", &m_Scene.Lights[1].Property.HaloRadius, 0.0f, 2.0f);
-		ImGui::SliderFloat("Halo Strength", &m_Scene.Lights[1].Property.HaloStrength, 0.0f, 1.0f);
-		ImGui::SliderFloat("Radius", &m_Scene.Lights[1].Property.Radius, 0.0f, 0.5f);
+		ImGui::SliderFloat("Halo Radius", &pScene->Lights[1].Property.HaloRadius, 0.0f, 2.0f);
+		ImGui::SliderFloat("Halo Strength", &pScene->Lights[1].Property.HaloStrength, 0.0f, 1.0f);
+		ImGui::SliderFloat("Radius", &pScene->Lights[1].Property.Radius, 0.0f, 0.5f);
 
 		ImGui::TreePop();
 	}
@@ -167,13 +224,14 @@ void DebugApp2::UpdateGUI()
 		ImGui::SliderFloat("LodBias", &pGlobalConstsCPU->LODBias, 0.0f, 10.0f);
 
 		int flag = 0;
+		Model* pPickedModel = m_pRenderer->GetPickedModel();
 
-		if (m_pPickedModel)
+		if (pPickedModel)
 		{
-			for (UINT64 i = 0, size = m_pPickedModel->Meshes.size(); i < size; ++i)
+			for (UINT64 i = 0, size = pPickedModel->Meshes.size(); i < size; ++i)
 			{
-				MaterialConstants* pMaterialConstData = (MaterialConstants*)m_pPickedModel->Meshes[i]->MaterialConstant.pSystemMem;
-				MeshConstants* pMeshConstData = (MeshConstants*)m_pPickedModel->Meshes[i]->MeshConstant.pSystemMem;
+				MaterialConstants* pMaterialConstData = (MaterialConstants*)pPickedModel->Meshes[i]->MaterialConstant.pSystemMem;
+				MeshConstants* pMeshConstData = (MeshConstants*)pPickedModel->Meshes[i]->MeshConstant.pSystemMem;
 				flag += ImGui::SliderFloat("Metallic", &pMaterialConstData->MetallicFactor, 0.0f, 1.0f);
 				flag += ImGui::SliderFloat("Roughness", &pMaterialConstData->RoughnessFactor, 0.0f, 1.0f);
 				flag += ImGui::CheckboxFlags("AlbedoTexture", &pMaterialConstData->bUseAlbedoMap, 1);
@@ -188,20 +246,21 @@ void DebugApp2::UpdateGUI()
 
 			if (flag)
 			{
-				m_pPickedModel->UpdateConstantBuffers();
+				pPickedModel->UpdateConstantBuffers();
 			}
-			ImGui::Checkbox("Draw Normals", &(m_pPickedModel->bDrawNormals));
+			ImGui::Checkbox("Draw Normals", &pPickedModel->bDrawNormals);
 		}
 
 		ImGui::TreePop();
 	}
 
-	BaseRenderer::endGUI();
+	ImGui::End();
 }
 
 void DebugApp2::Update(float deltaTime)
 {
-	BaseRenderer::Update(deltaTime);
+	UpdateGUI();
+	m_pRenderer->Update(deltaTime);
 
 	static int s_FrameCount = 0;
 
@@ -213,18 +272,20 @@ void DebugApp2::Update(float deltaTime)
 	// 4: dance
 	static int s_State = 0;
 
+	Keyboard* const pKeyboard = m_pRenderer->GetKeyboard();
+
 	switch (s_State)
 	{
 	case 0:
 	{
-		if (BaseRenderer::m_pbKeyPressed[VK_UP])
+		if (pKeyboard->bPressed[VK_UP])
 		{
 			s_State = 1;
 			s_FrameCount = 0;
 		}
 		else if (s_FrameCount ==
 				 m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size() ||
-				 BaseRenderer::m_pbKeyPressed[VK_UP]) // 재생이 다 끝난다면.
+				 pKeyboard->bPressed[VK_UP]) // 재생이 다 끝난다면.
 		{
 			s_FrameCount = 0; // 상태 변화 없이 반복.
 		}
@@ -243,13 +304,13 @@ void DebugApp2::Update(float deltaTime)
 
 	case 2:
 	{
-		if (BaseRenderer::m_pbKeyPressed[VK_RIGHT])
+		if (pKeyboard->bPressed[VK_RIGHT])
 		{
 			m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform =
 				Matrix::CreateRotationY(DirectX::XM_PI * 60.0f / 180.0f * deltaTime) *
 				m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform;
 		}
-		if (BaseRenderer::m_pbKeyPressed[VK_LEFT])
+		if (pKeyboard->bPressed[VK_LEFT])
 		{
 			m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform =
 				Matrix::CreateRotationY(-DirectX::XM_PI * 60.0f / 180.0f * deltaTime) *
@@ -258,7 +319,7 @@ void DebugApp2::Update(float deltaTime)
 		if (s_FrameCount == m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size())
 		{
 			// 방향키를 누르고 있지 않으면 정지. (누르고 있으면 계속 걷기)
-			if (!BaseRenderer::m_pbKeyPressed[VK_UP])
+			if (!pKeyboard->bPressed[VK_UP])
 			{
 				s_State = 3;
 			}
@@ -299,10 +360,14 @@ void DebugApp2::Update(float deltaTime)
 
 void DebugApp2::Render()
 {
-	m_pTimer->Start(m_pContext, true);
+	_ASSERT(m_pRenderer);
 
-	BaseRenderer::Render();
+	Timer* pTimer = m_pRenderer->GetTimer();
+
+	pTimer->Start(true);
+
+	m_pRenderer->Render();
 
 	OutputDebugStringA("Rendering time ==> ");
-	m_pTimer->End(m_pContext);
+	pTimer->End();
 }

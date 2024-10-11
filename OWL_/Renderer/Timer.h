@@ -6,12 +6,13 @@ class Timer
 {
 public:
 	Timer() = default;
-	Timer(ID3D11Device* pDevice);
 	~Timer() { Cleanup(); }
 
-	void Start(ID3D11DeviceContext* pContext, bool bMeasureGPU);
+	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
+
+	void Start(bool bMeasureGPU);
 	
-	void End(ID3D11DeviceContext* pContext);
+	void End();
 
 	void Cleanup();
 
@@ -20,6 +21,9 @@ public:
 	double ElapsedTimeGPU = 0.0f;
 
 protected:
+	ID3D11Device* m_pDevice = nullptr;
+	ID3D11DeviceContext* m_pContext = nullptr;
+
 	ID3D11Query* m_pStartQuery = nullptr;
 	ID3D11Query* m_pStopQuery = nullptr;
 	ID3D11Query* m_pDisjointQuery = nullptr;

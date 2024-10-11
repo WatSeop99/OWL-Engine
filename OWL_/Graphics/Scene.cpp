@@ -150,27 +150,15 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 	}
 
 	// 환경 박스 초기화.
-	MeshInfo skyboxMeshInfo;
+	/*MeshInfo skyboxMeshInfo;
 	MakeBox(&skyboxMeshInfo, 40.0f);
 
 	std::reverse(skyboxMeshInfo.Indices.begin(), skyboxMeshInfo.Indices.end());
 	m_pSkybox = new Model;
 	m_pSkybox->Initialize(pRenderer, { skyboxMeshInfo });
-	m_pSkybox->Name = "SkyBox";
+	m_pSkybox->Name = "SkyBox";*/
 
-
-	/*m_SunProperty.LightType = LIGHT_SUN | LIGHT_SHADOW;
-	m_SunCamera.bUseFirstPersonView = true;
-	m_SunCamera.SetAspectRatio(2560.0f / 2560.0f);
-	m_SunCamera.SetEyePos(m_SunProperty.Position);
-	m_SunCamera.SetViewDir(m_SunProperty.Direction);
-	m_SunCamera.SetProjectionFovAngleY(120.0f);
-	m_SunCamera.SetNearZ(0.1f);
-	m_SunCamera.SetFarZ(50.0f);
-	m_ShadowMap.SetShadowWidth(2560);
-	m_ShadowMap.SetShadowHeight(2560);
-	m_ShadowMap.Initialize(pRenderer, LIGHT_SUN | LIGHT_SHADOW);*/
-
+	// Initialize atmosphere data.
 	AtmosphereProperty STDUnitAtmosphereProperty = m_AtmosphereProperty.ToStdUnit();
 	m_pAtmosphereConstantBuffer = new ConstantBuffer;
 	m_pAtmosphereConstantBuffer->Initialize(pDevice, pContext, sizeof(AtmosphereProperty), &STDUnitAtmosphereProperty);
@@ -225,10 +213,6 @@ void Scene::Update(const float DELTA_TIME)
 	m_pSun->SetCamera(&CAMERA_POS, &CAMERA_VIEWPROJECTION);
 	m_pSun->SetWorldScale(m_pAerialLUT->pAerialData->WorldScale);
 	m_pSun->Update();
-
-	// Update shadow map.
-	/*m_SunProperty.Position = m_pSun->SunWorld.Translation();
-	m_ShadowMap.Update(m_SunProperty, m_SunCamera, m_Camera);*/
 
 	// Update aerial LUT.
 	m_pAerialLUT->SetCamera(&CAMERA_POS, ATMOS_EYE_HEIGHT, &CAMERA_FRUSTUM);

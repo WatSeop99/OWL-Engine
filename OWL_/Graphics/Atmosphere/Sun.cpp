@@ -48,6 +48,7 @@ void Sun::Update()
 	m_pSunCamera->SetEyePos(SunProperty.Position);
 	m_pSunCamera->SetViewDir(SunProperty.Direction);
 
+	// Update shadow.
 	m_pSunShadowMap->Update(SunProperty, m_pSunCamera, m_pMainCamera);
 
 	ConstantBuffer* const pShadowConstantBuffer = m_pSunShadowMap->GetShadowConstantBuffers();
