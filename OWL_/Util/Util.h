@@ -64,10 +64,12 @@ std::string RemoveExtension(const std::string& str);
 std::wstring RemoveExtension(const std::wstring& str);
 
 int Min(const int X, const int Y);
+UINT Min(const UINT X, const UINT Y);
 float Min(const float X, const float Y);
 Vector3 Min(const Vector3& V1, const Vector3& V2);
 
 int Max(const int X, const int Y);
+UINT Max(const UINT X, const UINT Y);
 float Max(const float X, const float Y);
 Vector3 Max(const Vector3& V1, const Vector3& V2);
 

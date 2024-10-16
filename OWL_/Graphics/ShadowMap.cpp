@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "ConstantDataType.h"
 #include "../Geometry/Model.h"
+#include "../Renderer/ResourceManager.h"
 #include "ShadowMap.h"
 
 using DirectX::SimpleMath::Vector4;

@@ -1,6 +1,9 @@
 #pragma once
 
-enum NodeChild
+#include <DirectXCollision.h>
+#include <intsafe.h>
+
+enum eNodeChild
 {
 	NodeChild_Left = 0,
 	NodeChild_Right,
@@ -10,7 +13,7 @@ enum NodeChild
 class Node
 {
 public:
-	static const UINT NULL_NODE = 0xFFFFFFFF;
+	static const UINT NULL_NODE = 0xffffffff;
 
 public:
 	Node() = default;
@@ -23,7 +26,7 @@ public:
 	UINT NextNodeID = NULL_NODE;
 	UINT ID = NULL_NODE;
 	UINT Children[NodeChild_Count] = { NULL_NODE, NULL_NODE };
-	UINT Height = 0xFFFFFFFF;
+	int Height = -1;
 	DirectX::BoundingBox AABB;
 };
 
@@ -35,9 +38,9 @@ public:
 
 	void Initialize(const UINT MAX_NODE_NUM);
 
-	void AddObject(const DirectX::BoundingBox& AABB);
+	void AddObject(const DirectX::BoundingBox* const pAABB);
 
-	void UpdateObject();
+	bool UpdateObject(const UINT NODE_ID, const DirectX::BoundingBox* const pNewAABB, bool bForceReinsert = false);
 
 	void RemoveObject(const UINT NODE_ID);
 
@@ -45,10 +48,10 @@ public:
 
 	inline Node* GetAllNodes() { return m_pNodes; }
 	inline UINT GetRootNodeID() { return m_RootNodeID; }
-	UINT GetMaxDepth();
+	int GetMaxDepth();
 
 protected:
-	void addObjectInternal(const DirectX::BoundingBox& AABB);
+	void addObjectInternal(const DirectX::BoundingBox* const pAABB);
 	
 	UINT allocateNode();
 	void releaseNode(const UINT NODE_ID);

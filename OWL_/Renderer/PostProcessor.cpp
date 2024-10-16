@@ -8,6 +8,7 @@
 #include "../Geometry/MeshInfo.h"
 #include "../Geometry/Model.h"
 #include "Texture.h"
+#include "../Renderer/ResourceManager.h"
 #include "PostProcessor.h"
 
 void PostProcessor::Initialize(BaseRenderer* pRenderer, const PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS)
@@ -151,6 +152,12 @@ void PostProcessor::Cleanup()
 	}
 }
 
+void PostProcessor::SetGlobalConstants(ConstantBuffer* const pGlobalConstants)
+{
+	_ASSERT(pGlobalConstants);
+	m_pGlobalConstsGPU = pGlobalConstants->pBuffer;
+}
+
 void PostProcessor::createPostBackBuffers()
 {
 	_ASSERT(m_pRenderer);
@@ -208,6 +215,8 @@ void PostProcessor::renderPostEffects()
 {
 	_ASSERT(m_pRenderer);
 	_ASSERT(m_pPostEffectsConstantBuffer);
+	_ASSERT(m_pFloatBuffer);
+	_ASSERT(m_pDepthBuffer);
 
 	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext(); 
@@ -289,7 +298,7 @@ void PostProcessor::setViewport()
 
 void PostProcessor::setRenderConfig(const PostProcessingBuffers& CONFIG)
 {
-	m_pGlobalConstsGPU = CONFIG.pGlobalConstsGPU;
+	//m_pGlobalConstsGPU = CONFIG.pGlobalConstsGPU;
 	m_pBackBuffer = CONFIG.pBackBuffer;
 	m_pFloatBuffer = CONFIG.pFloatBuffer;
 	m_pPrevBuffer = CONFIG.pPrevBuffer;

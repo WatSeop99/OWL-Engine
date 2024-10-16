@@ -98,7 +98,6 @@ float HaloEmission(float3 posView, float radius)
 
 float4 main(SamplingPixelShaderInput input) : SV_TARGET
 {
-    
     float4 returnColor;
     if (mode == 1)
     {

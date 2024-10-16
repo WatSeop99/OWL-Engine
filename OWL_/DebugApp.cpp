@@ -17,7 +17,7 @@ DebugApp::~DebugApp()
 
 void DebugApp::InitScene()
 {
-	BaseRenderer::m_Camera.Reset(Vector3(-0.112852f, 0.307729f, -0.542159f), 0.0589047f, 0.14399f);
+	BaseRenderer::m_pMainCamera.Reset(Vector3(-0.112852f, 0.307729f, -0.542159f), 0.0589047f, 0.14399f);
 
 	BaseRenderer::InitScene();
 
@@ -157,7 +157,7 @@ void DebugApp::UpdateGUI()
 	ImGui::SetNextItemOpen(false, ImGuiCond_Once);
 	if (ImGui::TreeNode("General"))
 	{
-		ImGui::Checkbox("Use FPV", &(m_Camera.bUseFirstPersonView));
+		ImGui::Checkbox("Use FPV", &(m_pMainCamera.bUseFirstPersonView));
 		ImGui::Checkbox("Wireframe", &(m_Scene.bDrawAsWire));
 		ImGui::Checkbox("DrawOBB", &(m_Scene.bDrawOBB));
 		ImGui::Checkbox("DrawBSphere", &(m_Scene.bDrawBS));
@@ -180,17 +180,17 @@ void DebugApp::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Post Effects"))
 	{
-		PostEffectsConstants* pPostEffectConstData = (PostEffectsConstants*)m_PostProcessor.GetPostEffectConstantBuffer();
+		PostEffectsConstants* pPostEffectConstData = (PostEffectsConstants*)m_pPostProcessor.GetPostEffectConstantBuffer();
 		if (!pPostEffectConstData)
 		{
 			__debugbreak();
 		}
 
-		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Render", &pPostEffectConstData->Mode, 1);
+		m_pPostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Render", &pPostEffectConstData->Mode, 1);
 		ImGui::SameLine();
-		m_PostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Depth", &pPostEffectConstData->Mode, 2);
-		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("DepthScale", &pPostEffectConstData->DepthScale, 0.0f, 1.0f);
-		m_PostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("Fog", &pPostEffectConstData->FogStrength, 0.0f, 10.0f);
+		m_pPostProcessor.PostEffectsUpdateFlag += ImGui::RadioButton("Depth", &pPostEffectConstData->Mode, 2);
+		m_pPostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("DepthScale", &pPostEffectConstData->DepthScale, 0.0f, 1.0f);
+		m_pPostProcessor.PostEffectsUpdateFlag += ImGui::SliderFloat("Fog", &pPostEffectConstData->FogStrength, 0.0f, 10.0f);
 
 		ImGui::TreePop();
 	}
@@ -198,10 +198,10 @@ void DebugApp::UpdateGUI()
 	if (ImGui::TreeNode("Post Processing"))
 	{
 		// 갱신된 내용은 Update()에서 처리.
-		ImageFilterConstData* pCombineFilterConstData = (ImageFilterConstData*)m_PostProcessor.CombineFilter.GetConstantBufferPtr()->pSystemMem;
-		m_PostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Bloom Strength", &pCombineFilterConstData->Strength, 0.0f, 1.0f);
-		m_PostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Exposure", &pCombineFilterConstData->Option1, 0.0f, 10.0f);
-		m_PostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Gamma", &pCombineFilterConstData->Option2, 0.1f, 5.0f);
+		ImageFilterConstData* pCombineFilterConstData = (ImageFilterConstData*)m_pPostProcessor.CombineFilter.GetConstantBufferPtr()->pSystemMem;
+		m_pPostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Bloom Strength", &pCombineFilterConstData->Strength, 0.0f, 1.0f);
+		m_pPostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Exposure", &pCombineFilterConstData->Option1, 0.0f, 10.0f);
+		m_pPostProcessor.CombineUpdateFlag += ImGui::SliderFloat("Gamma", &pCombineFilterConstData->Option2, 0.1f, 5.0f);
 
 		ImGui::TreePop();
 	}

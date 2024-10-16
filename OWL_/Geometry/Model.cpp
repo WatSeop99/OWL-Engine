@@ -4,7 +4,10 @@
 #include "GeometryGenerator.h"
 #include "../Graphics/GraphicsUtils.h"
 #include "Mesh.h"
+#include "../Renderer/ResourceManager.h"
 #include "Model.h"
+
+using DirectX::SimpleMath::Matrix;
 
 DirectX::BoundingBox GetBoundingBox(const std::vector<Vertex>& VERTICES)
 {
@@ -361,10 +364,10 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 		MeshConstants* pMeshConstData = (MeshConstants*)m_pBoundingBoxMesh->MeshConstant.pSystemMem;
 		pMeshConstData->World = Matrix();
 
-		hr = CreateVertexBuffer(pDevice, meshData.Vertices, &m_pBoundingBoxMesh->pVertexBuffer);
+		hr = pResourceManager->CreateVertexBuffer(sizeof(Vertex), (UINT)meshData.Vertices.size(), &m_pBoundingBoxMesh->pVertexBuffer, (void*)meshData.Vertices.data());
 		BREAK_IF_FAILED(hr);
 
-		hr = CreateIndexBuffer(pDevice, meshData.Indices, &m_pBoundingBoxMesh->pIndexBuffer);
+		hr = pResourceManager->CreateIndexBuffer(sizeof(UINT), (UINT)meshData.Indices.size(), &m_pBoundingBoxMesh->pIndexBuffer, (void*)meshData.Indices.data());
 		BREAK_IF_FAILED(hr);
 
 		m_pBoundingBoxMesh->IndexCount = (UINT)meshData.Indices.size();
@@ -396,10 +399,10 @@ void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MES
 		MeshConstants* pMeshConstData = (MeshConstants*)m_pBoundingSphereMesh->MeshConstant.pSystemMem;
 		pMeshConstData->World = Matrix();
 
-		hr = CreateVertexBuffer(pDevice, meshData.Vertices, &(m_pBoundingSphereMesh->pVertexBuffer));
+		hr = pResourceManager->CreateVertexBuffer(sizeof(Vertex), (UINT)meshData.Vertices.size(), &m_pBoundingSphereMesh->pVertexBuffer, (void*)meshData.Vertices.data());
 		BREAK_IF_FAILED(hr);
 
-		hr = CreateIndexBuffer(pDevice, meshData.Indices, &(m_pBoundingSphereMesh->pIndexBuffer));
+		hr = pResourceManager->CreateIndexBuffer(sizeof(UINT), (UINT)meshData.Indices.size(), &m_pBoundingSphereMesh->pIndexBuffer, (void*)meshData.Indices.data());
 		BREAK_IF_FAILED(hr);
 
 		m_pBoundingSphereMesh->IndexCount = (UINT)meshData.Indices.size();
@@ -414,12 +417,13 @@ void Model::InitMeshBuffers(const MeshInfo& MESH_INFO, Mesh* pNewMesh)
 	_ASSERT(pNewMesh);
 
 	HRESULT hr = S_OK;
+	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
 	ID3D11Device* pDevice = m_pRenderer->GetDevice();
 
-	hr = CreateVertexBuffer(pDevice, MESH_INFO.Vertices, &pNewMesh->pVertexBuffer);
+	hr = pResourceManager->CreateVertexBuffer(sizeof(Vertex), (UINT)MESH_INFO.Vertices.size(), &pNewMesh->pVertexBuffer, (void*)MESH_INFO.Vertices.data());
 	BREAK_IF_FAILED(hr);
 
-	hr = CreateIndexBuffer(pDevice, MESH_INFO.Indices, &pNewMesh->pIndexBuffer);
+	hr = pResourceManager->CreateVertexBuffer(sizeof(UINT), (UINT)MESH_INFO.Indices.size(), &pNewMesh->pIndexBuffer, (void*)MESH_INFO.Indices.data());
 	BREAK_IF_FAILED(hr);
 
 	pNewMesh->VertexCount = (UINT)MESH_INFO.Vertices.size();
@@ -453,12 +457,8 @@ void Model::UpdateWorld(const Matrix& WORLD)
 {
 	World = WORLD;
 	WorldInverseTranspose = WORLD;
-	// WorldInverseTranspose.Translation(Vector3(0.0f));
 	WorldInverseTranspose = WorldInverseTranspose.Invert().Transpose();
 
-	// bounding sphere 위치 업데이트.
-	// 스케일까지 고려하고 싶다면 x, y, z 스케일 중 가장 큰 값으로 스케일.
-	// 구(sphere)라서 회전은 고려할 필요 없음.
 	BoundingSphere.Center = World.Translation();
 	BoundingBox.Center = BoundingSphere.Center;
 
@@ -481,6 +481,11 @@ void Model::UpdateWorld(const Matrix& WORLD)
 		Mesh* pCurMesh = Meshes[i];
 
 		MeshConstants* pMeshConstData = (MeshConstants*)pCurMesh->MeshConstant.pSystemMem;
+		if (!pMeshConstData)
+		{
+			__debugbreak();
+		}
+
 		pMeshConstData->World = World.Transpose();
 		pMeshConstData->WorldInverseTranspose = WorldInverseTranspose.Transpose();
 		pMeshConstData->WorldInverse = WorldInverseTranspose;
@@ -509,10 +514,10 @@ void Model::Render()
 	{
 		Mesh* const pCurMesh = Meshes[i];
 
-		ID3D11Buffer* ppConstantBuffers[] = { pCurMesh->MeshConstant.pBuffer, pCurMesh->MaterialConstant.pBuffer };
-		UINT numConstantBuffers = _countof(ppConstantBuffers);
-		pContext->VSSetConstantBuffers(2, numConstantBuffers, ppConstantBuffers);
-		pContext->VSSetShaderResources(6, 1, &pCurMesh->pMaterialBuffer->Height.pSRV);
+		ID3D11Buffer* ppConstantBuffers[2] = { pCurMesh->MeshConstant.pBuffer, pCurMesh->MaterialConstant.pBuffer };
+		pContext->VSSetConstantBuffers(2, 2, ppConstantBuffers);
+		pContext->PSSetConstantBuffers(2, 2, ppConstantBuffers);
+		
 
 		// 물체 렌더링할 때 여러가지 텍스춰 사용. (t0 부터시작)
 		ID3D11ShaderResourceView* ppSRVs[] =
@@ -526,8 +531,8 @@ void Model::Render()
 			pCurMesh->pMaterialBuffer->Height.pSRV
 		};
 		UINT numSRVs = _countof(ppSRVs);
+		pContext->VSSetShaderResources(6, 1, &pCurMesh->pMaterialBuffer->Height.pSRV);
 		pContext->PSSetShaderResources(0, numSRVs, ppSRVs);
-		pContext->PSSetConstantBuffers(2, numConstantBuffers, ppConstantBuffers);
 
 		// 볼륨 렌더링.
 		if (pCurMesh->pMaterialBuffer->Density.pSRV)
@@ -544,8 +549,8 @@ void Model::Render()
 		pContext->DrawIndexed(pCurMesh->IndexCount, 0, 0);
 
 		// Release resources.
-		ID3D11ShaderResourceView* ppNulls[3] = { nullptr, };
-		pContext->PSSetShaderResources(7, 3, ppNulls);
+		ID3D11ShaderResourceView* ppNulls[9] = { nullptr, };
+		pContext->PSSetShaderResources(0, 9, ppNulls);
 	}
 }
 

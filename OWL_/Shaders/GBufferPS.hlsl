@@ -10,13 +10,13 @@ struct PixelShaderOutput
 };
 
 // 메쉬 재질 텍스춰들 t0 부터 시작.
-Texture2D g_AlbedoTex : register(t0);
-Texture2D g_EmissiveTex : register(t1);
-Texture2D g_NormalTex : register(t2);
-Texture2D g_AOTex : register(t3);
-Texture2D g_MetallicTex : register(t4);
-Texture2D g_RoughnessTex : register(t5);
-Texture2D g_HeightTexture : register(t6);
+Texture2D<float4> g_AlbedoTex : register(t0);
+Texture2D<float4> g_EmissiveTex : register(t1);
+Texture2D<float4> g_NormalTex : register(t2);
+Texture2D<float4> g_AOTex : register(t3);
+Texture2D<float4> g_MetallicTex : register(t4);
+Texture2D<float4> g_RoughnessTex : register(t5);
+Texture2D<float4> g_HeightTexture : register(t6);
 
 float3 GetNormal(PixelShaderInput input)
 {
@@ -49,13 +49,23 @@ PixelShaderOutput main(PixelShaderInput input)
     float3 pixelToEye = normalize(g_EyeWorld - input.WorldPosition);
     float3 normalWorld = GetNormal(input);
     
-    float4 albedo = (bUseAlbedoMap ? g_AlbedoTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias) * float4(g_AlbedoFactor, 1.0f) : float4(g_AlbedoFactor, 1.0f));
-    // clip(albedo.a - 0.5f); // Tree leaves. 투명한 부분의 픽셀은 그리지 않음.
-    float ao = (bUseAOMap ? g_AOTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).r : 1.0f);
-    float metallic = (bUseMetallicMap ? g_MetallicTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).b * g_MetallicFactor : g_MetallicFactor);
-    float roughness = (bUseRoughnessMap ? g_RoughnessTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).g * g_RoughnessFactor : g_RoughnessFactor);
-    float3 emission = (bUseEmissiveMap ? g_EmissiveTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).rgb : g_EmissionFactor);
+    // main camera위치부터 position이 10m 이상일 경우, lod 레벨 떨어뜨림.
+    float lod = 0.0f;
+    float distance = length(input.WorldPosition - g_EyeWorld);
+    lod = distance / 10.0f;
+
+    float4 albedo = (bUseAlbedoMap ? g_AlbedoTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, lod) * float4(g_AlbedoFactor, 1.0f) : float4(g_AlbedoFactor, 1.0f));
+    float ao = (bUseAOMap ? g_AOTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, lod).r : 1.0f);
+    float metallic = (bUseMetallicMap ? g_MetallicTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, lod).b * g_MetallicFactor : g_MetallicFactor);
+    float roughness = (bUseRoughnessMap ? g_RoughnessTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, lod).g * g_RoughnessFactor : g_RoughnessFactor);
+    float3 emission = (bUseEmissiveMap ? g_EmissiveTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, lod).rgb : g_EmissionFactor);
     float height = (bUseHeightMap ? g_HeightTexture.SampleLevel(g_LinearClampSampler, input.Texcoord, 0.0f).r : 0.0f);
+    //float4 albedo = (bUseAlbedoMap ? g_AlbedoTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias) * float4(g_AlbedoFactor, 1.0f) : float4(g_AlbedoFactor, 1.0f));
+    //float ao = (bUseAOMap ? g_AOTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).r : 1.0f);
+    //float metallic = (bUseMetallicMap ? g_MetallicTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).b * g_MetallicFactor : g_MetallicFactor);
+    //float roughness = (bUseRoughnessMap ? g_RoughnessTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).g * g_RoughnessFactor : g_RoughnessFactor);
+    //float3 emission = (bUseEmissiveMap ? g_EmissiveTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, g_LODBias).rgb : g_EmissionFactor);
+    //float height = (bUseHeightMap ? g_HeightTexture.SampleLevel(g_LinearClampSampler, input.Texcoord, 0.0f).r : 0.0f);
     
     output.Albedo = albedo;
     output.Normal = float4(normalWorld, 1.0f);

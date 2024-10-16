@@ -9,7 +9,9 @@
 #include "Atmosphere/Sky.h"
 #include "Atmosphere/SkyLUT.h"
 #include "Atmosphere/Sun.h"
+#include "../Renderer/Texture.h"
 #include "Atmosphere/TransmittanceLUT.h"
+#include "../Renderer/ResourceManager.h"
 #include "Scene.h"
 
 void Scene::Initialize(BaseRenderer* pRenderer)
@@ -17,6 +19,7 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 	_ASSERT(pRenderer);
 
 	m_pRenderer = pRenderer;
+	m_pMainCamera = pRenderer->GetCamera();
 
 	ResourceManager* pResourceManager = pRenderer->GetResourceManager();
 	ID3D11Device* pDevice = pRenderer->GetDevice();
@@ -98,19 +101,21 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 	// 바닥(거울).
 	{
 		// https://freepbr.com/materials/stringy-marble-pbr/
-		MeshInfo mesh;
-		MakeSquare(&mesh, 10.0f);
+		MeshInfo meshInfo;
+		//MakeSquare(&meshInfo, 10.0f);
+		MakeSquareGrid(&meshInfo, 10, 10, 10);
+		MakeTerrainTile(&meshInfo);
 
 		std::wstring path = L"./Assets/Textures/PBR/stringy-marble-ue/";
-		mesh.szAlbedoTextureFileName = path + L"stringy_marble_albedo.png";
-		mesh.szEmissiveTextureFileName = L"";
-		mesh.szAOTextureFileName = path + L"stringy_marble_ao.png";
-		mesh.szMetallicTextureFileName = path + L"stringy_marble_Metallic.png";
-		mesh.szNormalTextureFileName = path + L"stringy_marble_Normal-dx.png";
-		mesh.szRoughnessTextureFileName = path + L"stringy_marble_Roughness.png";
+		meshInfo.szAlbedoTextureFileName = path + L"stringy_marble_albedo.png";
+		meshInfo.szEmissiveTextureFileName = L"";
+		meshInfo.szAOTextureFileName = path + L"stringy_marble_ao.png";
+		meshInfo.szMetallicTextureFileName = path + L"stringy_marble_Metallic.png";
+		meshInfo.szNormalTextureFileName = path + L"stringy_marble_Normal-dx.png";
+		meshInfo.szRoughnessTextureFileName = path + L"stringy_marble_Roughness.png";
 
 		m_pGround = new Model;
-		m_pGround->Initialize(pRenderer, { mesh });
+		m_pGround->Initialize(pRenderer, { meshInfo });
 
 		MaterialConstants* pMatertialConstData = (MaterialConstants*)m_pGround->Meshes[0]->MaterialConstant.pSystemMem;
 		pMatertialConstData->AlbedoFactor = Vector3(0.7f);
@@ -120,8 +125,9 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 
 		// Vector3 position = Vector3(0.0f, -1.0f, 0.0f);
 		Vector3 position = Vector3(0.0f, -0.5f, 0.0f);
-		m_pGround->UpdateWorld(Matrix::CreateRotationX(DirectX::XM_PI * 0.5f) * Matrix::CreateTranslation(position));
-		m_pGround->bCastShadow = false; // 바닥은 그림자 만들기 생략.
+		//m_pGround->UpdateWorld(Matrix::CreateRotationX(DirectX::XM_PI * 0.5f) * Matrix::CreateTranslation(position));
+		m_pGround->UpdateWorld(Matrix::CreateTranslation(position));
+		m_pGround->bCastShadow = true; // 바닥은 그림자 만들기 생략.
 		RenderObjects.push_back(m_pGround);
 
 		m_MirrorPlane = DirectX::SimpleMath::Plane(position, Vector3(0.0f, 1.0f, 0.0f));
@@ -228,10 +234,10 @@ void Scene::Update(const float DELTA_TIME)
 	m_pSky->SetCamera(&CAMERA_FRUSTUM);
 	m_pSky->Update();
 
-	if (m_pMirror)
+	/*if (m_pMirror)
 	{
 		m_pMirror->UpdateConstantBuffers();
-	}
+	}*/
 
 	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
 	{

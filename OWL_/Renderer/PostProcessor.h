@@ -13,7 +13,6 @@ class PostProcessor
 public:
 	struct PostProcessingBuffers
 	{
-		ID3D11Buffer* pGlobalConstsGPU = nullptr;
 		Texture* pBackBuffer = nullptr;
 		Texture* pFloatBuffer = nullptr;
 		Texture* pPrevBuffer = nullptr;
@@ -33,6 +32,8 @@ public:
 	void Cleanup();
 
 	inline ConstantBuffer* GetPostEffectConstantBuffer() { return m_pPostEffectsConstantBuffer; }
+
+	void SetGlobalConstants(ConstantBuffer* const pGlobalConstants);
 
 protected:
 	void createPostBackBuffers();

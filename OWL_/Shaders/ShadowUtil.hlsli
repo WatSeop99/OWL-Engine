@@ -6,7 +6,8 @@
 // #define LIGHT_WORLD_RADIUS 0.001f
 // #define LIGHT_FRUSTUM_WIDTH 0.34641f // <- 계산해서 찾은 값
 // #define LIGHT_FRUSTUM_WIDTH 0.2f
-static const float LIGHT_FRUSTUM_WIDTH = 0.34641f;
+//static const float LIGHT_FRUSTUM_WIDTH = 0.34641f;
+static const float LIGHT_FRUSTUM_WIDTH = 20.0f;
 static const float NEAR_PLANE = 0.01f;
 static const float FAR_PLANE = 50.0f;
 

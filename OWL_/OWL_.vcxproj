@@ -142,6 +142,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Graphics\Terrain\Terrain.h" />
+    <ClInclude Include="Util\PerlinNoiseGenerator.h" />
     <ClInclude Include="Util\BVHTree.h" />
     <ClInclude Include="Graphics\Atmosphere\AtmosphereProperty.h" />
     <ClInclude Include="Graphics\Atmosphere\AerialLUT.h">
@@ -167,7 +169,10 @@
     <ClInclude Include="Graphics\Camera.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Graphics\ConstantDataType.h" />
-    <ClInclude Include="Graphics\GraphicsUtils.h" />
+    <ClInclude Include="Graphics\GraphicsUtils.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="DebugApp.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -214,6 +219,8 @@
     <ClCompile Include="External\imgui\imgui_draw.cpp" />
     <ClCompile Include="External\imgui\imgui_tables.cpp" />
     <ClCompile Include="External\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="Graphics\Terrain\Terrain.cpp" />
+    <ClCompile Include="Util\PerlinNoiseGenerator.cpp" />
     <ClCompile Include="Util\BVHTree.cpp" />
     <ClCompile Include="Graphics\Atmosphere\AtmosphereProperty.cpp" />
     <ClCompile Include="Graphics\Atmosphere\AerialLUT.cpp">
@@ -228,7 +235,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="Graphics\GraphicsUtils.cpp" />
+    <ClCompile Include="Graphics\GraphicsUtils.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Graphics\Light.cpp" />
     <ClCompile Include="Graphics\Scene.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>

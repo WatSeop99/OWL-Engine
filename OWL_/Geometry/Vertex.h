@@ -2,42 +2,35 @@
 
 #include <directxtk/SimpleMath.h>
 
-using DirectX::SimpleMath::Vector2;
-using DirectX::SimpleMath::Vector3;
-using DirectX::SimpleMath::Vector4;
-using DirectX::SimpleMath::Matrix;
-
 struct Vertex
 {
-	Vector3 Position;
-	Vector3 Normal;
-	Vector2 Texcoord;
-	Vector3 Tangent;
-	// Vector3 biTangent; // biTangent는 쉐이더에서 계산.
+	DirectX::SimpleMath::Vector3 Position;
+	DirectX::SimpleMath::Vector3 Normal;
+	DirectX::SimpleMath::Vector2 Texcoord;
+	DirectX::SimpleMath::Vector3 Tangent;
 };
 
 struct SkinnedVertex
 {
-	Vector3 Position;
-	Vector3 Normal;
-	Vector2 Texcoord;
-	Vector3 Tangent;
+	DirectX::SimpleMath::Vector3 Position;
+	DirectX::SimpleMath::Vector3 Normal;
+	DirectX::SimpleMath::Vector2 Texcoord;
+	DirectX::SimpleMath::Vector3 Tangent;
 
 	float BlendWeights[8] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };  // BLENDWEIGHT0 and 1
-	uint8_t BoneIndices[8] = { 0, 0, 0, 0, 0, 0, 0, 0 }; // BLENDINDICES0 and 1
+	UINT8 BoneIndices[8] = { 0, 0, 0, 0, 0, 0, 0, 0 }; // BLENDINDICES0 and 1
 };
 
 struct GrassVertex
 {
-	Vector3 Position;
-	Vector3 Normal;
-	Vector2 Texcoord;
-	// 주의: Instance World는 별도의 버퍼로 보냄.
+	DirectX::SimpleMath::Vector3 Position;
+	DirectX::SimpleMath::Vector3 Normal;
+	DirectX::SimpleMath::Vector2 Texcoord;
 };
 
 // GrassVS, grassIL과 일관성이 있어야 합니다.
 struct GrassInstance
 {
-	Matrix InstanceWorld; // <- Instance 단위의 Model to World 변환
+	DirectX::SimpleMath::Matrix InstanceWorld; // <- Instance 단위의 Model to World 변환
 	float WindStrength;
 };

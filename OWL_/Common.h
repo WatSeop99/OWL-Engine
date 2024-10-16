@@ -59,4 +59,5 @@
 #include <directxtk/SimpleMath.h>
 #include <DirectXCollision.h>
 
+#include "Graphics/EnumData.h"
 #include "Util/Util.h"

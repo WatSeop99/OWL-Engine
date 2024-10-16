@@ -4,6 +4,7 @@
 #include "../Renderer/ConstantBuffer.h"
 #include "../ShadowMap.h"
 #include "../Renderer/Texture.h"
+#include "../Renderer/ResourceManager.h"
 #include "Sun.h"
 
 void Sun::Initialize(BaseRenderer* pRenderer, Camera* pMainCamera)
@@ -27,7 +28,8 @@ void Sun::Initialize(BaseRenderer* pRenderer, Camera* pMainCamera)
 	m_pSunCamera->SetNearZ(0.1f);
 	m_pSunCamera->SetFarZ(1000.0f);
 
-	m_pSunShadowMap = new ShadowMap(3840, 3840);
+	//m_pSunShadowMap = new ShadowMap(3840, 3840);
+	m_pSunShadowMap = new ShadowMap(5120, 5120);
 	m_pSunShadowMap->Initialize(pRenderer, LIGHT_SUN | LIGHT_SHADOW);
 }
 
@@ -104,6 +106,17 @@ void Sun::Update()
 
 	m_pSunVSConstantBuffer->Upload();
 	m_pSunPSConstantBuffer->Upload();
+
+	/*DirectX::SimpleMath::Vector4 eye(0.0f, 0.0f, 0.0f, 1.0f);
+	DirectX::SimpleMath::Vector4 xLeft(-1.0f, -1.0f, 0.0f, 1.0f);
+	DirectX::SimpleMath::Vector4 xRight(1.0f, 1.0f, 0.0f, 1.0f);
+	Matrix lightProjection = Matrix::CreateOrthographic(20.0f, 20.0f, 0.1f, 80.0f);
+	eye = DirectX::SimpleMath::Vector4::Transform(eye, lightProjection);
+	xLeft = DirectX::SimpleMath::Vector4::Transform(xLeft, lightProjection.Invert());
+	xRight = DirectX::SimpleMath::Vector4::Transform(xRight, lightProjection.Invert());
+	xLeft /= xLeft.w;
+	xRight /= xRight.w;
+	std::cout << "LIGHT_FRUSTUM_WIDTH = " << xRight.x - xLeft.x << std::endl;*/
 }
 
 void Sun::Render()

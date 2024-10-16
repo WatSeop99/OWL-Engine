@@ -3,9 +3,7 @@
 #include "Atmosphere/AtmosphereProperty.h"
 #include "ConstantDataType.h"
 #include "../Renderer/ConstantBuffer.h"
-#include "../Renderer/GBuffer.h"
 #include "Light.h"
-#include "../Renderer/Texture.h"
 
 class AerialLUT;
 class BaseRenderer;
@@ -16,16 +14,13 @@ class MultiScatteringLUT;
 class Sky;
 class SkyLUT;
 class Sun;
+class Texture;
 class TransmittanceLUT;
 
 class Scene
 {
 public:
-	Scene(Camera* pCamera, UINT width = 1280, UINT height = 720) :
-		m_pMainCamera(pCamera),
-		m_ScreenWidth(width),
-		m_ScreenHeight(height)
-	{}
+	Scene() = default;
 	~Scene() { Cleanup(); }
 
 	void Initialize(BaseRenderer* pRenderer);
@@ -70,9 +65,6 @@ public:
 	float MirrorAlpha = 1.0f; // Opacity
 
 private:
-	UINT m_ScreenWidth;
-	UINT m_ScreenHeight;
-
 	// 렌더링을 위한 여러 상수 퍼버들.
 	ConstantBuffer m_GlobalConstants;
 	ConstantBuffer m_ReflectionGlobalConstants;
@@ -95,10 +87,7 @@ private:
 	Model* m_pMirror = nullptr; // 거울은 별도로 그림
 	DirectX::SimpleMath::Plane m_MirrorPlane;
 
-	// temp atmosphere data
-	LightProperty m_SunProperty;
-	Camera m_SunCamera;
-	ShadowMap m_ShadowMap = ShadowMap(2560, 2560);
+	// Atmosphere data
 	AtmosphereProperty m_AtmosphereProperty;
 	ConstantBuffer* m_pAtmosphereConstantBuffer = nullptr;
 	Sky* m_pSky = nullptr;

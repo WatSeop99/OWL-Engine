@@ -6,6 +6,7 @@
 #include "../Renderer/ConstantBuffer.h"
 #include "../Renderer/StructuredBuffer.h"
 #include "../Renderer/Texture.h"
+#include "../Renderer/ResourceManager.h"
 #include "MultiScatteringLUT.h"
 
 void GetPoissonDiskSamples(std::vector<Vector2>& samples, const int COUNT)

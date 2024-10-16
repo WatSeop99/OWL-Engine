@@ -1,11 +1,14 @@
 #include "../Common.h"
 #include "Animation.h"
 
+using DirectX::SimpleMath::Matrix;
+using DirectX::SimpleMath::Quaternion;
+using DirectX::SimpleMath::Vector3;
+
 Matrix AnimationClip::Key::GetTransform()
 {
 	return (Matrix::CreateScale(Scale) * Matrix::CreateFromQuaternion(Rotation) * Matrix::CreateTranslation(Position));
 }
-
 
 void AnimationData::Update(const int CLIP_ID, const int FRAME)
 {

@@ -104,7 +104,7 @@ void Camera::PrintView()
 	OutputDebugStringA(str);
 	OutputDebugStringA("f;\n");
 
-	OutputDebugStringA("BaseRenderer::m_Camera.Reset(Vector3(");
+	OutputDebugStringA("BaseRenderer::m_pMainCamera.Reset(Vector3(");
 	sprintf(str, "%f", m_Position.x);
 	OutputDebugStringA(str);
 	OutputDebugStringA("f, ");

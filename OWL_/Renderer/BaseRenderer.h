@@ -1,21 +1,18 @@
 ﻿#pragma once
 
-#include "../Graphics/Camera.h"
 #include "../Util/KnM.h"
-#include "ResourceManager.h"
-#include "../Renderer/PostProcessor.h"
-#include "../Graphics/Scene.h"
-#include "Texture.h"
-
-using DirectX::BoundingSphere;
-using DirectX::SimpleMath::Quaternion;
-using DirectX::SimpleMath::Ray;
-using DirectX::SimpleMath::Vector3;
 
 struct MeshInfo;
+class Camera;
+class ComputePSO;
 class GBuffer;
+class GraphicsPSO;
 class Model;
+class Scene;
 class Timer;
+class ResourceManager;
+class PostProcessor;
+class Texture;
 
 class BaseRenderer
 {
@@ -23,7 +20,7 @@ public:
 	BaseRenderer();
 	virtual ~BaseRenderer();
 
-	virtual void Initialize();
+	virtual void Initialize(Scene* const pScene);
 	virtual void InitScene();
 
 	virtual void UpdateGUI();
@@ -40,10 +37,9 @@ public:
 	inline ID3D11Device* GetDevice() { return m_pDevice; }
 	inline ID3D11DeviceContext* GetDeviceContext() { return m_pContext; }
 	inline ResourceManager* GetResourceManager() { return m_pResourceManager; }
-	inline PostProcessor* GetPostProcessor() { return &m_PostProcessor; }
+	inline PostProcessor* GetPostProcessor() { return m_pPostProcessor; }
 	inline Timer* GetTimer() { return m_pTimer; }
-	inline Camera* GetCamera() { return &m_Camera; }
-	inline Scene* GetScene() { return &m_Scene; }
+	inline Camera* GetCamera() { return m_pMainCamera; }
 
 	inline Model* GetPickedModel() { return m_pPickedModel; }
 	inline Keyboard* GetKeyboard() { return &m_Keyboard; }
@@ -52,10 +48,10 @@ public:
 	inline void SetPickedModel(Model* const pModel) { m_pPickedModel = pModel; }
 	void SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU, UINT slot);
 	void SetViewport(const D3D11_VIEWPORT* pViewports, const UINT NUM_VIEWPORT);
-	void SetPipelineState(const GraphicsPSO& PSO);
-	void SetPipelineState(const ComputePSO& PSO);
+	void SetPipelineState(const GraphicsPSO* pPSO);
+	void SetPipelineState(const ComputePSO* pPSO);
 
-	Model* PickClosest(const Ray& PICKNG_RAY, float* pMinDist);
+	Model* PickClosest(const DirectX::SimpleMath::Ray* pPickingRay, float* pMinDist);
 	void ProcessMouseControl();
 
 protected:
@@ -92,20 +88,14 @@ protected:
 	IDXGISwapChain4* m_pSwapChain = nullptr;
 
 	ResourceManager* m_pResourceManager = nullptr;
+	PostProcessor* m_pPostProcessor = nullptr;
 
 	Texture* m_pBackBuffer = nullptr;
-	Texture m_FloatBuffer;
-	Texture m_PrevBuffer; // 간단한 모션 블러 효과를 위함.
+	Texture* m_pFloatBuffer = nullptr;
+	Texture* m_pPrevBuffer = nullptr;
 	GBuffer* m_pGBuffer = nullptr;
 
-	// 레벨.
-	Scene m_Scene;
-
-	// 렌더링 -> PostEffects -> PostProcess
-	PostProcessor m_PostProcessor;
-
-	// 시점을 결정하는 카메라 클래스 추가
-	Camera m_Camera;
+	Camera* m_pMainCamera = nullptr;
 	Keyboard m_Keyboard;
 	Mouse m_Mouse;
 
@@ -116,4 +106,9 @@ protected:
 
 	// for debugging.
 	Timer* m_pTimer = nullptr;
+	std::vector<float> m_DeltaTimeData;
+	std::vector<float> m_FrameRateData;
+
+	// DO NOT release directly.
+	Scene* m_pScene = nullptr;
 };

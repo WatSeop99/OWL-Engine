@@ -2,6 +2,7 @@
 #include "../Renderer/BaseRenderer.h"
 #include "../Renderer/ConstantBuffer.h"
 #include "../Renderer/Texture.h"
+#include "../Renderer/ResourceManager.h"
 #include "TransmittanceLUT.h"
 
 void TransmittanceLUT::Initialize(BaseRenderer* pRenderer)

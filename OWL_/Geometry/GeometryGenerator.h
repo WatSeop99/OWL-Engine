@@ -18,5 +18,6 @@ void MakeCylinder(MeshInfo* pDst, const float BOTTOM_RADIUS, const float TOP_RAD
 void MakeSphere(MeshInfo* pDst, const float RADIUS, const int NUM_SLICES, const int NUM_STACKS, const Vector2 TEX_SCALE = Vector2(1.0f));
 void MakeTetrahedron(MeshInfo* pDst);
 void MakeIcosahedron(MeshInfo* pDst);
+void MakeTerrainTile(MeshInfo* pDst);
 
 void SubdivideToSphere(MeshInfo* pDst, const float RADIUS, MeshInfo& meshData);

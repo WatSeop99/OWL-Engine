@@ -2,6 +2,7 @@
 #include "../../Renderer/ConstantBuffer.h"
 #include "../../Renderer/BaseRenderer.h"
 #include "../../Renderer/Texture.h"
+#include "../Renderer/ResourceManager.h"
 #include "SkyLUT.h"
 
 void SkyLUT::Initialize(BaseRenderer* pRenderer)

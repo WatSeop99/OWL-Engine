@@ -5,10 +5,8 @@
 #include "../Graphics/EnumData.h"
 #include "MeshInfo.h"
 
-using DirectX::SimpleMath::Matrix;
-
-class Mesh;
 class BaseRenderer;
+class Mesh;
 
 class Model
 {
@@ -21,7 +19,7 @@ public:
 	virtual void InitMeshBuffers(const MeshInfo& MESH_INFO, Mesh* pNewMesh);
 
 	void UpdateConstantBuffers();
-	void UpdateWorld(const Matrix& WORLD);
+	void UpdateWorld(const  DirectX::SimpleMath::Matrix& WORLD);
 	virtual void UpdateAnimation(const int CLIP_ID, const int FRAME);
 
 	virtual void Render();
@@ -39,8 +37,8 @@ public:
 	virtual inline eGraphicsPSOType GetReflectPSO(const bool bWIRED) { return (bWIRED ? GraphicsPSOType_ReflectWire : GraphicsPSOType_ReflectSolid); }
 
 public:
-	Matrix World;					// Model(Object) To World 행렬.
-	Matrix WorldInverseTranspose;	// InverseTranspose.
+	 DirectX::SimpleMath::Matrix World;					// Model(Object) To World 행렬.
+	 DirectX::SimpleMath::Matrix WorldInverseTranspose;	// InverseTranspose.
 
 	bool bDrawNormals = false;
 	bool bIsVisible = true;

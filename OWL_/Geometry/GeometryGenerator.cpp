@@ -2,6 +2,7 @@
 #include "Animation.h"
 #include "MeshInfo.h"
 #include "ModelLoader.h"
+#include "../Util/PerlinNoiseGenerator.h"
 #include "GeometryGenerator.h"
 
 HRESULT ReadFromFile(std::vector<MeshInfo>& dst, std::wstring& basePath, std::wstring& fileName, bool bRevertNormals)
@@ -135,8 +136,10 @@ void MakeSquareGrid(MeshInfo* pDst, const int NUM_SLICES, const int NUM_STACKS, 
 		for (int i = 0; i < NUM_SLICES + 1; ++i)
 		{
 			Vertex& v = pDst->Vertices[j * (NUM_SLICES + 1) + i];
-			v.Position = Vector3(x, y, 0.0f) * SCALE;
-			v.Normal = Vector3(0.0f, 0.0f, -1.0f);
+			//v.Position = Vector3(x, y, 0.0f) * SCALE;
+			v.Position = Vector3(x, 0.0f, y) * SCALE;
+			//v.Normal = Vector3(0.0f, 0.0f, -1.0f);
+			v.Normal = Vector3(0.0f, 1.0f, 0.0f);
 			v.Texcoord = Vector2(x + 1.0f, y + 1.0f) * 0.5f * TEX_SCALE;
 			v.Tangent = Vector3(1.0f, 0.0f, 0.0f);
 
@@ -655,6 +658,22 @@ void MakeIcosahedron(MeshInfo* pDst)
 		3,  10, 7, 10, 6, 7, 6, 11, 7, 6, 0, 11, 6,  1, 0,
 		10, 1,  6, 11, 0, 9, 2, 11, 9, 5, 2, 9,  11, 2, 7
 	};
+}
+
+void MakeTerrainTile(MeshInfo* pDst)
+{
+	// 10m x 10m 사이즈의 그리드 박스를 받는다고 가정.
+
+	using DirectX::SimpleMath::Vector3;
+
+	_ASSERT(pDst);
+	_ASSERT(pDst->Vertices.size() > 0);
+
+	for (UINT64 i = 0, size = pDst->Vertices.size(); i < size; ++i)
+	{
+		Vector3& pos = pDst->Vertices[i].Position;
+		pos.y = GetValueUsingPerlinNoise(pos.x, pos.z) * 5.0f;
+	}
 }
 
 void SubdivideToSphere(MeshInfo* pDst, const float RADIUS, MeshInfo& meshData)

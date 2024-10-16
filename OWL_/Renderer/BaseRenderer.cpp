@@ -1,39 +1,44 @@
 ﻿#include "../Common.h"
 #include "../Graphics/Atmosphere/AerialLUT.h"
+#include "../Graphics/Camera.h"
 #include "GBuffer.h"
 #include "../Geometry/GeometryGenerator.h"
 #include "../Graphics/Light.h"
 #include "../Geometry/Mesh.h"
 #include "../Geometry/MeshInfo.h"
 #include "../Geometry/Model.h"
+#include "ResourceManager.h"
 #include "../Graphics/Atmosphere/Sky.h"
 #include "../Graphics/Atmosphere/SkyLUT.h"
 #include "../Graphics/Atmosphere/Sun.h"
+#include "../Graphics/Scene.h"
+#include "PipelineState.h"
+#include "../Renderer/PostProcessor.h"
+#include "Texture.h"
 #include "Timer.h"
 #include "BaseRenderer.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 using DirectX::BoundingSphere;
+using DirectX::SimpleMath::Quaternion;
+using DirectX::SimpleMath::Ray; BaseRenderer* g_pAppBase = nullptr;
 using DirectX::SimpleMath::Vector3;
-
-BaseRenderer* g_pAppBase = nullptr;
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	return g_pAppBase->MsgProc(hWnd, msg, wParam, lParam);
 }
 
-BaseRenderer::BaseRenderer() : m_Scene(&m_Camera)
+BaseRenderer::BaseRenderer()
 {
 	g_pAppBase = this;
-	m_Camera.SetAspectRatio(GetAspectRatio());
-	m_Camera.SetFarZ(500.0f);
 }
 
 BaseRenderer::~BaseRenderer()
 {
 	g_pAppBase = nullptr;
+	m_pScene = nullptr;
 	m_pCursorSphere = nullptr;
 
 	ImGui_ImplDX11_Shutdown();
@@ -42,6 +47,16 @@ BaseRenderer::~BaseRenderer()
 	m_pContext->OMSetRenderTargets(0, nullptr, nullptr);
 	m_pContext->Flush();
 	
+	if (m_pFloatBuffer)
+	{
+		delete m_pFloatBuffer;
+		m_pFloatBuffer = nullptr;
+	}
+	if (m_pPrevBuffer)
+	{
+		delete m_pPrevBuffer;
+		m_pPrevBuffer = nullptr;
+	}
 	if (m_pGBuffer)
 	{
 		delete m_pGBuffer;
@@ -51,6 +66,16 @@ BaseRenderer::~BaseRenderer()
 	{
 		delete m_pBackBuffer;
 		m_pBackBuffer = nullptr;
+	}
+	if (m_pMainCamera)
+	{
+		delete m_pMainCamera;
+		m_pMainCamera = nullptr;
+	}
+	if (m_pPostProcessor)
+	{
+		delete m_pPostProcessor;
+		m_pPostProcessor = nullptr;
 	}
 	if (m_pResourceManager)
 	{
@@ -70,37 +95,45 @@ BaseRenderer::~BaseRenderer()
 	DestroyWindow(m_hMainWindow);
 }
 
-void BaseRenderer::Initialize()
+void BaseRenderer::Initialize(Scene* const pScene)
 {
+	_ASSERT(pScene);
+
+	m_pScene = pScene;
+
 	initMainWindow();
 	initDirect3D();
 	initGUI();
+
+	m_pMainCamera = new Camera;
+	m_pMainCamera->SetAspectRatio(GetAspectRatio());
+	m_pMainCamera->SetFarZ(500.0f);
+
+	m_pResourceManager = new ResourceManager;
+	m_pResourceManager->Initialize(m_pDevice, m_pContext);
+
+	// postprocessor 초기화.
+	m_pPostProcessor = new PostProcessor;
+	m_pPostProcessor->Initialize(this,
+							   { m_pBackBuffer, m_pFloatBuffer, m_pPrevBuffer, &m_pGBuffer->DepthBuffer },
+							   m_ScreenWidth, m_ScreenHeight, 4);
 
 	// Timer setting.
 	m_pTimer = new Timer;
 	m_pTimer->Initialize(m_pDevice, m_pContext);
 
-	m_pResourceManager = new ResourceManager;
-	m_pResourceManager->Initialize(m_pDevice, m_pContext);
-
-	/*_ASSERT(m_pTimer);
-	m_pTimer->Start(m_pContext, false);*/
-
-	// postprocessor 초기화.
-	m_PostProcessor.Initialize(this,
-							   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, &m_FloatBuffer, &m_PrevBuffer, &m_pGBuffer->DepthBuffer },
-							   m_ScreenWidth, m_ScreenHeight, 4);
-
 	// 콘솔창이 렌더링 창을 덮는 것을 방지.
 	SetForegroundWindow(m_hMainWindow);
 
-	/*OutputDebugStringA("Renderer intialize time ==> ");
-	m_pTimer->End(m_pContext);*/
+	m_DeltaTimeData.resize(90, 0);
+	m_FrameRateData.resize(90, 0);
 }
 
 void BaseRenderer::InitScene()
 {
-	m_Scene.Initialize(this);
+	_ASSERT(m_pScene);
+
+	m_pPostProcessor->SetGlobalConstants(m_pScene->GetGlobalConstantBufferPtr());
 
 	// 커서 표시 (Main sphere와의 충돌이 감지되면 월드 공간에 작게 그려지는 구).
 	{
@@ -116,55 +149,73 @@ void BaseRenderer::InitScene()
 		pMaterialConstData->AlbedoFactor = Vector3(0.0f);
 		pMaterialConstData->EmissionFactor = Vector3(0.0f, 1.0f, 0.0f);
 
-		m_Scene.RenderObjects.push_back(m_pCursorSphere); // 리스트에 등록.
+		m_pScene->RenderObjects.push_back(m_pCursorSphere);
 	}
 }
 
 void BaseRenderer::UpdateGUI()
 {
-	/*ImGui_ImplWin32_NewFrame();
-	ImGui_ImplDX11_NewFrame();
+	_ASSERT(m_DeltaTimeData.size() > 0);
+	_ASSERT(m_FrameRateData.size() > 0);
 
-	ImGui::NewFrame();
-	ImGui::DockSpaceOverViewport();*/
+	static int s_DeltaTimeIndex = 0;
+	static int s_FrameIndex = 0;
 
-	/*ImGui::Begin("Scene");
-	ImVec2 wsize = ImGui::GetWindowSize();
-	ImGui::Image((ImTextureID)(intptr_t)m_PrevBuffer.pSRV, wsize, ImVec2(0, 0), ImVec2(1, 1));
-	ImGui::End();*/
+	const ImGuiIO& IMGUI_IO = ImGui::GetIO();
+
+	ImGui::Begin("Profile");
+
+	if (s_DeltaTimeIndex == m_DeltaTimeData.size())
+	{
+		s_DeltaTimeIndex = 0;
+	}
+	m_DeltaTimeData[s_DeltaTimeIndex++] = IMGUI_IO.DeltaTime;
+	ImGui::PushID("dt");
+	ImGui::Text("%s\t%-3.4f %s", "dt", IMGUI_IO.DeltaTime, "ms");
+	ImGui::PlotLines("##plotvar", m_DeltaTimeData.data(), (int)m_DeltaTimeData.size(), s_DeltaTimeIndex, nullptr, FLT_MAX, FLT_MAX, { 0, 50 });
+	ImGui::PopID();
+
+
+	if (s_FrameIndex == m_FrameRateData.size())
+	{
+		s_FrameIndex = 0;
+	}
+	m_FrameRateData[s_FrameIndex++] = IMGUI_IO.Framerate;
+	ImGui::PushID("fps");
+	ImGui::Text("%s\t%-3.4f", "fps", IMGUI_IO.Framerate);
+	ImGui::PlotLines("##plotvar", m_FrameRateData.data(), (int)m_FrameRateData.size(), s_FrameIndex, nullptr, FLT_MAX, FLT_MAX, { 0, 50 });
+	ImGui::PopID();
+
+	ImGui::End();
 }
 
 void BaseRenderer::Update(float deltaTime)
 {
+	_ASSERT(m_pMainCamera);
+	_ASSERT(m_pScene);
+
 	// 카메라의 이동.
-	m_Camera.UpdateKeyboard(deltaTime, &m_Keyboard);
+	m_pMainCamera->UpdateKeyboard(deltaTime, &m_Keyboard);
 
 	// 마우스 처리.
 	ProcessMouseControl();
 
 	// 전체 씬 업데이트.
-	m_Scene.Update(deltaTime);
+	m_pScene->Update(deltaTime);
 
 	// 후처리 프로세서 업데이트.
-	m_PostProcessor.Update();
+	m_pPostProcessor->Update();
 }
 
 void BaseRenderer::RenderGUI()
 {
 	ImGui::Begin("Scene");
 	ImVec2 wsize = ImGui::GetWindowSize();
-	ImGui::Image((ImTextureID)(intptr_t)m_PrevBuffer.pSRV, wsize, ImVec2(0, 0), ImVec2(1, 1));
+	ImGui::Image((ImTextureID)(intptr_t)m_pPrevBuffer->pSRV, wsize, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f));
 	ImGui::End();
 
-
-	const ImGuiIO& IMGUI_IO = ImGui::GetIO();
-
-	// Example의 Render()에서 RT 설정을 해주지 않았을 경우에도
-	// 백 버퍼에 GUI를 그리기위해 RT 설정.
-	// 예) Render()에서 ComputeShader만 사용
 	setMainViewport();
 
-	// GUI 렌더링.
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
@@ -177,22 +228,24 @@ void BaseRenderer::Render()
 	passGBuffer();
 	passShadow();
 
-	m_Scene.GetSkyLUTPtr()->Generate();
-	m_Scene.GetAerialLUTPtr()->Generate();
+	m_pScene->GetSkyLUTPtr()->Generate();
+	m_pScene->GetAerialLUTPtr()->Generate();
 
 	passDeferredLighting();
 	passSky();
 	passDebug();
 
-	m_PostProcessor.Render();
+	m_pPostProcessor->Render();
 
-	RenderGUI(); // 추후 editor/game 모드를 설정하여 따로 렌더링하도록 구상.
+	RenderGUI();
 
 	m_pSwapChain->Present(1, 0);
 }
 
 void BaseRenderer::OnMouseMove(int mouseX, int mouseY)
 {
+	_ASSERT(m_pMainCamera);
+
 	m_Mouse.MouseX = mouseX;
 	m_Mouse.MouseY = mouseY;
 
@@ -207,7 +260,7 @@ void BaseRenderer::OnMouseMove(int mouseX, int mouseY)
 	m_Mouse.MouseNDCY = Clamp(m_Mouse.MouseNDCY, -1.0f, 1.0f);
 
 	// 카메라 시점 회전.
-	m_Camera.UpdateMouse(m_Mouse.MouseNDCX, m_Mouse.MouseNDCY);
+	m_pMainCamera->UpdateMouse(m_Mouse.MouseNDCX, m_Mouse.MouseNDCY);
 }
 
 void BaseRenderer::OnMouseClick(int mouseX, int mouseY)
@@ -233,6 +286,9 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			// 화면 해상도가 바뀌면 SwapChain을 다시 생성.
 			if (m_pSwapChain)
 			{
+				_ASSERT(m_pMainCamera);
+				_ASSERT(m_pScene);
+
 				m_ScreenWidth = (int)LOWORD(lParam);
 				m_ScreenHeight = (int)HIWORD(lParam);
 
@@ -250,10 +306,11 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					m_pSwapChain->ResizeBuffers(0, m_ScreenWidth, m_ScreenHeight, DXGI_FORMAT_UNKNOWN, 0);
 
 					createBuffers();
-					m_Camera.SetAspectRatio(GetAspectRatio());
-					m_PostProcessor.Initialize(this,
-											   { m_Scene.GetGlobalConstantsGPU(), m_pBackBuffer, &m_FloatBuffer, &m_PrevBuffer, &m_pGBuffer->DepthBuffer },
+					m_pMainCamera->SetAspectRatio(GetAspectRatio());
+					m_pPostProcessor->Initialize(this,
+											   { m_pBackBuffer, m_pFloatBuffer, m_pPrevBuffer, &m_pGBuffer->DepthBuffer },
 											   m_ScreenWidth, m_ScreenHeight, 4);
+					m_pPostProcessor->SetGlobalConstants(m_pScene->GetGlobalConstantBufferPtr());
 				}
 			}
 
@@ -262,7 +319,7 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		case WM_SYSCOMMAND:
 		{
-			if ((wParam & 0xfff0) == SC_KEYMENU) // ALT키 비활성화.
+			if ((wParam & 0xFFF0) == SC_KEYMENU) // ALT키 비활성화.
 			{
 				return 0;
 			}
@@ -320,7 +377,8 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			if (wParam == 'F')  // f키 일인칭 시점.
 			{
-				m_Camera.bUseFirstPersonView = !m_Camera.bUseFirstPersonView;
+				_ASSERT(m_pMainCamera);
+				m_pMainCamera->bUseFirstPersonView = !m_pMainCamera->bUseFirstPersonView;
 			}
 			if (wParam == 'P') // 애니메이션 일시중지할 때 사용.
 			{
@@ -328,7 +386,8 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 			if (wParam == 'Z') // 카메라 설정 화면에 출력.
 			{
-				m_Camera.PrintView();
+				_ASSERT(m_pMainCamera);
+				m_pMainCamera->PrintView();
 			}
 
 			m_Keyboard.bPressed[wParam] = false;
@@ -366,42 +425,44 @@ void BaseRenderer::SetViewport(const D3D11_VIEWPORT* pViewports, const UINT NUM_
 	m_pContext->RSSetViewports(NUM_VIEWPORT, pViewports);
 }
 
-void BaseRenderer::SetPipelineState(const GraphicsPSO& PSO)
+void BaseRenderer::SetPipelineState(const GraphicsPSO* pPSO)
 {
-	m_pContext->VSSetShader(PSO.pVertexShader, nullptr, 0);
-	m_pContext->PSSetShader(PSO.pPixelShader, nullptr, 0);
-	m_pContext->HSSetShader(PSO.pHullShader, nullptr, 0);
-	m_pContext->DSSetShader(PSO.pDomainShader, nullptr, 0);
-	m_pContext->GSSetShader(PSO.pGeometryShader, nullptr, 0);
+	m_pContext->VSSetShader(pPSO->pVertexShader, nullptr, 0);
+	m_pContext->PSSetShader(pPSO->pPixelShader, nullptr, 0);
+	m_pContext->HSSetShader(pPSO->pHullShader, nullptr, 0);
+	m_pContext->DSSetShader(pPSO->pDomainShader, nullptr, 0);
+	m_pContext->GSSetShader(pPSO->pGeometryShader, nullptr, 0);
 	m_pContext->CSSetShader(nullptr, nullptr, 0);
-	m_pContext->IASetInputLayout(PSO.pInputLayout);
-	m_pContext->RSSetState(PSO.pRasterizerState);
-	m_pContext->OMSetBlendState(PSO.pBlendState, PSO.BlendFactor, 0xffffffff);
-	m_pContext->OMSetDepthStencilState(PSO.pDepthStencilState, PSO.StencilRef);
-	m_pContext->IASetPrimitiveTopology(PSO.PrimitiveTopology);
+	m_pContext->IASetInputLayout(pPSO->pInputLayout);
+	m_pContext->RSSetState(pPSO->pRasterizerState);
+	m_pContext->OMSetBlendState(pPSO->pBlendState, pPSO->BlendFactor, 0xffffffff);
+	m_pContext->OMSetDepthStencilState(pPSO->pDepthStencilState, pPSO->StencilRef);
+	m_pContext->IASetPrimitiveTopology(pPSO->PrimitiveTopology);
 }
 
-void BaseRenderer::SetPipelineState(const ComputePSO& PSO)
+void BaseRenderer::SetPipelineState(const ComputePSO* pPSO)
 {
 	m_pContext->VSSetShader(nullptr, nullptr, 0);
 	m_pContext->PSSetShader(nullptr, nullptr, 0);
 	m_pContext->HSSetShader(nullptr, nullptr, 0);
 	m_pContext->DSSetShader(nullptr, nullptr, 0);
 	m_pContext->GSSetShader(nullptr, nullptr, 0);
-	m_pContext->CSSetShader(PSO.pComputeShader, nullptr, 0);
+	m_pContext->CSSetShader(pPSO->pComputeShader, nullptr, 0);
 }
 
-Model* BaseRenderer::PickClosest(const Ray& PICKNG_RAY, float* pMinDist)
+Model* BaseRenderer::PickClosest(const DirectX::SimpleMath::Ray* pPickingRay, float* pMinDist)
 {
+	_ASSERT(m_pScene);
+
 	*pMinDist = 1e5f;
 	Model* pMinModel = nullptr;
 
-	for (UINT64 i = 0, size = m_Scene.RenderObjects.size(); i < size; ++i)
+	for (UINT64 i = 0, size = m_pScene->RenderObjects.size(); i < size; ++i)
 	{
-		Model* pCurModel = m_Scene.RenderObjects[i];
+		Model* pCurModel = m_pScene->RenderObjects[i];
 		float dist = 0.0f;
 		if (pCurModel->bIsPickable &&
-			PICKNG_RAY.Intersects(pCurModel->BoundingSphere, dist) &&
+			pPickingRay->Intersects(pCurModel->BoundingSphere, dist) &&
 			dist < *pMinDist)
 		{
 			pMinModel = pCurModel;
@@ -414,6 +475,8 @@ Model* BaseRenderer::PickClosest(const Ray& PICKNG_RAY, float* pMinDist)
 
 void BaseRenderer::ProcessMouseControl()
 {
+	_ASSERT(m_pMainCamera);
+
 	static Model* s_pActiveModel = nullptr;
 	static float s_PrevRatio = 0.0f;
 	static Vector3 s_PrevPos(0.0f);
@@ -428,8 +491,8 @@ void BaseRenderer::ProcessMouseControl()
 	// 사용자가 두 버튼 중 하나만 누른다고 가정.
 	if (m_Mouse.bMouseLeftButton || m_Mouse.bMouseRightButton)
 	{
-		const Matrix VIEW = m_Camera.GetView();
-		const Matrix PROJECTION = m_Camera.GetProjection();
+		const Matrix VIEW = m_pMainCamera->GetView();
+		const Matrix PROJECTION = m_pMainCamera->GetProjection();
 		const Vector3 NDC_NEAR = Vector3(m_Mouse.MouseNDCX, m_Mouse.MouseNDCY, 0.0f);
 		const Vector3 NDC_FAR = Vector3(m_Mouse.MouseNDCX, m_Mouse.MouseNDCY, 1.0f);
 		const Matrix INV_PROJECTION_VIEW = (VIEW * PROJECTION).Invert();
@@ -441,7 +504,7 @@ void BaseRenderer::ProcessMouseControl()
 
 		if (s_pActiveModel == nullptr) // 이전 프레임에서 아무 물체도 선택되지 않았을 경우에는 새로 선택.
 		{
-			Model* pSelectedModel = PickClosest(CUR_RAY, &dist);
+			Model* pSelectedModel = PickClosest(&CUR_RAY, &dist);
 			if (pSelectedModel)
 			{
 #ifdef _DEBUG
@@ -621,8 +684,8 @@ void BaseRenderer::initDirect3D()
 			if (SUCCEEDED(hr))
 			{
 				pDevice->QueryInterface(IID_PPV_ARGS(&m_pDevice));
-				pDevice->Release();
 				pContext->QueryInterface(IID_PPV_ARGS(&m_pContext));
+				pDevice->Release();
 				pContext->Release();
 
 				goto LB_EXIT;
@@ -686,8 +749,6 @@ void BaseRenderer::initGUI()
 	io.DisplaySize = ImVec2((float)m_ScreenWidth, (float)m_ScreenHeight);
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-	ImGui::StyleColorsLight();
-
 	// Setup Platform/Renderer backends
 	if (!ImGui_ImplDX11_Init(m_pDevice, m_pContext))
 	{
@@ -701,9 +762,6 @@ void BaseRenderer::initGUI()
 
 void BaseRenderer::createBuffers()
 {
-	_ASSERT(!m_pBackBuffer);
-	_ASSERT(!m_pGBuffer);
-
 	HRESULT hr = S_OK;
 
 	ID3D11Texture2D* pTexture = nullptr;
@@ -711,7 +769,10 @@ void BaseRenderer::createBuffers()
 	hr = m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pTexture));
 	BREAK_IF_FAILED(hr);
 
-	m_pBackBuffer = new Texture;
+	if (!m_pBackBuffer)
+	{
+		m_pBackBuffer = new Texture;
+	}
 	pTexture->GetDesc(&desc);
 	m_pBackBuffer->Initialize(m_pDevice, m_pContext, pTexture, true);
 	RELEASE(pTexture);
@@ -719,7 +780,11 @@ void BaseRenderer::createBuffers()
 	// 이전 프레임 저장용.
 	(*m_pBackBuffer->GetTexture2DPPtr())->GetDesc(&desc);
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-	m_PrevBuffer.Initialize(m_pDevice, m_pContext, desc, nullptr, true);
+	if (!m_pPrevBuffer)
+	{
+		m_pPrevBuffer = new Texture;
+	}
+	m_pPrevBuffer->Initialize(m_pDevice, m_pContext, desc, nullptr, true);
 
 	desc.MipLevels = 1;
 	desc.ArraySize = 1;
@@ -730,9 +795,16 @@ void BaseRenderer::createBuffers()
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 	desc.MiscFlags = 0;
 	desc.CPUAccessFlags = 0;
-	m_FloatBuffer.Initialize(m_pDevice, m_pContext, desc, nullptr, true);
+	if (!m_pFloatBuffer)
+	{
+		m_pFloatBuffer = new Texture;
+	}
+	m_pFloatBuffer->Initialize(m_pDevice, m_pContext, desc, nullptr, true);
 
-	m_pGBuffer = new GBuffer;
+	if (!m_pGBuffer)
+	{
+		m_pGBuffer = new GBuffer;
+	}
 	m_pGBuffer->Initialize(m_pDevice, m_pContext, m_ScreenWidth, m_ScreenHeight);
 }
 
@@ -762,33 +834,26 @@ void BaseRenderer::setComputeShaderBarrier()
 void BaseRenderer::destroyBuffersForRendering()
 {
 	// swap chain에 사용될 back bufffer와 관련된 모든 버퍼를 초기화.
-	if (m_pBackBuffer)
-	{
-		delete m_pBackBuffer;
-		m_pBackBuffer = nullptr;
-	}
-	if (m_pGBuffer)
-	{
-		delete m_pGBuffer;
-		m_pGBuffer = nullptr;
-	}
+	m_pBackBuffer->Cleanup();
+	m_pGBuffer->Cleanup();
+	m_pPrevBuffer->Cleanup();
+	m_pFloatBuffer->Cleanup();
 
-	m_PrevBuffer.Cleanup();
-	m_FloatBuffer.Cleanup();
-	m_PostProcessor.Cleanup();
+	m_pPostProcessor->Cleanup();
 }
 
 void BaseRenderer::passGBuffer()
 {
 	_ASSERT(m_pGBuffer);
+	_ASSERT(m_pScene);
 
 	setMainViewport();
-	SetGlobalConsts(&m_Scene.GetGlobalConstantBufferPtr()->pBuffer, 0);
+	SetGlobalConsts(&m_pScene->GetGlobalConstantBufferPtr()->pBuffer, 0);
 	m_pGBuffer->PrepareRender();
 
-	for (UINT64 i = 0, size = m_Scene.RenderObjects.size(); i < size; ++i)
+	for (UINT64 i = 0, size = m_pScene->RenderObjects.size(); i < size; ++i)
 	{
-		Model* const pModel = m_Scene.RenderObjects[i];
+		Model* const pModel = m_pScene->RenderObjects[i];
 		m_pResourceManager->SetPipelineState(pModel->GetGBufferPSO(false));
 		pModel->Render();
 	}
@@ -798,27 +863,31 @@ void BaseRenderer::passGBuffer()
 
 void BaseRenderer::passShadow()
 {
-	m_Scene.GetSunPtr()->RenderShadowMap(m_Scene.RenderObjects, nullptr);
-	for (UINT64 i = 0, size = m_Scene.Lights.size(); i < size; ++i)
+	_ASSERT(m_pScene);
+
+	m_pScene->GetSunPtr()->RenderShadowMap(m_pScene->RenderObjects, nullptr);
+	for (UINT64 i = 0, size = m_pScene->Lights.size(); i < size; ++i)
 	{
-		m_Scene.Lights[i].RenderShadowMap(m_Scene.RenderObjects, nullptr);
+		m_pScene->Lights[i].RenderShadowMap(m_pScene->RenderObjects, nullptr);
 	}
 }
 
 void BaseRenderer::passDeferredLighting()
 {
+	_ASSERT(m_pScene);
+
 	setMainViewport();
 	m_pResourceManager->SetPipelineState(GraphicsPSOType_DeferredRendering);
-	SetGlobalConsts(&m_Scene.GetGlobalConstantBufferPtr()->pBuffer, 0);
+	SetGlobalConsts(&m_pScene->GetGlobalConstantBufferPtr()->pBuffer, 0);
 
 	const float CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	m_pContext->ClearRenderTargetView(m_FloatBuffer.pRTV, CLEAR_COLOR);
-	m_pContext->OMSetRenderTargets(1, &m_FloatBuffer.pRTV, nullptr);
+	m_pContext->ClearRenderTargetView(m_pFloatBuffer->pRTV, CLEAR_COLOR);
+	m_pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, nullptr);
 
 	ID3D11ShaderResourceView* ppSRVs[5] = { m_pGBuffer->AlbedoBuffer.pSRV, m_pGBuffer->NormalBuffer.pSRV, m_pGBuffer->PositionBuffer.pSRV, m_pGBuffer->EmissionBuffer.pSRV, m_pGBuffer->ExtraBuffer.pSRV };
 	m_pContext->PSSetShaderResources(0, 5, ppSRVs);
 
-	ConstantBuffer* pLightConstantBuffer = m_Scene.GetLightConstantBufferPtr();
+	ConstantBuffer* pLightConstantBuffer = m_pScene->GetLightConstantBufferPtr();
 	if (!pLightConstantBuffer)
 	{
 		__debugbreak();
@@ -832,18 +901,18 @@ void BaseRenderer::passDeferredLighting()
 
 	// Draw obejct for each light.
 
-	Sun* pSun = m_Scene.GetSunPtr();
+	Sun* pSun = m_pScene->GetSunPtr();
 	memcpy(&pLightConstsData->Lights, &pSun->SunProperty, sizeof(LightProperty));
 	pLightConstantBuffer->Upload();
 	SetGlobalConsts(&pLightConstantBuffer->pBuffer, 1);
 	m_pContext->PSSetShaderResources(7, 1, &pSun->GetShadowMapPtr()->GetCascadeShadowBufferPtr()->pSRV);
 	m_pContext->Draw(6, 0);
 
-	for (UINT64 i = 0, size = m_Scene.Lights.size(); i < size; ++i)
+	for (UINT64 i = 0, size = m_pScene->Lights.size(); i < size; ++i)
 	{
-		Light& curLight = m_Scene.Lights[i];
+		Light& curLight = m_pScene->Lights[i];
 
-		memcpy(&pLightConstsData->Lights, &m_Scene.Lights[i].Property, sizeof(LightProperty));
+		memcpy(&pLightConstsData->Lights, &m_pScene->Lights[i].Property, sizeof(LightProperty));
 		pLightConstantBuffer->Upload();
 		SetGlobalConsts(&pLightConstantBuffer->pBuffer, 1);
 
@@ -868,11 +937,13 @@ void BaseRenderer::passDeferredLighting()
 
 void BaseRenderer::passSky()
 {
-	setMainViewport();
-	m_pContext->OMSetRenderTargets(1, &m_FloatBuffer.pRTV, m_pGBuffer->DepthBuffer.pDSV);
+	_ASSERT(m_pScene);
 
-	m_Scene.GetSkyPtr()->Render(m_Scene.GetSkyLUTPtr()->GetSkyLUT());
-	m_Scene.GetSunPtr()->Render();
+	setMainViewport();
+	m_pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_pGBuffer->DepthBuffer.pDSV);
+
+	m_pScene->GetSkyPtr()->Render(m_pScene->GetSkyLUTPtr()->GetSkyLUT());
+	m_pScene->GetSunPtr()->Render();
 
 	ID3D11RenderTargetView* pNullRTV = nullptr;
 	ID3D11DepthStencilView* pNullDSV = nullptr;
@@ -881,24 +952,26 @@ void BaseRenderer::passSky()
 
 void BaseRenderer::passDebug()
 {
-	setMainViewport();
-	SetGlobalConsts(&m_Scene.GetGlobalConstantBufferPtr()->pBuffer, 0);
-	m_pContext->OMSetRenderTargets(1, &m_FloatBuffer.pRTV, m_pGBuffer->DepthBuffer.pDSV);
+	_ASSERT(m_pScene);
 
-	for (UINT64 i = 0, size = m_Scene.RenderObjects.size(); i < size; ++i)
+	setMainViewport();
+	SetGlobalConsts(&m_pScene->GetGlobalConstantBufferPtr()->pBuffer, 0);
+	m_pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_pGBuffer->DepthBuffer.pDSV);
+
+	for (UINT64 i = 0, size = m_pScene->RenderObjects.size(); i < size; ++i)
 	{
-		Model* const pModel = m_Scene.RenderObjects[i];
+		Model* const pModel = m_pScene->RenderObjects[i];
 		if (pModel->bDrawNormals)
 		{
 			m_pResourceManager->SetPipelineState(GraphicsPSOType_Normal);
 			pModel->RenderNormals();
 		}
-		if (m_Scene.bDrawOBB)
+		if (m_pScene->bDrawOBB)
 		{
 			m_pResourceManager->SetPipelineState(GraphicsPSOType_BoundingBox);
 			pModel->RenderWireBoundingBox();
 		}
-		if (m_Scene.bDrawBS)
+		if (m_pScene->bDrawBS)
 		{
 			m_pResourceManager->SetPipelineState(GraphicsPSOType_BoundingBox);
 			pModel->RenderWireBoundingSphere();

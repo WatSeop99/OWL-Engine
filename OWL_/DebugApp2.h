@@ -1,26 +1,10 @@
 #pragma once
 
-#include "Renderer/BaseRenderer.h"
-#include "Geometry/Model.h"
-#include "Geometry/SkinnedMeshModel.h"
+class BaseRenderer;
+class Model;
+class Scene;
+class SkinnedMeshModel;
 
-//class DebugApp2 : public BaseRenderer
-//{
-//public:
-//	DebugApp2() = default;
-//	~DebugApp2();
-//
-//	void InitScene() override;
-//	
-//	void UpdateGUI() override;
-//	void Update(float deltaTime) override;
-//
-//	void Render() override;
-//
-//private:
-//	Model* m_pGround = nullptr;
-//	SkinnedMeshModel* m_pCharacter = nullptr;
-//};
 class DebugApp2
 {
 public:
@@ -39,6 +23,7 @@ public:
 
 private:
 	BaseRenderer* m_pRenderer = nullptr;
+	Scene* m_pScene = nullptr;
 	Model* m_pGround = nullptr;
 	SkinnedMeshModel* m_pCharacter = nullptr;
 };

@@ -1,8 +1,14 @@
 #include "Common.h"
+#include "Renderer/BaseRenderer.h"
+#include "Geometry/Model.h"
+#include "Geometry/SkinnedMeshModel.h"
 #include "Geometry/GeometryGenerator.h"
 #include "Graphics/Light.h"
 #include "Geometry/Mesh.h"
 #include "Renderer/Timer.h"
+#include "Graphics/Scene.h"
+#include "Renderer/ResourceManager.h"
+#include "Renderer/PostProcessor.h"
 #include "DebugApp2.h"
 
 using namespace DirectX::SimpleMath;
@@ -13,6 +19,11 @@ DebugApp2::~DebugApp2()
 	{
 		delete m_pGround;
 		m_pGround = nullptr;
+	}
+	if (m_pScene)
+	{
+		delete m_pScene;
+		m_pScene = nullptr;
 	}
 	if (m_pRenderer)
 	{
@@ -39,20 +50,25 @@ int DebugApp2::Run()
 		}
 	}
 
-	return (int)(msg.wParam);;
+	return (int)msg.wParam;
 }
 
 void DebugApp2::Initialize()
 {
 	m_pRenderer = new BaseRenderer;
-	m_pRenderer->Initialize();
-
+	m_pScene = new Scene;
+	
+	m_pRenderer->Initialize(m_pScene);
+	m_pScene->Initialize(m_pRenderer);
 	InitScene();
+
+	m_pRenderer->SetPickedModel(m_pCharacter);
 }
 
 void DebugApp2::InitScene()
 {
 	_ASSERT(m_pRenderer);
+	_ASSERT(m_pScene);
 
 	m_pRenderer->GetCamera()->Reset(Vector3(3.74966f, 5.03645f, -2.54918f), -0.819048f, 0.741502f);
 	m_pRenderer->InitScene();
@@ -104,8 +120,7 @@ void DebugApp2::InitScene()
 		}
 		m_pCharacter->UpdateWorld(Matrix::CreateScale(1.0f) * Matrix::CreateTranslation(center));
 
-		m_pRenderer->GetScene()->RenderObjects.push_back(m_pCharacter); // 리스트에 등록
-		m_pRenderer->SetPickedModel(m_pCharacter);
+		m_pScene->RenderObjects.push_back(m_pCharacter); // 리스트에 등록
 	}
 }
 
@@ -113,11 +128,10 @@ void DebugApp2::UpdateGUI()
 {
 	_ASSERT(m_pRenderer);
 
-	Scene* pScene = m_pRenderer->GetScene();
 	Camera* pMainCamera = m_pRenderer->GetCamera();
 	PostProcessor* pPostProcessor = m_pRenderer->GetPostProcessor();
 	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
-	GlobalConstants* pGlobalConstsCPU = m_pRenderer->GetScene()->GetGlobalConstantsCPU();
+	GlobalConstants* pGlobalConstsCPU = m_pScene->GetGlobalConstantsCPU();
 
 	ImGui_ImplWin32_NewFrame();
 	ImGui_ImplDX11_NewFrame();
@@ -128,16 +142,14 @@ void DebugApp2::UpdateGUI()
 	m_pRenderer->UpdateGUI();
 
 	ImGui::Begin("Scene Control");
-	// ImGui가 측정해주는 Framerate 출력.
-	ImGui::Text("Average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
 	ImGui::SetNextItemOpen(false, ImGuiCond_Once);
 	if (ImGui::TreeNode("General"))
 	{
 		ImGui::Checkbox("Use FPV", &pMainCamera->bUseFirstPersonView);
-		ImGui::Checkbox("Wireframe", &pScene->bDrawAsWire);
-		ImGui::Checkbox("DrawOBB", &pScene->bDrawOBB);
-		ImGui::Checkbox("DrawBSphere", &pScene->bDrawBS);
+		ImGui::Checkbox("Wireframe", &m_pScene->bDrawAsWire);
+		ImGui::Checkbox("DrawOBB", &m_pScene->bDrawOBB);
+		ImGui::Checkbox("DrawBSphere", &m_pScene->bDrawBS);
 		ImGui::TreePop();
 	}
 
@@ -184,9 +196,9 @@ void DebugApp2::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Mirror"))
 	{
-		ImGui::SliderFloat("Alpha", &pScene->MirrorAlpha, 0.0f, 1.0f);
-		const float BLEND_COLOR[4] = { pScene->MirrorAlpha, pScene->MirrorAlpha, pScene->MirrorAlpha, 1.0f };
-		if (pScene->bDrawAsWire)
+		ImGui::SliderFloat("Alpha", &m_pScene->MirrorAlpha, 0.0f, 1.0f);
+		const float BLEND_COLOR[4] = { m_pScene->MirrorAlpha, m_pScene->MirrorAlpha, m_pScene->MirrorAlpha, 1.0f };
+		if (m_pScene->bDrawAsWire)
 		{
 			pResourceManager->GraphicsPSOs[GraphicsPSOType_MirrorBlendWire].SetBlendFactor(BLEND_COLOR);
 		}
@@ -195,7 +207,7 @@ void DebugApp2::UpdateGUI()
 			pResourceManager->GraphicsPSOs[GraphicsPSOType_MirrorBlendSolid].SetBlendFactor(BLEND_COLOR);
 		}
 
-		Model* pMirror = pScene->GetMirror();
+		Model* pMirror = m_pScene->GetMirror();
 		MaterialConstants* pMaterialConstData = (MaterialConstants*)pMirror->Meshes[0]->MaterialConstant.pSystemMem;
 		if (!pMaterialConstData)
 		{
@@ -211,9 +223,9 @@ void DebugApp2::UpdateGUI()
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Light"))
 	{
-		ImGui::SliderFloat("Halo Radius", &pScene->Lights[1].Property.HaloRadius, 0.0f, 2.0f);
-		ImGui::SliderFloat("Halo Strength", &pScene->Lights[1].Property.HaloStrength, 0.0f, 1.0f);
-		ImGui::SliderFloat("Radius", &pScene->Lights[1].Property.Radius, 0.0f, 0.5f);
+		ImGui::SliderFloat("Halo Radius", &m_pScene->Lights[1].Property.HaloRadius, 0.0f, 2.0f);
+		ImGui::SliderFloat("Halo Strength", &m_pScene->Lights[1].Property.HaloStrength, 0.0f, 1.0f);
+		ImGui::SliderFloat("Radius", &m_pScene->Lights[1].Property.Radius, 0.0f, 0.5f);
 
 		ImGui::TreePop();
 	}
@@ -276,81 +288,81 @@ void DebugApp2::Update(float deltaTime)
 
 	switch (s_State)
 	{
-	case 0:
-	{
-		if (pKeyboard->bPressed[VK_UP])
+		case 0:
 		{
-			s_State = 1;
-			s_FrameCount = 0;
-		}
-		else if (s_FrameCount ==
-				 m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size() ||
-				 pKeyboard->bPressed[VK_UP]) // 재생이 다 끝난다면.
-		{
-			s_FrameCount = 0; // 상태 변화 없이 반복.
-		}
-	}
-		break;
-
-	case 1:
-	{
-		if (s_FrameCount == m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size())
-		{
-			s_State = 2;
-			s_FrameCount = 0;
-		}
-	}
-		break;
-
-	case 2:
-	{
-		if (pKeyboard->bPressed[VK_RIGHT])
-		{
-			m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform =
-				Matrix::CreateRotationY(DirectX::XM_PI * 60.0f / 180.0f * deltaTime) *
-				m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform;
-		}
-		if (pKeyboard->bPressed[VK_LEFT])
-		{
-			m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform =
-				Matrix::CreateRotationY(-DirectX::XM_PI * 60.0f / 180.0f * deltaTime) *
-				m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform;
-		}
-		if (s_FrameCount == m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size())
-		{
-			// 방향키를 누르고 있지 않으면 정지. (누르고 있으면 계속 걷기)
-			if (!pKeyboard->bPressed[VK_UP])
+			if (pKeyboard->bPressed[VK_UP])
 			{
-				s_State = 3;
+				s_State = 1;
+				s_FrameCount = 0;
 			}
-			s_FrameCount = 0;
+			else if (s_FrameCount ==
+					 m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size() ||
+					 pKeyboard->bPressed[VK_UP]) // 재생이 다 끝난다면.
+			{
+				s_FrameCount = 0; // 상태 변화 없이 반복.
+			}
 		}
-	}
 		break;
 
-	case 3:
-	{
-		if (s_FrameCount == m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size())
+		case 1:
 		{
-			// s_State = 4;
-			s_State = 0;
-			s_FrameCount = 0;
+			if (s_FrameCount == m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size())
+			{
+				s_State = 2;
+				s_FrameCount = 0;
+			}
 		}
-	}
 		break;
 
-	case 4:
-	{
-		if (s_FrameCount == m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size())
+		case 2:
 		{
-			s_State = 0;
-			s_FrameCount = 0;
+			if (pKeyboard->bPressed[VK_RIGHT])
+			{
+				m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform =
+					Matrix::CreateRotationY(DirectX::XM_PI * 60.0f / 180.0f * deltaTime) *
+					m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform;
+			}
+			if (pKeyboard->bPressed[VK_LEFT])
+			{
+				m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform =
+					Matrix::CreateRotationY(-DirectX::XM_PI * 60.0f / 180.0f * deltaTime) *
+					m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform;
+			}
+			if (s_FrameCount == m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size())
+			{
+				// 방향키를 누르고 있지 않으면 정지. (누르고 있으면 계속 걷기)
+				if (!pKeyboard->bPressed[VK_UP])
+				{
+					s_State = 3;
+				}
+				s_FrameCount = 0;
+			}
 		}
-	}
 		break;
 
-	default:
+		case 3:
+		{
+			if (s_FrameCount == m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size())
+			{
+				// s_State = 4;
+				s_State = 0;
+				s_FrameCount = 0;
+			}
+		}
 		break;
+
+		case 4:
+		{
+			if (s_FrameCount == m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size())
+			{
+				s_State = 0;
+				s_FrameCount = 0;
+			}
+		}
+		break;
+
+		default:
+			break;
 	}
 
 	m_pCharacter->UpdateAnimation(s_State, s_FrameCount);

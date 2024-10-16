@@ -2,12 +2,12 @@
 #include "../Renderer/BaseRenderer.h"
 #include "../Graphics/GraphicsUtils.h"
 #include "Mesh.h"
+#include "../Renderer/StructuredBuffer.h"
+#include "../Renderer/ResourceManager.h"
 #include "SkinnedMeshModel.h"
 
 void SkinnedMeshModel::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MESHES, const AnimationData& ANIM_DATA)
 {
-	_ASSERT(pRenderer);
-
 	Model::Initialize(pRenderer, MESHES);
 	InitAnimationData(ANIM_DATA);
 }
@@ -18,12 +18,13 @@ void SkinnedMeshModel::InitMeshBuffers(const MeshInfo& MESH_DATA, Mesh* pNewMesh
 	_ASSERT(pNewMesh);
 
 	HRESULT hr = S_OK;
+	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
 	ID3D11Device* pDevice = m_pRenderer->GetDevice();
 
-	hr = CreateVertexBuffer(pDevice, MESH_DATA.SkinnedVertices, &pNewMesh->pVertexBuffer);
+	hr = pResourceManager->CreateVertexBuffer(sizeof(SkinnedVertex), (UINT)MESH_DATA.SkinnedVertices.size(), &pNewMesh->pVertexBuffer, (void*)MESH_DATA.SkinnedVertices.data());
 	BREAK_IF_FAILED(hr);
 
-	hr = CreateIndexBuffer(pDevice, MESH_DATA.Indices, &pNewMesh->pIndexBuffer);
+	hr = pResourceManager->CreateIndexBuffer(sizeof(UINT), (UINT)MESH_DATA.Indices.size(), &pNewMesh->pIndexBuffer, (void*)MESH_DATA.Indices.data());
 	BREAK_IF_FAILED(hr);
 
 	pNewMesh->IndexCount = (UINT)MESH_DATA.Indices.size();
@@ -50,19 +51,24 @@ void SkinnedMeshModel::InitAnimationData(const AnimationData& ANIM_DATA)
 	
 	const UINT64 TOTAL_BONE_COUNT = ANIM_DATA.BoneNameToID.size(); // 뼈의 수.
 	std::vector<Matrix> initData(TOTAL_BONE_COUNT);
-	BoneTransforms.Initialize(pDevice, pContext, sizeof(Matrix), (UINT)TOTAL_BONE_COUNT, initData.data());
+
+	if (!m_pBoneTransform)
+	{
+		m_pBoneTransform = new StructuredBuffer;
+	}
+	m_pBoneTransform->Initialize(pDevice, pContext, sizeof(Matrix), (UINT)TOTAL_BONE_COUNT, initData.data());
 }
 
 void SkinnedMeshModel::UpdateAnimation(const int CLIP_ID, const int FRAME)
 {
 	CharacterAnimaionData.Update(CLIP_ID, FRAME);
 
-	Matrix* pBoneTransformData = (Matrix*)BoneTransforms.pSystemMem;
+	Matrix* pBoneTransformData = (Matrix*)m_pBoneTransform->pSystemMem;
 	for (UINT64 i = 0, size = CharacterAnimaionData.BoneIDToNames.size(); i < size; ++i)
 	{
 		pBoneTransformData[i] = CharacterAnimaionData.Get(CLIP_ID, (int)i, FRAME).Transpose();
 	}
-	BoneTransforms.Upload();
+	m_pBoneTransform->Upload();
 }
 
 void SkinnedMeshModel::Render()
@@ -71,10 +77,19 @@ void SkinnedMeshModel::Render()
 
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
-	// ConstantsBuffer 대신 StructuredBuffer 사용.
-	pContext->VSSetShaderResources(9, 1, &(BoneTransforms.pSRV));
+	pContext->VSSetShaderResources(9, 1, &m_pBoneTransform->pSRV);
 
-	// Skinned VS/PS는 GraphicsPSO를 통해 지정되므로, Model::Render() 같이 사용 가능.
-	// 이때, 전용 매크로를 사용해줘야 함.
 	Model::Render();
+
+	ID3D11ShaderResourceView* pNullSRV = nullptr;
+	pContext->VSSetShaderResources(9, 1, &pNullSRV);
+}
+
+void SkinnedMeshModel::Cleanup()
+{
+	if (m_pBoneTransform)
+	{
+		delete m_pBoneTransform;
+		m_pBoneTransform = nullptr;
+	}
 }
