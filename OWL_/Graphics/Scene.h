@@ -29,13 +29,13 @@ public:
 
 	void Cleanup();
 
-	inline ConstantBuffer* GetGlobalConstantBufferPtr() { return &m_GlobalConstants; }
-	inline ConstantBuffer* GetLightConstantBufferPtr() { return &m_LightConstants; }
+	inline ConstantBuffer* GetGlobalConstantBuffer() { return &m_GlobalConstants; }
+	inline ConstantBuffer* GetLightConstantBuffer() { return &m_LightConstants; }
 
-	inline AerialLUT* GetAerialLUTPtr() { return m_pAerialLUT; }
-	inline SkyLUT* GetSkyLUTPtr() { return m_pSkyLUT; }
-	inline Sky* GetSkyPtr() { return m_pSky; }
-	inline Sun* GetSunPtr() { return m_pSun; }
+	inline AerialLUT* GetAerialLUT() { return m_pAerialLUT; }
+	inline SkyLUT* GetSkyLUT() { return m_pSkyLUT; }
+	inline Sky* GetSky() { return m_pSky; }
+	inline Sun* GetSun() { return m_pSun; }
 
 	inline GlobalConstants* GetGlobalConstantsCPU() { return (GlobalConstants*)m_GlobalConstants.pSystemMem; }
 	inline ID3D11Buffer* GetGlobalConstantsGPU() const { return m_GlobalConstants.pBuffer; }

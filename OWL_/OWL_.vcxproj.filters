@@ -144,6 +144,9 @@
     <ClInclude Include="Util\PerlinNoiseGenerator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Geometry\TerrainGenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OWL_.rc">
@@ -282,6 +285,9 @@
     <ClCompile Include="Util\PerlinNoiseGenerator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Geometry\TerrainGenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\BasicVS.hlsl" />
@@ -325,6 +331,7 @@
     <FxCompile Include="Shaders\Atmosphere\SunVS.hlsl" />
     <FxCompile Include="Shaders\Atmosphere\SunPS.hlsl" />
     <FxCompile Include="Shaders\ScreenQuadVS.hlsl" />
+    <FxCompile Include="Shaders\NoiseGenerator.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Common.hlsli" />
@@ -342,5 +349,6 @@
     <None Include="Shaders\ShadingUtil.hlsli" />
     <None Include="Shaders\Atmosphere\PostColor.hlsli" />
     <None Include="Shaders\ShadowUtil.hlsli" />
+    <None Include="Shaders\TileableNoise.hlsli" />
   </ItemGroup>
 </Project>

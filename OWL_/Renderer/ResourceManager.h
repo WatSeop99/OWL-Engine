@@ -114,6 +114,7 @@ public:
 	ID3D11ComputeShader* pAerialLUTCS = nullptr;
 	ID3D11ComputeShader* pMultiScatterLUTCS = nullptr;
 	ID3D11ComputeShader* pTransmittanceLUTCS = nullptr;
+	ID3D11ComputeShader* pNoiseGeneratorCS = nullptr;
 
 	ID3D11InputLayout* pBasicIL = nullptr;
 	ID3D11InputLayout* pSkinnedIL = nullptr;

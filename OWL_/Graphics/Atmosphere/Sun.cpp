@@ -20,6 +20,7 @@ void Sun::Initialize(BaseRenderer* pRenderer, Camera* pMainCamera)
 
 	SunProperty.Radius = 0.004649f;
 	SunProperty.LightType = LIGHT_SUN | LIGHT_SHADOW;
+	// SunProperty.LightType = LIGHT_OFF;
 
 	m_pSunCamera = new Camera;
 	m_pSunCamera->bUseFirstPersonView = true;
@@ -28,9 +29,9 @@ void Sun::Initialize(BaseRenderer* pRenderer, Camera* pMainCamera)
 	m_pSunCamera->SetNearZ(0.1f);
 	m_pSunCamera->SetFarZ(1000.0f);
 
-	//m_pSunShadowMap = new ShadowMap(3840, 3840);
-	m_pSunShadowMap = new ShadowMap(5120, 5120);
-	m_pSunShadowMap->Initialize(pRenderer, LIGHT_SUN | LIGHT_SHADOW);
+	m_pSunShadowMap = new ShadowMap(4096, 4096);
+	//m_pSunShadowMap = new ShadowMap(5120, 5120);
+	m_pSunShadowMap->Initialize(pRenderer, SunProperty.LightType);
 }
 
 void Sun::Update()

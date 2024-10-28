@@ -10,15 +10,15 @@
 #define LIGHT_SUN 0x08
 #define LIGHT_SHADOW 0x10
 
-using DirectX::SimpleMath::Matrix;
-using DirectX::SimpleMath::Vector2;
-using DirectX::SimpleMath::Vector3;
+//using DirectX::SimpleMath::Matrix;
+//using DirectX::SimpleMath::Vector2;
+//using DirectX::SimpleMath::Vector3;
 
 ALIGN(16) struct MeshConstants
 {
-	Matrix World;
-	Matrix WorldInverseTranspose;
-	Matrix WorldInverse;
+	DirectX::SimpleMath::Matrix World;
+	DirectX::SimpleMath::Matrix WorldInverseTranspose;
+	DirectX::SimpleMath::Matrix WorldInverse;
 	BOOL bUseHeightMap = FALSE;
 	float HeightScale = 0.0f;
 	float WindTrunk = 0.0f;
@@ -27,10 +27,10 @@ ALIGN(16) struct MeshConstants
 
 ALIGN(16) struct MaterialConstants
 {
-	Vector3 AlbedoFactor = Vector3(1.0f);
+	DirectX::SimpleMath::Vector3 AlbedoFactor = DirectX::SimpleMath::Vector3(1.0f);
 	float RoughnessFactor = 1.0f;
 	float MetallicFactor = 1.0f;
-	Vector3 EmissionFactor;
+	DirectX::SimpleMath::Vector3 EmissionFactor;
 
 	// 여러 옵션들에 BOOL 플래그 하나만 사용할 수도 있음.
 	BOOL bUseAlbedoMap = FALSE;
@@ -45,11 +45,11 @@ ALIGN(16) struct MaterialConstants
 
 ALIGN(16) struct LightProperty
 {
-	Vector3 Radiance = Vector3(5.0f); // strength.
+	DirectX::SimpleMath::Vector3 Radiance = DirectX::SimpleMath::Vector3(5.0f); // strength.
 	float FallOffStart = 0.0f;
-	Vector3 Direction = Vector3(0.0f, 0.0f, 1.0f);
+	DirectX::SimpleMath::Vector3 Direction = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 1.0f);
 	float FallOffEnd = 20.0f;
-	Vector3 Position = Vector3(0.0f, 0.0f, -2.0f);
+	DirectX::SimpleMath::Vector3 Position = DirectX::SimpleMath::Vector3(0.0f, 0.0f, -2.0f);
 	float SpotPower = 6.0f;
 
 	// Light type bitmasking.
@@ -60,9 +60,9 @@ ALIGN(16) struct LightProperty
 	float HaloRadius = 0.0f;
 	float HaloStrength = 0.0f;
 
-	Matrix ViewProjections[6]; // spot은 1개만. point는 전부 사용. 추후 directional은 3개 사용할 수도..
-	Matrix Projections[4];
-	Matrix InverseProjections[4];
+	DirectX::SimpleMath::Matrix ViewProjections[6]; // spot은 1개만. point는 전부 사용. 추후 directional은 3개 사용할 수도..
+	DirectX::SimpleMath::Matrix Projections[4];
+	DirectX::SimpleMath::Matrix InverseProjections[4];
 };
 ALIGN(16) struct LightConstants
 {
@@ -70,19 +70,19 @@ ALIGN(16) struct LightConstants
 };
 ALIGN(16) struct ShadowConstants
 {
-	Matrix ViewProjects[6];
+	DirectX::SimpleMath::Matrix ViewProjects[6];
 };
 
 ALIGN(16) struct GlobalConstants
 {
-	Matrix View;
-	Matrix Projection;
-	Matrix InverseProjection;
-	Matrix ViewProjection;
-	Matrix InverseViewProjection; // Proj -> World
-	Matrix InverseView;
+	DirectX::SimpleMath::Matrix View;
+	DirectX::SimpleMath::Matrix Projection;
+	DirectX::SimpleMath::Matrix InverseProjection;
+	DirectX::SimpleMath::Matrix ViewProjection;
+	DirectX::SimpleMath::Matrix InverseViewProjection; // Proj -> World
+	DirectX::SimpleMath::Matrix InverseView;
 
-	Vector3 EyeWorld;
+	DirectX::SimpleMath::Vector3 EyeWorld;
 	float StrengthIBL = 0.0f;
 
 	int TextureToDraw = 0;	 // 0: Env, 1: Specular, 2: Irradiance, 그외: 검은색.
@@ -102,11 +102,11 @@ ALIGN(16) struct PostEffectsConstants
 
 ALIGN(16) struct VolumeConsts
 {
-	Vector3 UVWOffset = Vector3(0.0f);
+	DirectX::SimpleMath::Vector3 UVWOffset;
 	float LightAbsorption = 5.0f;
-	Vector3 LightDir = Vector3(0.0f, 1.0f, 0.0f);
+	DirectX::SimpleMath::Vector3 LightDir = DirectX::SimpleMath::Vector3(0.0f, 1.0f, 0.0f);
 	float DensityAbsorption = 10.0f;
-	Vector3 LightColor = Vector3(1.0f) * 40.0f;
+	DirectX::SimpleMath::Vector3 LightColor = DirectX::SimpleMath::Vector3(1.0f) * 40.0f;
 	float Aniso = 0.3f;
 };
 

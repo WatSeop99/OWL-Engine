@@ -46,6 +46,7 @@ enum eComputePSOType
 	ComputePSOType_AerialLUT = 0,
 	ComputePSOType_MultiScatterLUT,
 	ComputePSOType_TransmittanceLUT,
+	ComputePSOType_NoiseGenerate,
 	ComputePSOType_Count
 };
 

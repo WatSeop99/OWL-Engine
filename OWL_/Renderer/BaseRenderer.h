@@ -104,6 +104,10 @@ protected:
 	Model* m_pPickedModel = nullptr; // 마우스 선택용.
 	Model* m_pCursorSphere = nullptr; // 드래그 표시용.
 
+	// for noise.
+	/*ConstantBuffer* m_pRandomNoiseConstantBuffer = nullptr;
+	Texture* m_pRandomNoise = nullptr;*/
+
 	// for debugging.
 	Timer* m_pTimer = nullptr;
 	std::vector<float> m_DeltaTimeData;

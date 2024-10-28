@@ -662,17 +662,16 @@ void MakeIcosahedron(MeshInfo* pDst)
 
 void MakeTerrainTile(MeshInfo* pDst)
 {
-	// 10m x 10m 사이즈의 그리드 박스를 받는다고 가정.
-
-	using DirectX::SimpleMath::Vector3;
-
 	_ASSERT(pDst);
-	_ASSERT(pDst->Vertices.size() > 0);
 
+	MakeSquareGrid(pDst, 512, 512, 128, DirectX::SimpleMath::Vector2(512));
+
+	srand((unsigned int)time(nullptr));
 	for (UINT64 i = 0, size = pDst->Vertices.size(); i < size; ++i)
 	{
-		Vector3& pos = pDst->Vertices[i].Position;
-		pos.y = GetValueUsingPerlinNoise(pos.x, pos.z) * 5.0f;
+		DirectX::SimpleMath::Vector3& pos = pDst->Vertices[i].Position;
+		pos.y = GetHeight(pos.x, pos.z);
+		pos.y *= 2.0f;
 	}
 }
 

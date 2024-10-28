@@ -46,6 +46,17 @@ BaseRenderer::~BaseRenderer()
 	ImGui::DestroyContext();
 	m_pContext->OMSetRenderTargets(0, nullptr, nullptr);
 	m_pContext->Flush();
+
+	/*if (m_pRandomNoiseConstantBuffer)
+	{
+		delete m_pRandomNoiseConstantBuffer;
+		m_pRandomNoiseConstantBuffer = nullptr;
+	}
+	if (m_pRandomNoise)
+	{
+		delete m_pRandomNoise;
+		m_pRandomNoise = nullptr;
+	}*/
 	
 	if (m_pFloatBuffer)
 	{
@@ -133,7 +144,7 @@ void BaseRenderer::InitScene()
 {
 	_ASSERT(m_pScene);
 
-	m_pPostProcessor->SetGlobalConstants(m_pScene->GetGlobalConstantBufferPtr());
+	m_pPostProcessor->SetGlobalConstants(m_pScene->GetGlobalConstantBuffer());
 
 	// 커서 표시 (Main sphere와의 충돌이 감지되면 월드 공간에 작게 그려지는 구).
 	{
@@ -150,6 +161,29 @@ void BaseRenderer::InitScene()
 		pMaterialConstData->EmissionFactor = Vector3(0.0f, 1.0f, 0.0f);
 
 		m_pScene->RenderObjects.push_back(m_pCursorSphere);
+	}
+
+	{
+		/*D3D11_TEXTURE2D_DESC desc = {};
+		desc.Width = 256;
+		desc.Height = 256;
+		desc.MipLevels = 1;
+		desc.ArraySize = 1;
+		desc.Format = DXGI_FORMAT_R32_FLOAT;
+		desc.Usage = D3D11_USAGE_DEFAULT;
+		desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+		desc.CPUAccessFlags = 0;
+		desc.MiscFlags = 0;
+
+		m_pRandomNoise = new Texture;
+		m_pRandomNoise->Initialize(m_pDevice, m_pContext, desc, nullptr, true);
+
+		m_pResourceManager->SetPipelineState(ComputePSOType_NoiseGenerate);
+		m_pContext->CSSetUnorderedAccessViews(0, 1, &m_pRandomNoise->pUAV, nullptr);
+		m_pContext->Dispatch(256 / 16, 256 / 16, 1);
+
+		ID3D11UnorderedAccessView* pNullUAV = nullptr;
+		m_pContext->CSSetUnorderedAccessViews(0, 1, &pNullUAV, nullptr);*/
 	}
 }
 
@@ -228,8 +262,8 @@ void BaseRenderer::Render()
 	passGBuffer();
 	passShadow();
 
-	m_pScene->GetSkyLUTPtr()->Generate();
-	m_pScene->GetAerialLUTPtr()->Generate();
+	m_pScene->GetSkyLUT()->Generate();
+	m_pScene->GetAerialLUT()->Generate();
 
 	passDeferredLighting();
 	passSky();
@@ -310,7 +344,7 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					m_pPostProcessor->Initialize(this,
 											   { m_pBackBuffer, m_pFloatBuffer, m_pPrevBuffer, &m_pGBuffer->DepthBuffer },
 											   m_ScreenWidth, m_ScreenHeight, 4);
-					m_pPostProcessor->SetGlobalConstants(m_pScene->GetGlobalConstantBufferPtr());
+					m_pPostProcessor->SetGlobalConstants(m_pScene->GetGlobalConstantBuffer());
 				}
 			}
 
@@ -848,7 +882,7 @@ void BaseRenderer::passGBuffer()
 	_ASSERT(m_pScene);
 
 	setMainViewport();
-	SetGlobalConsts(&m_pScene->GetGlobalConstantBufferPtr()->pBuffer, 0);
+	SetGlobalConsts(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0);
 	m_pGBuffer->PrepareRender();
 
 	for (UINT64 i = 0, size = m_pScene->RenderObjects.size(); i < size; ++i)
@@ -865,7 +899,7 @@ void BaseRenderer::passShadow()
 {
 	_ASSERT(m_pScene);
 
-	m_pScene->GetSunPtr()->RenderShadowMap(m_pScene->RenderObjects, nullptr);
+	m_pScene->GetSun()->RenderShadowMap(m_pScene->RenderObjects, nullptr);
 	for (UINT64 i = 0, size = m_pScene->Lights.size(); i < size; ++i)
 	{
 		m_pScene->Lights[i].RenderShadowMap(m_pScene->RenderObjects, nullptr);
@@ -878,7 +912,7 @@ void BaseRenderer::passDeferredLighting()
 
 	setMainViewport();
 	m_pResourceManager->SetPipelineState(GraphicsPSOType_DeferredRendering);
-	SetGlobalConsts(&m_pScene->GetGlobalConstantBufferPtr()->pBuffer, 0);
+	SetGlobalConsts(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0);
 
 	const float CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	m_pContext->ClearRenderTargetView(m_pFloatBuffer->pRTV, CLEAR_COLOR);
@@ -887,7 +921,7 @@ void BaseRenderer::passDeferredLighting()
 	ID3D11ShaderResourceView* ppSRVs[5] = { m_pGBuffer->AlbedoBuffer.pSRV, m_pGBuffer->NormalBuffer.pSRV, m_pGBuffer->PositionBuffer.pSRV, m_pGBuffer->EmissionBuffer.pSRV, m_pGBuffer->ExtraBuffer.pSRV };
 	m_pContext->PSSetShaderResources(0, 5, ppSRVs);
 
-	ConstantBuffer* pLightConstantBuffer = m_pScene->GetLightConstantBufferPtr();
+	ConstantBuffer* pLightConstantBuffer = m_pScene->GetLightConstantBuffer();
 	if (!pLightConstantBuffer)
 	{
 		__debugbreak();
@@ -901,7 +935,7 @@ void BaseRenderer::passDeferredLighting()
 
 	// Draw obejct for each light.
 
-	Sun* pSun = m_pScene->GetSunPtr();
+	Sun* pSun = m_pScene->GetSun();
 	memcpy(&pLightConstsData->Lights, &pSun->SunProperty, sizeof(LightProperty));
 	pLightConstantBuffer->Upload();
 	SetGlobalConsts(&pLightConstantBuffer->pBuffer, 1);
@@ -942,8 +976,8 @@ void BaseRenderer::passSky()
 	setMainViewport();
 	m_pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_pGBuffer->DepthBuffer.pDSV);
 
-	m_pScene->GetSkyPtr()->Render(m_pScene->GetSkyLUTPtr()->GetSkyLUT());
-	m_pScene->GetSunPtr()->Render();
+	m_pScene->GetSky()->Render(m_pScene->GetSkyLUT()->GetSkyLUT());
+	m_pScene->GetSun()->Render();
 
 	ID3D11RenderTargetView* pNullRTV = nullptr;
 	ID3D11DepthStencilView* pNullDSV = nullptr;
@@ -955,7 +989,7 @@ void BaseRenderer::passDebug()
 	_ASSERT(m_pScene);
 
 	setMainViewport();
-	SetGlobalConsts(&m_pScene->GetGlobalConstantBufferPtr()->pBuffer, 0);
+	SetGlobalConsts(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0);
 	m_pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_pGBuffer->DepthBuffer.pDSV);
 
 	for (UINT64 i = 0, size = m_pScene->RenderObjects.size(); i < size; ++i)

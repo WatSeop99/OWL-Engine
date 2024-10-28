@@ -23,15 +23,16 @@ Texture2DArray g_CascadeShadowMaps : register(t7);
 float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, float3 normalWorld)
 {
     // Directional light.
-    float3 lightVec = (light.Type & (LIGHT_DIRECTIONAL | LIGHT_SUN) ? -light.Direction : representativePoint - posWorld); // light.position - posWorld;
+    //float3 lightVec = (light.Type & (LIGHT_DIRECTIONAL | LIGHT_SUN) ? -light.Direction : representativePoint - posWorld); // light.position - posWorld;
+    float3 lightVec = ((light.Type & LIGHT_SUN) ? -light.Direction : representativePoint - posWorld); // light.position - posWorld;
     float lightDist = length(lightVec);
     lightVec /= lightDist;
 
     // Spot light.
-    float spotFator = (light.Type & LIGHT_SPOT ? pow(max(-dot(lightVec, light.Direction), 0.0f), light.SpotPower) : 1.0f);
+    float spotFator = ((light.Type & LIGHT_SPOT) ? pow(max(-dot(lightVec, light.Direction), 0.0f), light.SpotPower) : 1.0f);
         
     // Distance attenuation.
-    float att = saturate((light.FallOffEnd - lightDist) / (light.FallOffEnd - light.FallOffStart));
+    float att = ((light.Type & LIGHT_SUN) ? 1.0f : saturate((light.FallOffEnd - lightDist) / (light.FallOffEnd - light.FallOffStart)));
 
     // Shadow map.
     float shadowFactor = 1.0f;

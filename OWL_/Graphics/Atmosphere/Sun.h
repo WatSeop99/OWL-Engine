@@ -54,6 +54,7 @@ public:
 	int SunDiskSegments = 32;
 
 	float SunIntensity = 10.0f;
+	//float SunIntensity = 0.0f;
 
 	Vector2 SunAngle = Vector2(0.0f, 11.6f);
 	Vector3 SunColor = Vector3(1.0f);

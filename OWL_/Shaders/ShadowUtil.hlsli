@@ -2,6 +2,7 @@
 #define SHADOW_UTIL
 
 #include "DiskSamples.hlsli"
+#include "TileableNoise.hlsli"
 
 // #define LIGHT_WORLD_RADIUS 0.001f
 // #define LIGHT_FRUSTUM_WIDTH 0.34641f // <- 계산해서 찾은 값
@@ -19,37 +20,76 @@ float N2V(float ndcDepth, matrix invProj)
     return pointView.z / pointView.w;
 }
 
+float2 VogelSample(int i, int nrSample, float startTheta)
+{
+    const float GOLDEN_ANGLE = 2.4f;
+    float idx = (float)i;
+    float r = sqrt(idx + 0.5f) / sqrt((float)nrSample);
+    float theta = idx * GOLDEN_ANGLE + startTheta;
+    return float2(cos(theta), sin(theta)) * r;
+}
+
 float PCFFilterSpotLight(Texture2D shadowMap, SamplerComparisonState shadowCompare, float2 uv, float zReceiverNDC, float filterRadiusUV)
 {
     float sum = 0.0f;
-    for (int i = 0; i < 64; ++i)
+    for (int i = 0; i < 128; ++i)
     {
-        float2 offset = diskSamples64[i] * filterRadiusUV;
+        float2 offset = diskSamples128[i] * filterRadiusUV;
         sum += shadowMap.SampleCmpLevelZero(shadowCompare, uv + offset, zReceiverNDC);
     }
-    return sum / 64.0f;
+    return sum / 128.0f;
+
+    //float sum = 0.0f;
+    //float startTheta = Hash21(uint2(uv) + uint2(84, 137)) * 3.14159265f;
+    //for (int i = 0; i < 64; ++i)
+    //{
+    //    float samplePos = uv + VogelSample(i, 64, startTheta) * filterRadiusUV;
+    //    sum += shadowMap.SampleCmpLevelZero(shadowCompare, samplePos, zReceiverNDC);
+    //}
+    
+    //return sum / 64.0f;
 }
 
 float PCFFilterDirectionalLight(Texture2DArray shadowMap, SamplerComparisonState shadowCompare, int shadowMapIndex, float2 uv, float zReceiverNDC, float filterRadiusUV)
 {
     float sum = 0.0f;
-    for (int i = 0; i < 64; ++i)
+    for (int i = 0; i < 128; ++i)
     {
-        float2 offset = diskSamples64[i] * filterRadiusUV;
+        float2 offset = diskSamples128[i] * filterRadiusUV;
         sum += shadowMap.SampleCmpLevelZero(shadowCompare, float3(uv + offset, shadowMapIndex), zReceiverNDC);
     }
-    return sum / 64.0f;
+    return sum / 128.0f;
+
+    //float sum = 0.0f;
+    //float startTheta = Hash21(uint2(uv) + uint2(84, 137)) * 3.14159265f;
+    //for (int i = 0; i < 64; ++i)
+    //{
+    //    float samplePos = uv + VogelSample(i, 64, startTheta) * filterRadiusUV;
+    //    sum += shadowMap.SampleCmpLevelZero(shadowCompare, samplePos, zReceiverNDC);
+    //}
+    
+    //return sum / 64.0f;
 }
 
 float PCFFilterPointLight(TextureCube shadowMap, SamplerComparisonState shadowCompare, float3 uvw, float zReceiverNDC, float filterRadiusUV)
 {
     float sum = 0.0f;
-    for (int i = 0; i < 64; ++i)
+    for (int i = 0; i < 128; ++i)
     {
-        float3 offset = float3(diskSamples64[i], 0.0f) * filterRadiusUV;
+        float3 offset = float3(diskSamples128[i], 0.0f) * filterRadiusUV;
         sum += shadowMap.SampleCmpLevelZero(shadowCompare, uvw + offset, zReceiverNDC);
     }
-    return sum / 64.0f;
+    return sum / 128.0f;
+
+    //float sum = 0.0f;
+    //float startTheta = Hash21(uint2(uv) + uint2(84, 137)) * 3.14159265f;
+    //for (int i = 0; i < 64; ++i)
+    //{
+    //    float samplePos = uv + VogelSample(i, 64, startTheta) * filterRadiusUV;
+    //    sum += shadowMap.SampleCmpLevelZero(shadowCompare, samplePos, zReceiverNDC);
+    //}
+    
+    //return sum / 64.0f;
 }
 
 void FindBlockerInSpotLight(out float avgBlockerDepthView, out float numBlockers, Texture2D shadowMap, SamplerState shadowPoint, float2 uv, float zReceiverView, matrix inverseProjection, float lightRadiusWorld)
@@ -59,9 +99,9 @@ void FindBlockerInSpotLight(out float avgBlockerDepthView, out float numBlockers
 
     float blockerSum = 0.0f;
     numBlockers = 0.0f;
-    for (int i = 0; i < 64; ++i)
+    for (int i = 0; i < 128; ++i)
     {
-        float shadowMapDepth = shadowMap.SampleLevel(shadowPoint, float2(uv + diskSamples64[i] * searchRadius), 0.0f).r;
+        float shadowMapDepth = shadowMap.SampleLevel(shadowPoint, float2(uv + diskSamples128[i] * searchRadius), 0.0f).r;
         shadowMapDepth = N2V(shadowMapDepth, inverseProjection);
         
         if (shadowMapDepth < zReceiverView)
@@ -72,6 +112,27 @@ void FindBlockerInSpotLight(out float avgBlockerDepthView, out float numBlockers
     }
     
     avgBlockerDepthView = blockerSum / numBlockers;
+
+    //float lightRadiusUV = lightRadiusWorld / LIGHT_FRUSTUM_WIDTH;
+    ////float searchRadius = lightRadiusUV * (zReceiverView - NEAR_PLANE) / zReceiverView;
+    //float searchRadius = Hash21(uint2(uv)) * 3.14159265f;
+
+    //float blockerSum = 0.0f;
+    //numBlockers = 0.0f;
+    //for (int i = 0; i < 64; ++i)
+    //{
+    //    float2 samplePos = uv + VogelSample(i, 64, searchRadius) * lightRadiusUV;
+    //    float shadowMapDepth = shadowMap.SampleLevel(shadowPoint, samplePos, 0.0f).r;
+    //    shadowMapDepth = N2V(shadowMapDepth, inverseProjection);
+        
+    //    if (shadowMapDepth < zReceiverView)
+    //    {
+    //        blockerSum += shadowMapDepth;
+    //        ++numBlockers;
+    //    }
+    //}
+    
+    //avgBlockerDepthView = blockerSum / numBlockers;
 }
 
 void FindBlockerInDirectionalLight(out float avgBlockerDepthView, out float numBlockers, Texture2DArray shadowMap, SamplerState shadowPoint, float2 uv, float zReceiverView, int shadowMapIndex, matrix invProj, float lightRadiusWorld)
@@ -81,9 +142,9 @@ void FindBlockerInDirectionalLight(out float avgBlockerDepthView, out float numB
 
     float blockerSum = 0.0f;
     numBlockers = 0.0f;
-    for (int i = 0; i < 64; ++i)
+    for (int i = 0; i < 128; ++i)
     {
-        float shadowMapDepth = shadowMap.SampleLevel(shadowPoint, float3(uv + diskSamples64[i] * searchRadius, shadowMapIndex), 0.0f).r;
+        float shadowMapDepth = shadowMap.SampleLevel(shadowPoint, float3(uv + diskSamples128[i] * searchRadius, shadowMapIndex), 0.0f).r;
         shadowMapDepth = N2V(shadowMapDepth, invProj);
         
         if (shadowMapDepth < zReceiverView)
@@ -94,6 +155,27 @@ void FindBlockerInDirectionalLight(out float avgBlockerDepthView, out float numB
     }
     
     avgBlockerDepthView = blockerSum / numBlockers;
+
+    //float lightRadiusUV = lightRadiusWorld / LIGHT_FRUSTUM_WIDTH;
+    //float searchRadius = lightRadiusUV * (zReceiverView - NEAR_PLANE) / zReceiverView;
+    ////float searchRadius = Hash21(uint2(uv)) * 3.14159265f;
+
+    //float blockerSum = 0.0f;
+    //numBlockers = 0.0f;
+    //for (int i = 0; i < 64; ++i)
+    //{
+    //    float3 samplePos = float3(uv + VogelSample(i, 64, searchRadius) * lightRadiusUV, shadowMapIndex);
+    //    float shadowMapDepth = shadowMap.SampleLevel(shadowPoint, samplePos, 0.0f).r;
+    //    shadowMapDepth = N2V(shadowMapDepth, invProj);
+        
+    //    if (shadowMapDepth < zReceiverView)
+    //    {
+    //        blockerSum += shadowMapDepth;
+    //        ++numBlockers;
+    //    }
+    //}
+    
+    //avgBlockerDepthView = blockerSum / numBlockers;
 }
 
 void FindBlockerInPointLight(out float avgBlockerDepthView, out float numBlockers, TextureCube shadowMap, SamplerState shadowPoint, float3 uvw, float zReceiverView, matrix invProj, float lightRadiusWorld)
@@ -103,9 +185,9 @@ void FindBlockerInPointLight(out float avgBlockerDepthView, out float numBlocker
 
     float blockerSum = 0.0f;
     numBlockers = 0.0f;
-    for (int i = 0; i < 64; ++i)
+    for (int i = 0; i < 128; ++i)
     {
-        float shadowMapDepth = shadowMap.SampleLevel(shadowPoint, uvw + float3(diskSamples64[i], 0.0f) * searchRadius, 0.0f).r;
+        float shadowMapDepth = shadowMap.SampleLevel(shadowPoint, uvw + float3(diskSamples128[i], 0.0f) * searchRadius, 0.0f).r;
         shadowMapDepth = N2V(shadowMapDepth, invProj);
         
         if (shadowMapDepth < zReceiverView)

@@ -119,4 +119,4 @@ static const float2 diskSamples128[128] =
     float2(0.7628938334406858, 0.7124073240762442),
 };
 
-#endif // __DISK_SAMPLES_HLSLI__
+#endif

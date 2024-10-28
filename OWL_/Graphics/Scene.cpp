@@ -34,10 +34,9 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 	{
 		// 조명 0.
 		Lights[0].Property.Radiance = Vector3(1.0f);
-		Lights[0].Property.FallOffEnd = 10.0f;
-		Lights[0].Property.Position = Vector3(0.0f);
-		Lights[0].Property.Direction = Vector3(0.0f, 0.0f, 1.0f);
-		Lights[0].Property.SpotPower = 3.0f;
+		Lights[0].Property.FallOffEnd = 7.0f;
+		Lights[0].Property.Position = Vector3(0.0f, 0.4f, 0.0f);
+		Lights[0].Property.SpotPower = 2.0f;
 		Lights[0].Property.LightType = LIGHT_POINT | LIGHT_SHADOW;
 		Lights[0].Property.Radius = 0.04f;
 		Lights[0].Property.LightType = LIGHT_OFF;
@@ -102,8 +101,7 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 	{
 		// https://freepbr.com/materials/stringy-marble-pbr/
 		MeshInfo meshInfo;
-		//MakeSquare(&meshInfo, 10.0f);
-		MakeSquareGrid(&meshInfo, 10, 10, 10);
+		//MakeSquareGrid(&meshInfo, 100, 100, 100, Vector2(100.0f));
 		MakeTerrainTile(&meshInfo);
 
 		std::wstring path = L"./Assets/Textures/PBR/stringy-marble-ue/";
@@ -123,8 +121,10 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 		pMatertialConstData->MetallicFactor = 0.5f;
 		pMatertialConstData->RoughnessFactor = 0.3f;
 
+		// m_pGround->Meshes[0]->pMaterialBuffer->Height;
+
 		// Vector3 position = Vector3(0.0f, -1.0f, 0.0f);
-		Vector3 position = Vector3(0.0f, -0.5f, 0.0f);
+		Vector3 position = Vector3(0.0f, -0.0f, 0.0f);
 		//m_pGround->UpdateWorld(Matrix::CreateRotationX(DirectX::XM_PI * 0.5f) * Matrix::CreateTranslation(position));
 		m_pGround->UpdateWorld(Matrix::CreateTranslation(position));
 		m_pGround->bCastShadow = true; // 바닥은 그림자 만들기 생략.
@@ -132,6 +132,9 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 
 		m_MirrorPlane = DirectX::SimpleMath::Plane(position, Vector3(0.0f, 1.0f, 0.0f));
 		m_pMirror = m_pGround; // 바닥에 거울처럼 반사 구현.
+
+		// Create height map with noise.
+
 	}
 
 	GlobalConstants initialGlobal;

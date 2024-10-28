@@ -78,7 +78,7 @@ void Timer::End()
 			m_pContext->GetData(m_pStartQuery, &startTime, sizeof(UINT64), 0);
 			m_pContext->GetData(m_pStopQuery, &stopTime, sizeof(UINT64), 0);
 
-			ElapsedTimeGPU = ((double)(stopTime - startTime) / (double)(tsDisjoint.Frequency)) * 1000.0f;
+			ElapsedTimeGPU = ((double)(stopTime - startTime) / (double)tsDisjoint.Frequency) * 1000.0f;
 		}
 		else
 		{
@@ -88,7 +88,7 @@ void Timer::End()
 
 	ElapsedTimeCPU = (std::chrono::high_resolution_clock::now() - m_StartTimeCPU).count() / double(1e6); // microsec -> millisec
 
-	char debugString[256] = { 0, };
+	char debugString[256];
 	if (m_bMeasureGPU)
 	{
 		sprintf(debugString, "GPU: %lf milliSec, ", ElapsedTimeGPU);

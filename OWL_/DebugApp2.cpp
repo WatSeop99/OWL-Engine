@@ -73,6 +73,18 @@ void DebugApp2::InitScene()
 	m_pRenderer->GetCamera()->Reset(Vector3(3.74966f, 5.03645f, -2.54918f), -0.819048f, 0.741502f);
 	m_pRenderer->InitScene();
 
+	{
+		MeshInfo meshInfo;
+		MakeBox(&meshInfo, 0.4f);
+
+		Model* pBox = new Model;
+		pBox->Initialize(m_pRenderer, { meshInfo });
+
+		pBox->UpdateWorld(Matrix::CreateTranslation(Vector3(0.5f, 1.0f, 0.2)));
+
+		m_pScene->RenderObjects.push_back(pBox);
+	}
+
 	// Main Object.
 	{
 		std::wstring path = L"./Assets/Characters/Mixamo/";
@@ -106,7 +118,7 @@ void DebugApp2::InitScene()
 			}
 		}
 
-		Vector3 center(0.0f, 0.0f, 2.0f);
+		Vector3 center(0.0f, 0.5f, 2.0f);
 		m_pCharacter = new SkinnedMeshModel;
 		m_pCharacter->Initialize(m_pRenderer, meshInfos, aniData);
 		for (UINT64 i = 0, size = m_pCharacter->Meshes.size(); i < size; ++i)
