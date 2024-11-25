@@ -54,7 +54,7 @@ void Model::Initialize(BaseRenderer* pRenderer, std::wstring& basePath, std::wst
 	_ASSERT(pRenderer);
 
 	std::vector<MeshInfo> meshInfos;
-	ReadFromFile(meshInfos, basePath, fileName);
+	ReadFromFile(meshInfos, nullptr, basePath, fileName);
 	Initialize(pRenderer, meshInfos);
 }
 
@@ -492,7 +492,7 @@ void Model::UpdateWorld(const Matrix& WORLD)
 	}
 }
 
-void Model::UpdateAnimation(const int CLIP_ID, const int FRAME)
+void Model::UpdateAnimation(const int CLIP_ID, const int FRAME, const float DELTA_TIME)
 {
 	// class SkinnedMeshModel¿¡¼­ override.
 	/*OutputDebugStringA("Model::UpdateAnimation(ID3D11DeviceContext* pContext, int clipID, int frame) was not implemented.");

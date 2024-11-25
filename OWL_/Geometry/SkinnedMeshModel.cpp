@@ -59,9 +59,9 @@ void SkinnedMeshModel::InitAnimationData(const AnimationData& ANIM_DATA)
 	m_pBoneTransform->Initialize(pDevice, pContext, sizeof(Matrix), (UINT)TOTAL_BONE_COUNT, initData.data());
 }
 
-void SkinnedMeshModel::UpdateAnimation(const int CLIP_ID, const int FRAME)
+void SkinnedMeshModel::UpdateAnimation(const int CLIP_ID, const int FRAME, const float DELTA_TIME)
 {
-	CharacterAnimaionData.Update(CLIP_ID, FRAME);
+	CharacterAnimaionData.Update(CLIP_ID, FRAME, DELTA_TIME);
 
 	Matrix* pBoneTransformData = (Matrix*)m_pBoneTransform->pSystemMem;
 	for (UINT64 i = 0, size = CharacterAnimaionData.BoneIDToNames.size(); i < size; ++i)

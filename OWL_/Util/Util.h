@@ -29,13 +29,6 @@ using DirectX::SimpleMath::Vector2;
 #define new DBG_NEW
 #endif
 
-#else
-
-#define Malloc(size) malloc(size)
-#ifdef __cplusplus
-#define New new
-#endif
-
 #endif
 
 #define BREAK_IF_FAILED(hr) if (FAILED(hr)) { __debugbreak(); }

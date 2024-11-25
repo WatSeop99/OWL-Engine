@@ -81,22 +81,25 @@ HRESULT ModelLoader::Load(std::wstring& basePath, std::wstring& fileName, bool _
 		findDeformingBones(pSCENE);
 
 		// 트리 구조를 따라, 업데이트 순서대로 뼈들의 인덱스를 결정.
-		int counter = 0;
-		updateBoneIDs(pSCENE->mRootNode, &counter);
+		int totalBoneCount = 0;
+		updateBoneIDs(pSCENE->mRootNode, &totalBoneCount);
 
 		// 업데이트 순서대로 뼈 이름 저장. (BoneIDToNames)
-		size_t totalBoneIDs = AnimData.BoneNameToID.size();
-		AnimData.BoneIDToNames.resize(totalBoneIDs);
+		AnimData.BoneIDToNames.resize(totalBoneCount);
 		for (auto iter = AnimData.BoneNameToID.begin(), endIter = AnimData.BoneNameToID.end(); iter != endIter; ++iter)
 		{
 			AnimData.BoneIDToNames[iter->second] = iter->first;
 		}
 
 		// 각 뼈마다 부모 인덱스를 저장할 준비.
-		AnimData.BoneParents.resize(totalBoneIDs, -1);
+		AnimData.BoneParents.resize(totalBoneCount, -1);
+		AnimData.NodeTransforms.resize(totalBoneCount);
+		AnimData.OffsetMatrices.resize(totalBoneCount);
+		AnimData.InverseOffsetMatrices.resize(totalBoneCount);
+		AnimData.BoneTransforms.resize(totalBoneCount);
 
-		Matrix tr; // Initial transformation.
-		processNode(pSCENE->mRootNode, pSCENE, tr);
+		Matrix globalTransform; // Initial transformation.
+		processNode(pSCENE->mRootNode, pSCENE, globalTransform);
 
 		// 애니메이션 정보 읽기.
 		if (pSCENE->HasAnimations())
@@ -134,6 +137,28 @@ HRESULT ModelLoader::LoadAnimation(std::wstring& basePath, std::wstring& fileNam
 
 	if (pSCENE && pSCENE->HasAnimations())
 	{
+		// 모든 메쉬에 대해, 정점에 영향 주는 뼈들의 목록을 생성.
+		findDeformingBones(pSCENE);
+
+		// 트리 구조를 따라, 업데이트 순서대로 뼈들의 인덱스를 결정.
+		int totalBoneCount = 0;
+		updateBoneIDs(pSCENE->mRootNode, &totalBoneCount);
+
+		// 업데이트 순서대로 뼈 이름 저장. (pBoneIDToNames)
+		AnimData.BoneIDToNames.resize(totalBoneCount);
+		for (auto iter = AnimData.BoneNameToID.begin(), endIter = AnimData.BoneNameToID.end(); iter != endIter; ++iter)
+		{
+			AnimData.BoneIDToNames[iter->second] = iter->first;
+		}
+
+		AnimData.BoneParents.resize(totalBoneCount, -1);
+		AnimData.NodeTransforms.resize(totalBoneCount);
+		AnimData.OffsetMatrices.resize(totalBoneCount);
+		AnimData.InverseOffsetMatrices.resize(totalBoneCount);
+		AnimData.BoneTransforms.resize(totalBoneCount);
+
+		processNodeForAnimation(pSCENE->mRootNode, pSCENE);
+
 		readAnimation(pSCENE);
 	}
 	else
@@ -219,12 +244,37 @@ void ModelLoader::processNode(aiNode* pNode, const aiScene* pScene, Matrix& tran
 			v.Position = DirectX::SimpleMath::Vector3::Transform(v.Position, m);
 		}
 
-		pMeshInfos.push_back(newMeshInfo);
+		MeshInfos.push_back(newMeshInfo);
 	}
 
 	for (UINT i = 0; i < pNode->mNumChildren; ++i)
 	{
 		processNode(pNode->mChildren[i], pScene, m);
+	}
+}
+
+void ModelLoader::processNodeForAnimation(aiNode* pNode, const aiScene* pSCENE)
+{
+	// 사용되는 부모 뼈를 찾아서 부모의 인덱스 저장.
+	const aiNode* pPARENT = findParent(pNode->mParent);
+	const char* pNODE_NAME = pNode->mName.C_Str();
+	if (pPARENT &&
+		AnimData.BoneNameToID.count(pNODE_NAME) > 0)
+	{
+		const int BONE_ID = AnimData.BoneNameToID[pNODE_NAME];
+		AnimData.BoneParents[BONE_ID] = AnimData.BoneNameToID[pPARENT->mName.C_Str()];
+		AnimData.NodeTransforms[BONE_ID] = Matrix(&pNode->mTransformation.a1).Transpose();
+	}
+
+	for (UINT i = 0; i < pNode->mNumMeshes; ++i)
+	{
+		aiMesh* pMesh = pSCENE->mMeshes[pNode->mMeshes[i]];
+		processMeshForAnimation(pMesh, pSCENE);
+	}
+
+	for (UINT i = 0; i < pNode->mNumChildren; ++i)
+	{
+		processNodeForAnimation(pNode->mChildren[i], pSCENE);
 	}
 }
 
@@ -385,6 +435,21 @@ void ModelLoader::processMesh(aiMesh* pMesh, const aiScene* pScene, MeshInfo* pM
 	}
 }
 
+void ModelLoader::processMeshForAnimation(aiMesh* pMesh, const aiScene* pSCENE)
+{
+	if (pMesh->HasBones())
+	{
+		for (UINT i = 0; i < pMesh->mNumBones; ++i)
+		{
+			const aiBone* pBONE = pMesh->mBones[i];
+			const UINT BONE_ID = AnimData.BoneNameToID[pBONE->mName.C_Str()];
+
+			AnimData.OffsetMatrices[BONE_ID] = Matrix(&pBONE->mOffsetMatrix.a1).Transpose();
+			AnimData.InverseOffsetMatrices[BONE_ID] = AnimData.OffsetMatrices[BONE_ID].Invert();
+		}
+	}
+}
+
 void ModelLoader::readAnimation(const aiScene* pSCENE)
 {
 	_ASSERT(pSCENE);
@@ -479,9 +544,9 @@ void ModelLoader::updateTangents()
 {
 	using namespace DirectX;
 
-	for (UINT64 i = 0, size = pMeshInfos.size(); i < size; ++i)
+	for (UINT64 i = 0, size = MeshInfos.size(); i < size; ++i)
 	{
-		MeshInfo& curMeshInfo = pMeshInfos[i];
+		MeshInfo& curMeshInfo = MeshInfos[i];
 		std::vector<Vertex>& curVertices = curMeshInfo.Vertices;
 		std::vector<SkinnedVertex>& curSkinnedVertices = curMeshInfo.SkinnedVertices;
 		std::vector<UINT>& curIndices = curMeshInfo.Indices;

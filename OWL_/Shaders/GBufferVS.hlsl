@@ -1,6 +1,7 @@
 #include "Common.hlsli"
 
-Texture2D g_heightTexture : register(t6);
+Texture2D<float4> g_HeightTexture : register(t6);
+Texture2D<float4> g_ColorMap : register(t7);
 
 PixelShaderInput main(VertexShaderInput input)
 {
@@ -47,7 +48,7 @@ PixelShaderInput main(VertexShaderInput input)
     input.ModelTangent = modelTangent;
 #endif
 
-    //참고: windTrunk, windLeaves 옵션도 skinnedMesh처럼 매크로 사용 가능.
+    // 참고: windTrunk, windLeaves 옵션도 skinnedMesh처럼 매크로 사용 가능.
     // 나무 줄기가 흔들리는 정도 결정.
     if (g_WindTrunk != 0.0f)
     {
@@ -81,9 +82,16 @@ PixelShaderInput main(VertexShaderInput input)
 
     if (bUseHeightMap)
     {
-        float height = g_heightTexture.SampleLevel(g_LinearClampSampler, input.Texcoord, 0.0f).r;
-        height = height * 2.0f - 1.0f;
-        output.WorldPosition += output.WorldNormal * height * g_HeightScale;
+        //float height = g_HeightTexture.SampleLevel(g_LinearClampSampler, input.Texcoord, 0.0f).r;
+        //height = height * 2.0f - 1.0f;
+        //output.WorldPosition += output.WorldNormal * height * g_HeightScale;
+        
+        float height = g_HeightTexture.SampleLevel(g_LinearClampSampler, input.Texcoord, 0.0f);
+        output.WorldPosition.y = height;
+    }
+    if (bUseColorMap)
+    {
+        output.Color = g_ColorMap.SampleLevel(g_LinearClampSampler, input.Texcoord, 0.0f);
     }
 
     output.ProjectedPosition = mul(float4(output.WorldPosition, 1.0f), g_ViewProjection);

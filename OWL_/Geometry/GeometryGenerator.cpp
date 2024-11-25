@@ -2,7 +2,6 @@
 #include "Animation.h"
 #include "MeshInfo.h"
 #include "ModelLoader.h"
-#include "../Util/PerlinNoiseGenerator.h"
 #include "GeometryGenerator.h"
 
 HRESULT ReadFromFile(std::vector<MeshInfo>& dst, std::wstring& basePath, std::wstring& fileName, bool bRevertNormals)
@@ -16,8 +15,8 @@ HRESULT ReadFromFile(std::vector<MeshInfo>& dst, std::wstring& basePath, std::ws
 		goto LB_RET;
 	}
 
-	Normalize(Vector3(0.0f), 1.0f, modelLoader.pMeshInfos, modelLoader.AnimData);
-	dst = modelLoader.pMeshInfos;
+	Normalize(Vector3(0.0f), 1.0f, modelLoader.MeshInfos, modelLoader.AnimData);
+	dst = modelLoader.MeshInfos;
 
 LB_RET:
 	return hr;
@@ -34,8 +33,54 @@ HRESULT ReadAnimationFromFile(std::tuple<std::vector<MeshInfo>, AnimationData>& 
 		goto LB_RET;
 	}
 
-	Normalize(Vector3(0.0f), 1.0f, modelLoader.pMeshInfos, modelLoader.AnimData);
-	dst = { modelLoader.pMeshInfos, modelLoader.AnimData };
+	Normalize(Vector3(0.0f), 1.0f, modelLoader.MeshInfos, modelLoader.AnimData);
+	dst = { modelLoader.MeshInfos, modelLoader.AnimData };
+
+LB_RET:
+	return hr;
+}
+
+HRESULT ReadFromFile(std::vector<MeshInfo>& dst, AnimationData* pAnimData, std::wstring& basePath, std::wstring& fileName, bool bRevertNormals)
+{
+	HRESULT hr = S_OK;
+
+	ModelLoader modelLoader;
+	hr = modelLoader.Load(basePath, fileName, bRevertNormals);
+	if (FAILED(hr))
+	{
+		__debugbreak();
+		hr = E_FAIL;
+		goto LB_RET;
+	}
+
+	Normalize(Vector3(0.0f), 1.0f, modelLoader.MeshInfos, modelLoader.AnimData);
+	dst = modelLoader.MeshInfos;
+	if (pAnimData)
+	{
+		*pAnimData = modelLoader.AnimData;
+	}
+
+LB_RET:
+	return hr;
+}
+
+HRESULT ReadAnimationFromFile(AnimationData* pAnimData, std::wstring& basePath, std::wstring& fileName, bool bRevertNormals)
+{
+	HRESULT hr = S_OK;
+
+	ModelLoader modelLoader;
+	hr = modelLoader.LoadAnimation(basePath, fileName);
+	if (FAILED(hr))
+	{
+		__debugbreak();
+		hr = E_FAIL;
+		goto LB_RET;
+	}
+
+	if (pAnimData)
+	{
+		*pAnimData = modelLoader.AnimData;
+	}
 
 LB_RET:
 	return hr;
@@ -664,15 +709,16 @@ void MakeTerrainTile(MeshInfo* pDst)
 {
 	_ASSERT(pDst);
 
-	MakeSquareGrid(pDst, 512, 512, 128, DirectX::SimpleMath::Vector2(512));
+	//MakeSquareGrid(pDst, 512, 512, 128, DirectX::SimpleMath::Vector2(512.0f));
+	MakeSquareGrid(pDst, 10, 10, 256);
 
-	srand((unsigned int)time(nullptr));
+	/*srand((unsigned int)time(nullptr));
 	for (UINT64 i = 0, size = pDst->Vertices.size(); i < size; ++i)
 	{
 		DirectX::SimpleMath::Vector3& pos = pDst->Vertices[i].Position;
 		pos.y = GetHeight(pos.x, pos.z);
 		pos.y *= 2.0f;
-	}
+	}*/
 }
 
 void SubdivideToSphere(MeshInfo* pDst, const float RADIUS, MeshInfo& meshData)

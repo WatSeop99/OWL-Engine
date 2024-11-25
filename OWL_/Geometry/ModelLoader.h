@@ -23,7 +23,9 @@ protected:
 	const aiNode* findParent(const aiNode* pNode);
 
 	void processNode(aiNode* pNode, const aiScene* pScene, Matrix& transform);
+	void processNodeForAnimation(aiNode* pNode, const aiScene* pSCENE);
 	void processMesh(aiMesh* pMesh, const aiScene* pScene, MeshInfo* pMeshInfo);
+	void processMeshForAnimation(aiMesh* pMesh, const aiScene* pSCENE);
 
 	void readAnimation(const aiScene* pScene);
 	HRESULT readTextureFileName(const aiScene* pScene, aiMaterial* pMaterial, aiTextureType type, std::wstring* pDst);
@@ -35,7 +37,7 @@ protected:
 
 public:
 	std::string szBasePath;
-	std::vector<MeshInfo> pMeshInfos;
+	std::vector<MeshInfo> MeshInfos;
 
 	AnimationData AnimData;
 

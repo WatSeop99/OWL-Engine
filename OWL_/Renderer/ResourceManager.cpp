@@ -255,7 +255,7 @@ void ResourceManager::Cleanup()
 	SAFE_RELEASE(pAerialLUTCS);
 	SAFE_RELEASE(pMultiScatterLUTCS);
 	SAFE_RELEASE(pTransmittanceLUTCS);
-	SAFE_RELEASE(pNoiseGeneratorCS);
+	SAFE_RELEASE(pTerrainGeneratorCS);
 
 	// Input Layouts
 	SAFE_RELEASE(pBasicIL);
@@ -750,7 +750,7 @@ void ResourceManager::initShaders()
 	BREAK_IF_FAILED(hr);
 	hr = createComputeShader(L"./Shaders/Atmosphere/TransmittanceLUTCS.hlsl", &pTransmittanceLUTCS);
 	BREAK_IF_FAILED(hr);
-	hr = createComputeShader(L"./Shaders/NoiseGenerator.hlsl", &pNoiseGeneratorCS);
+	hr = createComputeShader(L"./Shaders/TerrainGenerator.hlsl", &pTerrainGeneratorCS);
 	BREAK_IF_FAILED(hr);
 }
 
@@ -949,7 +949,7 @@ void ResourceManager::initPipelineStates()
 
 	ComputePSOs[ComputePSOType_TransmittanceLUT].pComputeShader = pTransmittanceLUTCS;
 
-	ComputePSOs[ComputePSOType_NoiseGenerate].pComputeShader = pNoiseGeneratorCS;
+	ComputePSOs[ComputePSOType_NoiseGenerate].pComputeShader = pTerrainGeneratorCS;
 }
 
 HRESULT ResourceManager::createVertexShaderAndInputLayout(const WCHAR* pszFileName, const D3D11_INPUT_ELEMENT_DESC* pINPUT_ELEMENTS, const UINT ELEMENT_SIZE, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11VertexShader** ppOutVertexShader, ID3D11InputLayout** ppOutInputLayout)

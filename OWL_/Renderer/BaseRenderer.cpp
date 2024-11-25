@@ -44,8 +44,8 @@ BaseRenderer::~BaseRenderer()
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
-	m_pContext->OMSetRenderTargets(0, nullptr, nullptr);
-	m_pContext->Flush();
+	/*m_pContext->OMSetRenderTargets(0, nullptr, nullptr);
+	m_pContext->Flush();*/
 
 	/*if (m_pRandomNoiseConstantBuffer)
 	{

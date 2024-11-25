@@ -9,6 +9,7 @@
 #include "Atmosphere/Sky.h"
 #include "Atmosphere/SkyLUT.h"
 #include "Atmosphere/Sun.h"
+#include "../Geometry/Terrain.h"
 #include "../Renderer/Texture.h"
 #include "Atmosphere/TransmittanceLUT.h"
 #include "../Renderer/ResourceManager.h"
@@ -100,20 +101,28 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 	// 바닥(거울).
 	{
 		// https://freepbr.com/materials/stringy-marble-pbr/
-		MeshInfo meshInfo;
-		//MakeSquareGrid(&meshInfo, 100, 100, 100, Vector2(100.0f));
-		MakeTerrainTile(&meshInfo);
+		//MeshInfo meshInfo;
+		////MakeSquareGrid(&meshInfo, 100, 100, 100, Vector2(100.0f));
+		//MakeTerrainTile(&meshInfo);
 
-		std::wstring path = L"./Assets/Textures/PBR/stringy-marble-ue/";
-		meshInfo.szAlbedoTextureFileName = path + L"stringy_marble_albedo.png";
-		meshInfo.szEmissiveTextureFileName = L"";
-		meshInfo.szAOTextureFileName = path + L"stringy_marble_ao.png";
-		meshInfo.szMetallicTextureFileName = path + L"stringy_marble_Metallic.png";
-		meshInfo.szNormalTextureFileName = path + L"stringy_marble_Normal-dx.png";
-		meshInfo.szRoughnessTextureFileName = path + L"stringy_marble_Roughness.png";
+		//std::wstring path = L"./Assets/Textures/PBR/stringy-marble-ue/";
+		//meshInfo.szAlbedoTextureFileName = path + L"stringy_marble_albedo.png";
+		//meshInfo.szEmissiveTextureFileName = L"";
+		//meshInfo.szAOTextureFileName = path + L"stringy_marble_ao.png";
+		//meshInfo.szMetallicTextureFileName = path + L"stringy_marble_Metallic.png";
+		//meshInfo.szNormalTextureFileName = path + L"stringy_marble_Normal-dx.png";
+		//meshInfo.szRoughnessTextureFileName = path + L"stringy_marble_Roughness.png";
 
-		m_pGround = new Model;
-		m_pGround->Initialize(pRenderer, { meshInfo });
+		//m_pGround = new Model;
+		//m_pGround->Initialize(pRenderer, { meshInfo });
+
+		// terrain에 문제있음.
+		Terrain* pTerrain = new Terrain;
+		pTerrain->Initialize(m_pRenderer);
+		m_pGround = (Model*)pTerrain;
+
+		MeshConstants* pMeshConstData = (MeshConstants*)m_pGround->Meshes[0]->MeshConstant.pSystemMem;
+		pMeshConstData->bUseHeightMap = TRUE;
 
 		MaterialConstants* pMatertialConstData = (MaterialConstants*)m_pGround->Meshes[0]->MaterialConstant.pSystemMem;
 		pMatertialConstData->AlbedoFactor = Vector3(0.7f);
@@ -126,15 +135,12 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 		// Vector3 position = Vector3(0.0f, -1.0f, 0.0f);
 		Vector3 position = Vector3(0.0f, -0.0f, 0.0f);
 		//m_pGround->UpdateWorld(Matrix::CreateRotationX(DirectX::XM_PI * 0.5f) * Matrix::CreateTranslation(position));
-		m_pGround->UpdateWorld(Matrix::CreateTranslation(position));
+		//m_pGround->UpdateWorld(Matrix::CreateTranslation(position));
 		m_pGround->bCastShadow = true; // 바닥은 그림자 만들기 생략.
 		RenderObjects.push_back(m_pGround);
 
-		m_MirrorPlane = DirectX::SimpleMath::Plane(position, Vector3(0.0f, 1.0f, 0.0f));
+		m_MirrorPlane = DirectX::SimpleMath::Plane(position, Vector3::UnitY);
 		m_pMirror = m_pGround; // 바닥에 거울처럼 반사 구현.
-
-		// Create height map with noise.
-
 	}
 
 	GlobalConstants initialGlobal;

@@ -73,9 +73,11 @@ cbuffer MeshConstants : register(b2)
     matrix g_WorldInverseTranspose; // World의 InverseTranspose
     matrix g_WorldInverse;
     bool bUseHeightMap;
+    bool bUseColorMap;
     float g_HeightScale;
     float g_WindTrunk;
     float g_WindLeaves;
+    float pad[3];
 };
 cbuffer MaterialConstants : register(b3)
 {
@@ -105,7 +107,6 @@ struct VertexShaderInput
     float3 ModelNormal : NORMAL; // 모델 좌표계의 normal    
     float2 Texcoord : TEXCOORD;
     float3 ModelTangent : TANGENT;
-    
 #ifdef SKINNED
     float4 BoneWeights0 : BLENDWEIGHT0;
     float4 BoneWeights1 : BLENDWEIGHT1;
@@ -122,6 +123,7 @@ struct PixelShaderInput
     float2 Texcoord : TEXCOORD0;
     float3 WorldTangent : TANGENT0;
     float3 ModelPosition : POSITION1; // Volume casting 시작점
+    float4 Color : COLOR;
 };
 
 #endif

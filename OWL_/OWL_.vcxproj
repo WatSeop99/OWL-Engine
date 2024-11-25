@@ -142,9 +142,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Graphics\Terrain\Terrain.h" />
+    <ClInclude Include="Geometry\Terrain.h" />
     <ClInclude Include="Geometry\TerrainGenerator.h" />
-    <ClInclude Include="Util\PerlinNoiseGenerator.h" />
     <ClInclude Include="Util\BVHTree.h" />
     <ClInclude Include="Graphics\Atmosphere\AtmosphereProperty.h" />
     <ClInclude Include="Graphics\Atmosphere\AerialLUT.h">
@@ -220,9 +219,8 @@
     <ClCompile Include="External\imgui\imgui_draw.cpp" />
     <ClCompile Include="External\imgui\imgui_tables.cpp" />
     <ClCompile Include="External\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="Graphics\Terrain\Terrain.cpp" />
+    <ClCompile Include="Geometry\Terrain.cpp" />
     <ClCompile Include="Geometry\TerrainGenerator.cpp" />
-    <ClCompile Include="Util\PerlinNoiseGenerator.cpp" />
     <ClCompile Include="Util\BVHTree.cpp" />
     <ClCompile Include="Graphics\Atmosphere\AtmosphereProperty.cpp" />
     <ClCompile Include="Graphics\Atmosphere\AerialLUT.cpp">
@@ -522,7 +520,7 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
-    <FxCompile Include="Shaders\NoiseGenerator.hlsl">
+    <FxCompile Include="Shaders\TerrainGenerator.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>

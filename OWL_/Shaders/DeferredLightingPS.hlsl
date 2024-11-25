@@ -23,7 +23,6 @@ Texture2DArray g_CascadeShadowMaps : register(t7);
 float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, float3 normalWorld)
 {
     // Directional light.
-    //float3 lightVec = (light.Type & (LIGHT_DIRECTIONAL | LIGHT_SUN) ? -light.Direction : representativePoint - posWorld); // light.position - posWorld;
     float3 lightVec = ((light.Type & LIGHT_SUN) ? -light.Direction : representativePoint - posWorld); // light.position - posWorld;
     float lightDist = length(lightVec);
     lightVec /= lightDist;

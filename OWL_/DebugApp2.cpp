@@ -70,6 +70,8 @@ void DebugApp2::InitScene()
 	_ASSERT(m_pRenderer);
 	_ASSERT(m_pScene);
 
+	HRESULT hr = S_OK;
+
 	m_pRenderer->GetCamera()->Reset(Vector3(3.74966f, 5.03645f, -2.54918f), -0.819048f, 0.741502f);
 	m_pRenderer->InitScene();
 
@@ -92,36 +94,37 @@ void DebugApp2::InitScene()
 		{
 			L"CatwalkIdle.fbx", L"CatwalkIdleToWalkForward.fbx",
 			L"CatwalkWalkForward.fbx", L"CatwalkWalkStop.fbx",
-			L"BreakdanceFreezeVar2.fbx"
+			//L"BreakdanceFreezeVar2.fbx"
 		};
-		AnimationData aniData;
 
+		// 로딩 부분 수정해야 함.
 		std::wstring filename = L"character.fbx";
-		std::tuple<std::vector<MeshInfo>, AnimationData> data;
-		ReadAnimationFromFile(data, path, filename);
-		std::vector<MeshInfo>& meshInfos = std::get<0>(data);
+		std::vector<MeshInfo> characterMeshInfo;
+		AnimationData characterDefaultAnimData;
+		hr = ReadFromFile(characterMeshInfo, &characterDefaultAnimData, path, filename);
+		BREAK_IF_FAILED(hr);
 
-		for (UINT64 i = 0, size = clipNames.size(); i < size; ++i)
+		// 애니메이션 클립들.
+		if (clipNames.size() > 0)
+		{
+			characterDefaultAnimData.Clips.clear();
+		}
+		for (SIZE_T i = 0, size = clipNames.size(); i < size; ++i)
 		{
 			std::wstring& name = clipNames[i];
-			std::tuple<std::vector<MeshInfo>, AnimationData> tempData;
-			ReadAnimationFromFile(tempData, path, name);
-			AnimationData& anim = std::get<1>(tempData);
+			AnimationData animDataInClip;
 
-			if (aniData.Clips.empty())
-			{
-				aniData = anim;
-			}
-			else
-			{
-				aniData.Clips.push_back(anim.Clips[0]);
-			}
+			hr = ReadAnimationFromFile(&animDataInClip, path, name);
+			BREAK_IF_FAILED(hr);
+
+			animDataInClip.Clips[0].Name.assign(name.begin(), name.end());
+			characterDefaultAnimData.Clips.push_back(animDataInClip.Clips[0]);
 		}
 
 		Vector3 center(0.0f, 0.5f, 2.0f);
 		m_pCharacter = new SkinnedMeshModel;
-		m_pCharacter->Initialize(m_pRenderer, meshInfos, aniData);
-		for (UINT64 i = 0, size = m_pCharacter->Meshes.size(); i < size; ++i)
+		m_pCharacter->Initialize(m_pRenderer, characterMeshInfo, characterDefaultAnimData);
+		for (SIZE_T i = 0, size = m_pCharacter->Meshes.size(); i < size; ++i)
 		{
 			Mesh* pCurMesh = m_pCharacter->Meshes[i];
 
@@ -377,7 +380,7 @@ void DebugApp2::Update(float deltaTime)
 			break;
 	}
 
-	m_pCharacter->UpdateAnimation(s_State, s_FrameCount);
+	m_pCharacter->UpdateAnimation(s_State, s_FrameCount, deltaTime);
 
 	++s_FrameCount;
 }

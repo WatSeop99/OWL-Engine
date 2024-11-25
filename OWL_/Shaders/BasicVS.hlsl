@@ -1,6 +1,6 @@
 #include "Common.hlsli"
 
-Texture2D g_HeightTex : register(t6);
+Texture2D<float4> g_HeightTex : register(t6);
 
 PixelShaderInput main(VertexShaderInput input)
 {

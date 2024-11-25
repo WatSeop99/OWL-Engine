@@ -20,7 +20,7 @@ public:
 
 	void UpdateConstantBuffers();
 	void UpdateWorld(const  DirectX::SimpleMath::Matrix& WORLD);
-	virtual void UpdateAnimation(const int CLIP_ID, const int FRAME);
+	virtual void UpdateAnimation(const int CLIP_ID, const int FRAME, const float DELTA_TIME);
 
 	virtual void Render();
 	virtual void RenderNormals();

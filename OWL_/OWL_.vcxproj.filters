@@ -138,10 +138,7 @@
     <ClInclude Include="Util\KnM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\Terrain\Terrain.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Util\PerlinNoiseGenerator.h">
+    <ClInclude Include="Geometry\Terrain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Geometry\TerrainGenerator.h">
@@ -279,10 +276,7 @@
     <ClCompile Include="External\imgui\backends\imgui_impl_win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\Terrain\Terrain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Util\PerlinNoiseGenerator.cpp">
+    <ClCompile Include="Geometry\Terrain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Geometry\TerrainGenerator.cpp">
@@ -331,7 +325,7 @@
     <FxCompile Include="Shaders\Atmosphere\SunVS.hlsl" />
     <FxCompile Include="Shaders\Atmosphere\SunPS.hlsl" />
     <FxCompile Include="Shaders\ScreenQuadVS.hlsl" />
-    <FxCompile Include="Shaders\NoiseGenerator.hlsl" />
+    <FxCompile Include="Shaders\TerrainGenerator.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Common.hlsli" />

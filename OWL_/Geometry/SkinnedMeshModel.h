@@ -17,7 +17,7 @@ public:
 	void InitMeshBuffers(const MeshInfo& MESH_DATA, Mesh* pNewMesh) override;
 	void InitAnimationData(const AnimationData& ANIM_DATA);
 
-	void UpdateAnimation(const int CLIP_ID, const int FRAME) override;
+	void UpdateAnimation(const int CLIP_ID, const int FRAME, const float DELTA_TIME) override;
 
 	void Render() override;
 	

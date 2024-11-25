@@ -20,9 +20,12 @@ ALIGN(16) struct MeshConstants
 	DirectX::SimpleMath::Matrix WorldInverseTranspose;
 	DirectX::SimpleMath::Matrix WorldInverse;
 	BOOL bUseHeightMap = FALSE;
+	BOOL bUseColorMap = FALSE;
 	float HeightScale = 0.0f;
 	float WindTrunk = 0.0f;
 	float WindLeaves = 0.0f;
+
+	float pad[3];
 };
 
 ALIGN(16) struct MaterialConstants
