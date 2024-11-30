@@ -1,5 +1,5 @@
 #include "../../Common.h"
-#include "../Renderer/BaseRenderer.h"
+#include "../Renderer/Renderer.h"
 #include "../Camera.h"
 #include "../Renderer/ConstantBuffer.h"
 #include "../ShadowMap.h"
@@ -7,7 +7,7 @@
 #include "../Renderer/ResourceManager.h"
 #include "Sun.h"
 
-void Sun::Initialize(BaseRenderer* pRenderer, Camera* pMainCamera)
+void Sun::Initialize(Renderer* pRenderer, Camera* pMainCamera)
 {
 	_ASSERT(pRenderer);
 	_ASSERT(pMainCamera);

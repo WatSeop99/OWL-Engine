@@ -14,24 +14,24 @@ class ResourceManager;
 class PostProcessor;
 class Texture;
 
-class BaseRenderer
+class Renderer
 {
 public:
-	BaseRenderer();
-	virtual ~BaseRenderer();
+	Renderer();
+	virtual ~Renderer();
 
-	virtual void Initialize(Scene* const pScene);
-	virtual void InitScene();
+	bool Initialize(Scene* const pScene);
+	bool InitScene();
 
-	virtual void UpdateGUI();
-	virtual void Update(float deltaTime);
+	void UpdateGUI();
+	void Update(const float DELTA_TIME);
 
-	virtual void RenderGUI();
-	virtual void Render();
+	void RenderGUI();
+	void Render();
 
-	virtual void OnMouseMove(int mouseX, int mouseY);
-	virtual void OnMouseClick(int mouseX, int mouseY);
-	virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	void OnMouseMove(int mouseX, int mouseY);
+	void OnMouseClick(int mouseX, int mouseY);
+	LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	inline float GetAspectRatio() { return (float)m_ScreenWidth / (float)m_ScreenHeight; }
 	inline ID3D11Device* GetDevice() { return m_pDevice; }
@@ -52,6 +52,7 @@ public:
 	void SetPipelineState(const ComputePSO* pPSO);
 
 	Model* PickClosest(const DirectX::SimpleMath::Ray* pPickingRay, float* pMinDist);
+	void ProcessKeyboardControl(const float DELTA_TIME);
 	void ProcessMouseControl();
 
 protected:
@@ -78,7 +79,7 @@ protected:
 	HWND m_hMainWindow = nullptr;
 	UINT m_NumQualityLevels = 0;
 
-	D3D_FEATURE_LEVEL m_FeatureLevel;
+	D3D_FEATURE_LEVEL m_FeatureLevel = D3D_FEATURE_LEVEL_11_0;
 	DXGI_ADAPTER_DESC2 m_AdapterDesc = { 0, };
 	DXGI_FORMAT m_BackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	D3D11_VIEWPORT m_ScreenViewport = { 0, };
@@ -103,10 +104,6 @@ protected:
 
 	Model* m_pPickedModel = nullptr; // 마우스 선택용.
 	Model* m_pCursorSphere = nullptr; // 드래그 표시용.
-
-	// for noise.
-	/*ConstantBuffer* m_pRandomNoiseConstantBuffer = nullptr;
-	Texture* m_pRandomNoise = nullptr;*/
 
 	// for debugging.
 	Timer* m_pTimer = nullptr;

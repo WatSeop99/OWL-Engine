@@ -1,5 +1,5 @@
 #include "../Common.h"
-#include "../Renderer/BaseRenderer.h"
+#include "../Renderer/Renderer.h"
 #include "../Graphics/ConstantDataType.h"
 #include "GeometryGenerator.h"
 #include "../Graphics/GraphicsUtils.h"
@@ -49,7 +49,7 @@ void ExtendBoundingBox(const DirectX::BoundingBox& SRC_BOX, DirectX::BoundingBox
 	pDestBox->Extents = maxCorner - pDestBox->Center;
 }
 
-void Model::Initialize(BaseRenderer* pRenderer, std::wstring& basePath, std::wstring& fileName)
+void Model::Initialize(Renderer* pRenderer, std::wstring& basePath, std::wstring& fileName)
 {
 	_ASSERT(pRenderer);
 
@@ -58,7 +58,7 @@ void Model::Initialize(BaseRenderer* pRenderer, std::wstring& basePath, std::wst
 	Initialize(pRenderer, meshInfos);
 }
 
-void Model::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MESH_INFOS)
+void Model::Initialize(Renderer* pRenderer, const std::vector<MeshInfo>& MESH_INFOS)
 {
 	_ASSERT(pRenderer);
 

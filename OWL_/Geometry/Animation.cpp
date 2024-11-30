@@ -18,76 +18,102 @@ void AnimationData::Update(const int CLIP_ID, const int FRAME, const float DELTA
 	float timeInTicks = (float)(TimeSinceLoaded * clip.TicksPerSec);
 	float animationTimeTicks = fmod(timeInTicks, (float)clip.Duration);
 
-	for (SIZE_T boneID = 0, totalTransformSize = BoneTransforms.size(); boneID < totalTransformSize; ++boneID)
+	//for (SIZE_T boneID = 0, totalTransformSize = BoneTransforms.size(); boneID < totalTransformSize; ++boneID)
+	//{
+	//	std::vector<AnimationClip::Key>& keys = clip.Keys[boneID];
+	//	const SIZE_T KEY_SIZE = keys.size();
+
+	//	// 주의: 모든 채널(뼈)이 FRAME 개수가 동일하진 않음.
+	//	const int PARENT_IDX = BoneParents[boneID];
+	//	const Matrix PARENT_MATRIX = (PARENT_IDX >= 0 ? BoneTransforms[PARENT_IDX] : AccumulatedRootTransform);
+
+	//	// keys.size()가 0일 경우에는 Identity 변환.
+	//	AnimationClip::Key key = (KEY_SIZE > 0 ? keys[FRAME % KEY_SIZE] : AnimationClip::Key());
+
+	//	// Root일 경우.
+	//	if (PARENT_IDX < 0)
+	//	{
+	//		if (FRAME != 0)
+	//		{
+	//			AccumulatedRootTransform = (Matrix::CreateTranslation(key.Position - PrevPos) * AccumulatedRootTransform); // root 뼈의 변환을 누적시킴.
+	//		}
+	//		else
+	//		{
+	//			// 애니메이션 섞어서 사용 시, 묘하게 틀어지는 부분이 존재. 이를 해결하기 위함.
+	//			// 여기서는 캐릭터의 높이만 보정함.
+	//			// 정확한 보정을 위해서는 환경(지면 등)에 따라 보정이 필요.
+	//			Vector3 temp = AccumulatedRootTransform.Translation();
+	//			temp.y = key.Position.y; // 높이 방향만 첫 프레임으로 보정.
+
+	//			AccumulatedRootTransform.Translation(temp);
+	//		}
+
+	//		PrevPos = key.Position;
+	//		key.Position = Vector3(0.0f); // 대신에 이동 취소.
+	//	}
+
+	//	BoneTransforms[boneID] = key.GetTransform() * PARENT_MATRIX;
+	//}
+
+	// root bone id은 0(아닐 수 있음).
 	{
-		std::vector<AnimationClip::Key>& keys = clip.Keys[boneID];
-		const SIZE_T KEY_SIZE = keys.size();
+		const int ROOT_BONE_ID = 0;
 
-		// 주의: 모든 채널(뼈)이 FRAME 개수가 동일하진 않음.
-		const int PARENT_IDX = BoneParents[boneID];
-		const Matrix PARENT_MATRIX = (PARENT_IDX >= 0 ? BoneTransforms[PARENT_IDX] : AccumulatedRootTransform);
+		Vector3 interpolatedPos;
+		Vector3 interpolatedScale;
+		Quaternion interpolatedRot;
+		InterpolateKeyData(&interpolatedPos, &interpolatedRot, &interpolatedScale, &clip, 0, animationTimeTicks);
 
-		// keys.size()가 0일 경우에는 Identity 변환.
-		AnimationClip::Key key = (KEY_SIZE > 0 ? keys[FRAME % KEY_SIZE] : AnimationClip::Key());
-
-		// Root일 경우.
-		if (PARENT_IDX < 0)
+		if (CLIP_ID == 0)
 		{
-			if (FRAME != 0)
-			{
-				AccumulatedRootTransform = (Matrix::CreateTranslation(key.Position - PrevPos) * AccumulatedRootTransform); // root 뼈의 변환을 누적시킴.
-			}
-			else
-			{
-				// 애니메이션 섞어서 사용 시, 묘하게 틀어지는 부분이 존재. 이를 해결하기 위함.
-				// 여기서는 캐릭터의 높이만 보정함.
-				// 정확한 보정을 위해서는 환경(지면 등)에 따라 보정이 필요.
-				Vector3 temp = AccumulatedRootTransform.Translation();
-				temp.y = key.Position.y; // 높이 방향만 첫 프레임으로 보정.
-
-				AccumulatedRootTransform.Translation(temp);
-			}
-
-			PrevPos = key.Position;
-			key.Position = Vector3(0.0f); // 대신에 이동 취소.
+			interpolatedPos.y = 0.0f;
+			BoneTransforms[ROOT_BONE_ID] = Matrix::CreateScale(interpolatedScale) * Matrix::CreateFromQuaternion(interpolatedRot) * Matrix::CreateTranslation(interpolatedPos);
 		}
-
-		BoneTransforms[boneID] = key.GetTransform() * PARENT_MATRIX;
+		else
+		{
+			BoneTransforms[ROOT_BONE_ID] = Matrix::CreateScale(interpolatedScale) * Matrix::CreateFromQuaternion(interpolatedRot);
+		}
 	}
 
-	//// root bone id은 0(아닐 수 있음).
-	//{
-	//	const int ROOT_BONE_ID = 0;
+	// 나머지 bone transform 업데이트.
+	// bone id가 부모->자식 순으로 선형적으로 저장되어 있기에 가능함.
+	for (SIZE_T boneID = 1, totalBone = BoneTransforms.size(); boneID < totalBone; ++boneID)
+	{
+		const int PARENT_ID = BoneParents[boneID];
 
-	//	Vector3 interpolatedPos;
-	//	Vector3 interpolatedScale;
-	//	Quaternion interpolatedRot;
-	//	InterpolateKeyData(&interpolatedPos, &interpolatedRot, &interpolatedScale, &clip, 0, animationTimeTicks);
+		Vector3 interpolatedPos;
+		Vector3 interpolatedScale;
+		Quaternion interpolatedRot;
+		InterpolateKeyData(&interpolatedPos, &interpolatedRot, &interpolatedScale, &clip, (const int)boneID, animationTimeTicks);
 
-	//	if (CLIP_ID == 0)
-	//	{
-	//		interpolatedPos.y = 0.0f;
-	//		BoneTransforms[ROOT_BONE_ID] = Matrix::CreateScale(interpolatedScale) * Matrix::CreateFromQuaternion(interpolatedRot) * Matrix::CreateTranslation(interpolatedPos);
-	//	}
-	//	else
-	//	{
-	//		BoneTransforms[ROOT_BONE_ID] = Matrix::CreateScale(interpolatedScale) * Matrix::CreateFromQuaternion(interpolatedRot);
-	//	}
-	//}
+		BoneTransforms[boneID] = Matrix::CreateScale(interpolatedScale) * Matrix::CreateFromQuaternion(interpolatedRot) * Matrix::CreateTranslation(interpolatedPos) * BoneTransforms[PARENT_ID];
+	}
+}
 
-	//// 나머지 bone transform 업데이트.
-	//// bone id가 부모->자식 순으로 선형적으로 저장되어 있기에 가능함.
-	//for (UINT64 boneID = 1, totalBone = BoneTransforms.size(); boneID < totalBone; ++boneID)
-	//{
-	//	const int PARENT_ID = BoneParents[boneID];
+void AnimationData::UpdateVelocity(const int CLIP_ID, const int FRAME)
+{
+	_ASSERT(Clips.size() > 0 && Clips.size() > CLIP_ID);
 
-	//	Vector3 interpolatedPos;
-	//	Vector3 interpolatedScale;
-	//	Quaternion interpolatedRot;
-	//	InterpolateKeyData(&interpolatedPos, &interpolatedRot, &interpolatedScale, &clip, (const int)boneID, animationTimeTicks);
+	AnimationClip& clip = Clips[CLIP_ID];
 
-	//	BoneTransforms[boneID] = Matrix::CreateScale(interpolatedScale) * Matrix::CreateFromQuaternion(interpolatedRot) * Matrix::CreateTranslation(interpolatedPos) * BoneTransforms[PARENT_ID];
-	//}
+	const int ROOT_BONE_ID = 0;
+	std::vector<AnimationClip::Key>& keys = clip.Keys[ROOT_BONE_ID];
+	const UINT64 KEY_SIZE = keys.size();
+
+	_ASSERT(KEY_SIZE != 0);
+	AnimationClip::Key& key = keys[FRAME % KEY_SIZE];
+
+	if (FRAME != 0)
+	{
+		Vector3 posDelta = key.Position - PrevKeyPos;
+		posDelta = Vector3::Transform(posDelta, DefaultTransform);
+		Velocity = posDelta.Length();
+	}
+	else
+	{
+		Velocity = 0.0f;
+	}
+	PrevKeyPos = key.Position;
 }
 
 void AnimationData::InterpolateKeyData(Vector3* pOutPosition, Quaternion* pOutRotation, Vector3* pOutScale, AnimationClip* pClip, const int BONE_ID, const float ANIMATION_TIME_TICK)

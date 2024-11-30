@@ -1,6 +1,6 @@
 #include <time.h>
 #include "../Common.h"
-#include "../Renderer/BaseRenderer.h"
+#include "../Renderer/Renderer.h"
 #include "../Renderer/ConstantBuffer.h"
 #include "GeometryGenerator.h"
 #include "Mesh.h"
@@ -11,7 +11,7 @@
 
 int Terrain::ms_TerrainCount = 0;
 
-void Terrain::Initialize(BaseRenderer* pRenderer)
+void Terrain::Initialize(Renderer* pRenderer)
 {
 	_ASSERT(pRenderer);
 
@@ -89,7 +89,7 @@ void Terrain::Initialize(BaseRenderer* pRenderer)
 	pContext->CSSetUnorderedAccessViews(0, 2, ppNullUAVs, nullptr);
 }
 
-void Terrain::Update(BaseRenderer* pRenderer)
+void Terrain::Update(Renderer* pRenderer)
 {
 	Cleanup();
 	Initialize(pRenderer);

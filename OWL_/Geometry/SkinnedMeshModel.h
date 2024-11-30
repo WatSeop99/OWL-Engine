@@ -3,7 +3,7 @@
 #include "Animation.h"
 #include "Model.h"
 
-class BaseRenderer;
+class Renderer;
 class Mesh;
 class StructuredBuffer;
 
@@ -13,7 +13,7 @@ public:
 	SkinnedMeshModel() = default;
 	~SkinnedMeshModel() { Cleanup(); };
 
-	void Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MESHES, const AnimationData& ANIM_DATA);
+	void Initialize(Renderer* pRenderer, const std::vector<MeshInfo>& MESHES, const AnimationData& ANIM_DATA);
 	void InitMeshBuffers(const MeshInfo& MESH_DATA, Mesh* pNewMesh) override;
 	void InitAnimationData(const AnimationData& ANIM_DATA);
 
@@ -31,7 +31,7 @@ public:
 	inline eGraphicsPSOType GetReflectPSO(const bool bWIRED) override { return (bWIRED ? GraphicsPSOType_ReflectSkinnedWire : GraphicsPSOType_ReflectSkinnedSolid); }
 
 public:
-	AnimationData CharacterAnimaionData;
+	AnimationData CharacterAnimationData;
 
 private:
 	StructuredBuffer* m_pBoneTransform = nullptr;

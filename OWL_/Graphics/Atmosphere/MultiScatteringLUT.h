@@ -9,7 +9,7 @@ ALIGN(16) struct MultiScatteringConstants
 	int RayMarchStepCount;
 };
 
-class BaseRenderer;
+class Renderer;
 class CosntantBuffer;
 class StructuredBuffer;
 class Texture;
@@ -24,7 +24,7 @@ public:
 	MultiScatteringLUT() = default;
 	~MultiScatteringLUT() { Cleanup(); };
 
-	void Initialize(BaseRenderer* pRenderer);
+	void Initialize(Renderer* pRenderer);
 
 	void Update(const Vector3* const pTerrainAlbedo);
 
@@ -50,6 +50,6 @@ private:
 	StructuredBuffer* m_pRawSamples = nullptr;
 
 	// DO NOT release directly.
-	BaseRenderer* m_pRenderer = nullptr;
+	Renderer* m_pRenderer = nullptr;
 	ConstantBuffer* m_pAtmosphereConstantBuffer = nullptr;
 };

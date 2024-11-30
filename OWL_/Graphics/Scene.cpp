@@ -1,11 +1,12 @@
 #include "../Common.h"
 #include "Atmosphere/AerialLUT.h"
-#include "../Renderer/BaseRenderer.h"
+#include "../Renderer/Renderer.h"
 #include "Camera.h"
 #include "../Geometry/GeometryGenerator.h"
 #include "../Geometry/Mesh.h"
 #include "../Geometry/Model.h"
 #include "Atmosphere/MultiScatteringLUT.h"
+#include "../Geometry/SkinnedMeshModel.h"
 #include "Atmosphere/Sky.h"
 #include "Atmosphere/SkyLUT.h"
 #include "Atmosphere/Sun.h"
@@ -15,7 +16,7 @@
 #include "../Renderer/ResourceManager.h"
 #include "Scene.h"
 
-void Scene::Initialize(BaseRenderer* pRenderer)
+bool Scene::Initialize(Renderer* pRenderer)
 {
 	_ASSERT(pRenderer);
 
@@ -101,25 +102,25 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 	// 바닥(거울).
 	{
 		// https://freepbr.com/materials/stringy-marble-pbr/
-		//MeshInfo meshInfo;
-		////MakeSquareGrid(&meshInfo, 100, 100, 100, Vector2(100.0f));
-		//MakeTerrainTile(&meshInfo);
+		MeshInfo meshInfo;
+		//MakeSquareGrid(&meshInfo, 100, 100, 100, Vector2(100.0f));
+		MakeTerrainTile(&meshInfo);
 
-		//std::wstring path = L"./Assets/Textures/PBR/stringy-marble-ue/";
-		//meshInfo.szAlbedoTextureFileName = path + L"stringy_marble_albedo.png";
-		//meshInfo.szEmissiveTextureFileName = L"";
-		//meshInfo.szAOTextureFileName = path + L"stringy_marble_ao.png";
-		//meshInfo.szMetallicTextureFileName = path + L"stringy_marble_Metallic.png";
-		//meshInfo.szNormalTextureFileName = path + L"stringy_marble_Normal-dx.png";
-		//meshInfo.szRoughnessTextureFileName = path + L"stringy_marble_Roughness.png";
+		std::wstring path = L"./Assets/Textures/PBR/stringy-marble-ue/";
+		meshInfo.szAlbedoTextureFileName = path + L"stringy_marble_albedo.png";
+		meshInfo.szEmissiveTextureFileName = L"";
+		meshInfo.szAOTextureFileName = path + L"stringy_marble_ao.png";
+		meshInfo.szMetallicTextureFileName = path + L"stringy_marble_Metallic.png";
+		meshInfo.szNormalTextureFileName = path + L"stringy_marble_Normal-dx.png";
+		meshInfo.szRoughnessTextureFileName = path + L"stringy_marble_Roughness.png";
 
-		//m_pGround = new Model;
-		//m_pGround->Initialize(pRenderer, { meshInfo });
+		m_pGround = new Model;
+		m_pGround->Initialize(pRenderer, { meshInfo });
 
 		// terrain에 문제있음.
-		Terrain* pTerrain = new Terrain;
+		/*Terrain* pTerrain = new Terrain;
 		pTerrain->Initialize(m_pRenderer);
-		m_pGround = (Model*)pTerrain;
+		m_pGround = (Model*)pTerrain;*/
 
 		MeshConstants* pMeshConstData = (MeshConstants*)m_pGround->Meshes[0]->MeshConstant.pSystemMem;
 		pMeshConstData->bUseHeightMap = TRUE;
@@ -210,6 +211,8 @@ void Scene::Initialize(BaseRenderer* pRenderer)
 	m_pSun->SetAtmosphere(m_pAtmosphereConstantBuffer);
 	m_pSun->SetTransmittanceLUT(m_pTransmittanceLUT->GetTransmittanceLUT());
 	m_pSun->Update();
+
+	return true;
 }
 
 void Scene::Update(const float DELTA_TIME)
@@ -316,6 +319,7 @@ void Scene::Cleanup()
 	}
 	RenderObjects.clear();
 
+	pMainController = nullptr;
 	m_pMainCamera = nullptr;
 	m_pRenderer = nullptr;
 }

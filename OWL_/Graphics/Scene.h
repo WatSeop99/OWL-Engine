@@ -6,10 +6,11 @@
 #include "Light.h"
 
 class AerialLUT;
-class BaseRenderer;
+class Renderer;
 class Camera;
 class Mesh;
 class Model;
+class SkinnedMeshModel;
 class MultiScatteringLUT;
 class Sky;
 class SkyLUT;
@@ -23,7 +24,7 @@ public:
 	Scene() = default;
 	~Scene() { Cleanup(); }
 
-	void Initialize(BaseRenderer* pRenderer);
+	bool Initialize(Renderer* pRenderer);
 
 	void Update(const float DELTA_TIME);
 
@@ -64,6 +65,9 @@ public:
 
 	float MirrorAlpha = 1.0f; // Opacity
 
+	// DO NOT release directly.
+	SkinnedMeshModel* pMainController = nullptr;
+
 private:
 	// 렌더링을 위한 여러 상수 퍼버들.
 	ConstantBuffer m_GlobalConstants;
@@ -98,6 +102,6 @@ private:
 	Sun* m_pSun = nullptr;
 
 	// DO NOT release directly.
-	BaseRenderer* m_pRenderer = nullptr;
+	Renderer* m_pRenderer = nullptr;
 	Camera* m_pMainCamera = nullptr;
 };

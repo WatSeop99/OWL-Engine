@@ -1,15 +1,17 @@
 #include "../Common.h"
-#include "../Renderer/BaseRenderer.h"
+#include "../Renderer/Renderer.h"
 #include "../Graphics/GraphicsUtils.h"
 #include "Mesh.h"
 #include "../Renderer/StructuredBuffer.h"
 #include "../Renderer/ResourceManager.h"
 #include "SkinnedMeshModel.h"
 
-void SkinnedMeshModel::Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MESHES, const AnimationData& ANIM_DATA)
+void SkinnedMeshModel::Initialize(Renderer* pRenderer, const std::vector<MeshInfo>& MESHES, const AnimationData& ANIM_DATA)
 {
 	Model::Initialize(pRenderer, MESHES);
 	InitAnimationData(ANIM_DATA);
+
+	CharacterAnimationData.Direction = Vector3(0.0f, 0.0f, -1.0f);
 }
 
 void SkinnedMeshModel::InitMeshBuffers(const MeshInfo& MESH_DATA, Mesh* pNewMesh)
@@ -41,7 +43,7 @@ void SkinnedMeshModel::InitAnimationData(const AnimationData& ANIM_DATA)
 		return;
 	}
 
-	CharacterAnimaionData = ANIM_DATA;
+	CharacterAnimationData = ANIM_DATA;
 
 	// 여기서는 AnimationClip이 SkinnedMesh라고 가정.
 	// 일반적으로 모든 Animation이 SkinnedMesh Animation은 아님.
@@ -61,12 +63,12 @@ void SkinnedMeshModel::InitAnimationData(const AnimationData& ANIM_DATA)
 
 void SkinnedMeshModel::UpdateAnimation(const int CLIP_ID, const int FRAME, const float DELTA_TIME)
 {
-	CharacterAnimaionData.Update(CLIP_ID, FRAME, DELTA_TIME);
+	CharacterAnimationData.Update(CLIP_ID, FRAME, DELTA_TIME);
 
 	Matrix* pBoneTransformData = (Matrix*)m_pBoneTransform->pSystemMem;
-	for (UINT64 i = 0, size = CharacterAnimaionData.BoneIDToNames.size(); i < size; ++i)
+	for (UINT64 i = 0, size = CharacterAnimationData.BoneIDToNames.size(); i < size; ++i)
 	{
-		pBoneTransformData[i] = CharacterAnimaionData.Get(CLIP_ID, (int)i, FRAME).Transpose();
+		pBoneTransformData[i] = CharacterAnimationData.Get(CLIP_ID, (int)i, FRAME).Transpose();
 	}
 	m_pBoneTransform->Upload();
 }

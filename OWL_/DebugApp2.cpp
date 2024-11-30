@@ -1,5 +1,5 @@
 #include "Common.h"
-#include "Renderer/BaseRenderer.h"
+#include "Renderer/Renderer.h"
 #include "Geometry/Model.h"
 #include "Geometry/SkinnedMeshModel.h"
 #include "Geometry/GeometryGenerator.h"
@@ -36,10 +36,15 @@ int DebugApp2::Run()
 {
 	// 메인 루프.
 	MSG msg = { 0, };
-	while (msg.message != WM_QUIT)
+	while (true)
 	{
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
+			if (msg.message == WM_QUIT || msg.message == WM_DESTROY)
+			{
+				break;
+			}
+
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
@@ -53,16 +58,35 @@ int DebugApp2::Run()
 	return (int)msg.wParam;
 }
 
-void DebugApp2::Initialize()
+bool DebugApp2::Initialize()
 {
-	m_pRenderer = new BaseRenderer;
+	bool bRet = true;
+
+	m_pRenderer = new Renderer;
 	m_pScene = new Scene;
+
+	if (!m_pRenderer || !m_pRenderer->Initialize(m_pScene))
+	{
+		__debugbreak();
+		
+		bRet = false;
+		goto LB_RET;
+	}
 	
-	m_pRenderer->Initialize(m_pScene);
-	m_pScene->Initialize(m_pRenderer);
+	if (!m_pScene || !m_pScene->Initialize(m_pRenderer))
+	{
+		__debugbreak();
+
+		bRet = false;
+		goto LB_RET;
+	}
+
 	InitScene();
 
 	m_pRenderer->SetPickedModel(m_pCharacter);
+
+LB_RET:
+	return bRet;
 }
 
 void DebugApp2::InitScene()
@@ -121,7 +145,7 @@ void DebugApp2::InitScene()
 			characterDefaultAnimData.Clips.push_back(animDataInClip.Clips[0]);
 		}
 
-		Vector3 center(0.0f, 0.5f, 2.0f);
+		Vector3 center(0.0f, 1.1f, 2.0f);
 		m_pCharacter = new SkinnedMeshModel;
 		m_pCharacter->Initialize(m_pRenderer, characterMeshInfo, characterDefaultAnimData);
 		for (SIZE_T i = 0, size = m_pCharacter->Meshes.size(); i < size; ++i)
@@ -133,9 +157,11 @@ void DebugApp2::InitScene()
 			pMaterialConstData->RoughnessFactor = 0.8f;
 			pMaterialConstData->MetallicFactor = 0.0f;
 		}
-		m_pCharacter->UpdateWorld(Matrix::CreateScale(1.0f) * Matrix::CreateTranslation(center));
+		m_pCharacter->UpdateWorld(Matrix::CreateTranslation(center));
+		m_pCharacter->CharacterAnimationData.Position = center;
 
 		m_pScene->RenderObjects.push_back(m_pCharacter); // 리스트에 등록
+		m_pScene->pMainController = m_pCharacter;
 	}
 }
 
@@ -284,105 +310,10 @@ void DebugApp2::UpdateGUI()
 	ImGui::End();
 }
 
-void DebugApp2::Update(float deltaTime)
+void DebugApp2::Update(const float DELTA_TIME)
 {
 	UpdateGUI();
-	m_pRenderer->Update(deltaTime);
-
-	static int s_FrameCount = 0;
-
-	// States
-	// 0: idle
-	// 1: idle to walk
-	// 2: walk forward
-	// 3: walk to stop
-	// 4: dance
-	static int s_State = 0;
-
-	Keyboard* const pKeyboard = m_pRenderer->GetKeyboard();
-
-	switch (s_State)
-	{
-		case 0:
-		{
-			if (pKeyboard->bPressed[VK_UP])
-			{
-				s_State = 1;
-				s_FrameCount = 0;
-			}
-			else if (s_FrameCount ==
-					 m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size() ||
-					 pKeyboard->bPressed[VK_UP]) // 재생이 다 끝난다면.
-			{
-				s_FrameCount = 0; // 상태 변화 없이 반복.
-			}
-		}
-		break;
-
-		case 1:
-		{
-			if (s_FrameCount == m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size())
-			{
-				s_State = 2;
-				s_FrameCount = 0;
-			}
-		}
-		break;
-
-		case 2:
-		{
-			if (pKeyboard->bPressed[VK_RIGHT])
-			{
-				m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform =
-					Matrix::CreateRotationY(DirectX::XM_PI * 60.0f / 180.0f * deltaTime) *
-					m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform;
-			}
-			if (pKeyboard->bPressed[VK_LEFT])
-			{
-				m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform =
-					Matrix::CreateRotationY(-DirectX::XM_PI * 60.0f / 180.0f * deltaTime) *
-					m_pCharacter->CharacterAnimaionData.AccumulatedRootTransform;
-			}
-			if (s_FrameCount == m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size())
-			{
-				// 방향키를 누르고 있지 않으면 정지. (누르고 있으면 계속 걷기)
-				if (!pKeyboard->bPressed[VK_UP])
-				{
-					s_State = 3;
-				}
-				s_FrameCount = 0;
-			}
-		}
-		break;
-
-		case 3:
-		{
-			if (s_FrameCount == m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size())
-			{
-				// s_State = 4;
-				s_State = 0;
-				s_FrameCount = 0;
-			}
-		}
-		break;
-
-		case 4:
-		{
-			if (s_FrameCount == m_pCharacter->CharacterAnimaionData.Clips[s_State].Keys[0].size())
-			{
-				s_State = 0;
-				s_FrameCount = 0;
-			}
-		}
-		break;
-
-		default:
-			break;
-	}
-
-	m_pCharacter->UpdateAnimation(s_State, s_FrameCount, deltaTime);
-
-	++s_FrameCount;
+	m_pRenderer->Update(DELTA_TIME);
 }
 
 void DebugApp2::Render()

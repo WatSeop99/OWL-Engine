@@ -31,7 +31,7 @@ ALIGN(16) struct SkyLUTConstants
 };
 
 class ConstantBuffer;
-class BaseRenderer;
+class Renderer;
 class Texture;
 
 class SkyLUT
@@ -40,7 +40,7 @@ public:
 	SkyLUT() = default;
 	~SkyLUT() { Cleanup(); };
 
-	void Initialize(BaseRenderer* pRenderer);
+	void Initialize(Renderer* pRenderer);
 
 	void Update();
 
@@ -73,7 +73,7 @@ private:
 	ConstantBuffer* m_pSkyLUTConstantBuffer = nullptr;
 
 	// DO NOT release directly.
-	BaseRenderer* m_pRenderer = nullptr;
+	Renderer* m_pRenderer = nullptr;
 	ConstantBuffer* m_pAtmosphereConstantBuffer = nullptr;
 	Texture* m_pTransmittanceLUT = nullptr;
 	Texture* m_pMultiScatterLUT = nullptr;

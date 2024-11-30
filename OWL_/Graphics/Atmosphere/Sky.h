@@ -12,7 +12,7 @@ ALIGN(16) struct SkyConstants
 	float pad3;
 };
 
-class BaseRenderer;
+class Renderer;
 class ConstantBuffer;
 class Texture;
 
@@ -22,7 +22,7 @@ public:
 	Sky() = default;
 	~Sky() { Cleanup(); };
 
-	void Initialize(BaseRenderer* pRenderer);
+	void Initialize(Renderer* pRenderer);
 
 	void Update();
 
@@ -39,5 +39,5 @@ private:
 	ConstantBuffer* m_pSkyConstantBuffer = nullptr;
 
 	// DO NOT release directly.
-	BaseRenderer* m_pRenderer = nullptr;
+	Renderer* m_pRenderer = nullptr;
 };

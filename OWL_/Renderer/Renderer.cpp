@@ -12,30 +12,33 @@
 #include "../Graphics/Atmosphere/SkyLUT.h"
 #include "../Graphics/Atmosphere/Sun.h"
 #include "../Graphics/Scene.h"
+#include "../Geometry/SkinnedMeshModel.h"
 #include "PipelineState.h"
 #include "../Renderer/PostProcessor.h"
 #include "Texture.h"
 #include "Timer.h"
-#include "BaseRenderer.h"
+#include "Renderer.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 using DirectX::BoundingSphere;
 using DirectX::SimpleMath::Quaternion;
-using DirectX::SimpleMath::Ray; BaseRenderer* g_pAppBase = nullptr;
+using DirectX::SimpleMath::Ray;
 using DirectX::SimpleMath::Vector3;
+
+Renderer* g_pAppBase = nullptr;
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	return g_pAppBase->MsgProc(hWnd, msg, wParam, lParam);
 }
 
-BaseRenderer::BaseRenderer()
+Renderer::Renderer()
 {
 	g_pAppBase = this;
 }
 
-BaseRenderer::~BaseRenderer()
+Renderer::~Renderer()
 {
 	g_pAppBase = nullptr;
 	m_pScene = nullptr;
@@ -106,7 +109,7 @@ BaseRenderer::~BaseRenderer()
 	DestroyWindow(m_hMainWindow);
 }
 
-void BaseRenderer::Initialize(Scene* const pScene)
+bool Renderer::Initialize(Scene* const pScene)
 {
 	_ASSERT(pScene);
 
@@ -138,9 +141,11 @@ void BaseRenderer::Initialize(Scene* const pScene)
 
 	m_DeltaTimeData.resize(90, 0);
 	m_FrameRateData.resize(90, 0);
+
+	return true;
 }
 
-void BaseRenderer::InitScene()
+bool Renderer::InitScene()
 {
 	_ASSERT(m_pScene);
 
@@ -185,9 +190,11 @@ void BaseRenderer::InitScene()
 		ID3D11UnorderedAccessView* pNullUAV = nullptr;
 		m_pContext->CSSetUnorderedAccessViews(0, 1, &pNullUAV, nullptr);*/
 	}
+
+	return true;
 }
 
-void BaseRenderer::UpdateGUI()
+void Renderer::UpdateGUI()
 {
 	_ASSERT(m_DeltaTimeData.size() > 0);
 	_ASSERT(m_FrameRateData.size() > 0);
@@ -223,25 +230,26 @@ void BaseRenderer::UpdateGUI()
 	ImGui::End();
 }
 
-void BaseRenderer::Update(float deltaTime)
+void Renderer::Update(const float DELTA_TIME)
 {
 	_ASSERT(m_pMainCamera);
 	_ASSERT(m_pScene);
 
 	// 카메라의 이동.
-	m_pMainCamera->UpdateKeyboard(deltaTime, &m_Keyboard);
+	m_pMainCamera->UpdateKeyboard(DELTA_TIME, &m_Keyboard);
 
 	// 마우스 처리.
+	ProcessKeyboardControl(DELTA_TIME);
 	ProcessMouseControl();
 
 	// 전체 씬 업데이트.
-	m_pScene->Update(deltaTime);
+	m_pScene->Update(DELTA_TIME);
 
 	// 후처리 프로세서 업데이트.
 	m_pPostProcessor->Update();
 }
 
-void BaseRenderer::RenderGUI()
+void Renderer::RenderGUI()
 {
 	ImGui::Begin("Scene");
 	ImVec2 wsize = ImGui::GetWindowSize();
@@ -254,7 +262,7 @@ void BaseRenderer::RenderGUI()
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
 
-void BaseRenderer::Render()
+void Renderer::Render()
 {
 	m_pContext->VSSetSamplers(0, (UINT)m_pResourceManager->SamplerStates.size(), m_pResourceManager->SamplerStates.data());
 	m_pContext->PSSetSamplers(0, (UINT)m_pResourceManager->SamplerStates.size(), m_pResourceManager->SamplerStates.data());
@@ -276,7 +284,7 @@ void BaseRenderer::Render()
 	m_pSwapChain->Present(1, 0);
 }
 
-void BaseRenderer::OnMouseMove(int mouseX, int mouseY)
+void Renderer::OnMouseMove(int mouseX, int mouseY)
 {
 	_ASSERT(m_pMainCamera);
 
@@ -297,7 +305,7 @@ void BaseRenderer::OnMouseMove(int mouseX, int mouseY)
 	m_pMainCamera->UpdateMouse(m_Mouse.MouseNDCX, m_Mouse.MouseNDCY);
 }
 
-void BaseRenderer::OnMouseClick(int mouseX, int mouseY)
+void Renderer::OnMouseClick(int mouseX, int mouseY)
 {
 	m_Mouse.MouseX = mouseX;
 	m_Mouse.MouseY = mouseY;
@@ -306,7 +314,7 @@ void BaseRenderer::OnMouseClick(int mouseX, int mouseY)
 	m_Mouse.MouseNDCY = -mouseY * 2.0f / m_ScreenHeight + 1.0f;
 }
 
-LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT Renderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
 	{
@@ -443,7 +451,7 @@ LRESULT BaseRenderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-void BaseRenderer::SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU, UINT slot)
+void Renderer::SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU, UINT slot)
 {
 	// 쉐이더와 일관성 유지 cbuffer GlobalConstants : register(b0).
 	m_pContext->VSSetConstantBuffers(slot, 1, ppGlobalConstsGPU);
@@ -451,7 +459,7 @@ void BaseRenderer::SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU, UINT slot)
 	m_pContext->GSSetConstantBuffers(slot, 1, ppGlobalConstsGPU);
 }
 
-void BaseRenderer::SetViewport(const D3D11_VIEWPORT* pViewports, const UINT NUM_VIEWPORT)
+void Renderer::SetViewport(const D3D11_VIEWPORT* pViewports, const UINT NUM_VIEWPORT)
 {
 	_ASSERT(pViewports);
 	_ASSERT(NUM_VIEWPORT > 0);
@@ -459,7 +467,7 @@ void BaseRenderer::SetViewport(const D3D11_VIEWPORT* pViewports, const UINT NUM_
 	m_pContext->RSSetViewports(NUM_VIEWPORT, pViewports);
 }
 
-void BaseRenderer::SetPipelineState(const GraphicsPSO* pPSO)
+void Renderer::SetPipelineState(const GraphicsPSO* pPSO)
 {
 	m_pContext->VSSetShader(pPSO->pVertexShader, nullptr, 0);
 	m_pContext->PSSetShader(pPSO->pPixelShader, nullptr, 0);
@@ -474,7 +482,7 @@ void BaseRenderer::SetPipelineState(const GraphicsPSO* pPSO)
 	m_pContext->IASetPrimitiveTopology(pPSO->PrimitiveTopology);
 }
 
-void BaseRenderer::SetPipelineState(const ComputePSO* pPSO)
+void Renderer::SetPipelineState(const ComputePSO* pPSO)
 {
 	m_pContext->VSSetShader(nullptr, nullptr, 0);
 	m_pContext->PSSetShader(nullptr, nullptr, 0);
@@ -484,7 +492,7 @@ void BaseRenderer::SetPipelineState(const ComputePSO* pPSO)
 	m_pContext->CSSetShader(pPSO->pComputeShader, nullptr, 0);
 }
 
-Model* BaseRenderer::PickClosest(const DirectX::SimpleMath::Ray* pPickingRay, float* pMinDist)
+Model* Renderer::PickClosest(const DirectX::SimpleMath::Ray* pPickingRay, float* pMinDist)
 {
 	_ASSERT(m_pScene);
 
@@ -507,7 +515,130 @@ Model* BaseRenderer::PickClosest(const DirectX::SimpleMath::Ray* pPickingRay, fl
 	return pMinModel;
 }
 
-void BaseRenderer::ProcessMouseControl()
+void Renderer::ProcessKeyboardControl(const float DELTA_TIME)
+{
+	// 키보드 조작에 따른 캐릭터 조작.
+	// 만약, 키보드 조작을 따르는 다른 컨트롤이 있다면 추가할 것.
+
+	_ASSERT(m_pScene);
+	_ASSERT(m_pScene->pMainController);
+
+	enum
+	{
+		Idle = 0,
+		IdleToWalk,
+		Walk,
+		WalkToStop
+	};
+
+	static int s_State = Idle;
+	static int s_FrameCount = 0;
+
+	AnimationData* pAnimationData = &m_pScene->pMainController->CharacterAnimationData;
+	const SIZE_T ANIMATION_CLIP_SIZE = pAnimationData->Clips[s_State].Keys[0].size();
+
+	switch (s_State)
+	{
+		case Idle:
+		{
+			Vector3 deltaPos = Vector3(1.0f, 1.0f, 1.0f) * (pAnimationData->Velocity * DELTA_TIME);
+			pAnimationData->Position += deltaPos;
+
+			if (m_Keyboard.bPressed[VK_UP])
+			{
+				s_State = IdleToWalk;
+				s_FrameCount = 0;
+				pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+			}
+			else if (s_FrameCount == ANIMATION_CLIP_SIZE)
+			{
+				s_FrameCount = 0;
+			}
+
+			break;
+		}
+
+		case IdleToWalk:
+		{
+			pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+
+			Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * DELTA_TIME);
+			pAnimationData->Position += deltaPos;
+
+			if (s_FrameCount == ANIMATION_CLIP_SIZE)
+			{
+				s_State = Walk;
+				s_FrameCount = 0;
+				pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+			}
+
+			break;
+		}
+
+		case Walk:
+		{ 
+			if (m_Keyboard.bPressed[VK_RIGHT])
+			{
+				Quaternion newRot = Quaternion::CreateFromYawPitchRoll(DegreeToRadian(60.0f) * DELTA_TIME * 2.0f, 0.0f, 0.0f);
+				pAnimationData->Direction = Vector3::TransformNormal(pAnimationData->Direction, Matrix::CreateFromQuaternion(newRot));
+				pAnimationData->Rotation = Quaternion::Concatenate(pAnimationData->Rotation, newRot);
+			}
+			if (m_Keyboard.bPressed[VK_LEFT])
+			{
+				Quaternion newRot = Quaternion::CreateFromYawPitchRoll(DegreeToRadian(-60.0f) * DELTA_TIME * 2.0f, 0.0f, 0.0f);
+				pAnimationData->Direction = Vector3::TransformNormal(pAnimationData->Direction, Matrix::CreateFromQuaternion(newRot));
+				pAnimationData->Rotation = Quaternion::Concatenate(pAnimationData->Rotation, newRot);
+			}
+
+			pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+
+			Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * DELTA_TIME);
+			pAnimationData->Position += deltaPos;
+
+			if (!m_Keyboard.bPressed[VK_UP])
+			{
+				s_State = WalkToStop;
+				s_FrameCount = 0;
+			}
+			if (s_FrameCount == ANIMATION_CLIP_SIZE)
+			{
+				s_FrameCount = 0;
+				pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+			}
+
+			break;
+		}
+
+		case WalkToStop:
+		{ 
+			pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+
+			Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * DELTA_TIME);
+			pAnimationData->Position += deltaPos;
+
+			if (s_FrameCount == ANIMATION_CLIP_SIZE)
+			{
+				s_State = Idle;
+				s_FrameCount = 0;
+				pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+			}
+
+			break;
+		}
+
+		default:
+			__debugbreak();
+			break;
+	}
+
+	Matrix newWorld = Matrix::CreateFromQuaternion(pAnimationData->Rotation) * Matrix::CreateTranslation(pAnimationData->Position);
+	m_pScene->pMainController->UpdateWorld(newWorld);
+	m_pScene->pMainController->UpdateAnimation(s_State, s_FrameCount, DELTA_TIME);
+
+	++s_FrameCount;
+}
+
+void Renderer::ProcessMouseControl()
 {
 	_ASSERT(m_pMainCamera);
 
@@ -627,7 +758,7 @@ void BaseRenderer::ProcessMouseControl()
 	}
 }
 
-void BaseRenderer::initMainWindow()
+void Renderer::initMainWindow()
 {
 	WNDCLASSEX wc =
 	{
@@ -670,7 +801,7 @@ void BaseRenderer::initMainWindow()
 	UpdateWindow(m_hMainWindow);
 }
 
-void BaseRenderer::initDirect3D()
+void Renderer::initDirect3D()
 {
 	HRESULT hr = S_OK;
 
@@ -774,7 +905,7 @@ LB_EXIT:
 	pAdapter->Release();
 }
 
-void BaseRenderer::initGUI()
+void Renderer::initGUI()
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -794,7 +925,7 @@ void BaseRenderer::initGUI()
 	}
 }
 
-void BaseRenderer::createBuffers()
+void Renderer::createBuffers()
 {
 	HRESULT hr = S_OK;
 
@@ -842,7 +973,7 @@ void BaseRenderer::createBuffers()
 	m_pGBuffer->Initialize(m_pDevice, m_pContext, m_ScreenWidth, m_ScreenHeight);
 }
 
-void BaseRenderer::setMainViewport()
+void Renderer::setMainViewport()
 {
 	// Set the viewport
 	m_ScreenViewport = { 0, };
@@ -856,7 +987,7 @@ void BaseRenderer::setMainViewport()
 	m_pContext->RSSetViewports(1, &m_ScreenViewport);
 }
 
-void BaseRenderer::setComputeShaderBarrier()
+void Renderer::setComputeShaderBarrier()
 {
 	// 예제들에서 최대 사용하는 SRV, UAV 갯수가 6개.
 	ID3D11ShaderResourceView* ppNullSRVs[6] = { nullptr, };
@@ -865,7 +996,7 @@ void BaseRenderer::setComputeShaderBarrier()
 	m_pContext->CSSetUnorderedAccessViews(0, 6, ppNullUAVs, nullptr);
 }
 
-void BaseRenderer::destroyBuffersForRendering()
+void Renderer::destroyBuffersForRendering()
 {
 	// swap chain에 사용될 back bufffer와 관련된 모든 버퍼를 초기화.
 	m_pBackBuffer->Cleanup();
@@ -876,7 +1007,7 @@ void BaseRenderer::destroyBuffersForRendering()
 	m_pPostProcessor->Cleanup();
 }
 
-void BaseRenderer::passGBuffer()
+void Renderer::passGBuffer()
 {
 	_ASSERT(m_pGBuffer);
 	_ASSERT(m_pScene);
@@ -895,7 +1026,7 @@ void BaseRenderer::passGBuffer()
 	m_pGBuffer->AfterRender();
 }
 
-void BaseRenderer::passShadow()
+void Renderer::passShadow()
 {
 	_ASSERT(m_pScene);
 
@@ -906,7 +1037,7 @@ void BaseRenderer::passShadow()
 	}
 }
 
-void BaseRenderer::passDeferredLighting()
+void Renderer::passDeferredLighting()
 {
 	_ASSERT(m_pScene);
 
@@ -969,7 +1100,7 @@ void BaseRenderer::passDeferredLighting()
 	}
 }
 
-void BaseRenderer::passSky()
+void Renderer::passSky()
 {
 	_ASSERT(m_pScene);
 
@@ -984,7 +1115,7 @@ void BaseRenderer::passSky()
 	m_pContext->OMSetRenderTargets(1, &pNullRTV, pNullDSV);
 }
 
-void BaseRenderer::passDebug()
+void Renderer::passDebug()
 {
 	_ASSERT(m_pScene);
 

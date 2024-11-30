@@ -1,6 +1,6 @@
 #pragma once
 
-class BaseRenderer;
+class Renderer;
 class Model;
 class Scene;
 class SkinnedMeshModel;
@@ -13,16 +13,16 @@ public:
 
 	int Run();
 
-	void Initialize();
+	bool Initialize();
 	void InitScene();
 
 	void UpdateGUI();
-	void Update(float deltaTime);
+	void Update(const float DELTA_TIME);
 
 	void Render();
 
 private:
-	BaseRenderer* m_pRenderer = nullptr;
+	Renderer* m_pRenderer = nullptr;
 	Scene* m_pScene = nullptr;
 	Model* m_pGround = nullptr;
 	SkinnedMeshModel* m_pCharacter = nullptr;

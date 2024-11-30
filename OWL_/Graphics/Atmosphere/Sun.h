@@ -15,7 +15,7 @@ ALIGN(16) struct SunPSConstants
 	float pad;
 };
 
-class BaseRenderer;
+class Renderer;
 class Camera;
 class ConstantBuffer;
 class ShadowMap;
@@ -27,7 +27,7 @@ public:
 	Sun() = default;
 	~Sun() { Cleanup(); };
 
-	void Initialize(BaseRenderer* pRenderer, Camera* pMainCamera);
+	void Initialize(Renderer* pRenderer, Camera* pMainCamera);
 
 	void Update();
 
@@ -79,7 +79,7 @@ private:
 	Matrix m_CameraViewProjection;
 
 	// DO NOT release directly.
-	BaseRenderer* m_pRenderer = nullptr;
+	Renderer* m_pRenderer = nullptr;
 	Camera* m_pMainCamera = nullptr;
 	ConstantBuffer* m_pAtmosphereConstantBuffer = nullptr;
 	Texture* m_pTransmittanceLUT = nullptr;

@@ -460,6 +460,7 @@ void ModelLoader::readAnimation(const aiScene* pSCENE)
 	{
 		AnimationClip& clip = AnimData.Clips[i];
 		const aiAnimation* pANIM = pSCENE->mAnimations[i];
+		const SIZE_T TOTAL_BONES = AnimData.BoneNameToID.size();
 
 		clip.Duration = pANIM->mDuration;
 		clip.TicksPerSec = pANIM->mTicksPerSecond;
@@ -480,9 +481,26 @@ void ModelLoader::readAnimation(const aiScene* pSCENE)
 				const aiVector3D SCALE = pNODE_ANIM->mScalingKeys[k].mValue;
 
 				AnimationClip::Key& key = clip.Keys[BONE_ID][k];
-				key.Position = { POS.x, POS.y, POS.z };
-				key.Rotation = { ROTATION.x, ROTATION.y, ROTATION.z, ROTATION.w };
-				key.Scale = { SCALE.x, SCALE.y, SCALE.z };
+				key.Position = Vector3(POS.x, POS.y, POS.z);
+				key.Rotation = Quaternion(ROTATION.x, ROTATION.y, ROTATION.z, ROTATION.w);
+				key.Scale = Vector3(SCALE.x, SCALE.y, SCALE.z);
+				key.Time = pNODE_ANIM->mPositionKeys[k].mTime;
+			}
+		}
+
+		// key data가 없는 곳을 default로 채움.
+		for (SIZE_T boneID = 0; boneID < TOTAL_BONES; ++boneID)
+		{
+			std::vector<AnimationClip::Key>& keys = clip.Keys[boneID];
+			const SIZE_T KEY_SIZE = keys.size();
+			if (KEY_SIZE == 0)
+			{
+				Matrix nodeTransform = AnimData.NodeTransforms[boneID];
+				AnimationClip::Key key;
+				key.Position = nodeTransform.Translation();
+				key.Rotation = Quaternion::CreateFromRotationMatrix(nodeTransform);
+
+				keys.push_back(key);
 			}
 		}
 	}

@@ -3,7 +3,7 @@
 #include "Camera.h"
 #include "ShadowMap.h"
 
-class BaseRenderer;
+class Renderer;
 class Model;
 
 class Light
@@ -15,7 +15,7 @@ public:
 	Light(UINT width = 1280, UINT height = 1280);
 	~Light() { Cleanup(); }
 
-	void Initialize(BaseRenderer* pRenderer);
+	void Initialize(Renderer* pRenderer);
 
 	void Update(float deltaTime, Camera* pMainCamera);
 

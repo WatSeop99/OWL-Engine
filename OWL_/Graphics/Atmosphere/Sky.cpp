@@ -1,12 +1,12 @@
 #include "../Common.h"
-#include "../Renderer/BaseRenderer.h"
+#include "../Renderer/Renderer.h"
 #include "../Graphics/Camera.h"
 #include "../Renderer/ConstantBuffer.h"
 #include "../Renderer/Texture.h"
 #include "../Renderer/ResourceManager.h"
 #include "Sky.h"
 
-void Sky::Initialize(BaseRenderer* pRenderer)
+void Sky::Initialize(Renderer* pRenderer)
 {
 	_ASSERT(pRenderer);
 

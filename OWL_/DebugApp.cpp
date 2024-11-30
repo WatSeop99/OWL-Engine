@@ -17,9 +17,9 @@ DebugApp::~DebugApp()
 
 void DebugApp::InitScene()
 {
-	BaseRenderer::m_pMainCamera.Reset(Vector3(-0.112852f, 0.307729f, -0.542159f), 0.0589047f, 0.14399f);
+	Renderer::m_pMainCamera.Reset(Vector3(-0.112852f, 0.307729f, -0.542159f), 0.0589047f, 0.14399f);
 
-	BaseRenderer::InitScene();
+	Renderer::InitScene();
 
 	// Main Object.
 	{
@@ -143,7 +143,7 @@ void DebugApp::Render()
 {
 	m_pTimer->Start(m_pContext, true);
 
-	BaseRenderer::Render();
+	Renderer::Render();
 
 	OutputDebugStringA("Rendering time ==> ");
 	m_pTimer->End(m_pContext);
@@ -151,7 +151,7 @@ void DebugApp::Render()
 
 void DebugApp::UpdateGUI()
 {
-	BaseRenderer::UpdateGUI();
+	Renderer::UpdateGUI();
 	GlobalConstants* pGlobalConstsCPU = m_Scene.GetGlobalConstantsCPU();
 
 	ImGui::SetNextItemOpen(false, ImGuiCond_Once);

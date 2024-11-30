@@ -1,5 +1,5 @@
 #include "../Common.h"
-#include "../Renderer/BaseRenderer.h"
+#include "../Renderer/Renderer.h"
 #include "ConstantDataType.h"
 #include "../Geometry/Model.h"
 #include "Light.h"
@@ -15,7 +15,7 @@ Light::Light(UINT width, UINT height) : m_ShadowMap(width, height)
 	m_LightViewCamera.SetFarZ(50.0f);
 }
 
-void Light::Initialize(BaseRenderer* pRenderer)
+void Light::Initialize(Renderer* pRenderer)
 {
 	_ASSERT(pRenderer);
 

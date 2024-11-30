@@ -12,7 +12,7 @@ ALIGN(16) struct TerrainConstants
 	float MaxHeight;
 };
 
-class BaseRenderer;
+class Renderer;
 class ConstantBuffer;
 class Texture;
 class StructuredBuffer;
@@ -23,9 +23,9 @@ public:
 	Terrain() = default;
 	~Terrain() { Cleanup(); }
 
-	void Initialize(BaseRenderer* pRenderer);
+	void Initialize(Renderer* pRenderer);
 
-	void Update(BaseRenderer* pRenderer);
+	void Update(Renderer* pRenderer);
 
 	void Render() override;
 

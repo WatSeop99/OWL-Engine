@@ -5,7 +5,7 @@
 #include "../Graphics/EnumData.h"
 #include "MeshInfo.h"
 
-class BaseRenderer;
+class Renderer;
 class Mesh;
 
 class Model
@@ -14,8 +14,8 @@ public:
 	Model() = default;
 	virtual ~Model() { Cleanup(); }
 
-	void Initialize(BaseRenderer* pRenderer, std::wstring& basePath, std::wstring& fileName);
-	void Initialize(BaseRenderer* pRenderer, const std::vector<MeshInfo>& MESH_INFOS);
+	void Initialize(Renderer* pRenderer, std::wstring& basePath, std::wstring& fileName);
+	void Initialize(Renderer* pRenderer, const std::vector<MeshInfo>& MESH_INFOS);
 	virtual void InitMeshBuffers(const MeshInfo& MESH_INFO, Mesh* pNewMesh);
 
 	void UpdateConstantBuffers();
@@ -57,5 +57,5 @@ protected:
 	Mesh* m_pBoundingSphereMesh = nullptr;
 
 	// DO NOT release directly.
-	BaseRenderer* m_pRenderer = nullptr;
+	Renderer* m_pRenderer = nullptr;
 };

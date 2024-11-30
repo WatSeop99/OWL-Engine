@@ -1,11 +1,11 @@
 #include "../../Common.h"
-#include "../Renderer/BaseRenderer.h"
+#include "../Renderer/Renderer.h"
 #include "../Renderer/ConstantBuffer.h"
 #include "../Renderer/Texture.h"
 #include "../Renderer/ResourceManager.h"
 #include "TransmittanceLUT.h"
 
-void TransmittanceLUT::Initialize(BaseRenderer* pRenderer)
+void TransmittanceLUT::Initialize(Renderer* pRenderer)
 {
 	_ASSERT(pRenderer);
 

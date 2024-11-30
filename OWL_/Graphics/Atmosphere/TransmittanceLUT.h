@@ -1,6 +1,6 @@
 #pragma once
 
-class BaseRenderer;
+class Renderer;
 class ConstantBuffer;
 class Texture;
 
@@ -10,7 +10,7 @@ public:
 	TransmittanceLUT() = default;
 	~TransmittanceLUT() { Cleanup(); }
 
-	void Initialize(BaseRenderer* pRenderer);
+	void Initialize(Renderer* pRenderer);
 
 	void Generate();
 
@@ -32,6 +32,6 @@ private:
 	Texture* m_pTransmittanceLUT = nullptr;
 
 	// DO NOT release directly.
-	BaseRenderer* m_pRenderer = nullptr;
+	Renderer* m_pRenderer = nullptr;
 	ConstantBuffer* m_pAtmosphereConstantbuffer = nullptr;
 };

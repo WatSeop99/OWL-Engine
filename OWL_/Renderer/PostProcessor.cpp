@@ -1,5 +1,5 @@
 #include "../Common.h"
-#include "BaseRenderer.h"
+#include "Renderer.h"
 #include "ConstantBuffer.h"
 #include "../Graphics/ConstantDataType.h"
 #include "../Geometry/GeometryGenerator.h"
@@ -11,7 +11,7 @@
 #include "../Renderer/ResourceManager.h"
 #include "PostProcessor.h"
 
-void PostProcessor::Initialize(BaseRenderer* pRenderer, const PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS)
+void PostProcessor::Initialize(Renderer* pRenderer, const PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS)
 {
 	_ASSERT(pRenderer);
 
@@ -208,7 +208,7 @@ void PostProcessor::createImageResources(int width, int height, ID3D11ShaderReso
 	hr = pDevice->CreateShaderResourceView(pTexture, nullptr, ppSrv);
 	BREAK_IF_FAILED(hr);
 
-	RELEASE(pTexture);
+	pTexture->Release();
 }
 
 void PostProcessor::renderPostEffects()

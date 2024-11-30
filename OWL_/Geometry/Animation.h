@@ -33,6 +33,7 @@ public:
 	~AnimationData() = default;
 
 	void Update(const int CLIP_ID, const int FRAME, const float DELTA_TIME);
+	void UpdateVelocity(const int CLIP_ID, const int FRAME);
 
 	void InterpolateKeyData(Vector3* pOutPosition, Quaternion* pOutRotation, Vector3* pOutScale, AnimationClip* pClip, const int BONE_ID, const float ANIMATION_TIME_TICK);
 
@@ -58,9 +59,14 @@ public:
 	std::vector<AnimationClip> Clips;					// 애니메이션 동작.
 
 	DirectX::SimpleMath::Matrix DefaultTransform;
+	DirectX::SimpleMath::Matrix InverseDefaultTransform;
 	DirectX::SimpleMath::Matrix RootTransform;
 	DirectX::SimpleMath::Matrix AccumulatedRootTransform;
-	DirectX::SimpleMath::Vector3 PrevPos;
+	// DirectX::SimpleMath::Vector3 PrevPos;
+	DirectX::SimpleMath::Vector3 PrevKeyPos;
+	DirectX::SimpleMath::Vector3 Position;
+	DirectX::SimpleMath::Vector3 Direction;
+	DirectX::SimpleMath::Quaternion Rotation;
 
 	double TimeSinceLoaded = 0.25f;
 	float NormalizingScale = 1.0f;

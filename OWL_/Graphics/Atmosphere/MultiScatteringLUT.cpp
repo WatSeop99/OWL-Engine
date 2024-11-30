@@ -2,7 +2,7 @@
 #include <cyVector.h>
 #include <cySampleElim.h>
 #include "../../Common.h"
-#include "../Renderer/BaseRenderer.h"
+#include "../Renderer/Renderer.h"
 #include "../Renderer/ConstantBuffer.h"
 #include "../Renderer/StructuredBuffer.h"
 #include "../Renderer/Texture.h"
@@ -39,7 +39,7 @@ void GetPoissonDiskSamples(std::vector<Vector2>& samples, const int COUNT)
 }
 
 
-void MultiScatteringLUT::Initialize(BaseRenderer* pRenderer)
+void MultiScatteringLUT::Initialize(Renderer* pRenderer)
 {
 	_ASSERT(pRenderer);
 

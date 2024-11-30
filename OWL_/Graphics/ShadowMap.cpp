@@ -1,5 +1,5 @@
 #include "../Common.h"
-#include "../Renderer/BaseRenderer.h"
+#include "../Renderer/Renderer.h"
 #include "Camera.h"
 #include "ConstantDataType.h"
 #include "../Geometry/Model.h"
@@ -8,7 +8,7 @@
 
 using DirectX::SimpleMath::Vector4;
 
-void ShadowMap::Initialize(BaseRenderer* pRenderer, const UINT LIGHT_TYPE)
+void ShadowMap::Initialize(Renderer* pRenderer, const UINT LIGHT_TYPE)
 {
 	_ASSERT(pRenderer);
 

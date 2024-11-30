@@ -3,7 +3,7 @@
 #include "../Graphics/ConstantDataType.h"
 #include "../Graphics/ImageFilter.h"
 
-class BaseRenderer;
+class Renderer;
 class ConstantBuffer;
 class Mesh;
 class Texture;
@@ -23,7 +23,7 @@ public:
 	PostProcessor() = default;
 	~PostProcessor() { Cleanup(); }
 
-	void Initialize(BaseRenderer* pRenderer, const PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS);
+	void Initialize(Renderer* pRenderer, const PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS);
 
 	void Update();
 
@@ -67,7 +67,7 @@ private:
 	std::vector<ID3D11RenderTargetView*> m_pBloomRTVs;
 
 	// Do not delete these pointer.
-	BaseRenderer* m_pRenderer = nullptr;
+	Renderer* m_pRenderer = nullptr;
 	ID3D11Buffer* m_pGlobalConstsGPU = nullptr;
 	Texture* m_pBackBuffer = nullptr;
 	Texture* m_pFloatBuffer = nullptr;

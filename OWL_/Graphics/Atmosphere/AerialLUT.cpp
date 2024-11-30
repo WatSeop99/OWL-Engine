@@ -1,12 +1,12 @@
 #include "../../Common.h"
-#include "../../Renderer/BaseRenderer.h"
+#include "../../Renderer/Renderer.h"
 #include "../Camera.h"
 #include "../ShadowMap.h"
 #include "../../Renderer/Texture.h"
 #include "../Renderer/ResourceManager.h"
 #include "AerialLUT.h"
 
-void AerialLUT::Initialize(BaseRenderer* pRenderer)
+void AerialLUT::Initialize(Renderer* pRenderer)
 {
 	_ASSERT(pRenderer);
 

@@ -5,7 +5,7 @@
 #include "../Renderer/Texture.h"
 
 struct LightProperty;
-class BaseRenderer;
+class Renderer;
 class Camera;
 class GraphicsPSO;
 class Model;
@@ -16,7 +16,7 @@ public:
 	ShadowMap(const UINT WIDTH = 1280, const UINT HEIGHT = 1280) : m_ShadowWidth(WIDTH), m_ShadowHeight(HEIGHT) {}
 	~ShadowMap() { Cleanup(); }
 
-	void Initialize(BaseRenderer* pRenderer, const UINT LIGHT_TYPE);
+	void Initialize(Renderer* pRenderer, const UINT LIGHT_TYPE);
 
 	void Update(const LightProperty& PROPERTY, Camera* pLightCam, Camera* pMainCamera);
 
@@ -55,5 +55,5 @@ private:
 	ConstantBuffer m_ShadowConstantsBufferForGS; // 2개 이상의 view 행렬을 사용하는 광원을 위한  geometry용 상수버퍼.
 	
 	// DO NOT release directly.
-	BaseRenderer* m_pRenderer = nullptr;
+	Renderer* m_pRenderer = nullptr;
 };
