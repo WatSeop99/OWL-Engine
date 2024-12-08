@@ -37,13 +37,7 @@ public:
 
 	void InterpolateKeyData(Vector3* pOutPosition, Quaternion* pOutRotation, Vector3* pOutScale, AnimationClip* pClip, const int BONE_ID, const float ANIMATION_TIME_TICK);
 
-	inline DirectX::SimpleMath::Matrix Get(const int CLIP_ID, const int BONE_ID, const int FRAME)
-	{
-		// DefaultTransform은 모델을 읽어들일때 GeometryGenerator::Normalize()에서 계산. 
-		// DefaultTransform.Invert() * OffsetMatrices[BONE_ID]를 미리 계산해서 합치고 
-		// DefaultTransform * RootTransform을 미리 계산해놓을 수 있음.
-		return (DefaultTransform.Invert() * OffsetMatrices[BONE_ID] * BoneTransforms[BONE_ID] * DefaultTransform);
-	}
+	DirectX::SimpleMath::Matrix Get(const int CLIP_ID, const int BONE_ID, const int FRAME);
 
 protected:
 	UINT findIndex(AnimationClip* pClip, const int BONE_ID, const float ANIMATION_TIME_TICK);

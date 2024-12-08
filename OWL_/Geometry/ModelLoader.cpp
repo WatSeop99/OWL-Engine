@@ -1,4 +1,10 @@
-﻿#include <assimp/Importer.hpp>
+﻿#ifdef _DEBUG
+#pragma comment(lib, "assimp-vc143-mtd.lib")
+#else
+#pragma comment(lib, "assimp-vc143-mt.lib")
+#endif
+
+#include <assimp/Importer.hpp>
 #include <assimp/material.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -133,7 +139,8 @@ HRESULT ModelLoader::LoadAnimation(std::wstring& basePath, std::wstring& fileNam
 
 	Assimp::Importer importer;
 
-	const aiScene* pSCENE = importer.ReadFile(szBasePath + fileNameA, aiProcess_Triangulate | aiProcess_ConvertToLeftHanded);
+	//const aiScene* pSCENE = importer.ReadFile(szBasePath + fileNameA, aiProcess_Triangulate | aiProcess_ConvertToLeftHanded);
+	const aiScene* pSCENE = importer.ReadFile(szBasePath + fileNameA, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_ConvertToLeftHanded);
 
 	if (pSCENE && pSCENE->HasAnimations())
 	{

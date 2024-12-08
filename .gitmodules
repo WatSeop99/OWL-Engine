@@ -4,3 +4,9 @@
 [submodule "OWL_/External/imgui"]
 	path = OWL_/External/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "OWL_/External/stb"]
+	path = OWL_/External/stb
+	url = https://github.com/nothings/stb.git
+[submodule "OWL_/External/Assimp"]
+	path = OWL_/External/Assimp
+	url = https://github.com/assimp/assimp.git

@@ -48,7 +48,6 @@ HRESULT ReadFromFile(std::vector<MeshInfo>& dst, AnimationData* pAnimData, std::
 	hr = modelLoader.Load(basePath, fileName, bRevertNormals);
 	if (FAILED(hr))
 	{
-		__debugbreak();
 		hr = E_FAIL;
 		goto LB_RET;
 	}
@@ -72,7 +71,6 @@ HRESULT ReadAnimationFromFile(AnimationData* pAnimData, std::wstring& basePath, 
 	hr = modelLoader.LoadAnimation(basePath, fileName);
 	if (FAILED(hr))
 	{
-		__debugbreak();
 		hr = E_FAIL;
 		goto LB_RET;
 	}
@@ -91,22 +89,22 @@ void Normalize(const Vector3& CENTER, const float LONGEST_LENGTH, std::vector<Me
 	// 모델의 중심을 원점으로 옮기고 크기를 [-1,1]^3으로 스케일 -> 박스 형태로.
 
 	// Normalize vertices
-	Vector3 vMin(1000.0f, 1000.0f, 1000.0f);
-	Vector3 vMax(-1000.0f, -1000.0f, -1000.0f);
+	Vector3 minVector(1000.0f, 1000.0f, 1000.0f);
+	Vector3 maxVector(-1000.0f, -1000.0f, -1000.0f);
 	for (UINT64 i = 0, totalMesh = meshes.size(); i < totalMesh; ++i)
 	{
 		MeshInfo& curMesh = meshes[i];
 		for (UINT64 j = 0, vertSize = curMesh.Vertices.size(); j < vertSize; ++j)
 		{
 			Vertex& v = curMesh.Vertices[j];
-			vMin = Min(vMin, v.Position);
-			vMax = Max(vMax, v.Position);
+			minVector = Min(minVector, v.Position);
+			maxVector = Max(maxVector, v.Position);
 		}
 	}
 
-	Vector3 delta = vMax - vMin;
+	Vector3 delta = maxVector - minVector;
 	float scale = LONGEST_LENGTH / DirectX::XMMax(DirectX::XMMax(delta.x, delta.y), delta.z);
-	Vector3 translation = -(vMin + vMax) * 0.5f + CENTER;
+	Vector3 translation = -(minVector + maxVector) * 0.5f + CENTER;
 
 	for (UINT64 i = 0, totalMesh = meshes.size(); i < totalMesh; ++i)
 	{
@@ -125,6 +123,7 @@ void Normalize(const Vector3& CENTER, const float LONGEST_LENGTH, std::vector<Me
 
 	// 애니메이션 데이터 보정에 사용.
 	animData.DefaultTransform = Matrix::CreateTranslation(translation) * Matrix::CreateScale(scale);
+	animData.InverseDefaultTransform = animData.DefaultTransform.Invert();
 }
 
 void MakeSquare(MeshInfo* pDst, const float SCALE, const Vector2 TEX_SCALE)
