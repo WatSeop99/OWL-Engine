@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="E:\OWL_Git\OWL-Engine\OWL_\External\polyclipping\cpp\build\CMakeFiles\a68a1ff76232e1b11329bf0575c2c91f\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{8B905B39-0443-3C6B-9327-882FB4AC1981}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

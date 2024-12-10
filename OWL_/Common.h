@@ -11,6 +11,25 @@
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "dxguid.lib")
+#pragma comment(lib, "DirectXTK.lib")
+#pragma comment(lib, "DirectXTex.lib")
+
+#ifdef _DEBUG
+#pragma comment(lib, "Iex-3_4_d.lib")
+#pragma comment(lib, "IlmThread-3_4_d.lib")
+#pragma comment(lib, "Imath-3_2_d.lib")
+#pragma comment(lib, "OpenEXR-3_4_d.lib")
+#pragma comment(lib, "OpenEXRCore-3_4_d.lib")
+#pragma comment(lib, "OpenEXRUtil-3_4_d.lib")
+#else
+#pragma comment(lib, "Iex-3_4.lib")
+#pragma comment(lib, "IlmThread-3_4.lib")
+#pragma comment(lib, "Imath-3_2.lib")
+#pragma comment(lib, "OpenEXR-3_4.lib")
+#pragma comment(lib, "OpenEXRCore-3_4.lib")
+#pragma comment(lib, "OpenEXRUtil-3_4.lib")
+#endif
+
 #pragma warning(disable: 4996)
 
 #define INLINE __forceinline
@@ -56,7 +75,7 @@
 #include <backends/imgui_impl_win32.h>
 
 // 수학함수
-#include <directxtk/SimpleMath.h>
+#include <SimpleMath.h>
 #include <DirectXCollision.h>
 
 #include "Graphics/EnumData.h"

@@ -1,0 +1,10 @@
+^E:\OWL_GIT\OWL-ENGINE\OWL_\EXTERNAL\POLYCLIPPING\CPP\BUILD\CMAKEFILES\A68A1FF76232E1B11329BF0575C2C91F\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SE:/OWL_Git/OWL-Engine/OWL_/External/polyclipping/cpp -BE:/OWL_Git/OWL-Engine/OWL_/External/polyclipping/cpp/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file E:/OWL_Git/OWL-Engine/OWL_/External/polyclipping/cpp/build/polyclipping.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

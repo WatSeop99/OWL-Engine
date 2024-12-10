@@ -144,6 +144,18 @@
     <ClInclude Include="Geometry\TerrainGenerator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="External\DirectXTK\Inc\SimpleMath.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="External\DirectXTex\DirectXTex\DirectXTex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="External\DirectXTex\Auxiliary\DirectXTexEXR.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="External\DirectXTK\Inc\DDSTextureLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OWL_.rc">
@@ -280,6 +292,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Geometry\TerrainGenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="External\DirectXTex\Auxiliary\DirectXTexEXR.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="External\DirectXTK\Src\SimpleMath.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="External\DirectXTK\Src\DDSTextureLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include <directxtk/SimpleMath.h>
+#include <SimpleMath.h>
 
 #include <iostream>
 #include <utility>

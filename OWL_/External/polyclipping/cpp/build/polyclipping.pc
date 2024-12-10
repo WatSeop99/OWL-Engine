@@ -1,0 +1,13 @@
+prefix=C:/Program Files (x86)/polyclipping
+exec_prefix=C:/Program Files (x86)/polyclipping
+libdir=C:/Program Files (x86)/polyclipping/lib
+sharedlibdir=C:/Program Files (x86)/polyclipping/lib
+includedir=C:/Program Files (x86)/polyclipping/include/polyclipping
+
+Name: polyclipping
+Description: polygon clipping library
+Version: 
+
+Requires:
+Libs: -L${libdir} -L${sharedlibdir} -lpolyclipping
+Cflags: -I${includedir}

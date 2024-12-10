@@ -2,7 +2,7 @@
 
 #include <DirectXTex.h>
 #include <DirectXTexEXR.h>
-#include <directxtk/DDSTextureLoader.h>
+#include <DDSTextureLoader.h>
 #include <float.h>
 #include "../Common.h"
 

@@ -10,3 +10,36 @@
 [submodule "OWL_/External/Assimp"]
 	path = OWL_/External/Assimp
 	url = https://github.com/assimp/assimp.git
+[submodule "OWL_/External/DirectXTK"]
+	path = OWL_/External/DirectXTK
+	url = https://github.com/microsoft/DirectXTK.git
+[submodule "OWL_/External/DirectXTex"]
+	path = OWL_/External/DirectXTex
+	url = https://github.com/microsoft/DirectXTex.git
+[submodule "OWL_/External/openexr"]
+	path = OWL_/External/openexr
+	url = https://github.com/AcademySoftwareFoundation/openexr.git
+[submodule "OWL_/External/DirectXMath"]
+	path = OWL_/External/DirectXMath
+	url = https://github.com/microsoft/DirectXMath.git
+[submodule "OWL_/External/Draco"]
+	path = OWL_/External/Draco
+	url = https://github.com/google/draco.git
+[submodule "OWL_/External/poly2tri"]
+	path = OWL_/External/poly2tri
+	url = https://github.com/jhasse/poly2tri.git
+[submodule "OWL_/External/zlib"]
+	path = OWL_/External/zlib
+	url = https://github.com/madler/zlib.git
+[submodule "OWL_/External/pugixml"]
+	path = OWL_/External/pugixml
+	url = https://github.com/zeux/pugixml.git
+[submodule "OWL_/External/rapidjson"]
+	path = OWL_/External/rapidjson
+	url = https://github.com/Tencent/rapidjson.git
+[submodule "OWL_/External/utfcpp"]
+	path = OWL_/External/utfcpp
+	url = https://github.com/nemtrif/utfcpp.git
+[submodule "OWL_/External/kudazip"]
+	path = OWL_/External/kudazip
+	url = https://github.com/kuba--/zip.git

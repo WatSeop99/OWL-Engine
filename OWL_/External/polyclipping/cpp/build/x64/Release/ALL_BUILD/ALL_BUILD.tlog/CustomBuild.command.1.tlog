@@ -1,0 +1,10 @@
+^E:\OWL_GIT\OWL-ENGINE\OWL_\EXTERNAL\POLYCLIPPING\CPP\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SE:/OWL_Git/OWL-Engine/OWL_/External/polyclipping/cpp -BE:/OWL_Git/OWL-Engine/OWL_/External/polyclipping/cpp/build --check-stamp-file E:/OWL_Git/OWL-Engine/OWL_/External/polyclipping/cpp/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

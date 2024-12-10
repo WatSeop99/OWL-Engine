@@ -1,0 +1,4 @@
+﻿  Building Custom Rule E:/OWL_Git/OWL-Engine/OWL_/External/polyclipping/cpp/CMakeLists.txt
+  clipper.cpp
+E:\OWL_Git\OWL-Engine\OWL_\External\polyclipping\cpp\clipper.cpp(3792,1): warning C4819: The file contains a character that cannot be represented in the current code page (949). Save the file in Unicode format to prevent data loss
+  polyclipping.vcxproj -> E:\OWL_Git\OWL-Engine\OWL_\External\polyclipping\cpp\build\Debug\polyclipping.dll

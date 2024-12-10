@@ -75,6 +75,8 @@ HRESULT ModelLoader::Load(std::wstring& basePath, std::wstring& fileName, bool _
 	szBasePath = std::string(basePath.begin(), basePath.end());
 
 	Assimp::Importer importer;
+	importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
+
 	// ReadFile()에서 경우에 따라서 여러가지 옵션들 설정 가능
 	// aiProcess_JoinIdenticalVertices | aiProcess_PopulateArmatureData |
 	// aiProcess_SplitByBoneCount |
@@ -127,6 +129,8 @@ HRESULT ModelLoader::Load(std::wstring& basePath, std::wstring& fileName, bool _
 		hr = E_FAIL;
 	}
 
+	importer.FreeScene();
+
 	return hr;
 }
 
@@ -138,9 +142,10 @@ HRESULT ModelLoader::LoadAnimation(std::wstring& basePath, std::wstring& fileNam
 	szBasePath = std::string(basePath.begin(), basePath.end());
 
 	Assimp::Importer importer;
+	importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
 
-	//const aiScene* pSCENE = importer.ReadFile(szBasePath + fileNameA, aiProcess_Triangulate | aiProcess_ConvertToLeftHanded);
-	const aiScene* pSCENE = importer.ReadFile(szBasePath + fileNameA, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_ConvertToLeftHanded);
+	const aiScene* pSCENE = importer.ReadFile(szBasePath + fileNameA, aiProcess_Triangulate | aiProcess_ConvertToLeftHanded);
+	//const aiScene* pSCENE = importer.ReadFile(szBasePath + fileNameA,  aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_ConvertToLeftHanded);
 
 	if (pSCENE && pSCENE->HasAnimations())
 	{
@@ -177,6 +182,8 @@ HRESULT ModelLoader::LoadAnimation(std::wstring& basePath, std::wstring& fileNam
 
 		hr = E_FAIL;
 	}
+
+	importer.FreeScene();
 
 	return hr;
 }
@@ -388,7 +395,7 @@ void ModelLoader::processMesh(aiMesh* pMesh, const aiScene* pScene, MeshInfo* pM
 
 	if (pMesh->HasBones())
 	{
-		const UINT64 VERT_SIZE = vertices.size();
+		const SIZE_T VERT_SIZE = vertices.size();
 		std::vector<std::vector<float>> boneWeights(VERT_SIZE);
 		std::vector<std::vector<UINT8>> boneIndices(VERT_SIZE);
 
@@ -416,7 +423,7 @@ void ModelLoader::processMesh(aiMesh* pMesh, const aiScene* pScene, MeshInfo* pM
 
 #ifdef _DEBUG
 		int maxBones = 0;
-		for (UINT64 i = 0, boneWeightSize = boneWeights.size(); i < boneWeightSize; ++i)
+		for (SIZE_T i = 0, boneWeightSize = boneWeights.size(); i < boneWeightSize; ++i)
 		{
 			maxBones = Max(maxBones, (int)boneWeights[i].size());
 		}
@@ -427,13 +434,13 @@ void ModelLoader::processMesh(aiMesh* pMesh, const aiScene* pScene, MeshInfo* pM
 #endif
 
 		skinnedVertices.resize(VERT_SIZE);
-		for (UINT64 i = 0; i < VERT_SIZE; ++i)
+		for (SIZE_T i = 0; i < VERT_SIZE; ++i)
 		{
 			skinnedVertices[i].Position = vertices[i].Position;
 			skinnedVertices[i].Normal = vertices[i].Normal;
 			skinnedVertices[i].Texcoord = vertices[i].Texcoord;
 
-			for (UINT64 j = 0, curBoneWeightsSize = boneWeights[i].size(); j < curBoneWeightsSize; ++j)
+			for (SIZE_T j = 0, curBoneWeightsSize = boneWeights[i].size(); j < curBoneWeightsSize; ++j)
 			{
 				skinnedVertices[i].BlendWeights[j] = boneWeights[i][j];
 				skinnedVertices[i].BoneIndices[j] = boneIndices[i][j];
@@ -569,18 +576,18 @@ void ModelLoader::updateTangents()
 {
 	using namespace DirectX;
 
-	for (UINT64 i = 0, size = MeshInfos.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = MeshInfos.size(); i < size; ++i)
 	{
 		MeshInfo& curMeshInfo = MeshInfos[i];
 		std::vector<Vertex>& curVertices = curMeshInfo.Vertices;
 		std::vector<SkinnedVertex>& curSkinnedVertices = curMeshInfo.SkinnedVertices;
 		std::vector<UINT>& curIndices = curMeshInfo.Indices;
-		UINT64 numFaces = curIndices.size() / 3;
+		SIZE_T numFaces = curIndices.size() / 3;
 
 		DirectX::XMFLOAT3 tangent;
 		DirectX::XMFLOAT3 bitangent;
 
-		for (UINT64 j = 0; j < numFaces; ++j)
+		for (SIZE_T j = 0; j < numFaces; ++j)
 		{
 			calculateTangentBitangent(curVertices[curIndices[j * 3]], curVertices[curIndices[j * 3 + 1]], curVertices[curIndices[j * 3 + 2]], &tangent, &bitangent);
 

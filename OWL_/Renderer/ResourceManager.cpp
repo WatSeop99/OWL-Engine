@@ -1,4 +1,4 @@
-#include <directxtk/DDSTextureLoader.h>
+#include <DDSTextureLoader.h>
 #include "../Common.h"
 #include "../Graphics/GraphicsUtils.h"
 #include "ResourceManager.h"

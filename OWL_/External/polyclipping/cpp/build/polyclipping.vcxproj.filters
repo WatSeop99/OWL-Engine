@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="E:\OWL_Git\OWL-Engine\OWL_\External\polyclipping\cpp\clipper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\OWL_Git\OWL-Engine\OWL_\External\polyclipping\cpp\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{262F7752-F264-3BDF-AD5D-89A07737155F}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
