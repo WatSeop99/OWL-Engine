@@ -1,33 +1,35 @@
 #ifndef __TILEABLE_NOISE_HLSLI__
 #define __TILEABLE_NOISE_HLSLI__
 
+#include "Hash.hlsli"
+
 // https://www.shadertoy.com/view/3dVXDc
 
-// Hash by David_Hoskins
-#define UI0 1597334673U
-#define UI1 3812015801U
-#define UI2 uint2(UI0, UI1)
-#define UI3 uint3(UI0, UI1, 2798796415U)
-#define UIF (1.0f / (float)0xFFFFFFFFU)
+//// Hash by David_Hoskins
+//#define UI0 1597334673U
+//#define UI1 3812015801U
+//#define UI2 uint2(UI0, UI1)
+//#define UI3 uint3(UI0, UI1, 2798796415U)
+//#define UIF (1.0f / (float)0xFFFFFFFFU)
 
-// if you need another has33 check link: https://www.shadertoy.com/view/XlXcW4
-float3 Hash33(float3 p)
-{
-    uint3 q = uint3(int3(p)) * UI3;
-    q = (q.x ^ q.y ^ q.z) * UI3;
-    return -1.0f + 2.0f * float3(q) * UIF;
-}
+//// if you need another has33 check link: https://www.shadertoy.com/view/XlXcW4
+//float3 Hash33(float3 p)
+//{
+//    uint3 q = uint3(int3(p)) * UI3;
+//    q = (q.x ^ q.y ^ q.z) * UI3;
+//    return -1.0f + 2.0f * float3(q) * UIF;
+//}
 
-float Hash21(uint2 p)
-{
-    //p *= uint2(73333, 7777);
-    //p ^= (uint2(3333777777) >> (p >> 28));
-    //float n = p.x * p.y;
-    //return n * UIF;
-    uint2 q = 1103515245U * ((p >> 1U) ^ (p.yx));
-    uint n = 1103515245U * ((q.x) ^ (q.y >> 3U));
-    return float(n) * UIF;
-}
+//float Hash21(uint2 p)
+//{
+//    //p *= uint2(73333, 7777);
+//    //p ^= (uint2(3333777777) >> (p >> 28));
+//    //float n = p.x * p.y;
+//    //return n * UIF;
+//    uint2 q = 1103515245U * ((p >> 1U) ^ (p.yx));
+//    uint n = 1103515245U * ((q.x) ^ (q.y >> 3U));
+//    return float(n) * UIF;
+//}
 
 float Remap(float x, float a, float b, float c, float d)
 {

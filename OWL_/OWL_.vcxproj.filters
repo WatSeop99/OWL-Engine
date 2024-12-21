@@ -156,6 +156,9 @@
     <ClInclude Include="External\DirectXTK\Inc\DDSTextureLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Geometry\FBXLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OWL_.rc">
@@ -303,6 +306,9 @@
     <ClCompile Include="External\DirectXTK\Src\DDSTextureLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Geometry\FBXLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\BasicVS.hlsl" />
@@ -365,5 +371,6 @@
     <None Include="Shaders\Atmosphere\PostColor.hlsli" />
     <None Include="Shaders\ShadowUtil.hlsli" />
     <None Include="Shaders\TileableNoise.hlsli" />
+    <None Include="Shaders\Hash.hlsli" />
   </ItemGroup>
 </Project>

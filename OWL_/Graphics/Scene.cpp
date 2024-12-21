@@ -56,7 +56,7 @@ bool Scene::Initialize(Renderer* pRenderer)
 
 		// 조명 2.
 		Lights[2].Property.Radiance = Vector3(1.0f);
-		Lights[2].Property.Position = Vector3(4.0f);
+		Lights[2].Property.Position = Vector3(5.0f);
 		Lights[2].Property.Direction = Vector3(-1.0f, -1.0f, -1.0f);
 		Lights[2].Property.Direction.Normalize();
 		Lights[2].Property.LightType = LIGHT_DIRECTIONAL | LIGHT_SHADOW;
@@ -137,7 +137,7 @@ bool Scene::Initialize(Renderer* pRenderer)
 		Vector3 position = Vector3(0.0f, -0.0f, 0.0f);
 		//m_pGround->UpdateWorld(Matrix::CreateRotationX(DirectX::XM_PI * 0.5f) * Matrix::CreateTranslation(position));
 		//m_pGround->UpdateWorld(Matrix::CreateTranslation(position));
-		m_pGround->bCastShadow = true; // 바닥은 그림자 만들기 생략.
+		m_pGround->bCastShadow = false; // 바닥은 그림자 만들기 생략.
 		RenderObjects.push_back(m_pGround);
 
 		m_MirrorPlane = DirectX::SimpleMath::Plane(position, Vector3::UnitY);

@@ -22,14 +22,14 @@ void UpdateNormals(std::vector<MeshInfo>& meshInfos)
 	// DirectXMesh의 ComputeNormals()과 비슷합니다.
 	// https://github.com/microsoft/DirectXMesh/wiki/ComputeNormals
 
-	for (UINT64 i = 0, endI = meshInfos.size(); i < endI; ++i)
+	for (SIZE_T i = 0, endI = meshInfos.size(); i < endI; ++i)
 	{
 		MeshInfo& meshInfo = meshInfos[i];
 
 		std::vector<Vector3> normalsTemp(meshInfo.Vertices.size(), Vector3(0.0f));
 		std::vector<float> weightsTemp(meshInfo.Vertices.size(), 0.0f);
 
-		for (UINT64 j = 0, endJ = meshInfo.Indices.size(); j < endJ; j += 3)
+		for (SIZE_T j = 0, endJ = meshInfo.Indices.size(); j < endJ; j += 3)
 		{
 			UINT idx0 = meshInfo.Indices[j];
 			UINT idx1 = meshInfo.Indices[j + 1];
@@ -49,7 +49,7 @@ void UpdateNormals(std::vector<MeshInfo>& meshInfos)
 			weightsTemp[idx2] += 1.0f;
 		}
 
-		for (UINT64 j = 0, endJ = meshInfo.Vertices.size(); j < endJ; ++j)
+		for (SIZE_T j = 0, endJ = meshInfo.Vertices.size(); j < endJ; ++j)
 		{
 			if (weightsTemp[j] > 0.0f)
 			{

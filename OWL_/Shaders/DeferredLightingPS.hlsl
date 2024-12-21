@@ -67,11 +67,17 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
                             index = i;
                             break;
                         }
+
+                        //lightTexcoord = float3(lightScreen.x, -lightScreen.y, lightScreen.z);
+                        //lightTexcoord = (lightTexcoord + 1.0f) * 0.5f;
+                        
+
                     }
                     
                     if (index != -1)
                     {
-                        shadowFactor = PCSSForDirectionalLight(g_CascadeShadowMaps, g_ShadowPointSampler, g_ShadowCompareSampler, index, lightTexcoord.xy, lightScreen.z - 0.001f, light.InverseProjections[index], light.Radius * radiusScale);
+                        //shadowFactor = PCSSForDirectionalLight(g_CascadeShadowMaps, g_ShadowPointSampler, g_ShadowCompareSampler, index, lightTexcoord.xy, lightScreen.z - 0.001f, light.InverseProjections[index], light.Radius * radiusScale);
+                        shadowFactor = PCSSForDirectionalLight(g_CascadeShadowMaps, g_ShadowPointSampler, g_ShadowCompareSampler, index, lightTexcoord.xy, lightScreen.z - 0.0001f, light.InverseProjections[index], light.Radius * radiusScale);
                     }
                 }
                 break;
@@ -106,7 +112,7 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
         
                     lightTexcoord = lightToPos;
         
-                    shadowFactor = PCSSForPointLight(g_ShadowCubeMap, g_ShadowPointSampler, g_ShadowCompareSampler, lightTexcoord, lightScreen.z - 0.001f, light.InverseProjections[0], light.Radius * radiusScale);
+                    shadowFactor = PCSSForPointLight(g_ShadowCubeMap, g_ShadowPointSampler, g_ShadowCompareSampler, lightTexcoord, lightScreen.z - 0.0001f, light.InverseProjections[0], light.Radius * radiusScale);
                 }
                 break;
             
@@ -122,7 +128,7 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
                     lightTexcoord.xy += 1.0f;
                     lightTexcoord.xy *= 0.5f;
        
-                    shadowFactor = PCSSForSpotLight(g_Shadow2DMap, g_ShadowPointSampler, g_ShadowCompareSampler, lightTexcoord.xy, lightScreen.z - 0.001f, light.InverseProjections[0], light.Radius * radiusScale);
+                    shadowFactor = PCSSForSpotLight(g_Shadow2DMap, g_ShadowPointSampler, g_ShadowCompareSampler, lightTexcoord.xy, lightScreen.z - 0.0001f, light.InverseProjections[0], light.Radius * radiusScale);
                 }
                 break;
             
