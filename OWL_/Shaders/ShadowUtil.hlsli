@@ -102,6 +102,7 @@ void FindBlockerInDirectionalLight(out float avgBlockerDepthView, out float numB
 {
     float lightRadiusUV = lightRadiusWorld / LIGHT_FRUSTUM_WIDTH;
     float searchRadius = lightRadiusUV * (zReceiverView - NEAR_PLANE) / zReceiverView;
+    searchRadius = 0.001f;
 
     float blockerSum = 0.0f;
     numBlockers = 0.0f;
@@ -213,6 +214,7 @@ float PCSSForDirectionalLight(Texture2DArray shadowMap, SamplerState shadowPoint
         // STEP 2: penumbra size.
         float penumbraRatio = (zReceiverView - avgBlockerDepthView) / avgBlockerDepthView;
         float filterRadiusUV = penumbraRatio * lightRadiusUV * NEAR_PLANE / zReceiverView;
+        filterRadiusUV = 0.001f;
 
         // STEP 3: filtering.
         return PCFFilterDirectionalLight(shadowMap, shadowCompare, shadowMapIndex, uv, zReceiverNDC, filterRadiusUV);
