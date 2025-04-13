@@ -24,12 +24,11 @@
 //	bool initializeSDKObjects(fbxsdk::FbxManager** ppOutManager, fbxsdk::FbxScene** ppOutScene);
 //	bool initializeImporter(fbxsdk::FbxManager* pSDKManager, std::string& fileName, fbxsdk::FbxImporter** ppOutImporter);
 //
-//	void findDeformingBones(const fbxsdk::FbxNode* pNODE, int* pCount);
-//	const aiNode* findParent(const aiNode* pNode);
+//	void findDeformingBones(fbxsdk::FbxNode* pNode, int* pCount);
 //
-//	void processNode(const fbxsdk::FbxNode* pNODE, Matrix& transform);
+//	void processNode(fbxsdk::FbxNode* pNode, Matrix& transform);
 //	void processNodeForAnimation(aiNode* pNode, const aiScene* pSCENE);
-//	void processMesh(aiMesh* pMesh, const aiScene* pScene, MeshInfo* pMeshInfo);
+//	void processMesh(fbxsdk::FbxMesh* pMesh, MeshInfo* pMeshInfo);
 //	void processMeshForAnimation(aiMesh* pMesh, const aiScene* pSCENE);
 //
 //	void readAnimation(const aiScene* pScene);

@@ -667,6 +667,7 @@ void Renderer::ProcessMouseControl()
 		dir.Normalize();
 		const Ray CUR_RAY = DirectX::SimpleMath::Ray(WORLD_NEAR, dir);
 
+
 		if (s_pActiveModel == nullptr) // 이전 프레임에서 아무 물체도 선택되지 않았을 경우에는 새로 선택.
 		{
 			Model* pSelectedModel = PickClosest(&CUR_RAY, &dist);
@@ -1066,6 +1067,7 @@ void Renderer::passDeferredLighting()
 
 	// Draw obejct for each light.
 
+	// light vector 다시 잡아야 함. 지금 vector는 2차원임.
 	Sun* pSun = m_pScene->GetSun();
 	memcpy(&pLightConstsData->Lights, &pSun->SunProperty, sizeof(LightProperty));
 	pLightConstantBuffer->Upload();

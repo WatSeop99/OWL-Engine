@@ -51,17 +51,6 @@ float PCFFilterDirectionalLight(Texture2DArray shadowMap, SamplerComparisonState
         sum += shadowMap.SampleCmpLevelZero(shadowCompare, float3(uv + offset, shadowMapIndex), zReceiverNDC);
     }
     return sum / 64.0f;
-
-    //float sum = 0.0f;
-    //float startTheta = Hash12(uint2(uv) + uint2(84, 137)) * 3.14159265f;
-    //for (int i = 0; i < 64; ++i)
-    //{
-    //    float2 offset = uv + diskSamples64[i] * filterRadiusUV;
-    //    //float samplePos = uv + VogelSample(i, 64, startTheta) * filterRadiusUV;
-    //    sum += shadowMap.SampleCmpLevelZero(shadowCompare, float3(uv + offset, shadowMapIndex), zReceiverNDC);
-    //}
-    
-    //return sum / 64.0f;
 }
 
 float PCFFilterPointLight(TextureCube shadowMap, SamplerComparisonState shadowCompare, float3 uvw, float zReceiverNDC, float filterRadiusUV)
@@ -79,13 +68,13 @@ void FindBlockerInSpotLight(out float avgBlockerDepthView, out float numBlockers
 {
     float lightRadiusUV = lightRadiusWorld / LIGHT_FRUSTUM_WIDTH;
     float searchRadius = lightRadiusUV * (zReceiverView - NEAR_PLANE) / zReceiverView;
+    searchRadius = 0.001f;
 
     float blockerSum = 0.0f;
     numBlockers = 0.0f;
     for (int i = 0; i < 64; ++i)
     {
         float shadowMapDepth = shadowMap.SampleLevel(shadowPoint, float2(uv + diskSamples64[i] * searchRadius), 0.0f).r;
-        //float shadowMapDepth = shadowMap.SampleLevel(shadowPoint, uv + diskSamples128[i] * float2(0.001f, 0.001f), 0.0f).r;
         shadowMapDepth = N2V(shadowMapDepth, inverseProjection);
         
         if (shadowMapDepth < zReceiverView)
@@ -102,14 +91,13 @@ void FindBlockerInDirectionalLight(out float avgBlockerDepthView, out float numB
 {
     float lightRadiusUV = lightRadiusWorld / LIGHT_FRUSTUM_WIDTH;
     float searchRadius = lightRadiusUV * (zReceiverView - NEAR_PLANE) / zReceiverView;
-    searchRadius = 0.001f;
+    searchRadius = 0.0008f;
 
     float blockerSum = 0.0f;
     numBlockers = 0.0f;
     for (int i = 0; i < 64; ++i)
     {
         float shadowMapDepth = shadowMap.SampleLevel(shadowPoint, float3(uv + diskSamples64[i] * searchRadius, shadowMapIndex), 0.0f).r;
-        //float shadowMapDepth = shadowMap.SampleLevel(shadowPoint, float3(uv + diskSamples64[i] * float2(0.001f, 0.001f), shadowMapIndex), 0.0f).r;
         shadowMapDepth = N2V(shadowMapDepth, invProj);
         
         if (shadowMapDepth < zReceiverView)
@@ -120,33 +108,13 @@ void FindBlockerInDirectionalLight(out float avgBlockerDepthView, out float numB
     }
     
     avgBlockerDepthView = blockerSum / numBlockers;
-
-    //float lightRadiusUV = lightRadiusWorld / LIGHT_FRUSTUM_WIDTH;
-    //float searchRadius = lightRadiusUV * (zReceiverView - NEAR_PLANE) / zReceiverView;
-    ////float searchRadius = Hash21(uint2(uv)) * 3.14159265f;
-
-    //float blockerSum = 0.0f;
-    //numBlockers = 0.0f;
-    //for (int i = 0; i < 64; ++i)
-    //{
-    //    float3 samplePos = float3(uv + VogelSample(i, 64, searchRadius) * lightRadiusUV, shadowMapIndex);
-    //    float shadowMapDepth = shadowMap.SampleLevel(shadowPoint, samplePos, 0.0f).r;
-    //    shadowMapDepth = N2V(shadowMapDepth, invProj);
-        
-    //    if (shadowMapDepth < zReceiverView)
-    //    {
-    //        blockerSum += shadowMapDepth;
-    //        ++numBlockers;
-    //    }
-    //}
-    
-    //avgBlockerDepthView = blockerSum / numBlockers;
 }
 
 void FindBlockerInPointLight(out float avgBlockerDepthView, out float numBlockers, TextureCube shadowMap, SamplerState shadowPoint, float3 uvw, float zReceiverView, matrix invProj, float lightRadiusWorld)
 {
     float lightRadiusUV = lightRadiusWorld / LIGHT_FRUSTUM_WIDTH;
     float searchRadius = lightRadiusUV * (zReceiverView - NEAR_PLANE) / zReceiverView;
+    searchRadius = 0.001f;
 
     float blockerSum = 0.0f;
     numBlockers = 0.0f;
@@ -187,6 +155,7 @@ float PCSSForSpotLight(Texture2D shadowMap, SamplerState shadowPoint, SamplerCom
         // STEP 2: penumbra size.
         float penumbraRatio = (zReceiverView - avgBlockerDepthView) / avgBlockerDepthView;
         float filterRadiusUV = penumbraRatio * lightRadiusUV * NEAR_PLANE / zReceiverView;
+        filterRadiusUV = 0.001f;
 
         // STEP 3: filtering.
         return PCFFilterSpotLight(shadowMap, shadowCompare, uv, zReceiverNDC, filterRadiusUV);
@@ -214,7 +183,7 @@ float PCSSForDirectionalLight(Texture2DArray shadowMap, SamplerState shadowPoint
         // STEP 2: penumbra size.
         float penumbraRatio = (zReceiverView - avgBlockerDepthView) / avgBlockerDepthView;
         float filterRadiusUV = penumbraRatio * lightRadiusUV * NEAR_PLANE / zReceiverView;
-        filterRadiusUV = 0.001f;
+        filterRadiusUV = 0.0008f;
 
         // STEP 3: filtering.
         return PCFFilterDirectionalLight(shadowMap, shadowCompare, shadowMapIndex, uv, zReceiverNDC, filterRadiusUV);
@@ -242,6 +211,7 @@ float PCSSForPointLight(TextureCube shadowMap, SamplerState shadowPoint, Sampler
         // STEP 2: penumbra size.
         float penumbraRatio = (zReceiverView - avgBlockerDepthView) / avgBlockerDepthView;
         float filterRadiusUV = penumbraRatio * lightRadiusUV * NEAR_PLANE / zReceiverView;
+        filterRadiusUV = 0.001f;
 
         // STEP 3: filtering.
         return PCFFilterPointLight(shadowMap, shadowCompare, uvw, zReceiverNDC, filterRadiusUV);

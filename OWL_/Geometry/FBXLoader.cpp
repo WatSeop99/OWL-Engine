@@ -68,7 +68,17 @@
 //
 //        // 모든 메쉬에 대해, 정점에 영향 주는 뼈들의 목록을 생성.
 //        // 트리 구조를 따라, 업데이트 순서대로 뼈들의 인덱스를 결정.
-//        fbxsdk::FbxNode* pRootNode = pScene->GetRootNode()->GetChild(1);
+//        fbxsdk::FbxNode* pRootNode = nullptr;
+//        for (int i = 0, size = pScene->GetRootNode()->GetChildCount(); i < size; ++i)
+//        {
+//            fbxsdk::FbxNode* pNode = pScene->GetRootNode()->GetChild(i);
+//            if (pNode->GetChildCount() > 0)
+//            {
+//                pRootNode = pNode;
+//                break;
+//            }
+//        }
+//
 //        int totalBoneCount = 0;
 //        findDeformingBones(pRootNode, &totalBoneCount);
 //
@@ -179,65 +189,68 @@
 //    return true;
 //}
 //
-//void FBXLoader::findDeformingBones(const fbxsdk::FbxNode* pNODE, int* pCount)
+//void FBXLoader::findDeformingBones(fbxsdk::FbxNode* pNode, int* pCount)
 //{
 //    _ASSERT(pCount);
 //
-//    if (!pNODE)
+//    if (!pNode)
 //    {
 //        return;
 //    }
 //
-//    AnimData.BoneNameToID[pNODE->GetName()] = *pCount;
-//    *pCount += 1;
+//    fbxsdk::FbxNodeAttribute* pAttribute = pNode->GetNodeAttribute();
+//    if (pAttribute && pAttribute->GetAttributeType() == fbxsdk::FbxNodeAttribute::eSkeleton)
+//    {
+//        AnimData.BoneNameToID[pNode->GetName()] = *pCount;
+//        *pCount += 1;
+//    }
 //
-//    const int CHILD_COUNT = pNODE->GetChildCount();
+//    const int CHILD_COUNT = pNode->GetChildCount();
 //    for (int i = 0; i < CHILD_COUNT; ++i)
 //    {
-//        findDeformingBones(pNODE->GetChild(i), pCount);
+//        findDeformingBones(pNode->GetChild(i), pCount);
 //    }
 //}
 //
-//const aiNode* FBXLoader::findParent(const aiNode* pNode)
+//void FBXLoader::processNode(fbxsdk::FbxNode* pNode, Matrix& transform)
 //{
-//    return nullptr;
-//}
-//
-//void FBXLoader::processNode(const fbxsdk::FbxNode* pNODE, Matrix& transform)
-//{
-//    if (!pNODE)
+//    if (!pNode)
 //    {
 //        return;
 //    }
 //
-//    const fbxsdk::FbxNode* pPARENT = pNODE->GetParent();
-//    const char* pszCUR_NODE_NAME = pNODE->GetName();
-//    const char* pszCUR_PARRENT_NAME = pPARENT->GetName();
+//	fbxsdk::FbxNodeAttribute* pAttribute = pNode->GetNodeAttribute();
+//	if (pAttribute)
+//	{
+//        MeshInfo meshInfo = {};
 //
-//    if (pPARENT && 
-//        strncmp("RootNode", pszCUR_NODE_NAME, strlen("RootNode")) != 0 &&
-//        AnimData.BoneNameToID.count(pszCUR_PARRENT_NAME) > 0)
+//		switch (pAttribute->GetAttributeType())
+//		{
+//			case fbxsdk::FbxNodeAttribute::eMesh:
+//			{
+//                processMesh(pNode->GetMesh(), &meshInfo);
+//				break;
+//			}
+//
+//			default:
+//				break;
+//		}
+//	}
+//
+//    const int CHILD_COUNT = pNode->GetChildCount();
+//    for (int i = 0; i < CHILD_COUNT; ++i)
 //    {
-//        const int BONE_ID = AnimData.BoneNameToID[pszCUR_PARRENT_NAME];
-//        AnimData.BoneParents[BONE_ID] = AnimData.BoneNameToID[pszCUR_NODE_NAME];
-//    }
-//
-//    // update mTransform.
-//
-//    // process current node mesh.
-//
-//    const int CHILD_NODE_COUNT = pNODE->GetChildCount();
-//    for (int i = 0; i < CHILD_NODE_COUNT; ++i)
-//    {
-//        processNode(pNODE->GetChild(i), m);
+//        processNode(pNode->GetChild(i));
 //    }
 //}
 //
 //void FBXLoader::processNodeForAnimation(aiNode* pNode, const aiScene * pSCENE)
 //{}
 //
-//void FBXLoader::processMesh(aiMesh* pMesh, const aiScene* pScene, MeshInfo* pMeshInfo)
-//{}
+//void FBXLoader::processMesh(fbxsdk::FbxMesh* pMesh, MeshInfo* pMeshInfo)
+//{
+//
+//}
 //
 //void FBXLoader::processMeshForAnimation(aiMesh* pMesh, const aiScene* pSCENE)
 //{}

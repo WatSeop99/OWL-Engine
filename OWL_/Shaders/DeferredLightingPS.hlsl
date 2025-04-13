@@ -138,6 +138,7 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
     }
 
     float3 radiance = light.Radiance * spotFator * att * shadowFactor;
+    //float3 radiance = light.Radiance * shadowFactor;
     return radiance;
 }
 
@@ -165,14 +166,16 @@ PixelShaderOutput main(SamplingPixelShaderInput input)
     
     if (lights.Type)
     {
-        float3 L = lights.Position - worldPos;
+        float3 L = (lights.Type & LIGHT_SUN ? -lights.Direction : lights.Position - worldPos);
+        //float3 L = lights.Direction;
         float3 r = normalize(reflect(g_EyeWorld - worldPos, normal));
         float3 centerToRay = dot(L, r) * r - L;
         float3 representativePoint = L + centerToRay * clamp(lights.Radius / length(centerToRay), 0.0f, 1.0f);
         representativePoint += worldPos;
         float3 lightVec = representativePoint - worldPos;
+        //lightVec = lights.Direction;
 
-            //float3 lightVec = lights[i].position - worldPos;
+        //float3 lightVec = lights[i].position - worldPos;
         float lightDist = length(lightVec);
         lightVec /= lightDist;
         float3 halfway = normalize(pixelToEye + lightVec);
@@ -186,7 +189,7 @@ PixelShaderOutput main(SamplingPixelShaderInput input)
         float3 kd = lerp(float3(1.0f, 1.0f, 1.0f) - F, float3(0.0f, 0.0f, 0.0f), metallic);
         float3 diffuseBRDF = kd * albedo.rgb;
 
-            // Sphere Normalization
+        // Sphere Normalization
         float alpha = roughness * roughness;
         float alphaPrime = saturate(alpha + lights.Radius / (2.0f * lightDist));
 
@@ -197,7 +200,7 @@ PixelShaderOutput main(SamplingPixelShaderInput input)
         float3 radiance = float3(0.0f, 0.0f, 0.0f);
         radiance = LightRadiance(lights, representativePoint, worldPos, normal);
             
-            // 오류 임시 수정 (radiance가 (0,0,0)일 경우, directLighting += ... 인데도 0 벡터가 되어버림.
+        // 오류 임시 수정 (radiance가 (0,0,0)일 경우, directLighting += ... 인데도 0 벡터가 되어버림.
         if (abs(dot(radiance, float3(1.0f, 1.0f, 1.0f))) > 1e-5)
         {
             directLighting += (diffuseBRDF + specularBRDF) * radiance * NdotI;

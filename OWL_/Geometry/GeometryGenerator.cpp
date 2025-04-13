@@ -590,12 +590,12 @@ void MakeSphere(MeshInfo* pDst, const float RADIUS, const int NUM_SLICES, const 
 			Vertex& v = vertices[j * (NUM_SLICES + 1) + i];
 
 			// 시작점을 x-z 평면에서 회전시키면서 원을 만드는 구조.
-			v.Position = Vector3::Transform(stackStartPoint, Matrix::CreateRotationY(D_THETA * float(i)));
+			v.Position = Vector3::Transform(stackStartPoint, Matrix::CreateRotationY(D_THETA * (float)i));
 
 			v.Normal = v.Position; // 원점이 구의 중심.
 			v.Normal.Normalize();
 
-			v.Texcoord = Vector2(float(i) / NUM_SLICES, 1.0f - float(j) / NUM_STACKS) * TEX_SCALE;
+			v.Texcoord = Vector2((float)i / NUM_SLICES, 1.0f - (float)j / NUM_STACKS) * TEX_SCALE;
 
 			// Texcoord가 위로 갈수록 증가.
 			Vector3 biTangent = Vector3::UnitY;

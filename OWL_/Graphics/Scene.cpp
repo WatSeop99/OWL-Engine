@@ -251,7 +251,7 @@ void Scene::Update(const float DELTA_TIME)
 		m_pMirror->UpdateConstantBuffers();
 	}*/
 
-	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = RenderObjects.size(); i < size; ++i)
 	{
 		Model* const pCurModel = RenderObjects[i];
 		pCurModel->UpdateConstantBuffers();
