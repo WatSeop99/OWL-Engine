@@ -26,37 +26,9 @@ public:
 	Mesh() = default;
 	~Mesh() { Cleanup(); };
 
-	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
-	{
-		_ASSERT(pDevice);
-		_ASSERT(pContext);
+	void Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
 
-		pMaterialBuffer = new Material;
-		ZeroMemory(pMaterialBuffer, sizeof(Material));
-		
-		MeshConstants initMeshConst;
-		MaterialConstants initMaterialConst;
-		MeshConstant.Initialize(pDevice, pContext, sizeof(MeshConstants), &initMeshConst);
-		MaterialConstant.Initialize(pDevice, pContext, sizeof(MaterialConstants), &initMaterialConst);
-	}
-
-	void Cleanup()
-	{
-		VertexCount = 0;
-		IndexCount = 0;
-		Stride = 0;
-		Offset = 0;
-
-		if (pMaterialBuffer)
-		{
-			delete pMaterialBuffer;
-			pMaterialBuffer = nullptr;
-		}
-		MeshConstant.Cleanup();
-		MaterialConstant.Cleanup();
-		SAFE_RELEASE(pVertexBuffer);
-		SAFE_RELEASE(pIndexBuffer);
-	}
+	void Cleanup();
 
 public:
 	ID3D11Buffer* pVertexBuffer = nullptr;

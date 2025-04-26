@@ -50,7 +50,7 @@ ALIGN(16) struct LightProperty
 {
 	DirectX::SimpleMath::Vector3 Radiance = DirectX::SimpleMath::Vector3(5.0f); // strength.
 	float FallOffStart = 0.0f;
-	DirectX::SimpleMath::Vector3 Direction = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 1.0f);
+	DirectX::SimpleMath::Vector3 Direction = DirectX::SimpleMath::Vector3::UnitZ;
 	float FallOffEnd = 20.0f;
 	DirectX::SimpleMath::Vector3 Position = DirectX::SimpleMath::Vector3(0.0f, 0.0f, -2.0f);
 	float SpotPower = 6.0f;

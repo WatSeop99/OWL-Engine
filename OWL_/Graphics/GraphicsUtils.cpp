@@ -73,13 +73,13 @@ HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWid
 	HRESULT hr = S_OK;
 	int channels = 0;
 
-	char pFileName[256];
-	if (!WideCharToMultiByte(CP_ACP, 0, pszFileName, -1, pFileName, MAX_PATH, nullptr, nullptr))
+	char szFileName[256];
+	if (!WideCharToMultiByte(CP_ACP, 0, pszFileName, -1, szFileName, MAX_PATH, nullptr, nullptr))
 	{
-		pFileName[0] = '\0';
+		szFileName[0] = '\0';
 	}
 
-	BYTE* pImg = stbi_load(pFileName, pWidth, pHeight, &channels, 0);
+	BYTE* pImg = stbi_load(szFileName, pWidth, pHeight, &channels, 0);
 	if (!pImg)
 	{
 		__debugbreak();
@@ -89,121 +89,121 @@ HRESULT ReadImage(const WCHAR* pszFileName, std::vector<UINT8>& image, int* pWid
 	image.resize((*pWidth) * (*pHeight) * 4, 255);
 	switch (channels)
 	{
-		case 1:
-			for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
+	case 1:
+		for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
+		{
+			BYTE g = pImg[i * channels];
+			for (int c = 0; c < 4; ++c)
 			{
-				UINT8 g = pImg[i * channels];
-				for (int c = 0; c < 4; ++c)
-				{
-					image[4 * i + c] = g;
-				}
+				image[4 * i + c] = g;
 			}
-			break;
+		}
+		break;
 
-		case 2:
-			for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
+	case 2:
+		for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
+		{
+			for (int c = 0; c < 2; ++c)
 			{
-				for (int c = 0; c < 2; ++c)
-				{
-					image[4 * i + c] = pImg[i * channels + c];
-				}
+				image[4 * i + c] = pImg[i * channels + c];
 			}
-			break;
+		}
+		break;
 
-		case 3:
-			for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
+	case 3:
+		for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
+		{
+			for (int c = 0; c < 3; ++c)
 			{
-				for (int c = 0; c < 3; ++c)
-				{
-					image[4 * i + c] = pImg[i * channels + c];
-				}
+				image[4 * i + c] = pImg[i * channels + c];
 			}
-			break;
+		}
+		break;
 
-		case 4:
-			for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
+	case 4:
+		for (int i = 0, size = (*pWidth) * (*pHeight); i < size; ++i)
+		{
+			for (int c = 0; c < 4; ++c)
 			{
-				for (int c = 0; c < 4; ++c)
-				{
-					image[4 * i + c] = pImg[i * channels + c];
-				}
+				image[4 * i + c] = pImg[i * channels + c];
 			}
-			break;
+		}
+		break;
 
-		default:
-			hr = E_FAIL;
-			break;
+	default:
+		hr = E_FAIL;
+		break;
 	}
 
 	free(pImg);
 
-//	DirectX::TexMetadata metaData;
-//	DirectX::ScratchImage scratchImage;
-//	DirectX::ScratchImage convertImage;
-//
-//	std::wstring fileExtension = GetFileExtension(pszFileName);
-//
-//	if (fileExtension.compare(L"hdr") == 0)
-//	{
-//		hr = GetMetadataFromHDRFile(pszFileName, metaData);
-//		if (FAILED(hr))
-//		{
-//			goto LB_RET;
-//		}
-//
-//		hr = LoadFromHDRFile(pszFileName, nullptr, scratchImage);
-//		if (FAILED(hr))
-//		{
-//			goto LB_RET;
-//		}
-//	}
-//	else if (fileExtension.compare(L"tga") == 0)
-//	{
-//		hr = GetMetadataFromTGAFile(pszFileName, metaData);
-//		if (FAILED(hr))
-//		{
-//			goto LB_RET;
-//		}
-//
-//		hr = LoadFromTGAFile(pszFileName, nullptr, scratchImage);
-//		if (FAILED(hr))
-//		{
-//			goto LB_RET;
-//		}
-//	}
-//	else
-//	{
-//		//hr = GetMetadataFromWICFile(pszFileName, DirectX::WIC_FLAGS_NONE, metaData);
-//		hr = GetMetadataFromWICFile(pszFileName, bUSE_SRGB ? DirectX::WIC_FLAGS_FORCE_RGB : DirectX::WIC_FLAGS_DEFAULT_SRGB, metaData);
-//		if (FAILED(hr))
-//		{
-//			goto LB_RET;
-//		}
-//
-//		//hr = LoadFromWICFile(pszFileName, DirectX::WIC_FLAGS_NONE, &metaData, scratchImage);
-//		hr = LoadFromWICFile(pszFileName, bUSE_SRGB ? DirectX::WIC_FLAGS_FORCE_RGB : DirectX::WIC_FLAGS_DEFAULT_SRGB, &metaData, scratchImage);
-//		if (FAILED(hr))
-//		{
-//			goto LB_RET;
-//		}
-//	}
-//
-//	*pWidth = (int)metaData.width;
-//	*pHeight = (int)metaData.height;
-//	*pPixelFormat = metaData.format;
-//	image.resize(scratchImage.GetPixelsSize(), 255);
-//
-//	if (DirectX::IsBGR(*pPixelFormat))
-//	{
-//		DirectX::Convert(scratchImage.GetImages(), scratchImage.GetImageCount(), scratchImage.GetMetadata(), DXGI_FORMAT_R8G8B8A8_UNORM, DirectX::TEX_FILTER_DEFAULT, DirectX::TEX_THRESHOLD_DEFAULT, convertImage);
-//		memcpy(image.data(), convertImage.GetPixels(), image.size());
-//	}
-//	else
-//	{
-//		memcpy(image.data(), scratchImage.GetPixels(), image.size());
-//	}
-//
-//LB_RET:
+	//	DirectX::TexMetadata metaData;
+	//	DirectX::ScratchImage scratchImage;
+	//	DirectX::ScratchImage convertImage;
+	//
+	//	std::wstring fileExtension = GetFileExtension(pszFileName);
+	//
+	//	if (fileExtension.compare(L"hdr") == 0)
+	//	{
+	//		hr = GetMetadataFromHDRFile(pszFileName, metaData);
+	//		if (FAILED(hr))
+	//		{
+	//			goto LB_RET;
+	//		}
+	//
+	//		hr = LoadFromHDRFile(pszFileName, nullptr, scratchImage);
+	//		if (FAILED(hr))
+	//		{
+	//			goto LB_RET;
+	//		}
+	//	}
+	//	else if (fileExtension.compare(L"tga") == 0)
+	//	{
+	//		hr = GetMetadataFromTGAFile(pszFileName, metaData);
+	//		if (FAILED(hr))
+	//		{
+	//			goto LB_RET;
+	//		}
+	//
+	//		hr = LoadFromTGAFile(pszFileName, nullptr, scratchImage);
+	//		if (FAILED(hr))
+	//		{
+	//			goto LB_RET;
+	//		}
+	//	}
+	//	else
+	//	{
+	//		//hr = GetMetadataFromWICFile(pszFileName, DirectX::WIC_FLAGS_NONE, metaData);
+	//		hr = GetMetadataFromWICFile(pszFileName, bUSE_SRGB ? DirectX::WIC_FLAGS_FORCE_RGB : DirectX::WIC_FLAGS_DEFAULT_SRGB, metaData);
+	//		if (FAILED(hr))
+	//		{
+	//			goto LB_RET;
+	//		}
+	//
+	//		//hr = LoadFromWICFile(pszFileName, DirectX::WIC_FLAGS_NONE, &metaData, scratchImage);
+	//		hr = LoadFromWICFile(pszFileName, bUSE_SRGB ? DirectX::WIC_FLAGS_FORCE_RGB : DirectX::WIC_FLAGS_DEFAULT_SRGB, &metaData, scratchImage);
+	//		if (FAILED(hr))
+	//		{
+	//			goto LB_RET;
+	//		}
+	//	}
+	//
+	//	*pWidth = (int)metaData.width;
+	//	*pHeight = (int)metaData.height;
+	//	*pPixelFormat = metaData.format;
+	//	image.resize(scratchImage.GetPixelsSize(), 255);
+	//
+	//	if (DirectX::IsBGR(*pPixelFormat))
+	//	{
+	//		DirectX::Convert(scratchImage.GetImages(), scratchImage.GetImageCount(), scratchImage.GetMetadata(), DXGI_FORMAT_R8G8B8A8_UNORM, DirectX::TEX_FILTER_DEFAULT, DirectX::TEX_THRESHOLD_DEFAULT, convertImage);
+	//		memcpy(image.data(), convertImage.GetPixels(), image.size());
+	//	}
+	//	else
+	//	{
+	//		memcpy(image.data(), scratchImage.GetPixels(), image.size());
+	//	}
+	//
+	//LB_RET:
 	return hr;
 }
 
@@ -246,29 +246,29 @@ UINT64 GetPixelSize(DXGI_FORMAT pixelFormat)
 {
 	switch (pixelFormat)
 	{
-		case DXGI_FORMAT_R16G16B16A16_FLOAT:
-			return sizeof(UINT16) * 4;
+	case DXGI_FORMAT_R16G16B16A16_FLOAT:
+		return sizeof(UINT16) * 4;
 
-		case DXGI_FORMAT_R32G32B32A32_FLOAT:
-			return sizeof(UINT32) * 4;
+	case DXGI_FORMAT_R32G32B32A32_FLOAT:
+		return sizeof(UINT32) * 4;
 
-		case DXGI_FORMAT_R32_FLOAT:
-			return sizeof(UINT32);
+	case DXGI_FORMAT_R32_FLOAT:
+		return sizeof(UINT32);
 
-		case DXGI_FORMAT_R8G8B8A8_UNORM:
-			return sizeof(UINT8) * 4;
+	case DXGI_FORMAT_R8G8B8A8_UNORM:
+		return sizeof(UINT8) * 4;
 
-		case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-			return sizeof(UINT8) * 4;
+	case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+		return sizeof(UINT8) * 4;
 
-		case DXGI_FORMAT_R32_SINT:
-			return sizeof(int);
+	case DXGI_FORMAT_R32_SINT:
+		return sizeof(int);
 
-		case DXGI_FORMAT_R16_FLOAT:
-			return sizeof(UINT16);
+	case DXGI_FORMAT_R16_FLOAT:
+		return sizeof(UINT16);
 
-		default:
-			break;
+	default:
+		break;
 	}
 
 	char szDebugString[256];

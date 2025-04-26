@@ -232,6 +232,7 @@
     <ClCompile Include="External\imgui\imgui_tables.cpp" />
     <ClCompile Include="External\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Geometry\FBXLoader.cpp" />
+    <ClCompile Include="Geometry\Mesh.cpp" />
     <ClCompile Include="Geometry\Terrain.cpp" />
     <ClCompile Include="Geometry\TerrainGenerator.cpp" />
     <ClCompile Include="Util\BVHTree.cpp" />
