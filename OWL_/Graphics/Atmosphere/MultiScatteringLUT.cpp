@@ -1,7 +1,7 @@
+#include "../../Common.h"
 #include <random>
 #include <cyVector.h>
 #include <cySampleElim.h>
-#include "../../Common.h"
 #include "../Renderer/Renderer.h"
 #include "../Renderer/ConstantBuffer.h"
 #include "../Renderer/StructuredBuffer.h"

@@ -72,12 +72,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>D:\Program Files\Autodesk\FBX\FBX SDK\2020.3.7\include;E:\OWL_Git\OWL-Engine\OWL_\External\utfcpp\source;E:\OWL_Git\OWL-Engine\OWL_\External\rapidjson\include;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\imath-build\config;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\imath-src\src\Imath;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\deflate-src;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\cmake;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXRUtil;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXRCore;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXR;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\IlmThread;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\Iex;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTex\Auxiliary;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTex\DirectXTex;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTK\Inc;E:\OWL_Git\OWL-Engine\OWL_\External\stb;E:\OWL_Git\OWL-Engine\OWL_\External\imgui;E:\OWL_Git\OWL-Engine\OWL_\External\cyCodeBase;$(IncludePath)</IncludePath>
+    <IncludePath>E:\OWL_Git\OWL-Engine\OWL_\External\tracy\public;D:\Program Files\Autodesk\FBX\FBX SDK\2020.3.7\include;E:\OWL_Git\OWL-Engine\OWL_\External\utfcpp\source;E:\OWL_Git\OWL-Engine\OWL_\External\rapidjson\include;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\imath-build\config;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\imath-src\src\Imath;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\deflate-src;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\cmake;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXRUtil;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXRCore;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXR;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\IlmThread;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\Iex;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTex\Auxiliary;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTex\DirectXTex;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTK\Inc;E:\OWL_Git\OWL-Engine\OWL_\External\stb;E:\OWL_Git\OWL-Engine\OWL_\External\imgui;E:\OWL_Git\OWL-Engine\OWL_\External\cyCodeBase;$(IncludePath)</IncludePath>
     <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
     <LibraryPath>D:\Program Files\Autodesk\FBX\FBX SDK\2020.3.7\lib\x64\debug;E:\OWL_Git\OWL-Engine\OWL_\External\Library\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>D:\Program Files\Autodesk\FBX\FBX SDK\2020.3.7\include;E:\OWL_Git\OWL-Engine\OWL_\External\utfcpp\source;E:\OWL_Git\OWL-Engine\OWL_\External\rapidjson\include;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\imath-build\config;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\imath-src\src\Imath;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\deflate-src;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\cmake;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXRUtil;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXRCore;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXR;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\IlmThread;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\Iex;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTex\Auxiliary;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTex\DirectXTex;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTK\Inc;E:\OWL_Git\OWL-Engine\OWL_\External\stb;E:\OWL_Git\OWL-Engine\OWL_\External\imgui;E:\OWL_Git\OWL-Engine\OWL_\External\cyCodeBase;$(IncludePath)</IncludePath>
+    <IncludePath>E:\OWL_Git\OWL-Engine\OWL_\External\tracy\public;D:\Program Files\Autodesk\FBX\FBX SDK\2020.3.7\include;E:\OWL_Git\OWL-Engine\OWL_\External\utfcpp\source;E:\OWL_Git\OWL-Engine\OWL_\External\rapidjson\include;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\imath-build\config;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\imath-src\src\Imath;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\deflate-src;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\cmake;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXRUtil;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXRCore;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXR;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\IlmThread;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\Iex;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTex\Auxiliary;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTex\DirectXTex;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTK\Inc;E:\OWL_Git\OWL-Engine\OWL_\External\stb;E:\OWL_Git\OWL-Engine\OWL_\External\imgui;E:\OWL_Git\OWL-Engine\OWL_\External\cyCodeBase;$(IncludePath)</IncludePath>
     <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
     <LibraryPath>D:\Program Files\Autodesk\FBX\FBX SDK\2020.3.7\lib\x64\release;E:\OWL_Git\OWL-Engine\OWL_\External\Library\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -118,6 +118,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -136,6 +137,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -150,6 +152,7 @@
     <ClInclude Include="External\DirectXTex\DirectXTex\DirectXTex.h" />
     <ClInclude Include="External\DirectXTK\Inc\DDSTextureLoader.h" />
     <ClInclude Include="External\DirectXTK\Inc\SimpleMath.h" />
+    <ClInclude Include="External\tracy\public\tracy\Tracy.hpp" />
     <ClInclude Include="Geometry\FBXLoader.h" />
     <ClInclude Include="Geometry\Terrain.h" />
     <ClInclude Include="Geometry\TerrainGenerator.h" />
@@ -231,6 +234,7 @@
     <ClCompile Include="External\imgui\imgui_draw.cpp" />
     <ClCompile Include="External\imgui\imgui_tables.cpp" />
     <ClCompile Include="External\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="External\tracy\public\TracyClient.cpp" />
     <ClCompile Include="Geometry\FBXLoader.cpp" />
     <ClCompile Include="Geometry\Mesh.cpp" />
     <ClCompile Include="Geometry\Terrain.cpp" />

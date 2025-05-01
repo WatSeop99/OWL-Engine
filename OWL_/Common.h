@@ -78,5 +78,8 @@
 #include <SimpleMath.h>
 #include <DirectXCollision.h>
 
+#define TRACY_ENABLE
+#include <tracy/Tracy.hpp>
+
 #include "Graphics/EnumData.h"
 #include "Util/Util.h"
