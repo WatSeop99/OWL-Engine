@@ -72,12 +72,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>D:\Program Files\Autodesk\FBX\FBX SDK\2020.3.7\include;E:\OWL_Git\OWL-Engine\OWL_\External\utfcpp\source;E:\OWL_Git\OWL-Engine\OWL_\External\rapidjson\include;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\imath-build\config;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\imath-src\src\Imath;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\deflate-src;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\cmake;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXRUtil;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXRCore;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXR;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\IlmThread;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\Iex;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTex\Auxiliary;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTex\DirectXTex;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTK\Inc;E:\OWL_Git\OWL-Engine\OWL_\External\stb;E:\OWL_Git\OWL-Engine\OWL_\External\imgui;E:\OWL_Git\OWL-Engine\OWL_\External\cyCodeBase;$(IncludePath)</IncludePath>
+    <IncludePath>E:\OWL_Git\OWL-Engine\OWL_\External\optick\src;D:\Program Files\Autodesk\FBX\FBX SDK\2020.3.7\include;E:\OWL_Git\OWL-Engine\OWL_\External\utfcpp\source;E:\OWL_Git\OWL-Engine\OWL_\External\rapidjson\include;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\imath-build\config;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\imath-src\src\Imath;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\deflate-src;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\cmake;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXRUtil;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXRCore;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXR;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\IlmThread;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\Iex;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTex\Auxiliary;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTex\DirectXTex;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTK\Inc;E:\OWL_Git\OWL-Engine\OWL_\External\stb;E:\OWL_Git\OWL-Engine\OWL_\External\imgui;E:\OWL_Git\OWL-Engine\OWL_\External\cyCodeBase;$(IncludePath)</IncludePath>
     <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
     <LibraryPath>D:\Program Files\Autodesk\FBX\FBX SDK\2020.3.7\lib\x64\debug;E:\OWL_Git\OWL-Engine\OWL_\External\Library\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>D:\Program Files\Autodesk\FBX\FBX SDK\2020.3.7\include;E:\OWL_Git\OWL-Engine\OWL_\External\utfcpp\source;E:\OWL_Git\OWL-Engine\OWL_\External\rapidjson\include;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\imath-build\config;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\imath-src\src\Imath;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\deflate-src;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\cmake;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXRUtil;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXRCore;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXR;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\IlmThread;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\Iex;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTex\Auxiliary;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTex\DirectXTex;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTK\Inc;E:\OWL_Git\OWL-Engine\OWL_\External\stb;E:\OWL_Git\OWL-Engine\OWL_\External\imgui;E:\OWL_Git\OWL-Engine\OWL_\External\cyCodeBase;$(IncludePath)</IncludePath>
+    <IncludePath>E:\OWL_Git\OWL-Engine\OWL_\External\optick\src;D:\Program Files\Autodesk\FBX\FBX SDK\2020.3.7\include;E:\OWL_Git\OWL-Engine\OWL_\External\utfcpp\source;E:\OWL_Git\OWL-Engine\OWL_\External\rapidjson\include;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\imath-build\config;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\imath-src\src\Imath;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\_deps\deflate-src;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\build\cmake;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXRUtil;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXRCore;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\OpenEXR;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\IlmThread;E:\OWL_Git\OWL-Engine\OWL_\External\openexr\src\lib\Iex;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTex\Auxiliary;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTex\DirectXTex;E:\OWL_Git\OWL-Engine\OWL_\External\DirectXTK\Inc;E:\OWL_Git\OWL-Engine\OWL_\External\stb;E:\OWL_Git\OWL-Engine\OWL_\External\imgui;E:\OWL_Git\OWL-Engine\OWL_\External\cyCodeBase;$(IncludePath)</IncludePath>
     <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
     <LibraryPath>D:\Program Files\Autodesk\FBX\FBX SDK\2020.3.7\lib\x64\release;E:\OWL_Git\OWL-Engine\OWL_\External\Library\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -152,7 +152,22 @@
     <ClInclude Include="External\DirectXTex\DirectXTex\DirectXTex.h" />
     <ClInclude Include="External\DirectXTK\Inc\DDSTextureLoader.h" />
     <ClInclude Include="External\DirectXTK\Inc\SimpleMath.h" />
-    <ClInclude Include="External\tracy\public\tracy\Tracy.hpp" />
+    <ClInclude Include="External\optick\src\optick.config.h" />
+    <ClInclude Include="External\optick\src\optick.h" />
+    <ClInclude Include="External\optick\src\optick_capi.h" />
+    <ClInclude Include="External\optick\src\optick_common.h" />
+    <ClInclude Include="External\optick\src\optick_core.freebsd.h" />
+    <ClInclude Include="External\optick\src\optick_core.h" />
+    <ClInclude Include="External\optick\src\optick_core.linux.h" />
+    <ClInclude Include="External\optick\src\optick_core.macos.h" />
+    <ClInclude Include="External\optick\src\optick_core.platform.h" />
+    <ClInclude Include="External\optick\src\optick_core.win.h" />
+    <ClInclude Include="External\optick\src\optick_gpu.h" />
+    <ClInclude Include="External\optick\src\optick_memory.h" />
+    <ClInclude Include="External\optick\src\optick_message.h" />
+    <ClInclude Include="External\optick\src\optick_miniz.h" />
+    <ClInclude Include="External\optick\src\optick_serialization.h" />
+    <ClInclude Include="External\optick\src\optick_server.h" />
     <ClInclude Include="Geometry\FBXLoader.h" />
     <ClInclude Include="Geometry\Terrain.h" />
     <ClInclude Include="Geometry\TerrainGenerator.h" />
@@ -234,7 +249,14 @@
     <ClCompile Include="External\imgui\imgui_draw.cpp" />
     <ClCompile Include="External\imgui\imgui_tables.cpp" />
     <ClCompile Include="External\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="External\tracy\public\TracyClient.cpp" />
+    <ClCompile Include="External\optick\src\optick_capi.cpp" />
+    <ClCompile Include="External\optick\src\optick_core.cpp" />
+    <ClCompile Include="External\optick\src\optick_gpu.cpp" />
+    <ClCompile Include="External\optick\src\optick_gpu.d3d12.cpp" />
+    <ClCompile Include="External\optick\src\optick_message.cpp" />
+    <ClCompile Include="External\optick\src\optick_miniz.cpp" />
+    <ClCompile Include="External\optick\src\optick_serialization.cpp" />
+    <ClCompile Include="External\optick\src\optick_server.cpp" />
     <ClCompile Include="Geometry\FBXLoader.cpp" />
     <ClCompile Include="Geometry\Mesh.cpp" />
     <ClCompile Include="Geometry\Terrain.cpp" />

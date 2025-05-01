@@ -312,6 +312,9 @@ void DebugApp2::UpdateGUI()
 
 void DebugApp2::Update(const float DELTA_TIME)
 {
+#ifdef PROFILING
+	OPTICK_EVENT("Update");
+#endif
 	UpdateGUI();
 	m_pRenderer->Update(DELTA_TIME);
 }
@@ -319,6 +322,10 @@ void DebugApp2::Update(const float DELTA_TIME)
 void DebugApp2::Render()
 {
 	_ASSERT(m_pRenderer);
+
+#ifdef PROFILING
+	OPTICK_EVENT("Render");
+#endif
 
 	Timer* pTimer = m_pRenderer->GetTimer();
 

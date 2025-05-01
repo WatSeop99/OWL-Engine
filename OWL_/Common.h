@@ -74,6 +74,9 @@
 #include <backends/imgui_impl_dx11.h>
 #include <backends/imgui_impl_win32.h>
 
+#define PROFILING
+#include <optick.h>
+
 // 수학함수
 #include <SimpleMath.h>
 #include <DirectXCollision.h>

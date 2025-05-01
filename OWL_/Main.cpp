@@ -31,6 +31,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
+#ifdef PROFILING
+	OPTICK_APP("OWL_Engine");
+	OPTICK_START_CAPTURE();
+#endif
+
 	DebugApp2* pApp = new DebugApp2;
 	if (!pApp || !pApp->Initialize())
 	{
@@ -43,6 +48,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		delete pApp;
 		pApp = nullptr;
 	}
+
+#ifdef PROFILING
+	OPTICK_STOP_CAPTURE();
+#endif
 
 #ifdef _DEBUG
 	CheckD3DMemoryLeak();
