@@ -45,9 +45,9 @@ void MultiScatteringLUT::Initialize(Renderer* pRenderer)
 
 	m_pRenderer = pRenderer;
 
-	createConstantBuffer();
-	createMultiScatteringLUTBuffer();
-	createRawDiskSamples();
+	CreateConstantBuffer();
+	CreateMultiScatteringLUTBuffer();
+	CreateRawDiskSamples();
 }
 
 void MultiScatteringLUT::Update(const Vector3* const pTerrainAlbedo)
@@ -131,7 +131,7 @@ void MultiScatteringLUT::Cleanup()
 	m_pAtmosphereConstantBuffer = nullptr;
 }
 
-void MultiScatteringLUT::createConstantBuffer()
+void MultiScatteringLUT::CreateConstantBuffer()
 {
 	_ASSERT(m_pRenderer);
 	_ASSERT(!m_pMultiScatteringConstantBuffer);
@@ -153,7 +153,7 @@ void MultiScatteringLUT::createConstantBuffer()
 	pMultiScatterConstData->RayMarchStepCount = RAY_MARCH_STEP_COUNT;
 }
 
-void MultiScatteringLUT::createMultiScatteringLUTBuffer()
+void MultiScatteringLUT::CreateMultiScatteringLUTBuffer()
 {
 	_ASSERT(m_pRenderer);
 	_ASSERT(!m_pMultiScatteringLUT);
@@ -191,7 +191,7 @@ void MultiScatteringLUT::createMultiScatteringLUTBuffer()
 	m_pMultiScatteringLUT->CreateUAV(uavDesc);
 }
 
-void MultiScatteringLUT::createRawDiskSamples()
+void MultiScatteringLUT::CreateRawDiskSamples()
 {
 	_ASSERT(m_pRenderer);
 	_ASSERT(!m_pRawSamples);

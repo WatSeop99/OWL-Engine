@@ -12,7 +12,7 @@ void Sky::Initialize(Renderer* pRenderer)
 
 	m_pRenderer = pRenderer;
 
-	createConstantBuffer();
+	CreateConstantBuffer();
 }
 
 void Sky::Update()
@@ -77,7 +77,7 @@ void Sky::SetCamera(const FrustumDirection* pFrustumDirs)
 	pSkyConstantData->FrustumD = pFrustumDirs->FrustumD;
 }
 
-void Sky::createConstantBuffer()
+void Sky::CreateConstantBuffer()
 {
 	_ASSERT(m_pRenderer);
 	_ASSERT(!m_pSkyConstantBuffer);

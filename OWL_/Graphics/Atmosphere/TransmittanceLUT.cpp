@@ -11,7 +11,7 @@ void TransmittanceLUT::Initialize(Renderer* pRenderer)
 
 	m_pRenderer = pRenderer;
 
-	createTransmittanceLUTBuffer();
+	CreateTransmittanceLUTBuffer();
 }
 
 void TransmittanceLUT::Generate()
@@ -54,7 +54,7 @@ void TransmittanceLUT::ResetLUT()
 		delete m_pTransmittanceLUT;
 		m_pTransmittanceLUT = nullptr;
 	}
-	createTransmittanceLUTBuffer();
+	CreateTransmittanceLUTBuffer();
 }
 
 void TransmittanceLUT::Cleanup()
@@ -68,7 +68,7 @@ void TransmittanceLUT::Cleanup()
 	m_pRenderer = nullptr;
 }
 
-void TransmittanceLUT::createTransmittanceLUTBuffer()
+void TransmittanceLUT::CreateTransmittanceLUTBuffer()
 {
 	_ASSERT(m_pRenderer);
 	_ASSERT(!m_pTransmittanceLUT);

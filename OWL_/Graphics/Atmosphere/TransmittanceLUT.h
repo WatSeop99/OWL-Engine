@@ -23,7 +23,7 @@ public:
 	inline void SetAtmosphere(ConstantBuffer* const pAtmos) { m_pAtmosphereConstantbuffer = pAtmos; }
 
 protected:
-	void createTransmittanceLUTBuffer();
+	void CreateTransmittanceLUTBuffer();
 
 public:
 	Vector2 Resolution = Vector2(256.0f, 256.0f);

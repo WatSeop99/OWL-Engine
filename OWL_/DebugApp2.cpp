@@ -58,14 +58,14 @@ int DebugApp2::Run()
 	return (int)msg.wParam;
 }
 
-bool DebugApp2::Initialize()
+bool DebugApp2::Initialize(HINSTANCE hInstance)
 {
 	bool bRet = true;
 
 	m_pRenderer = new Renderer;
 	m_pScene = new Scene;
 
-	if (!m_pRenderer || !m_pRenderer->Initialize(m_pScene))
+	if (!m_pRenderer || !m_pRenderer->Initialize(hInstance, m_pScene))
 	{
 		__debugbreak();
 		

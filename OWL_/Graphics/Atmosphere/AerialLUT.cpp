@@ -12,8 +12,8 @@ void AerialLUT::Initialize(Renderer* pRenderer)
 
 	m_pRenderer = pRenderer;
 
-	createAerialLUTBuffer();
-	createConstantBuffer();
+	CreateAerialLUTBuffer();
+	CreateConstantBuffer();
 }
 
 void AerialLUT::Update()
@@ -81,7 +81,7 @@ void AerialLUT::Resize()
 		delete m_pAerialLUT;
 		m_pAerialLUT = nullptr;
 	}
-	createAerialLUTBuffer();
+	CreateAerialLUTBuffer();
 }
 
 void AerialLUT::Cleanup()
@@ -156,7 +156,7 @@ void AerialLUT::SetMultiScatteringLUT(Texture* const pMultiScatteringLUT)
 	pAerialData->bEnableMultiScattering = TRUE;
 }
 
-void AerialLUT::createAerialLUTBuffer()
+void AerialLUT::CreateAerialLUTBuffer()
 {
 	_ASSERT(m_pRenderer);
 	_ASSERT(!m_pAerialLUT);
@@ -194,7 +194,7 @@ void AerialLUT::createAerialLUTBuffer()
 	m_pAerialLUT->CreateSRV(srvDesc);
 }
 
-void AerialLUT::createConstantBuffer()
+void AerialLUT::CreateConstantBuffer()
 {
 	_ASSERT(m_pRenderer);
 	_ASSERT(!m_pAerialConstantBuffer);

@@ -11,8 +11,8 @@ void SkyLUT::Initialize(Renderer* pRenderer)
 
 	m_pRenderer = pRenderer;
 
-	createSkyLUTBuffer();
-	createConstantBuffers();
+	CreateSkyLUTBuffer();
+	CreateConstantBuffers();
 }
 
 void SkyLUT::Update()
@@ -43,7 +43,7 @@ void SkyLUT::Generate()
 	pContext->PSSetSamplers(0, 1, &pResourceManager->pLinearClampSS);
 
 	// Draw.
-	setViewport();
+	SetViewport();
 	pContext->OMSetRenderTargets(1, &m_pSkyLUT->pRTV, nullptr);
 	pContext->Draw(6, 0);
 
@@ -66,7 +66,7 @@ void SkyLUT::Resize()
 		m_pSkyLUT = nullptr;
 	}
 	
-	createSkyLUTBuffer();
+	CreateSkyLUTBuffer();
 }
 
 void SkyLUT::Cleanup()
@@ -119,7 +119,7 @@ void SkyLUT::SetSun(const Vector3* const pDirection, const Vector3* const pInten
 	pSkyLUTData->SunIntensity = *pIntensity;
 }
 
-void SkyLUT::createSkyLUTBuffer()
+void SkyLUT::CreateSkyLUTBuffer()
 {
 	_ASSERT(m_pRenderer);
 	_ASSERT(!m_pSkyLUT);
@@ -144,7 +144,7 @@ void SkyLUT::createSkyLUTBuffer()
 	m_pSkyLUT->Initialize(pDevice, pContext, resourceDesc, nullptr, true);
 }
 
-void SkyLUT::createConstantBuffers()
+void SkyLUT::CreateConstantBuffers()
 {
 	_ASSERT(m_pRenderer);
 	_ASSERT(!m_pSkyLUTConstantBuffer);
@@ -160,7 +160,7 @@ void SkyLUT::createConstantBuffers()
 	pSkyData->EnableMultiScattering = TRUE;
 }
 
-void SkyLUT::setViewport()
+void SkyLUT::SetViewport()
 {
 	_ASSERT(m_pRenderer);
 

@@ -26,21 +26,164 @@ using DirectX::SimpleMath::Quaternion;
 using DirectX::SimpleMath::Ray;
 using DirectX::SimpleMath::Vector3;
 
-Renderer* g_pAppBase = nullptr;
-
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT Renderer::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	return g_pAppBase->MsgProc(hWnd, msg, wParam, lParam);
-}
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+	{
+		return TRUE;
+	}
 
-Renderer::Renderer()
-{
-	g_pAppBase = this;
+	switch (msg)
+	{
+	case WM_CREATE:
+	{
+		CREATESTRUCT* pStruct = (CREATESTRUCT*)lParam;
+		Renderer* pRenderer = (Renderer*)pStruct->lpCreateParams;
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)pRenderer);
+
+		break;
+	}
+
+	case WM_SIZE:
+	{
+		Renderer* pRenderer = (Renderer*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		if (!pRenderer)
+		{
+			__debugbreak();
+		}
+		pRenderer->OnResize((int)LOWORD(lParam), (int)HIWORD(lParam));
+
+		break;
+	}
+
+	case WM_SYSCOMMAND:
+	{
+		if ((wParam & 0xFFF0) == SC_KEYMENU) // ALT키 비활성화.
+		{
+			break;
+		}
+
+		break;
+	}
+
+	case WM_MOUSEMOVE:
+	{
+		Renderer* pRenderer = (Renderer*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		if (!pRenderer)
+		{
+			__debugbreak();
+		}
+		pRenderer->OnMouseMove((int)LOWORD(lParam), (int)HIWORD(lParam));
+
+		break;
+	}
+
+	case WM_LBUTTONDOWN:
+	{
+		Renderer* pRenderer = (Renderer*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		if (!pRenderer)
+		{
+			__debugbreak();
+		}
+		pRenderer->OnMouseClick(true, true, (int)LOWORD(lParam), (int)HIWORD(lParam));
+
+		break;
+	}
+
+	case WM_LBUTTONUP:
+	{
+		Renderer* pRenderer = (Renderer*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		if (!pRenderer)
+		{
+			__debugbreak();
+		}
+		pRenderer->OnMouseClick(true, false, (int)LOWORD(lParam), (int)HIWORD(lParam));
+		
+		break;
+	}
+
+	case WM_RBUTTONDOWN:
+	{
+		Renderer* pRenderer = (Renderer*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		if (!pRenderer)
+		{
+			__debugbreak();
+		}
+		pRenderer->OnMouseClick(false, true, (int)LOWORD(lParam), (int)HIWORD(lParam));
+
+		break;
+	}
+
+	case WM_RBUTTONUP:
+	{
+		Renderer* pRenderer = (Renderer*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		if (!pRenderer)
+		{
+			__debugbreak();
+		}
+		pRenderer->OnMouseClick(false, false, (int)LOWORD(lParam), (int)HIWORD(lParam));
+		break;
+	}
+
+	case WM_KEYDOWN:
+	{
+		if (wParam == VK_ESCAPE) // ESC키 종료.
+		{
+			DestroyWindow(hWnd);
+			PostQuitMessage(0);
+
+			break;
+		}
+
+		Renderer* pRenderer = (Renderer*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		if (!pRenderer)
+		{
+			__debugbreak();
+		}
+		pRenderer->OnKeyboardClick(true, wParam);
+
+		break;
+	}
+
+	case WM_KEYUP:
+	{
+		Renderer* pRenderer = (Renderer*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		if (!pRenderer)
+		{
+			__debugbreak();
+		}
+		pRenderer->OnKeyboardClick(false, wParam);
+
+		break;
+	}
+
+	case WM_MOUSEWHEEL:
+	{
+		Renderer* pRenderer = (Renderer*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		if (!pRenderer)
+		{
+			__debugbreak();
+		}
+		pRenderer->OnMouseWheel(wParam);
+
+		break;
+	}
+
+	case WM_CLOSE:
+	case WM_QUIT:
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+
+	default:
+		return DefWindowProc(hWnd, msg, wParam, lParam);
+	}
+
+	return 0;
 }
 
 Renderer::~Renderer()
 {
-	g_pAppBase = nullptr;
 	m_pScene = nullptr;
 	m_pCursorSphere = nullptr;
 
@@ -60,7 +203,7 @@ Renderer::~Renderer()
 		delete m_pRandomNoise;
 		m_pRandomNoise = nullptr;
 	}*/
-	
+
 	if (m_pFloatBuffer)
 	{
 		delete m_pFloatBuffer;
@@ -109,15 +252,16 @@ Renderer::~Renderer()
 	DestroyWindow(m_hMainWindow);
 }
 
-bool Renderer::Initialize(Scene* const pScene)
+bool Renderer::Initialize(HINSTANCE hInstance, Scene* const pScene)
 {
 	_ASSERT(pScene);
 
+	m_hInstance = hInstance;
 	m_pScene = pScene;
 
-	initMainWindow();
-	initDirect3D();
-	initGUI();
+	InitMainWindow();
+	InitD3D();
+	InitGUI();
 
 	m_pMainCamera = new Camera;
 	m_pMainCamera->SetAspectRatio(GetAspectRatio());
@@ -129,8 +273,8 @@ bool Renderer::Initialize(Scene* const pScene)
 	// postprocessor 초기화.
 	m_pPostProcessor = new PostProcessor;
 	m_pPostProcessor->Initialize(this,
-							   { m_pBackBuffer, m_pFloatBuffer, m_pPrevBuffer, &m_pGBuffer->DepthBuffer },
-							   m_ScreenWidth, m_ScreenHeight, 4);
+								 { m_pBackBuffer, m_pFloatBuffer, m_pPrevBuffer, &m_pGBuffer->DepthBuffer },
+								 m_ScreenWidth, m_ScreenHeight, 4);
 
 	// Timer setting.
 	m_pTimer = new Timer;
@@ -256,7 +400,7 @@ void Renderer::RenderGUI()
 	ImGui::Image((ImTextureID)(intptr_t)m_pPrevBuffer->pSRV, wsize, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f));
 	ImGui::End();
 
-	setMainViewport();
+	SetMainViewport();
 
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
@@ -267,21 +411,56 @@ void Renderer::Render()
 	m_pContext->VSSetSamplers(0, (UINT)m_pResourceManager->SamplerStates.size(), m_pResourceManager->SamplerStates.data());
 	m_pContext->PSSetSamplers(0, (UINT)m_pResourceManager->SamplerStates.size(), m_pResourceManager->SamplerStates.data());
 
-	passGBuffer();
-	passShadow();
+	PassGBuffer();
+	PassShadow();
 
 	m_pScene->GetSkyLUT()->Generate();
 	m_pScene->GetAerialLUT()->Generate();
 
-	passDeferredLighting();
-	passSky();
-	passDebug();
+	PassDeferredLighting();
+	PassSky();
+	PassDebug();
 
 	m_pPostProcessor->Render();
 
 	RenderGUI();
 
 	m_pSwapChain->Present(1, 0);
+}
+
+void Renderer::OnResize(int width, int height)
+{
+	if (!m_pSwapChain || !m_pMainCamera || !m_pScene)
+	{
+		return;
+	}
+
+	// 윈도우가 Minimize 모드에서는 screenWidth/Height가 0.
+	if (width <= 0 || height <= 0)
+	{
+		return;
+	}
+	
+
+	m_ScreenWidth = width;
+	m_ScreenHeight = height;
+
+#ifdef _DEBUG
+	char debugString[256];
+	sprintf(debugString, "Resize SwapChain to %d %d\n", width, height);
+	OutputDebugStringA(debugString);
+#endif 
+
+	// 기존 버퍼 초기화.
+	DestroyBuffersForRendering();
+	m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
+
+	CreateBuffers();
+	m_pMainCamera->SetAspectRatio(GetAspectRatio());
+	m_pPostProcessor->Initialize(this,
+								 { m_pBackBuffer, m_pFloatBuffer, m_pPrevBuffer, &m_pGBuffer->DepthBuffer },
+								 width, height, 4);
+	m_pPostProcessor->SetGlobalConstants(m_pScene->GetGlobalConstantBuffer());
 }
 
 void Renderer::OnMouseMove(int mouseX, int mouseY)
@@ -305,8 +484,39 @@ void Renderer::OnMouseMove(int mouseX, int mouseY)
 	m_pMainCamera->UpdateMouse(m_Mouse.MouseNDCX, m_Mouse.MouseNDCY);
 }
 
-void Renderer::OnMouseClick(int mouseX, int mouseY)
+void Renderer::OnMouseClick(bool bLeft, bool bClicked, int mouseX, int mouseY)
 {
+	if (bLeft)
+	{
+		if (bClicked)
+		{
+			if (!m_Mouse.bMouseLeftButton)
+			{
+				m_Mouse.bMouseDragStartFlag = true; // 드래그를 새로 시작하는지 확인.
+			}
+			m_Mouse.bMouseLeftButton = true;
+		}
+		else
+		{
+			m_Mouse.bMouseLeftButton = false;
+		}
+	}
+	else
+	{
+		if (bClicked)
+		{
+			if (!m_Mouse.bMouseRightButton)
+			{
+				m_Mouse.bMouseDragStartFlag = true; // 드래그를 새로 시작하는지 확인.
+			}
+			m_Mouse.bMouseRightButton = true;
+		}
+		else
+		{
+			m_Mouse.bMouseRightButton = false;
+		}
+	}
+
 	m_Mouse.MouseX = mouseX;
 	m_Mouse.MouseY = mouseY;
 
@@ -314,141 +524,40 @@ void Renderer::OnMouseClick(int mouseX, int mouseY)
 	m_Mouse.MouseNDCY = -mouseY * 2.0f / m_ScreenHeight + 1.0f;
 }
 
-LRESULT Renderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+void Renderer::OnMouseWheel(WPARAM wheelValue)
 {
-	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
+	m_Mouse.WheelDelta = GET_WHEEL_DELTA_WPARAM(wheelValue);
+}
+
+void Renderer::OnKeyboardClick(bool bClicked, WPARAM keyCode)
+{
+	if (bClicked)
 	{
-		return true;
-	}
+		m_Keyboard.bPressed[keyCode] = true;
 
-	switch (msg)
+		// 이 섹션은 키 누름 한번만 반영하기 위한 것.
+
+		if (keyCode == 'F')  // f키 일인칭 시점.
+		{
+			_ASSERT(m_pMainCamera);
+			m_pMainCamera->bUseFirstPersonView = !m_pMainCamera->bUseFirstPersonView;
+		}
+		if (keyCode == 'P') // 애니메이션 일시중지할 때 사용.
+		{
+			m_bPauseAnimation = !m_bPauseAnimation;
+		}
+		if (keyCode == 'Z') // 카메라 설정 화면에 출력.
+		{
+			_ASSERT(m_pMainCamera);
+			m_pMainCamera->PrintView();
+		}
+	}
+	else
 	{
-		case WM_SIZE:
-		{
-			// 화면 해상도가 바뀌면 SwapChain을 다시 생성.
-			if (m_pSwapChain)
-			{
-				_ASSERT(m_pMainCamera);
-				_ASSERT(m_pScene);
+		m_Keyboard.bPressed[keyCode] = false;
 
-				m_ScreenWidth = (int)LOWORD(lParam);
-				m_ScreenHeight = (int)HIWORD(lParam);
-
-				// 윈도우가 Minimize 모드에서는 screenWidth/Height가 0.
-				if (m_ScreenWidth && m_ScreenHeight)
-				{
-#ifdef _DEBUG
-					char debugString[256];
-					sprintf(debugString, "Resize SwapChain to %d %d\n", m_ScreenWidth, m_ScreenHeight);
-					OutputDebugStringA(debugString);
-#endif 
-
-					// 기존 버퍼 초기화.
-					destroyBuffersForRendering();
-					m_pSwapChain->ResizeBuffers(0, m_ScreenWidth, m_ScreenHeight, DXGI_FORMAT_UNKNOWN, 0);
-
-					createBuffers();
-					m_pMainCamera->SetAspectRatio(GetAspectRatio());
-					m_pPostProcessor->Initialize(this,
-											   { m_pBackBuffer, m_pFloatBuffer, m_pPrevBuffer, &m_pGBuffer->DepthBuffer },
-											   m_ScreenWidth, m_ScreenHeight, 4);
-					m_pPostProcessor->SetGlobalConstants(m_pScene->GetGlobalConstantBuffer());
-				}
-			}
-
-			break;
-		}
-
-		case WM_SYSCOMMAND:
-		{
-			if ((wParam & 0xFFF0) == SC_KEYMENU) // ALT키 비활성화.
-			{
-				return 0;
-			}
-
-			break;
-		}
-
-		case WM_MOUSEMOVE:
-			OnMouseMove(LOWORD(lParam), HIWORD(lParam));
-			break;
-
-		case WM_LBUTTONDOWN:
-		{
-			if (!m_Mouse.bMouseLeftButton)
-			{
-				m_Mouse.bMouseDragStartFlag = true; // 드래그를 새로 시작하는지 확인.
-			}
-			m_Mouse.bMouseLeftButton = true;
-			OnMouseClick(LOWORD(lParam), HIWORD(lParam));
-
-			break;
-		}
-
-		case WM_LBUTTONUP:
-			m_Mouse.bMouseLeftButton = false;
-			break;
-
-		case WM_RBUTTONDOWN:
-		{
-			if (!m_Mouse.bMouseRightButton)
-			{
-				m_Mouse.bMouseDragStartFlag = true; // 드래그를 새로 시작하는지 확인.
-			}
-			m_Mouse.bMouseRightButton = true;
-
-			break;
-		}
-
-		case WM_RBUTTONUP:
-			m_Mouse.bMouseRightButton = false;
-			break;
-
-		case WM_KEYDOWN:
-		{
-			m_Keyboard.bPressed[wParam] = true;
-			if (wParam == VK_ESCAPE) // ESC키 종료.
-			{
-				DestroyWindow(hwnd);
-			}
-
-			break;
-		}
-
-		case WM_KEYUP:
-		{
-			if (wParam == 'F')  // f키 일인칭 시점.
-			{
-				_ASSERT(m_pMainCamera);
-				m_pMainCamera->bUseFirstPersonView = !m_pMainCamera->bUseFirstPersonView;
-			}
-			if (wParam == 'P') // 애니메이션 일시중지할 때 사용.
-			{
-				m_bPauseAnimation = !m_bPauseAnimation;
-			}
-			if (wParam == 'Z') // 카메라 설정 화면에 출력.
-			{
-				_ASSERT(m_pMainCamera);
-				m_pMainCamera->PrintView();
-			}
-
-			m_Keyboard.bPressed[wParam] = false;
-			break;
-		}
-
-		case WM_MOUSEWHEEL:
-			m_Mouse.WheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
-			break;
-
-		case WM_DESTROY:
-			PostQuitMessage(0);
-			return 0;
-
-		default:
-			break;
+		
 	}
-
-	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 void Renderer::SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU, UINT slot)
@@ -539,96 +648,96 @@ void Renderer::ProcessKeyboardControl(const float DELTA_TIME)
 
 	switch (s_State)
 	{
-		case Idle:
+	case Idle:
+	{
+		Vector3 deltaPos = Vector3(1.0f, 1.0f, 1.0f) * (pAnimationData->Velocity * DELTA_TIME);
+		pAnimationData->Position += deltaPos;
+
+		if (m_Keyboard.bPressed[VK_UP])
 		{
-			Vector3 deltaPos = Vector3(1.0f, 1.0f, 1.0f) * (pAnimationData->Velocity * DELTA_TIME);
-			pAnimationData->Position += deltaPos;
-
-			if (m_Keyboard.bPressed[VK_UP])
-			{
-				s_State = IdleToWalk;
-				s_FrameCount = 0;
-				pAnimationData->UpdateVelocity(s_State, s_FrameCount);
-			}
-			else if (s_FrameCount == ANIMATION_CLIP_SIZE)
-			{
-				s_FrameCount = 0;
-			}
-
-			break;
+			s_State = IdleToWalk;
+			s_FrameCount = 0;
+			pAnimationData->UpdateVelocity(s_State, s_FrameCount);
 		}
-
-		case IdleToWalk:
+		else if (s_FrameCount == ANIMATION_CLIP_SIZE)
 		{
-			pAnimationData->UpdateVelocity(s_State, s_FrameCount);
-
-			Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * DELTA_TIME);
-			pAnimationData->Position += deltaPos;
-
-			if (s_FrameCount == ANIMATION_CLIP_SIZE)
-			{
-				s_State = Walk;
-				s_FrameCount = 0;
-				pAnimationData->UpdateVelocity(s_State, s_FrameCount);
-			}
-
-			break;
+			s_FrameCount = 0;
 		}
 
-		case Walk:
-		{ 
-			if (m_Keyboard.bPressed[VK_RIGHT])
-			{
-				Quaternion newRot = Quaternion::CreateFromYawPitchRoll(DegreeToRadian(60.0f) * DELTA_TIME * 2.0f, 0.0f, 0.0f);
-				pAnimationData->Direction = Vector3::TransformNormal(pAnimationData->Direction, Matrix::CreateFromQuaternion(newRot));
-				pAnimationData->Rotation = Quaternion::Concatenate(pAnimationData->Rotation, newRot);
-			}
-			if (m_Keyboard.bPressed[VK_LEFT])
-			{
-				Quaternion newRot = Quaternion::CreateFromYawPitchRoll(DegreeToRadian(-60.0f) * DELTA_TIME * 2.0f, 0.0f, 0.0f);
-				pAnimationData->Direction = Vector3::TransformNormal(pAnimationData->Direction, Matrix::CreateFromQuaternion(newRot));
-				pAnimationData->Rotation = Quaternion::Concatenate(pAnimationData->Rotation, newRot);
-			}
+		break;
+	}
 
+	case IdleToWalk:
+	{
+		pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+
+		Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * DELTA_TIME);
+		pAnimationData->Position += deltaPos;
+
+		if (s_FrameCount == ANIMATION_CLIP_SIZE)
+		{
+			s_State = Walk;
+			s_FrameCount = 0;
 			pAnimationData->UpdateVelocity(s_State, s_FrameCount);
-
-			Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * DELTA_TIME);
-			pAnimationData->Position += deltaPos;
-
-			if (!m_Keyboard.bPressed[VK_UP])
-			{
-				s_State = WalkToStop;
-				s_FrameCount = 0;
-			}
-			if (s_FrameCount == ANIMATION_CLIP_SIZE)
-			{
-				s_FrameCount = 0;
-				pAnimationData->UpdateVelocity(s_State, s_FrameCount);
-			}
-
-			break;
 		}
 
-		case WalkToStop:
-		{ 
-			pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+		break;
+	}
 
-			Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * DELTA_TIME);
-			pAnimationData->Position += deltaPos;
-
-			if (s_FrameCount == ANIMATION_CLIP_SIZE)
-			{
-				s_State = Idle;
-				s_FrameCount = 0;
-				pAnimationData->UpdateVelocity(s_State, s_FrameCount);
-			}
-
-			break;
+	case Walk:
+	{
+		if (m_Keyboard.bPressed[VK_RIGHT])
+		{
+			Quaternion newRot = Quaternion::CreateFromYawPitchRoll(DegreeToRadian(60.0f) * DELTA_TIME * 2.0f, 0.0f, 0.0f);
+			pAnimationData->Direction = Vector3::TransformNormal(pAnimationData->Direction, Matrix::CreateFromQuaternion(newRot));
+			pAnimationData->Rotation = Quaternion::Concatenate(pAnimationData->Rotation, newRot);
+		}
+		if (m_Keyboard.bPressed[VK_LEFT])
+		{
+			Quaternion newRot = Quaternion::CreateFromYawPitchRoll(DegreeToRadian(-60.0f) * DELTA_TIME * 2.0f, 0.0f, 0.0f);
+			pAnimationData->Direction = Vector3::TransformNormal(pAnimationData->Direction, Matrix::CreateFromQuaternion(newRot));
+			pAnimationData->Rotation = Quaternion::Concatenate(pAnimationData->Rotation, newRot);
 		}
 
-		default:
-			__debugbreak();
-			break;
+		pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+
+		Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * DELTA_TIME);
+		pAnimationData->Position += deltaPos;
+
+		if (!m_Keyboard.bPressed[VK_UP])
+		{
+			s_State = WalkToStop;
+			s_FrameCount = 0;
+		}
+		if (s_FrameCount == ANIMATION_CLIP_SIZE)
+		{
+			s_FrameCount = 0;
+			pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+		}
+
+		break;
+	}
+
+	case WalkToStop:
+	{
+		pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+
+		Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * DELTA_TIME);
+		pAnimationData->Position += deltaPos;
+
+		if (s_FrameCount == ANIMATION_CLIP_SIZE)
+		{
+			s_State = Idle;
+			s_FrameCount = 0;
+			pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+		}
+
+		break;
+	}
+
+	default:
+		__debugbreak();
+		break;
 	}
 
 	Matrix newWorld = Matrix::CreateFromQuaternion(pAnimationData->Rotation) * Matrix::CreateTranslation(pAnimationData->Position);
@@ -688,7 +797,7 @@ void Renderer::ProcessMouseControl()
 					s_PrevVector.Normalize();
 				}
 				else
-				{ 
+				{
 					// 오른쪽 버튼 이동 준비
 					m_Mouse.bMouseDragStartFlag = false;
 					s_PrevRatio = dist / (WORLD_FAR - WORLD_NEAR).Length();
@@ -759,23 +868,21 @@ void Renderer::ProcessMouseControl()
 	}
 }
 
-void Renderer::initMainWindow()
+void Renderer::InitMainWindow()
 {
-	WNDCLASSEX wc =
-	{
-		sizeof(WNDCLASSEX),			// cbSize
-		CS_HREDRAW | CS_VREDRAW,	// style
-		WndProc,					// lpfnWndProc
-		0,							// cbClsExtra
-		0,							// cbWndExtra
-		GetModuleHandle(NULL),		// hInstance
-		NULL, 						// hIcon
-		NULL,						// hCursor
-		(HBRUSH)(COLOR_WINDOW + 1),	// hbrBackground
-		nullptr,					// lpszMenuName
-		L"OWL",						// lpszClassName
-		NULL						// hIconSm
-	};
+	_ASSERT(m_hInstance);
+
+	WNDCLASSEX wc = { 0, };
+	wc.cbSize = sizeof(WNDCLASSEX);
+	wc.style = CS_HREDRAW | CS_VREDRAW;
+	wc.lpfnWndProc = Renderer::WndProc;
+	wc.hInstance = m_hInstance;
+	wc.hIcon = nullptr;
+	wc.hCursor = nullptr;
+	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	wc.lpszMenuName = nullptr;
+	wc.lpszClassName = L"OWL";
+	wc.hIconSm = nullptr;
 
 	if (!RegisterClassEx(&wc))
 	{
@@ -787,11 +894,11 @@ void Renderer::initMainWindow()
 	m_hMainWindow = CreateWindow(wc.lpszClassName,
 								 L"OWL Engine",
 								 WS_OVERLAPPEDWINDOW,
-								 100,				 // 윈도우 좌측 상단의 x 좌표
-								 100,				 // 윈도우 좌측 상단의 y 좌표
-								 wr.right - wr.left, // 윈도우 가로 방향 해상도
-								 wr.bottom - wr.top, // 윈도우 세로 방향 해상도
-								 NULL, NULL, wc.hInstance, NULL);
+								 100,
+								 100,
+								 wr.right - wr.left,
+								 wr.bottom - wr.top,
+								 nullptr, nullptr, m_hInstance, this);
 
 	if (!m_hMainWindow)
 	{
@@ -802,7 +909,7 @@ void Renderer::initMainWindow()
 	UpdateWindow(m_hMainWindow);
 }
 
-void Renderer::initDirect3D()
+void Renderer::InitD3D()
 {
 	HRESULT hr = S_OK;
 
@@ -899,14 +1006,14 @@ LB_EXIT:
 		m_BackBufferFormat = swapChainDesc.Format;
 	}
 
-	createBuffers();
-	setMainViewport();
+	CreateBuffers();
+	SetMainViewport();
 
 	pFactory->Release();
 	pAdapter->Release();
 }
 
-void Renderer::initGUI()
+void Renderer::InitGUI()
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -926,7 +1033,7 @@ void Renderer::initGUI()
 	}
 }
 
-void Renderer::createBuffers()
+void Renderer::CreateBuffers()
 {
 	HRESULT hr = S_OK;
 
@@ -974,7 +1081,7 @@ void Renderer::createBuffers()
 	m_pGBuffer->Initialize(m_pDevice, m_pContext, m_ScreenWidth, m_ScreenHeight);
 }
 
-void Renderer::setMainViewport()
+void Renderer::SetMainViewport()
 {
 	// Set the viewport
 	m_ScreenViewport = { 0, };
@@ -988,7 +1095,7 @@ void Renderer::setMainViewport()
 	m_pContext->RSSetViewports(1, &m_ScreenViewport);
 }
 
-void Renderer::setComputeShaderBarrier()
+void Renderer::SetComputeShaderBarrier()
 {
 	// 예제들에서 최대 사용하는 SRV, UAV 갯수가 6개.
 	ID3D11ShaderResourceView* ppNullSRVs[6] = { nullptr, };
@@ -997,7 +1104,7 @@ void Renderer::setComputeShaderBarrier()
 	m_pContext->CSSetUnorderedAccessViews(0, 6, ppNullUAVs, nullptr);
 }
 
-void Renderer::destroyBuffersForRendering()
+void Renderer::DestroyBuffersForRendering()
 {
 	// swap chain에 사용될 back bufffer와 관련된 모든 버퍼를 초기화.
 	m_pBackBuffer->Cleanup();
@@ -1008,26 +1115,26 @@ void Renderer::destroyBuffersForRendering()
 	m_pPostProcessor->Cleanup();
 }
 
-void Renderer::passGBuffer()
+void Renderer::PassGBuffer()
 {
 	_ASSERT(m_pGBuffer);
 	_ASSERT(m_pScene);
 
-	setMainViewport();
+	SetMainViewport();
 	SetGlobalConsts(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0);
 	m_pGBuffer->PrepareRender();
 
 	for (UINT64 i = 0, size = m_pScene->RenderObjects.size(); i < size; ++i)
 	{
 		Model* const pModel = m_pScene->RenderObjects[i];
-		m_pResourceManager->SetPipelineState(pModel->GetGBufferPSO(false));
+		m_pResourceManager->SetPipelineState(pModel->GetGBufferPSO(m_pScene->bDrawAsWire));
 		pModel->Render();
 	}
 
 	m_pGBuffer->AfterRender();
 }
 
-void Renderer::passShadow()
+void Renderer::PassShadow()
 {
 	_ASSERT(m_pScene);
 
@@ -1038,11 +1145,11 @@ void Renderer::passShadow()
 	}
 }
 
-void Renderer::passDeferredLighting()
+void Renderer::PassDeferredLighting()
 {
 	_ASSERT(m_pScene);
 
-	setMainViewport();
+	SetMainViewport();
 	m_pResourceManager->SetPipelineState(GraphicsPSOType_DeferredRendering);
 	SetGlobalConsts(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0);
 
@@ -1085,28 +1192,28 @@ void Renderer::passDeferredLighting()
 
 		switch (curLight.Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
 		{
-			case LIGHT_DIRECTIONAL:
-			case LIGHT_SPOT:
-				m_pContext->PSSetShaderResources(5, 1, &curLight.GetShadowMapPtr()->GetShadow2DBufferPtr()->pSRV);
-				break;
+		case LIGHT_DIRECTIONAL:
+		case LIGHT_SPOT:
+			m_pContext->PSSetShaderResources(5, 1, &curLight.GetShadowMapPtr()->GetShadow2DBufferPtr()->pSRV);
+			break;
 
-			case LIGHT_POINT:
-				m_pContext->PSSetShaderResources(6, 1, &curLight.GetShadowMapPtr()->GetShadowCubeBufferPtr()->pSRV);
-				break;
+		case LIGHT_POINT:
+			m_pContext->PSSetShaderResources(6, 1, &curLight.GetShadowMapPtr()->GetShadowCubeBufferPtr()->pSRV);
+			break;
 
-			default:
-				break;
+		default:
+			break;
 		}
 
 		m_pContext->Draw(6, 0);
 	}
 }
 
-void Renderer::passSky()
+void Renderer::PassSky()
 {
 	_ASSERT(m_pScene);
 
-	setMainViewport();
+	SetMainViewport();
 	m_pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_pGBuffer->DepthBuffer.pDSV);
 
 	m_pScene->GetSky()->Render(m_pScene->GetSkyLUT()->GetSkyLUT());
@@ -1117,11 +1224,11 @@ void Renderer::passSky()
 	m_pContext->OMSetRenderTargets(1, &pNullRTV, pNullDSV);
 }
 
-void Renderer::passDebug()
+void Renderer::PassDebug()
 {
 	_ASSERT(m_pScene);
 
-	setMainViewport();
+	SetMainViewport();
 	SetGlobalConsts(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0);
 	m_pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_pGBuffer->DepthBuffer.pDSV);
 

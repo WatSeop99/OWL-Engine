@@ -217,8 +217,8 @@ bool Scene::Initialize(Renderer* pRenderer)
 
 void Scene::Update(const float DELTA_TIME)
 {
-	updateLights(DELTA_TIME);
-	updateGlobalConstants(DELTA_TIME);
+	UpdateLights(DELTA_TIME);
+	UpdateGlobalConstants(DELTA_TIME);
 
 	const Vector3 CAMERA_POS = m_pMainCamera->GetEyePos();
 	const Matrix CAMERA_VIEWPROJECTION = m_pMainCamera->GetView() * m_pMainCamera->GetProjection();
@@ -324,7 +324,7 @@ void Scene::Cleanup()
 	m_pRenderer = nullptr;
 }
 
-void Scene::initCubemaps(std::wstring&& basePath, std::wstring&& envFileName, std::wstring&& specularFileName, std::wstring&& irradianceFileName, std::wstring&& brdfFileName)
+void Scene::InitCubemaps(std::wstring&& basePath, std::wstring&& envFileName, std::wstring&& specularFileName, std::wstring&& irradianceFileName, std::wstring&& brdfFileName)
 {
 	_ASSERT(m_pRenderer);
 
@@ -374,7 +374,7 @@ void Scene::initCubemaps(std::wstring&& basePath, std::wstring&& envFileName, st
 	pResourceManager->CreateTextureCubeFromFile((basePath + brdfFileName).c_str(), m_pBRDF->GetTexture2DPPtr(), &textureDesc);*/
 }
 
-void Scene::updateLights(const float DELTA_TIME)
+void Scene::UpdateLights(const float DELTA_TIME)
 {
 	for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
 	{
@@ -383,7 +383,7 @@ void Scene::updateLights(const float DELTA_TIME)
 	}
 }
 
-void Scene::updateGlobalConstants(const float DELTA_TIME)
+void Scene::UpdateGlobalConstants(const float DELTA_TIME)
 {
 	const Vector3 EYE_WORLD = m_pMainCamera->GetEyePos();
 	const Matrix REFLECTION = Matrix::CreateReflection(m_MirrorPlane);

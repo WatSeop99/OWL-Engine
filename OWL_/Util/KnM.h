@@ -2,6 +2,8 @@
 
 struct Keyboard
 {
+	// keycode는 다음 virtual keycode를 따라감.
+	// https://learn.microsoft.com/ko-kr/windows/win32/inputdev/virtual-key-codes
 	bool bPressed[256] = { false, };
 };
 struct Mouse

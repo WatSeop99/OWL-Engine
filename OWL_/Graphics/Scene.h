@@ -44,16 +44,16 @@ public:
 
 	void LoadScene()
 	{
-		// initCubemaps(pDevice, L"./Assets/Textures/Cubemaps/HDRI/", L"SampleEnvHDR.dds", L"SampleSpecularHDR.dds", L"SampleDiffuseHDR.dds", L"SampleBrdf.dds"); 
-		initCubemaps(L"./Assets/Textures/Cubemaps/HDRI/", L"clear_pureskyEnvHDR.dds", L"clear_pureskySpecularHDR.dds", L"clear_pureskyDiffuseHDR.dds", L"clear_pureskyBrdf.dds");
+		// InitCubemaps(pDevice, L"./Assets/Textures/Cubemaps/HDRI/", L"SampleEnvHDR.dds", L"SampleSpecularHDR.dds", L"SampleDiffuseHDR.dds", L"SampleBrdf.dds"); 
+		InitCubemaps(L"./Assets/Textures/Cubemaps/HDRI/", L"clear_pureskyEnvHDR.dds", L"clear_pureskySpecularHDR.dds", L"clear_pureskyDiffuseHDR.dds", L"clear_pureskyBrdf.dds");
 	}
 	void SaveScene() {}
 
 protected:
-	void initCubemaps(std::wstring&& basePath, std::wstring&& envFileName, std::wstring&& specularFileName, std::wstring&& irradianceFileName, std::wstring&& brdfFileName);
+	void InitCubemaps(std::wstring&& basePath, std::wstring&& envFileName, std::wstring&& specularFileName, std::wstring&& irradianceFileName, std::wstring&& brdfFileName);
 
-	void updateLights(const float DELTA_TIME);
-	void updateGlobalConstants(const float DELTA_TIME);
+	void UpdateLights(const float DELTA_TIME);
+	void UpdateGlobalConstants(const float DELTA_TIME);
 
 public:
 	std::vector<Model*> RenderObjects; // opaque.

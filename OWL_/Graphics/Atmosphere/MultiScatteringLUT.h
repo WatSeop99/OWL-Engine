@@ -37,9 +37,9 @@ public:
 	inline void SetAtmosphere(ConstantBuffer* const pAtmos) { m_pAtmosphereConstantBuffer = pAtmos; }
 
 protected:
-	void createConstantBuffer();
-	void createMultiScatteringLUTBuffer();
-	void createRawDiskSamples();
+	void CreateConstantBuffer();
+	void CreateMultiScatteringLUTBuffer();
+	void CreateRawDiskSamples();
 
 public:
 	Vector2 Resolution = Vector2(256.0f, 256.0f);

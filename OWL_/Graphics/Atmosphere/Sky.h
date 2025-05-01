@@ -33,7 +33,7 @@ public:
 	void SetCamera(const FrustumDirection* pFrustumDirs);
 
 protected:
-	void createConstantBuffer();
+	void CreateConstantBuffer();
 
 private:
 	ConstantBuffer* m_pSkyConstantBuffer = nullptr;

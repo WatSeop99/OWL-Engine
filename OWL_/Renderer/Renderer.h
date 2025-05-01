@@ -16,11 +16,14 @@ class Texture;
 
 class Renderer
 {
+private:
+	static LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 public:
-	Renderer();
+	Renderer() = default;
 	virtual ~Renderer();
 
-	bool Initialize(Scene* const pScene);
+	bool Initialize(HINSTANCE hInstance, Scene* const pScene);
 	bool InitScene();
 
 	void UpdateGUI();
@@ -29,9 +32,11 @@ public:
 	void RenderGUI();
 	void Render();
 
+	void OnResize(int width, int height);
 	void OnMouseMove(int mouseX, int mouseY);
-	void OnMouseClick(int mouseX, int mouseY);
-	LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	void OnMouseClick(bool bLeft, bool bClicked, int mouseX, int mouseY);
+	void OnMouseWheel(WPARAM wheelValue);
+	void OnKeyboardClick(bool bClicked, WPARAM keyCode);
 
 	inline float GetAspectRatio() { return (float)m_ScreenWidth / (float)m_ScreenHeight; }
 	inline ID3D11Device* GetDevice() { return m_pDevice; }
@@ -56,27 +61,28 @@ public:
 	void ProcessMouseControl();
 
 protected:
-	void initMainWindow();
-	void initDirect3D();
-	void initGUI();
+	void InitMainWindow();
+	void InitD3D();
+	void InitGUI();
 
-	void createBuffers();
+	void CreateBuffers();
 
-	void setMainViewport();
-	void setComputeShaderBarrier();
+	void SetMainViewport();
+	void SetComputeShaderBarrier();
 
-	void destroyBuffersForRendering();
+	void DestroyBuffersForRendering();
 
-	void passGBuffer();
-	void passShadow();
-	void passDeferredLighting();
-	void passSky();
-	void passDebug();
+	void PassGBuffer();
+	void PassShadow();
+	void PassDeferredLighting();
+	void PassSky();
+	void PassDebug();
 
 protected:
-	UINT m_ScreenWidth = 1920;
-	UINT m_ScreenHeight = 1080;
+	HINSTANCE m_hInstance = nullptr;
 	HWND m_hMainWindow = nullptr;
+	int m_ScreenWidth = 1920;
+	int m_ScreenHeight = 1080;
 	UINT m_NumQualityLevels = 0;
 
 	D3D_FEATURE_LEVEL m_FeatureLevel = D3D_FEATURE_LEVEL_11_0;
@@ -97,8 +103,8 @@ protected:
 	GBuffer* m_pGBuffer = nullptr;
 
 	Camera* m_pMainCamera = nullptr;
-	Keyboard m_Keyboard;
-	Mouse m_Mouse;
+	Keyboard m_Keyboard = {};
+	Mouse m_Mouse = {};
 
 	bool m_bPauseAnimation = false;
 

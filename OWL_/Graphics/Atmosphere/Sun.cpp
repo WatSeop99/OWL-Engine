@@ -15,8 +15,8 @@ void Sun::Initialize(Renderer* pRenderer, Camera* pMainCamera)
 	m_pRenderer = pRenderer;
 	m_pMainCamera = pMainCamera;
 
-	createSunMesh(SunDiskSegments);
-	createConstantBuffers();
+	CreateSunMesh(SunDiskSegments);
+	CreateConstantBuffers();
 
 	SunProperty.Radius = 0.004649f;
 	SunProperty.LightType = LIGHT_SUN | LIGHT_SHADOW;
@@ -180,7 +180,7 @@ void Sun::RenderShadowMap(std::vector<Model*>& basicList, Model* pMirror)
 void Sun::ResetSunDisk()
 {
 	SAFE_RELEASE(m_pSunDiskBuffer);
-	createSunMesh(SunDiskSegments);
+	CreateSunMesh(SunDiskSegments);
 }
 
 void Sun::Cleanup()
@@ -224,7 +224,7 @@ void Sun::SetCamera(const Vector3* const pEye, const Matrix* const pViewProj)
 	m_CameraViewProjection = *pViewProj;
 }
 
-void Sun::createSunMesh(const int SEG_COUNT)
+void Sun::CreateSunMesh(const int SEG_COUNT)
 {
 	_ASSERT(m_pRenderer);
 	_ASSERT(!m_pSunDiskBuffer);
@@ -250,7 +250,7 @@ void Sun::createSunMesh(const int SEG_COUNT)
 	BREAK_IF_FAILED(hr);
 }
 
-void Sun::createConstantBuffers()
+void Sun::CreateConstantBuffers()
 {
 	_ASSERT(m_pRenderer);
 	_ASSERT(!m_pSunVSConstantBuffer);

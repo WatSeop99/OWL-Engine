@@ -47,8 +47,8 @@ public:
 	inline void SetTransmittanceLUT(Texture* const pTransmittanceLUT) { m_pTransmittanceLUT = pTransmittanceLUT; }
 
 protected:
-	void createSunMesh(const int SEG_COUNT);
-	void createConstantBuffers();
+	void CreateSunMesh(const int SEG_COUNT);
+	void CreateConstantBuffers();
 
 public:
 	int SunDiskSegments = 32;

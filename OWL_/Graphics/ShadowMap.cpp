@@ -152,7 +152,7 @@ void ShadowMap::Update(const LightProperty& PROPERTY, Camera* pLightCam, Camera*
 
 			for (int i = 0; i < 4; ++i)
 			{
-				calculateCascadeLightViewProjection(&lightSectionPosition, &lightSectionView, &lightSectionProjection, camView, camProjection, PROPERTY.Direction, i);
+				CalculateCascadeLightViewProjection(&lightSectionPosition, &lightSectionView, &lightSectionProjection, camView, camProjection, PROPERTY.Direction, i);
 
 				GlobalConstants* pShadowGlobalConstData = (GlobalConstants*)m_pShadowConstantsBuffers[i].pSystemMem;
 				ShadowConstants* pShadowConstGSData = (ShadowConstants*)m_ShadowConstantsBufferForGS.pSystemMem;
@@ -267,7 +267,7 @@ void ShadowMap::Render(std::vector<Model*>& pBasicList, Model* pMirror)
 	ResourceManager* pResourceManager = m_pRenderer->GetResourceManager();
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
-	setShadowViewport();
+	SetShadowViewport();
 
 	switch (m_LightType & m_TOTAL_LIGHT_TYPE)
 	{
@@ -363,7 +363,7 @@ void ShadowMap::Cleanup()
 	m_pRenderer = nullptr;
 }
 
-void ShadowMap::setShadowViewport()
+void ShadowMap::SetShadowViewport()
 {
 	_ASSERT(m_pRenderer);
 
@@ -419,7 +419,7 @@ void ShadowMap::setShadowViewport()
 	}
 }
 
-void ShadowMap::calculateCascadeLightViewProjection(Vector3* pPosition, Matrix* pView, Matrix* pProjection, const Matrix& VIEW, const Matrix& PROJECTION, const Vector3& DIR, int cascadeIndex)
+void ShadowMap::CalculateCascadeLightViewProjection(Vector3* pPosition, Matrix* pView, Matrix* pProjection, const Matrix& VIEW, const Matrix& PROJECTION, const Vector3& DIR, int cascadeIndex)
 {
 	_ASSERT(pPosition);
 	_ASSERT(pView);

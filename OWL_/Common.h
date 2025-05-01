@@ -6,6 +6,8 @@
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN 
+//#define PROFILING
+#define DX11
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -44,7 +46,9 @@
 #include <stringapiset.h>
 #include <minwindef.h>
 
+#ifdef DX11
 #include <d3d11_4.h>
+#endif
 #include <dxgi1_3.h>
 #include <dxgi1_5.h>
 #include <d3dcompiler.h>
@@ -71,10 +75,11 @@
 #include <locale>
 
 #include <imgui.h>
-#include <backends/imgui_impl_dx11.h>
 #include <backends/imgui_impl_win32.h>
+#ifdef DX11
+#include <backends/imgui_impl_dx11.h>
+#endif
 
-#define PROFILING
 #include <optick.h>
 
 // 수학함수

@@ -37,7 +37,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 #endif
 
 	DebugApp2* pApp = new DebugApp2;
-	if (!pApp || !pApp->Initialize())
+	if (!pApp || !pApp->Initialize(hInstance))
 	{
 		__debugbreak();
 	}

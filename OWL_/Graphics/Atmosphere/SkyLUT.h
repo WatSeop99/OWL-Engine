@@ -59,10 +59,10 @@ public:
 	inline void SetMultiScatteringLUT(Texture* pMultiScatteringLUT) { m_pMultiScatterLUT = pMultiScatteringLUT; }
 
 protected:
-	void createSkyLUTBuffer();
-	void createConstantBuffers();
+	void CreateSkyLUTBuffer();
+	void CreateConstantBuffers();
 
-	void setViewport();
+	void SetViewport();
 
 public:
 	SkyLUTConstants* pSkyData = nullptr;

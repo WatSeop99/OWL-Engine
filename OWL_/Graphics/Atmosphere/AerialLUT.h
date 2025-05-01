@@ -58,8 +58,8 @@ public:
     //inline void SetMultiScatteringLUT(Texture* const pMultiScatteringLUT) { m_pMultiScatterLUT = pMultiScatteringLUT; }
 
 protected:
-    void createAerialLUTBuffer();
-    void createConstantBuffer();
+    void CreateAerialLUTBuffer();
+    void CreateConstantBuffer();
 
 public:
     AerialLUTConstants* pAerialData = nullptr;

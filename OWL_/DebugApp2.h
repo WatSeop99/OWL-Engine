@@ -13,7 +13,7 @@ public:
 
 	int Run();
 
-	bool Initialize();
+	bool Initialize(HINSTANCE hInstance);
 	void InitScene();
 
 	void UpdateGUI();
