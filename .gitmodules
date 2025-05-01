@@ -43,3 +43,6 @@
 [submodule "OWL_/External/kudazip"]
 	path = OWL_/External/kudazip
 	url = https://github.com/kuba--/zip.git
+[submodule "OWL_/External/optick"]
+	path = OWL_/External/optick
+	url = https://github.com/bombomby/optick.git
