@@ -30,6 +30,8 @@ LRESULT Renderer::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
 	{
+		//return true;
+		//return 0;
 		return TRUE;
 	}
 
@@ -56,15 +58,7 @@ LRESULT Renderer::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 
-	//case WM_SYSCOMMAND:
-	//{
-	//	if ((wParam & 0xFFF0) == SC_KEYMENU) // ALT키 비활성화.
-	//	{
-	//		break;
-	//	}
-
-	//	break;
-	//}
+	// WM_SYSCOMMAND => 이거 처리하면서 창 컨트롤이 아예 안먹힘.
 
 	case WM_MOUSEMOVE:
 	{
@@ -168,6 +162,8 @@ LRESULT Renderer::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 
+	case WM_CLOSE:
+	case WM_DESTROY:
 	case WM_QUIT:
 		PostQuitMessage(0);
 		break;
@@ -187,8 +183,6 @@ Renderer::~Renderer()
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
-	/*m_pContext->OMSetRenderTargets(0, nullptr, nullptr);
-	m_pContext->Flush();*/
 
 	/*if (m_pRandomNoiseConstantBuffer)
 	{
@@ -550,8 +544,6 @@ void Renderer::OnKeyboardClick(bool bClicked, WPARAM keyCode)
 	else
 	{
 		m_Keyboard.bPressed[keyCode] = false;
-
-		
 	}
 }
 

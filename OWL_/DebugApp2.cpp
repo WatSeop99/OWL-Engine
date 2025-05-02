@@ -42,15 +42,10 @@ int DebugApp2::Run()
 
 	// 메인 루프.
 	MSG msg = { 0, };
-	while (TRUE)
+	while (msg.message != WM_QUIT && msg.message != WM_DESTROY)
 	{
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
-			if (msg.message == WM_QUIT || msg.message == WM_DESTROY)
-			{
-				break;
-			}
-
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
@@ -192,12 +187,12 @@ void DebugApp2::Render()
 
 	Timer* pTimer = m_pRenderer->GetTimer();
 
-	pTimer->Start(true);
+	//pTimer->Start(true);
 
 	m_pRenderer->Render();
 
-	OutputDebugStringA("Rendering time ==> ");
-	pTimer->End();
+	//OutputDebugStringA("Rendering time ==> ");
+	//pTimer->End();
 }
 
 void DebugApp2::UpdateGUI()
@@ -210,7 +205,9 @@ void DebugApp2::UpdateGUI()
 	GlobalConstants* pGlobalConstsCPU = m_pScene->GetGlobalConstantsCPU();
 
 	ImGui_ImplWin32_NewFrame();
+#ifdef DX11
 	ImGui_ImplDX11_NewFrame();
+#endif
 
 	ImGui::NewFrame();
 	ImGui::DockSpaceOverViewport();
