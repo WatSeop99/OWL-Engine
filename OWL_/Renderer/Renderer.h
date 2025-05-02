@@ -38,6 +38,7 @@ public:
 	void OnMouseWheel(WPARAM wheelValue);
 	void OnKeyboardClick(bool bClicked, WPARAM keyCode);
 
+	inline HWND GetWindowHandle() { return m_hMainWindow; }
 	inline float GetAspectRatio() { return (float)m_ScreenWidth / (float)m_ScreenHeight; }
 	inline ID3D11Device* GetDevice() { return m_pDevice; }
 	inline ID3D11DeviceContext* GetDeviceContext() { return m_pContext; }

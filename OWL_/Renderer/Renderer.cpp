@@ -56,15 +56,15 @@ LRESULT Renderer::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 
-	case WM_SYSCOMMAND:
-	{
-		if ((wParam & 0xFFF0) == SC_KEYMENU) // ALT키 비활성화.
-		{
-			break;
-		}
+	//case WM_SYSCOMMAND:
+	//{
+	//	if ((wParam & 0xFFF0) == SC_KEYMENU) // ALT키 비활성화.
+	//	{
+	//		break;
+	//	}
 
-		break;
-	}
+	//	break;
+	//}
 
 	case WM_MOUSEMOVE:
 	{
@@ -129,7 +129,6 @@ LRESULT Renderer::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		if (wParam == VK_ESCAPE) // ESC키 종료.
 		{
-			DestroyWindow(hWnd);
 			PostQuitMessage(0);
 
 			break;
@@ -169,9 +168,7 @@ LRESULT Renderer::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 
-	case WM_CLOSE:
 	case WM_QUIT:
-	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
 
@@ -249,7 +246,8 @@ Renderer::~Renderer()
 	SAFE_RELEASE(m_pContext);
 	SAFE_RELEASE(m_pDevice);
 
-	DestroyWindow(m_hMainWindow);
+	m_hMainWindow = nullptr;
+	m_hInstance = nullptr;
 }
 
 bool Renderer::Initialize(HINSTANCE hInstance, Scene* const pScene)
@@ -279,9 +277,6 @@ bool Renderer::Initialize(HINSTANCE hInstance, Scene* const pScene)
 	// Timer setting.
 	m_pTimer = new Timer;
 	m_pTimer->Initialize(m_pDevice, m_pContext);
-
-	// 콘솔창이 렌더링 창을 덮는 것을 방지.
-	SetForegroundWindow(m_hMainWindow);
 
 	m_DeltaTimeData.resize(90, 0);
 	m_FrameRateData.resize(90, 0);
@@ -904,9 +899,6 @@ void Renderer::InitMainWindow()
 	{
 		__debugbreak();
 	}
-
-	ShowWindow(m_hMainWindow, SW_SHOWDEFAULT);
-	UpdateWindow(m_hMainWindow);
 }
 
 void Renderer::InitD3D()

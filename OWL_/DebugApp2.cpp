@@ -34,9 +34,15 @@ DebugApp2::~DebugApp2()
 
 int DebugApp2::Run()
 {
+	_ASSERT(m_pRenderer);
+
+	HWND hWnd = m_pRenderer->GetWindowHandle();
+	ShowWindow(hWnd, SW_SHOWDEFAULT);
+	UpdateWindow(hWnd);
+
 	// 메인 루프.
 	MSG msg = { 0, };
-	while (true)
+	while (TRUE)
 	{
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
@@ -54,6 +60,8 @@ int DebugApp2::Run()
 			Render();
 		}
 	}
+
+	DestroyWindow(hWnd);
 
 	return (int)msg.wParam;
 }
@@ -163,6 +171,33 @@ void DebugApp2::InitScene()
 		m_pScene->RenderObjects.push_back(m_pCharacter); // 리스트에 등록
 		m_pScene->pMainController = m_pCharacter;
 	}
+}
+
+void DebugApp2::Update(const float DELTA_TIME)
+{
+#ifdef PROFILING
+	OPTICK_EVENT("Update");
+#endif
+	UpdateGUI();
+	m_pRenderer->Update(DELTA_TIME);
+}
+
+void DebugApp2::Render()
+{
+	_ASSERT(m_pRenderer);
+
+#ifdef PROFILING
+	OPTICK_EVENT("Render");
+#endif
+
+	Timer* pTimer = m_pRenderer->GetTimer();
+
+	pTimer->Start(true);
+
+	m_pRenderer->Render();
+
+	OutputDebugStringA("Rendering time ==> ");
+	pTimer->End();
 }
 
 void DebugApp2::UpdateGUI()
@@ -308,31 +343,4 @@ void DebugApp2::UpdateGUI()
 	}
 
 	ImGui::End();
-}
-
-void DebugApp2::Update(const float DELTA_TIME)
-{
-#ifdef PROFILING
-	OPTICK_EVENT("Update");
-#endif
-	UpdateGUI();
-	m_pRenderer->Update(DELTA_TIME);
-}
-
-void DebugApp2::Render()
-{
-	_ASSERT(m_pRenderer);
-
-#ifdef PROFILING
-	OPTICK_EVENT("Render");
-#endif
-
-	Timer* pTimer = m_pRenderer->GetTimer();
-
-	pTimer->Start(true);
-
-	m_pRenderer->Render();
-
-	OutputDebugStringA("Rendering time ==> ");
-	pTimer->End();
 }

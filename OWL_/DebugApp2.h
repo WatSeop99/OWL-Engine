@@ -15,11 +15,13 @@ public:
 
 	bool Initialize(HINSTANCE hInstance);
 	void InitScene();
-
-	void UpdateGUI();
+	
 	void Update(const float DELTA_TIME);
 
 	void Render();
+
+private:
+	void UpdateGUI();
 
 private:
 	Renderer* m_pRenderer = nullptr;
