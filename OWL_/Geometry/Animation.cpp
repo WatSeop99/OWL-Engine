@@ -135,7 +135,7 @@ void AnimationData::InterpolateKeyData(Vector3* pOutPosition, Quaternion* pOutRo
 	}
 
 	// Find key index at this time.
-	UINT positionIndex = findIndex(pClip, BONE_ID, ANIMATION_TIME_TICK);
+	UINT positionIndex = FindIndex(pClip, BONE_ID, ANIMATION_TIME_TICK);
 	UINT nextPositionIndex = positionIndex + 1;
 	_ASSERT(nextPositionIndex < KEY_SIZE);
 
@@ -177,7 +177,7 @@ DirectX::SimpleMath::Matrix AnimationData::Get(const int CLIP_ID, const int BONE
 	return (InverseDefaultTransform * OffsetMatrices[BONE_ID] * BoneTransforms[BONE_ID] * InverseOffsetMatrices[BONE_ID] * DefaultTransform);
 }
 
-UINT AnimationData::findIndex(AnimationClip* pClip, const int BONE_ID, const float ANIMATION_TIME_TICK)
+UINT AnimationData::FindIndex(AnimationClip* pClip, const int BONE_ID, const float ANIMATION_TIME_TICK)
 {
 	_ASSERT(pClip);
 	_ASSERT(BONE_ID >= 0);

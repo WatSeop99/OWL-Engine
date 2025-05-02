@@ -3,7 +3,7 @@
 #include "../Graphics/EnumData.h"
 #include "PipelineState.h"
 
-class ResourceManager
+class ResourceManager final
 {
 public:
 	ResourceManager() = default;
@@ -24,12 +24,12 @@ public:
 	void Cleanup();
 
 protected:
-	void initSamplers();
-	void initRasterizerStates();
-	void initBlendStates();
-	void initDepthStencilStates();
-	void initShaders();
-	void initPipelineStates();
+	void InitSamplers();
+	void InitRasterizerStates();
+	void InitBlendStates();
+	void InitDepthStencilStates();
+	void InitShaders();
+	void InitPipelineStates();
 
 	// volume shader Á¦¿Ü.
 

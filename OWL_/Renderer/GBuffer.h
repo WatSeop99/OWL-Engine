@@ -2,7 +2,7 @@
 
 #include "Texture.h"
 
-class GBuffer
+class GBuffer final
 {
 public:
 	GBuffer() = default;

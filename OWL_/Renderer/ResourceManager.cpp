@@ -13,12 +13,12 @@ void ResourceManager::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCo
 	m_pContext = pContext;
 	m_pContext->AddRef();
 
-	initSamplers();
-	initRasterizerStates();
-	initBlendStates();
-	initDepthStencilStates();
-	initShaders();
-	initPipelineStates();
+	InitSamplers();
+	InitRasterizerStates();
+	InitBlendStates();
+	InitDepthStencilStates();
+	InitShaders();
+	InitPipelineStates();
 }
 
 HRESULT ResourceManager::CreateVertexBuffer(UINT sizePerVertex, UINT numVertex, ID3D11Buffer** ppOutVertexBuffer, void* pInitData)
@@ -280,7 +280,7 @@ void ResourceManager::Cleanup()
 	SAFE_RELEASE(m_pDevice);
 }
 
-void ResourceManager::initSamplers()
+void ResourceManager::InitSamplers()
 {
 	_ASSERT(m_pDevice);
 
@@ -378,7 +378,7 @@ void ResourceManager::initSamplers()
 	SamplerStates.push_back(pPointClampSS);    // s7
 }
 
-void ResourceManager::initRasterizerStates()
+void ResourceManager::InitRasterizerStates()
 {
 	_ASSERT(m_pDevice);
 
@@ -445,7 +445,7 @@ void ResourceManager::initRasterizerStates()
 	SET_DEBUG_INFO_TO_OBJECT(pPostProcessingRS, "pPostProcessingRS");
 }
 
-void ResourceManager::initBlendStates()
+void ResourceManager::InitBlendStates()
 {
 	_ASSERT(m_pDevice);
 
@@ -501,7 +501,7 @@ void ResourceManager::initBlendStates()
 	SET_DEBUG_INFO_TO_OBJECT(pAlphaBS, "pAlphaBS");
 }
 
-void ResourceManager::initDepthStencilStates()
+void ResourceManager::InitDepthStencilStates()
 {
 	_ASSERT(m_pDevice);
 
@@ -579,7 +579,7 @@ void ResourceManager::initDepthStencilStates()
 	SET_DEBUG_INFO_TO_OBJECT(pDrawMaskedDSS, "pDrawMaskedDSS");
 }
 
-void ResourceManager::initShaders()
+void ResourceManager::InitShaders()
 {
 	_ASSERT(m_pDevice);
 
@@ -754,7 +754,7 @@ void ResourceManager::initShaders()
 	BREAK_IF_FAILED(hr);
 }
 
-void ResourceManager::initPipelineStates()
+void ResourceManager::InitPipelineStates()
 {
 	// g_DefaultSolidPSO
 	GraphicsPSOs[GraphicsPSOType_DefaultSolid].pVertexShader = pBasicVS;

@@ -51,14 +51,14 @@ public:
 	int GetMaxDepth();
 
 protected:
-	void addObjectInternal(const DirectX::BoundingBox* const pAABB);
+	void AddObjectInternal(const DirectX::BoundingBox* const pAABB);
 	
-	UINT allocateNode();
-	void releaseNode(const UINT NODE_ID);
+	UINT AllocateNode();
+	void ReleaseNode(const UINT NODE_ID);
 
-	void insertLeafNode(const UINT NODE_ID);
-	void removeLeafNode(const UINT NODE_ID);
-	UINT balanceSubTreeAtNode(const UINT NODE_ID);
+	void InsertLeafNode(const UINT NODE_ID);
+	void RemoveLeafNode(const UINT NODE_ID);
+	UINT BalanceSubTreeAtNode(const UINT NODE_ID);
 
 private:
 	Node* m_pNodes = nullptr;

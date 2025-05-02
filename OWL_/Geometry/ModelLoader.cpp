@@ -86,11 +86,11 @@ HRESULT ModelLoader::Load(std::wstring& basePath, std::wstring& fileName, bool _
 	if (pSCENE)
 	{
 		// 모든 메쉬에 대해, 정점에 영향 주는 뼈들의 목록을 생성.
-		findDeformingBones(pSCENE);
+		FindDeformingBones(pSCENE);
 
 		// 트리 구조를 따라, 업데이트 순서대로 뼈들의 인덱스를 결정.
 		int totalBoneCount = 0;
-		updateBoneIDs(pSCENE->mRootNode, &totalBoneCount);
+		UpdateBoneIDs(pSCENE->mRootNode, &totalBoneCount);
 
 		// 업데이트 순서대로 뼈 이름 저장. (BoneIDToNames)
 		AnimData.BoneIDToNames.resize(totalBoneCount);
@@ -107,17 +107,17 @@ HRESULT ModelLoader::Load(std::wstring& basePath, std::wstring& fileName, bool _
 		AnimData.BoneTransforms.resize(totalBoneCount);
 
 		Matrix globalTransform; // Initial transformation.
-		processNode(pSCENE->mRootNode, pSCENE, globalTransform);
+		ProcessNode(pSCENE->mRootNode, pSCENE, globalTransform);
 
 		// 애니메이션 정보 읽기.
 		if (pSCENE->HasAnimations())
 		{
-			readAnimation(pSCENE);
+			ReadAnimation(pSCENE);
 		}
 
 		// UpdateNormals(this->meshInfos); // Vertex Normal을 직접 계산 (참고용)
 
-		updateTangents();
+		UpdateTangents();
 	}
 	else
 	{
@@ -150,11 +150,11 @@ HRESULT ModelLoader::LoadAnimation(std::wstring& basePath, std::wstring& fileNam
 	if (pSCENE && pSCENE->HasAnimations())
 	{
 		// 모든 메쉬에 대해, 정점에 영향 주는 뼈들의 목록을 생성.
-		findDeformingBones(pSCENE);
+		FindDeformingBones(pSCENE);
 
 		// 트리 구조를 따라, 업데이트 순서대로 뼈들의 인덱스를 결정.
 		int totalBoneCount = 0;
-		updateBoneIDs(pSCENE->mRootNode, &totalBoneCount);
+		UpdateBoneIDs(pSCENE->mRootNode, &totalBoneCount);
 
 		// 업데이트 순서대로 뼈 이름 저장. (pBoneIDToNames)
 		AnimData.BoneIDToNames.resize(totalBoneCount);
@@ -169,9 +169,9 @@ HRESULT ModelLoader::LoadAnimation(std::wstring& basePath, std::wstring& fileNam
 		AnimData.InverseOffsetMatrices.resize(totalBoneCount);
 		AnimData.BoneTransforms.resize(totalBoneCount);
 
-		processNodeForAnimation(pSCENE->mRootNode, pSCENE);
+		ProcessNodeForAnimation(pSCENE->mRootNode, pSCENE);
 
-		readAnimation(pSCENE);
+		ReadAnimation(pSCENE);
 	}
 	else
 	{
@@ -188,7 +188,7 @@ HRESULT ModelLoader::LoadAnimation(std::wstring& basePath, std::wstring& fileNam
 	return hr;
 }
 
-void ModelLoader::findDeformingBones(const aiScene* pScene)
+void ModelLoader::FindDeformingBones(const aiScene* pScene)
 {
 	_ASSERT(pScene);
 
@@ -206,7 +206,7 @@ void ModelLoader::findDeformingBones(const aiScene* pScene)
 	}
 }
 
-const aiNode* ModelLoader::findParent(const aiNode* pNode)
+const aiNode* ModelLoader::FindParent(const aiNode* pNode)
 {
 	if (!pNode)
 	{
@@ -217,10 +217,10 @@ const aiNode* ModelLoader::findParent(const aiNode* pNode)
 		return pNode;
 	}
 
-	return findParent(pNode->mParent);
+	return FindParent(pNode->mParent);
 }
 
-void ModelLoader::processNode(aiNode* pNode, const aiScene* pScene, Matrix& transform)
+void ModelLoader::ProcessNode(aiNode* pNode, const aiScene* pScene, Matrix& transform)
 {
 	// https://ogldev.org/www/tutorial38/tutorial38.html
 	// If a node represents a bone in the hierarchy then the node name must
@@ -234,7 +234,7 @@ void ModelLoader::processNode(aiNode* pNode, const aiScene* pScene, Matrix& tran
 	}
 
 	// 사용되는 부모 뼈를 찾아서 부모의 인덱스 저장.
-	const aiNode* pPARENT = findParent(pNode->mParent);
+	const aiNode* pPARENT = FindParent(pNode->mParent);
 	if (pNode->mParent &&
 		AnimData.BoneNameToID.count(pNode->mName.C_Str()) > 0 &&
 		pPARENT)
@@ -251,7 +251,7 @@ void ModelLoader::processNode(aiNode* pNode, const aiScene* pScene, Matrix& tran
 		aiMesh* pMesh = pScene->mMeshes[pNode->mMeshes[i]];
 		MeshInfo newMeshInfo;
 
-		processMesh(pMesh, pScene, &newMeshInfo);
+		PocessMesh(pMesh, pScene, &newMeshInfo);
 		for (UINT64 j = 0, size = newMeshInfo.Vertices.size(); j < size; ++j)
 		{
 			Vertex& v = newMeshInfo.Vertices[j];
@@ -263,14 +263,14 @@ void ModelLoader::processNode(aiNode* pNode, const aiScene* pScene, Matrix& tran
 
 	for (UINT i = 0; i < pNode->mNumChildren; ++i)
 	{
-		processNode(pNode->mChildren[i], pScene, m);
+		ProcessNode(pNode->mChildren[i], pScene, m);
 	}
 }
 
-void ModelLoader::processNodeForAnimation(aiNode* pNode, const aiScene* pSCENE)
+void ModelLoader::ProcessNodeForAnimation(aiNode* pNode, const aiScene* pSCENE)
 {
 	// 사용되는 부모 뼈를 찾아서 부모의 인덱스 저장.
-	const aiNode* pPARENT = findParent(pNode->mParent);
+	const aiNode* pPARENT = FindParent(pNode->mParent);
 	const char* pNODE_NAME = pNode->mName.C_Str();
 	if (pPARENT &&
 		AnimData.BoneNameToID.count(pNODE_NAME) > 0)
@@ -283,16 +283,16 @@ void ModelLoader::processNodeForAnimation(aiNode* pNode, const aiScene* pSCENE)
 	for (UINT i = 0; i < pNode->mNumMeshes; ++i)
 	{
 		aiMesh* pMesh = pSCENE->mMeshes[pNode->mMeshes[i]];
-		processMeshForAnimation(pMesh, pSCENE);
+		ProcessMeshForAnimation(pMesh, pSCENE);
 	}
 
 	for (UINT i = 0; i < pNode->mNumChildren; ++i)
 	{
-		processNodeForAnimation(pNode->mChildren[i], pSCENE);
+		ProcessNodeForAnimation(pNode->mChildren[i], pSCENE);
 	}
 }
 
-void ModelLoader::processMesh(aiMesh* pMesh, const aiScene* pScene, MeshInfo* pMeshInfo)
+void ModelLoader::PocessMesh(aiMesh* pMesh, const aiScene* pScene, MeshInfo* pMeshInfo)
 {
 	_ASSERT(pScene);
 	_ASSERT(pMeshInfo);
@@ -367,22 +367,22 @@ void ModelLoader::processMesh(aiMesh* pMesh, const aiScene* pScene, MeshInfo* pM
 	{
 		aiMaterial* pMaterial = pScene->mMaterials[pMesh->mMaterialIndex];
 
-		readTextureFileName(pScene, pMaterial, aiTextureType_BASE_COLOR, &pMeshInfo->szAlbedoTextureFileName);
+		ReadTextureFileName(pScene, pMaterial, aiTextureType_BASE_COLOR, &pMeshInfo->szAlbedoTextureFileName);
 		if (pMeshInfo->szAlbedoTextureFileName.empty())
 		{
-			readTextureFileName(pScene, pMaterial, aiTextureType_DIFFUSE, &pMeshInfo->szAlbedoTextureFileName);
+			ReadTextureFileName(pScene, pMaterial, aiTextureType_DIFFUSE, &pMeshInfo->szAlbedoTextureFileName);
 		}
-		readTextureFileName(pScene, pMaterial, aiTextureType_EMISSIVE, &pMeshInfo->szEmissiveTextureFileName);
-		readTextureFileName(pScene, pMaterial, aiTextureType_HEIGHT, &pMeshInfo->szHeightTextureFileName);
-		readTextureFileName(pScene, pMaterial, aiTextureType_NORMALS, &pMeshInfo->szNormalTextureFileName);
-		readTextureFileName(pScene, pMaterial, aiTextureType_METALNESS, &pMeshInfo->szMetallicTextureFileName);
-		readTextureFileName(pScene, pMaterial, aiTextureType_DIFFUSE_ROUGHNESS, &pMeshInfo->szRoughnessTextureFileName);
-		readTextureFileName(pScene, pMaterial, aiTextureType_AMBIENT_OCCLUSION, &pMeshInfo->szAOTextureFileName);
+		ReadTextureFileName(pScene, pMaterial, aiTextureType_EMISSIVE, &pMeshInfo->szEmissiveTextureFileName);
+		ReadTextureFileName(pScene, pMaterial, aiTextureType_HEIGHT, &pMeshInfo->szHeightTextureFileName);
+		ReadTextureFileName(pScene, pMaterial, aiTextureType_NORMALS, &pMeshInfo->szNormalTextureFileName);
+		ReadTextureFileName(pScene, pMaterial, aiTextureType_METALNESS, &pMeshInfo->szMetallicTextureFileName);
+		ReadTextureFileName(pScene, pMaterial, aiTextureType_DIFFUSE_ROUGHNESS, &pMeshInfo->szRoughnessTextureFileName);
+		ReadTextureFileName(pScene, pMaterial, aiTextureType_AMBIENT_OCCLUSION, &pMeshInfo->szAOTextureFileName);
 		if (pMeshInfo->szAOTextureFileName.empty())
 		{
-			readTextureFileName(pScene, pMaterial, aiTextureType_LIGHTMAP, &pMeshInfo->szAOTextureFileName);
+			ReadTextureFileName(pScene, pMaterial, aiTextureType_LIGHTMAP, &pMeshInfo->szAOTextureFileName);
 		}
-		readTextureFileName(pScene, pMaterial, aiTextureType_OPACITY, &pMeshInfo->szOpacityTextureFileName); // 불투명도를 표현하는 텍스쳐.
+		ReadTextureFileName(pScene, pMaterial, aiTextureType_OPACITY, &pMeshInfo->szOpacityTextureFileName); // 불투명도를 표현하는 텍스쳐.
 
 		if (!pMeshInfo->szOpacityTextureFileName.empty())
 		{
@@ -449,7 +449,7 @@ void ModelLoader::processMesh(aiMesh* pMesh, const aiScene* pScene, MeshInfo* pM
 	}
 }
 
-void ModelLoader::processMeshForAnimation(aiMesh* pMesh, const aiScene* pSCENE)
+void ModelLoader::ProcessMeshForAnimation(aiMesh* pMesh, const aiScene* pSCENE)
 {
 	if (pMesh->HasBones())
 	{
@@ -464,7 +464,7 @@ void ModelLoader::processMeshForAnimation(aiMesh* pMesh, const aiScene* pSCENE)
 	}
 }
 
-void ModelLoader::readAnimation(const aiScene* pSCENE)
+void ModelLoader::ReadAnimation(const aiScene* pSCENE)
 {
 	_ASSERT(pSCENE);
 
@@ -520,7 +520,7 @@ void ModelLoader::readAnimation(const aiScene* pSCENE)
 	}
 }
 
-HRESULT ModelLoader::readTextureFileName(const aiScene* pSCENE, aiMaterial* pMaterial, aiTextureType type, std::wstring* pDst)
+HRESULT ModelLoader::ReadTextureFileName(const aiScene* pSCENE, aiMaterial* pMaterial, aiTextureType type, std::wstring* pDst)
 {
 	_ASSERT(pSCENE);
 	_ASSERT(pMaterial);
@@ -572,7 +572,7 @@ HRESULT ModelLoader::readTextureFileName(const aiScene* pSCENE, aiMaterial* pMat
 	return hr;
 }
 
-void ModelLoader::updateTangents()
+void ModelLoader::UpdateTangents()
 {
 	using namespace DirectX;
 
@@ -589,7 +589,7 @@ void ModelLoader::updateTangents()
 
 		for (SIZE_T j = 0; j < numFaces; ++j)
 		{
-			calculateTangentBitangent(curVertices[curIndices[j * 3]], curVertices[curIndices[j * 3 + 1]], curVertices[curIndices[j * 3 + 2]], &tangent, &bitangent);
+			CalculateTangentBitangent(curVertices[curIndices[j * 3]], curVertices[curIndices[j * 3 + 1]], curVertices[curIndices[j * 3 + 2]], &tangent, &bitangent);
 
 			curVertices[curIndices[j * 3]].Tangent = tangent;
 			curVertices[curIndices[j * 3 + 1]].Tangent = tangent;
@@ -605,7 +605,7 @@ void ModelLoader::updateTangents()
 	}
 }
 
-void ModelLoader::updateBoneIDs(aiNode* pNode, int* pCounter)
+void ModelLoader::UpdateBoneIDs(aiNode* pNode, int* pCounter)
 {
 	_ASSERT(pCounter);
 
@@ -618,12 +618,12 @@ void ModelLoader::updateBoneIDs(aiNode* pNode, int* pCounter)
 		}
 		for (UINT i = 0; i < pNode->mNumChildren; ++i)
 		{
-			updateBoneIDs(pNode->mChildren[i], pCounter);
+			UpdateBoneIDs(pNode->mChildren[i], pCounter);
 		}
 	}
 }
 
-void ModelLoader::calculateTangentBitangent(const Vertex& V1, const Vertex& V2, const Vertex& V3, DirectX::XMFLOAT3* pTangent, DirectX::XMFLOAT3* pBitangent)
+void ModelLoader::CalculateTangentBitangent(const Vertex& V1, const Vertex& V2, const Vertex& V3, DirectX::XMFLOAT3* pTangent, DirectX::XMFLOAT3* pBitangent)
 {
 	DirectX::XMFLOAT3 vector1;
 	DirectX::XMFLOAT3 vector2;

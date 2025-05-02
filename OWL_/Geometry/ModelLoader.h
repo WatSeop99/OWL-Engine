@@ -19,21 +19,21 @@ public:
 	HRESULT LoadAnimation(std::wstring& basePath, std::wstring& fileName);
 
 protected:
-	void findDeformingBones(const aiScene* pScene);
-	const aiNode* findParent(const aiNode* pNode);
+	void FindDeformingBones(const aiScene* pScene);
+	const aiNode* FindParent(const aiNode* pNode);
 
-	void processNode(aiNode* pNode, const aiScene* pScene, Matrix& transform);
-	void processNodeForAnimation(aiNode* pNode, const aiScene* pSCENE);
-	void processMesh(aiMesh* pMesh, const aiScene* pScene, MeshInfo* pMeshInfo);
-	void processMeshForAnimation(aiMesh* pMesh, const aiScene* pSCENE);
+	void ProcessNode(aiNode* pNode, const aiScene* pScene, Matrix& transform);
+	void ProcessNodeForAnimation(aiNode* pNode, const aiScene* pSCENE);
+	void PocessMesh(aiMesh* pMesh, const aiScene* pScene, MeshInfo* pMeshInfo);
+	void ProcessMeshForAnimation(aiMesh* pMesh, const aiScene* pSCENE);
 
-	void readAnimation(const aiScene* pScene);
-	HRESULT readTextureFileName(const aiScene* pScene, aiMaterial* pMaterial, aiTextureType type, std::wstring* pDst);
+	void ReadAnimation(const aiScene* pScene);
+	HRESULT ReadTextureFileName(const aiScene* pScene, aiMaterial* pMaterial, aiTextureType type, std::wstring* pDst);
 
-	void updateTangents();
-	void updateBoneIDs(aiNode* pNode, int* pCounter);
+	void UpdateTangents();
+	void UpdateBoneIDs(aiNode* pNode, int* pCounter);
 
-	void calculateTangentBitangent(const Vertex& V1, const Vertex& V2, const Vertex& V3, DirectX::XMFLOAT3* pTangent, DirectX::XMFLOAT3* pBitangent);
+	void CalculateTangentBitangent(const Vertex& V1, const Vertex& V2, const Vertex& V3, DirectX::XMFLOAT3* pTangent, DirectX::XMFLOAT3* pBitangent);
 
 public:
 	std::string szBasePath;

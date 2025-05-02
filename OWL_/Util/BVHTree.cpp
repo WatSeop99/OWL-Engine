@@ -26,7 +26,7 @@ void BVHTree::Initialize(const UINT MAX_NODE_NUM)
 void BVHTree::AddObject(const DirectX::BoundingBox* const pAABB)
 {
 	_ASSERT(m_pNodes);
-	addObjectInternal(pAABB);
+	AddObjectInternal(pAABB);
 }
 
 bool BVHTree::UpdateObject(const UINT NODE_ID, const DirectX::BoundingBox* const pNewAABB, bool bForceReinsert)
@@ -45,9 +45,9 @@ bool BVHTree::UpdateObject(const UINT NODE_ID, const DirectX::BoundingBox* const
 		goto LB_RET;
 	}
 
-	removeLeafNode(NODE_ID);
+	RemoveLeafNode(NODE_ID);
 	m_pNodes[NODE_ID].AABB = *pNewAABB;
-	insertLeafNode(NODE_ID);
+	InsertLeafNode(NODE_ID);
 
 LB_RET:
 	return bRet;
@@ -58,8 +58,8 @@ void BVHTree::RemoveObject(const UINT NODE_ID)
 	_ASSERT(NODE_ID >= 0 && NODE_ID < m_AllocatedNodes);
 	_ASSERT(m_pNodes[NODE_ID].IsLeaf());
 
-	removeLeafNode(NODE_ID);
-	releaseNode(NODE_ID);
+	RemoveLeafNode(NODE_ID);
+	ReleaseNode(NODE_ID);
 }
 
 void BVHTree::Cleanup()
@@ -81,14 +81,14 @@ int BVHTree::GetMaxDepth()
 	return (m_pNodes + m_RootNodeID)->Height;
 }
 
-void BVHTree::addObjectInternal(const DirectX::BoundingBox* const pAABB)
+void BVHTree::AddObjectInternal(const DirectX::BoundingBox* const pAABB)
 {
 	_ASSERT(m_pNodes);
 
-	UINT nodeID = allocateNode();
+	UINT nodeID = AllocateNode();
 	m_pNodes[nodeID].AABB = *pAABB;
 
-	insertLeafNode(nodeID);
+	InsertLeafNode(nodeID);
 	if (!m_pNodes[nodeID].IsLeaf())
 	{
 		__debugbreak();
@@ -99,7 +99,7 @@ void BVHTree::addObjectInternal(const DirectX::BoundingBox* const pAABB)
 	}
 }
 
-UINT BVHTree::allocateNode()
+UINT BVHTree::AllocateNode()
 {
 	_ASSERT(m_pNodes);
 
@@ -133,7 +133,7 @@ UINT BVHTree::allocateNode()
 	return freeNodeID;
 }
 
-void BVHTree::releaseNode(const UINT NODE_ID)
+void BVHTree::ReleaseNode(const UINT NODE_ID)
 {
 	_ASSERT(m_pNodes);
 	_ASSERT(NODE_ID >= 0 && NODE_ID < m_AllocatedNodes);
@@ -144,7 +144,7 @@ void BVHTree::releaseNode(const UINT NODE_ID)
 	--m_TotalNodes;
 }
 
-void BVHTree::insertLeafNode(const UINT NODE_ID)
+void BVHTree::InsertLeafNode(const UINT NODE_ID)
 {
 	_ASSERT(m_pNodes);
 	_ASSERT(NODE_ID >= 0 && NODE_ID < m_AllocatedNodes);
@@ -217,7 +217,7 @@ void BVHTree::insertLeafNode(const UINT NODE_ID)
 	UINT siblingNode = currentNodeID;
 
 	UINT oldParentNode = m_pNodes[siblingNode].ParentID;
-	UINT newParentNode = allocateNode();
+	UINT newParentNode = AllocateNode();
 	m_pNodes[newParentNode].ParentID = oldParentNode;
 	DirectX::BoundingBox::CreateMerged(m_pNodes[newParentNode].AABB, m_pNodes[siblingNode].AABB, newNodeAABB);
 	m_pNodes[newParentNode].Height = m_pNodes[siblingNode].Height + 1;
@@ -252,7 +252,7 @@ void BVHTree::insertLeafNode(const UINT NODE_ID)
 	_ASSERT(!m_pNodes[currentNodeID].IsLeaf());
 	while (currentNodeID != Node::NULL_NODE)
 	{
-		currentNodeID = balanceSubTreeAtNode(currentNodeID);
+		currentNodeID = BalanceSubTreeAtNode(currentNodeID);
 		_ASSERT(m_pNodes[NODE_ID].IsLeaf());
 
 		_ASSERT(!m_pNodes[currentNodeID].IsLeaf());
@@ -271,7 +271,7 @@ void BVHTree::insertLeafNode(const UINT NODE_ID)
 	_ASSERT(m_pNodes[NODE_ID].IsLeaf());
 }
 
-void BVHTree::removeLeafNode(const UINT NODE_ID)
+void BVHTree::RemoveLeafNode(const UINT NODE_ID)
 {
 	_ASSERT(NODE_ID >= 0 && NODE_ID < m_AllocatedNodes);
 	_ASSERT(m_pNodes[NODE_ID].IsLeaf());
@@ -306,12 +306,12 @@ void BVHTree::removeLeafNode(const UINT NODE_ID)
 			m_pNodes[grandParentNodeID].Children[NodeChild_Right] = siblingNodeID;
 		}
 		m_pNodes[siblingNodeID].ParentID = grandParentNodeID;
-		releaseNode(parentNodeID);
+		ReleaseNode(parentNodeID);
 
 		UINT currentNodeID = grandParentNodeID;
 		while (currentNodeID != Node::NULL_NODE)
 		{
-			currentNodeID = balanceSubTreeAtNode(currentNodeID);
+			currentNodeID = BalanceSubTreeAtNode(currentNodeID);
 
 			_ASSERT(!m_pNodes[currentNodeID].IsLeaf());
 
@@ -329,11 +329,11 @@ void BVHTree::removeLeafNode(const UINT NODE_ID)
 	{
 		m_RootNodeID = siblingNodeID;
 		m_pNodes[siblingNodeID].ParentID = Node::NULL_NODE;
-		releaseNode(parentNodeID);
+		ReleaseNode(parentNodeID);
 	}
 }
 
-UINT BVHTree::balanceSubTreeAtNode(const UINT NODE_ID)
+UINT BVHTree::BalanceSubTreeAtNode(const UINT NODE_ID)
 {
 	_ASSERT(m_pNodes);
 	_ASSERT(NODE_ID != Node::NULL_NODE);

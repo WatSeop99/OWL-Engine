@@ -3,7 +3,7 @@
 // https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/PipelineState.h
 // https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_graphics_pipeline_state_desc
 
-class GraphicsPSO
+class GraphicsPSO final
 {
 public:
 	GraphicsPSO() = default;
@@ -44,7 +44,7 @@ public:
 	D3D11_PRIMITIVE_TOPOLOGY PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 };
 
-class ComputePSO
+class ComputePSO final
 {
 public:
 	~ComputePSO() { Destroy(); }

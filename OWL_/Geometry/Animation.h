@@ -40,7 +40,7 @@ public:
 	DirectX::SimpleMath::Matrix Get(const int CLIP_ID, const int BONE_ID, const int FRAME);
 
 protected:
-	UINT findIndex(AnimationClip* pClip, const int BONE_ID, const float ANIMATION_TIME_TICK);
+	UINT FindIndex(AnimationClip* pClip, const int BONE_ID, const float ANIMATION_TIME_TICK);
 
 public:
 	std::map<std::string, int> BoneNameToID;	// »À ÀÌ¸§°ú ÀÎµ¦½º Á¤¼ö.

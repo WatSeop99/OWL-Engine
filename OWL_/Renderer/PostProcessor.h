@@ -8,7 +8,7 @@ class ConstantBuffer;
 class Mesh;
 class Texture;
 
-class PostProcessor
+class PostProcessor final
 {
 public:
 	struct PostProcessingBuffers
@@ -36,16 +36,16 @@ public:
 	void SetGlobalConstants(ConstantBuffer* const pGlobalConstants);
 
 protected:
-	void createPostBackBuffers();
-	void createImageResources(int width, int height, ID3D11ShaderResourceView** ppSrv, ID3D11RenderTargetView** ppRtv);
+	void CreatePostBackBuffers();
+	void CreateImageResources(int width, int height, ID3D11ShaderResourceView** ppSrv, ID3D11RenderTargetView** ppRtv);
 
-	void renderPostEffects();
-	void renderPostProcessing();
-	void renderImageFilter(const ImageFilter& IMAGE_FILTER);
+	void RenderPostEffects();
+	void RenderPostProcessing();
+	void RenderImageFilter(const ImageFilter& IMAGE_FILTER);
 
-	void setViewport();
-	void setRenderConfig(const PostProcessingBuffers& CONFIG);
-	void setGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU);
+	void SetViewport();
+	void SetRenderConfig(const PostProcessingBuffers& CONFIG);
+	void SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU);
 
 public:
 	int PostEffectsUpdateFlag = 0;

@@ -30,12 +30,12 @@ public:
 	inline ID3D11Texture3D** GetTexture3DPPtr() { return &m_pTexture3D; }
 
 protected:
-	void createTexture();
-	void createStagingTexture(void* pInitData);
-	void createRenderTargetView();
-	void createShaderResourceView();
-	void createDepthStencilView();
-	void createUnorderedAccessView();
+	void CreateTexture();
+	void CreateStagingTexture(void* pInitData);
+	void CreateRenderTargetView();
+	void CreateShaderResourceView();
+	void CreateDepthStencilView();
+	void CreateUnorderedAccessView();
 
 public:
 	ID3D11RenderTargetView* pRTV = nullptr;

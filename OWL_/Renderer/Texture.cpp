@@ -18,8 +18,8 @@ void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, c
 	// Create texture resources.
 	m_pTexture2D = nullptr;
 	m_pStagingTexture2D = nullptr;
-	createTexture();
-	createStagingTexture(pInitData);
+	CreateTexture();
+	CreateStagingTexture(pInitData);
 
 	if (!bCreatingViews)
 	{
@@ -28,19 +28,19 @@ void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, c
 
 	if (m_Texture2DDesc.BindFlags & D3D11_BIND_RENDER_TARGET)
 	{
-		createRenderTargetView();
+		CreateRenderTargetView();
 	}
 	if (m_Texture2DDesc.BindFlags & D3D11_BIND_SHADER_RESOURCE)
 	{
-		createShaderResourceView();
+		CreateShaderResourceView();
 	}
 	if (m_Texture2DDesc.BindFlags & D3D11_BIND_DEPTH_STENCIL)
 	{
-		createDepthStencilView();
+		CreateDepthStencilView();
 	}
 	if (m_Texture2DDesc.BindFlags & D3D11_BIND_UNORDERED_ACCESS)
 	{
-		createUnorderedAccessView();
+		CreateUnorderedAccessView();
 	}
 }
 
@@ -60,8 +60,8 @@ void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, c
 	// Create texture resources.
 	m_pTexture3D = nullptr;
 	m_pStagingTexture3D = nullptr;
-	createTexture();
-	createStagingTexture(pInitData);
+	CreateTexture();
+	CreateStagingTexture(pInitData);
 
 	if (!bCreatingViews)
 	{
@@ -70,19 +70,19 @@ void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, c
 
 	if (m_Texture3DDesc.BindFlags & D3D11_BIND_RENDER_TARGET)
 	{
-		createRenderTargetView();
+		CreateRenderTargetView();
 	}
 	if (m_Texture3DDesc.BindFlags & D3D11_BIND_SHADER_RESOURCE)
 	{
-		createShaderResourceView();
+		CreateShaderResourceView();
 	}
 	if (m_Texture3DDesc.BindFlags & D3D11_BIND_DEPTH_STENCIL)
 	{
-		createDepthStencilView();
+		CreateDepthStencilView();
 	}
 	if (m_Texture3DDesc.BindFlags & D3D11_BIND_UNORDERED_ACCESS)
 	{
-		createUnorderedAccessView();
+		CreateUnorderedAccessView();
 	}
 }
 
@@ -110,19 +110,19 @@ void Texture::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, I
 	
 	if (m_Texture2DDesc.BindFlags & D3D11_BIND_RENDER_TARGET)
 	{
-		createRenderTargetView();
+		CreateRenderTargetView();
 	}
 	if (m_Texture2DDesc.BindFlags & D3D11_BIND_SHADER_RESOURCE)
 	{
-		createShaderResourceView();
+		CreateShaderResourceView();
 	}
 	if (m_Texture2DDesc.BindFlags & D3D11_BIND_DEPTH_STENCIL)
 	{
-		createDepthStencilView();
+		CreateDepthStencilView();
 	}
 	if (m_Texture2DDesc.BindFlags & D3D11_BIND_UNORDERED_ACCESS)
 	{
-		createUnorderedAccessView();
+		CreateUnorderedAccessView();
 	}
 }
 
@@ -280,7 +280,7 @@ void Texture::Cleanup()
 	SAFE_RELEASE(m_pDevice);
 }
 
-void Texture::createTexture()
+void Texture::CreateTexture()
 {
 	_ASSERT(m_pDevice);
 
@@ -360,7 +360,7 @@ void Texture::createTexture()
 	BREAK_IF_FAILED(hr);
 }
 
-void Texture::createStagingTexture(void* pInitData)
+void Texture::CreateStagingTexture(void* pInitData)
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(m_pContext);
@@ -451,7 +451,7 @@ void Texture::createStagingTexture(void* pInitData)
 	}
 }
 
-void Texture::createRenderTargetView()
+void Texture::CreateRenderTargetView()
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(!pRTV);
@@ -471,7 +471,7 @@ void Texture::createRenderTargetView()
 	BREAK_IF_FAILED(hr);
 }
 
-void Texture::createShaderResourceView()
+void Texture::CreateShaderResourceView()
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(m_pContext);
@@ -560,7 +560,7 @@ void Texture::createShaderResourceView()
 	}
 }
 
-void Texture::createDepthStencilView()
+void Texture::CreateDepthStencilView()
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(!pDSV);
@@ -628,7 +628,7 @@ void Texture::createDepthStencilView()
 	BREAK_IF_FAILED(hr);
 }
 
-void Texture::createUnorderedAccessView()
+void Texture::CreateUnorderedAccessView()
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(!pUAV);

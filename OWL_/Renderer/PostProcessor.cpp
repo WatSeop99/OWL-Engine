@@ -26,8 +26,8 @@ void PostProcessor::Initialize(Renderer* pRenderer, const PostProcessingBuffers&
 	ID3D11DeviceContext* pContext = pRenderer->GetDeviceContext();
 
 	// 후처리 효과용 버퍼 생성.
-	setRenderConfig(CONFIG);
-	createPostBackBuffers();
+	SetRenderConfig(CONFIG);
+	CreatePostBackBuffers();
 
 	// 후처리 효과용 constBuffer.
 	PostEffectsConstants initData;
@@ -40,7 +40,7 @@ void PostProcessor::Initialize(Renderer* pRenderer, const PostProcessingBuffers&
 	for (int i = 0; i < BLOOMLEVELS; ++i)
 	{
 		int div = (int)pow(2, i);
-		createImageResources(WIDTH / div, HEIGHT / div, &m_pBloomSRVs[i], &m_pBloomRTVs[i]);
+		CreateImageResources(WIDTH / div, HEIGHT / div, &m_pBloomSRVs[i], &m_pBloomRTVs[i]);
 #ifdef _DEBUG
 		char szDebugStringName1[256];
 		char szDebugStringName2[256];
@@ -116,8 +116,8 @@ void PostProcessor::Update()
 
 void PostProcessor::Render()
 {
-	renderPostEffects();
-	renderPostProcessing();
+	RenderPostEffects();
+	RenderPostProcessing();
 }
 
 void PostProcessor::Cleanup()
@@ -158,7 +158,7 @@ void PostProcessor::SetGlobalConstants(ConstantBuffer* const pGlobalConstants)
 	m_pGlobalConstsGPU = pGlobalConstants->pBuffer;
 }
 
-void PostProcessor::createPostBackBuffers()
+void PostProcessor::CreatePostBackBuffers()
 {
 	_ASSERT(m_pRenderer);
 	_ASSERT(m_pBackBuffer);
@@ -180,7 +180,7 @@ void PostProcessor::createPostBackBuffers()
 	m_pPostEffectsBuffer->Initialize(pDevice, pContext, desc, nullptr, true);
 }
 
-void PostProcessor::createImageResources(int width, int height, ID3D11ShaderResourceView** ppSrv, ID3D11RenderTargetView** ppRtv)
+void PostProcessor::CreateImageResources(int width, int height, ID3D11ShaderResourceView** ppSrv, ID3D11RenderTargetView** ppRtv)
 {
 	_ASSERT(m_pRenderer);
 
@@ -211,7 +211,7 @@ void PostProcessor::createImageResources(int width, int height, ID3D11ShaderReso
 	pTexture->Release();
 }
 
-void PostProcessor::renderPostEffects()
+void PostProcessor::RenderPostEffects()
 {
 	_ASSERT(m_pRenderer);
 	_ASSERT(m_pPostEffectsConstantBuffer);
@@ -222,9 +222,9 @@ void PostProcessor::renderPostEffects()
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext(); 
 
 	// PostEffects (m_pGlobalConstsGPU 사용).
-	setViewport();
+	SetViewport();
 	pResourceManager->SetPipelineState(GraphicsPSOType_PostEffects);
-	setGlobalConsts(&m_pGlobalConstsGPU);
+	SetGlobalConsts(&m_pGlobalConstsGPU);
 
 	ID3D11ShaderResourceView* ppPostEffectsSRVs[2] = { m_pFloatBuffer->pSRV, m_pDepthBuffer->pSRV };
 	pContext->PSSetShaderResources(20, 2, ppPostEffectsSRVs);
@@ -236,7 +236,7 @@ void PostProcessor::renderPostEffects()
 	pContext->PSSetShaderResources(20, 2, ppNulls);
 }
 
-void PostProcessor::renderPostProcessing()
+void PostProcessor::RenderPostProcessing()
 {
 	_ASSERT(m_pRenderer);
 
@@ -259,20 +259,20 @@ void PostProcessor::renderPostProcessing()
 	{
 		for (UINT64 i = 0, size = m_pBloomDownFilters.size(); i < size; ++i)
 		{
-			renderImageFilter(m_pBloomDownFilters[i]);
+			RenderImageFilter(m_pBloomDownFilters[i]);
 		}
 		for (UINT64 i = 0, size = m_pBloomUpFilters.size(); i < size; ++i)
 		{
-			renderImageFilter(m_pBloomUpFilters[i]);
+			RenderImageFilter(m_pBloomUpFilters[i]);
 		}
 	}
 
-	renderImageFilter(CombineFilter);
+	RenderImageFilter(CombineFilter);
 
 	pContext->CopyResource(*m_pPrevBuffer->GetTexture2DPPtr(), *m_pBackBuffer->GetTexture2DPPtr()); // 모션 블러 효과를 위해 렌더링 결과 보관.
 }
 
-void PostProcessor::renderImageFilter(const ImageFilter& IMAGE_FILTER)
+void PostProcessor::RenderImageFilter(const ImageFilter& IMAGE_FILTER)
 {
 	_ASSERT(m_pRenderer);
 
@@ -281,7 +281,7 @@ void PostProcessor::renderImageFilter(const ImageFilter& IMAGE_FILTER)
 	pContext->Draw(6, 0);
 }
 
-void PostProcessor::setViewport()
+void PostProcessor::SetViewport()
 {
 	_ASSERT(m_pRenderer);
 
@@ -296,7 +296,7 @@ void PostProcessor::setViewport()
 	m_pRenderer->SetViewport(&m_Viewport, 1);
 }
 
-void PostProcessor::setRenderConfig(const PostProcessingBuffers& CONFIG)
+void PostProcessor::SetRenderConfig(const PostProcessingBuffers& CONFIG)
 {
 	//m_pGlobalConstsGPU = CONFIG.pGlobalConstsGPU;
 	m_pBackBuffer = CONFIG.pBackBuffer;
@@ -305,7 +305,7 @@ void PostProcessor::setRenderConfig(const PostProcessingBuffers& CONFIG)
 	m_pDepthBuffer = CONFIG.pDepthBuffer;
 }
 
-void PostProcessor::setGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU)
+void PostProcessor::SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU)
 {
 	_ASSERT(m_pRenderer);
 
