@@ -14,7 +14,7 @@ class ResourceManager;
 class PostProcessor;
 class Texture;
 
-class Renderer
+class Renderer final
 {
 private:
 	static LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -66,6 +66,8 @@ protected:
 	void InitD3D();
 	void InitGUI();
 
+	void WindowF11Sync();
+
 	void CreateBuffers();
 
 	void SetMainViewport();
@@ -108,6 +110,7 @@ protected:
 	Mouse m_Mouse = {};
 
 	bool m_bPauseAnimation = false;
+	bool m_bMaximizedWindow = false;
 
 	Model* m_pPickedModel = nullptr; // 마우스 선택용.
 	Model* m_pCursorSphere = nullptr; // 드래그 표시용.

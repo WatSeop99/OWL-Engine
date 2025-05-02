@@ -124,7 +124,6 @@ LRESULT Renderer::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		if (wParam == VK_ESCAPE) // ESC키 종료.
 		{
 			PostQuitMessage(0);
-
 			break;
 		}
 
@@ -428,6 +427,11 @@ void Renderer::OnResize(int width, int height)
 	if (width <= 0 || height <= 0)
 	{
 		return;
+	
+	}
+	if (m_ScreenWidth == width && m_ScreenHeight == height)
+	{
+		return;
 	}
 	
 
@@ -539,6 +543,10 @@ void Renderer::OnKeyboardClick(bool bClicked, WPARAM keyCode)
 		{
 			_ASSERT(m_pMainCamera);
 			m_pMainCamera->PrintView();
+		}
+		if (keyCode == VK_F11)
+		{
+			WindowF11Sync();
 		}
 	}
 	else
@@ -878,15 +886,22 @@ void Renderer::InitMainWindow()
 
 	RECT wr = { 0, 0, (long)m_ScreenWidth, (long)m_ScreenHeight };
 	AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, FALSE);
-	m_hMainWindow = CreateWindow(wc.lpszClassName,
-								 L"OWL Engine",
-								 WS_OVERLAPPEDWINDOW,
-								 100,
-								 100,
-								 wr.right - wr.left,
-								 wr.bottom - wr.top,
-								 nullptr, nullptr, m_hInstance, this);
 
+	// 창 스타일은 기본(GWL_STYLE), 확장형(GWL_EXSTYLE)이 있음.
+	// 기본만 있었는데, 다양한 기능 추가를 위해 확장형을 넣은 것 같음.
+	// f11 전체화면과 같은 기능을 구현하기 위해서는 확장형 일부 플래그를 사용해야 함.
+	// GWL_STYLE에는 무조건 WS_DLGFRAME가 포함됨(되는 것 같음. 강제로 max or minimize 하지 않는 한)
+	// GWL_EXSTYLE는 기본값이 WS_EX_WINDOWEDGE.
+
+	m_hMainWindow = CreateWindowEx(WS_EX_CONTEXTHELP, //WS_EX_WINDOWEDGE,
+								   wc.lpszClassName,
+								   L"OWL Engine",
+								   WS_OVERLAPPEDWINDOW,
+								   100,
+								   100,
+								   wr.right - wr.left,
+								   wr.bottom - wr.top,
+								   nullptr, nullptr, m_hInstance, this);
 	if (!m_hMainWindow)
 	{
 		__debugbreak();
@@ -1015,6 +1030,76 @@ void Renderer::InitGUI()
 	{
 		__debugbreak();
 	}
+}
+
+void Renderer::WindowF11Sync()
+{
+	// f11을 눌렀을 때, 창없는 전체화면 기능 구현.
+
+	_ASSERT(m_hMainWindow);
+
+	static int s_PrevPosX = 0;
+	static int s_PrevPosY = 0;
+	static int s_PrevWidth = 0;
+	static int s_PrevHeight = 0;
+	static DWORD s_PrevWindowStyle = 0;
+	static DWORD s_PrevWindowExStyle = 0;
+
+	if (m_bMaximizedWindow) // 현재 전체화면인 상태.
+	{
+		SetWindowLongPtr(m_hMainWindow, GWL_STYLE, s_PrevWindowStyle);
+		SetWindowLongPtr(m_hMainWindow, GWL_EXSTYLE, s_PrevWindowExStyle);
+
+		SetWindowPos(m_hMainWindow,
+					 HWND_TOP,
+					 s_PrevPosX, s_PrevPosY,
+					 s_PrevWidth, s_PrevHeight,
+					 SWP_NOZORDER | SWP_FRAMECHANGED);
+
+		s_PrevPosX = 0;
+		s_PrevPosY = 0;
+		s_PrevWidth = 0;
+		s_PrevHeight = 0;
+		s_PrevWindowStyle = 0;
+		s_PrevWindowExStyle = 0;
+	}
+	else
+	{
+		// 이전 정보 저장.
+
+		RECT curWindowRect = {};
+		GetWindowRect(m_hMainWindow, &curWindowRect);
+
+		s_PrevPosX = curWindowRect.left;
+		s_PrevPosY = curWindowRect.top;
+		s_PrevWidth = m_ScreenWidth;
+		s_PrevHeight = m_ScreenHeight;
+		s_PrevWindowStyle = (DWORD)GetWindowLongPtr(m_hMainWindow, GWL_STYLE);
+		s_PrevWindowExStyle = (DWORD)GetWindowLongPtr(m_hMainWindow, GWL_EXSTYLE);
+
+
+		// 갱신.
+
+		HMONITOR hMonitor = MonitorFromWindow(m_hMainWindow, MONITOR_DEFAULTTONEAREST);
+		MONITORINFO monitorInfo = {};
+		monitorInfo.cbSize = sizeof(MONITORINFO);
+		if (!GetMonitorInfo(hMonitor, &monitorInfo))
+		{
+			__debugbreak();
+		}
+
+		SetWindowLongPtr(m_hMainWindow, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+		SetWindowLongPtr(m_hMainWindow, GWL_EXSTYLE, WS_EX_APPWINDOW);
+
+		SetWindowPos(m_hMainWindow,
+					 HWND_TOP,
+					 monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.top,
+					 monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
+					 monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
+					 SWP_FRAMECHANGED);
+	}
+
+	m_bMaximizedWindow = !m_bMaximizedWindow;
 }
 
 void Renderer::CreateBuffers()
