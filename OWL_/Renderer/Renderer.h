@@ -63,12 +63,12 @@ public:
 	void ProcessKeyboardControl(const float DELTA_TIME);
 	void ProcessMouseControl();
 
-protected:
+private:
 	void InitMainWindow();
 	void InitD3D();
 	void InitGUI();
 
-	void WindowF11Sync();
+	void WindowF1Sync();
 
 	void CreateBuffers();
 
@@ -83,7 +83,7 @@ protected:
 	void PassSky();
 	void PassDebug();
 
-protected:
+private:
 	HINSTANCE m_hInstance = nullptr;
 	HWND m_hMainWindow = nullptr;
 	int m_ScreenWidth = 1920;

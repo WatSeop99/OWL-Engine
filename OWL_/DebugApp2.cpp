@@ -173,7 +173,10 @@ void DebugApp2::Update(const float DELTA_TIME)
 #ifdef PROFILING
 	OPTICK_EVENT("Update");
 #endif
+
 	UpdateGUI();
+
+	m_pScene->Update(DELTA_TIME);
 	m_pRenderer->Update(DELTA_TIME);
 }
 
@@ -210,7 +213,7 @@ void DebugApp2::UpdateGUI()
 #endif
 
 	ImGui::NewFrame();
-	ImGui::DockSpaceOverViewport();
+	//ImGui::DockSpaceOverViewport();
 
 	m_pRenderer->UpdateGUI();
 

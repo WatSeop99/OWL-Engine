@@ -374,9 +374,6 @@ void Renderer::Update(const float DELTA_TIME)
 	ProcessKeyboardControl(DELTA_TIME);
 	ProcessMouseControl();
 
-	// 전체 씬 업데이트.
-	m_pScene->Update(DELTA_TIME);
-
 	// 후처리 프로세서 업데이트.
 	m_pPostProcessor->Update();
 }
@@ -389,9 +386,15 @@ void Renderer::RenderGUI()
 	ImGui::End();
 
 	SetMainViewport();
-
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		// 생성된 플랫폼 윈도우들에 대해 업데이트 & 렌더까지 처리
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
+	}
 }
 
 void Renderer::Render()
@@ -544,9 +547,9 @@ void Renderer::OnKeyboardClick(bool bClicked, WPARAM keyCode)
 			_ASSERT(m_pMainCamera);
 			m_pMainCamera->PrintView();
 		}
-		if (keyCode == VK_F11)
+		if (keyCode == VK_F1)
 		{
-			WindowF11Sync();
+			WindowF1Sync();
 		}
 	}
 	else
@@ -1019,20 +1022,20 @@ void Renderer::InitGUI()
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.DisplaySize = ImVec2((float)m_ScreenWidth, (float)m_ScreenHeight);
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_ViewportsEnable;
 
 	// Setup Platform/Renderer backends
-	if (!ImGui_ImplDX11_Init(m_pDevice, m_pContext))
+	if (!ImGui_ImplWin32_Init(m_hMainWindow))
 	{
 		__debugbreak();
 	}
-	if (!ImGui_ImplWin32_Init(m_hMainWindow))
+	if (!ImGui_ImplDX11_Init(m_pDevice, m_pContext))
 	{
 		__debugbreak();
 	}
 }
 
-void Renderer::WindowF11Sync()
+void Renderer::WindowF1Sync()
 {
 	// f11을 눌렀을 때, 창없는 전체화면 기능 구현.
 

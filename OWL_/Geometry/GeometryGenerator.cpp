@@ -535,7 +535,7 @@ void MakeCylinder(MeshInfo* pOutDst, float bottomRadius, float topRadius, float 
 		v.Normal = v.Position - Vector3(0.0f, -0.5f * height, 0.0f);
 		v.Normal.Normalize();
 		
-		v.Texcoord = Vector2(float(i) / numSlices, 1.0f);
+		v.Texcoord = Vector2((float)i / numSlices, 1.0f);
 	}
 
 	// 옆면의 맨 위 버텍스들 (인덱스 NUM_SLICES 이상 2 * NUM_SLICES 미만).
