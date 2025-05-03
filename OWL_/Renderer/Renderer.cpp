@@ -174,75 +174,6 @@ LRESULT Renderer::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-Renderer::~Renderer()
-{
-	m_pScene = nullptr;
-	m_pCursorSphere = nullptr;
-
-	ImGui_ImplDX11_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
-
-	/*if (m_pRandomNoiseConstantBuffer)
-	{
-		delete m_pRandomNoiseConstantBuffer;
-		m_pRandomNoiseConstantBuffer = nullptr;
-	}
-	if (m_pRandomNoise)
-	{
-		delete m_pRandomNoise;
-		m_pRandomNoise = nullptr;
-	}*/
-
-	if (m_pFloatBuffer)
-	{
-		delete m_pFloatBuffer;
-		m_pFloatBuffer = nullptr;
-	}
-	if (m_pPrevBuffer)
-	{
-		delete m_pPrevBuffer;
-		m_pPrevBuffer = nullptr;
-	}
-	if (m_pGBuffer)
-	{
-		delete m_pGBuffer;
-		m_pGBuffer = nullptr;
-	}
-	if (m_pBackBuffer)
-	{
-		delete m_pBackBuffer;
-		m_pBackBuffer = nullptr;
-	}
-	if (m_pMainCamera)
-	{
-		delete m_pMainCamera;
-		m_pMainCamera = nullptr;
-	}
-	if (m_pPostProcessor)
-	{
-		delete m_pPostProcessor;
-		m_pPostProcessor = nullptr;
-	}
-	if (m_pResourceManager)
-	{
-		delete m_pResourceManager;
-		m_pResourceManager = nullptr;
-	}
-	if (m_pTimer)
-	{
-		delete m_pTimer;
-		m_pTimer = nullptr;
-	}
-
-	SAFE_RELEASE(m_pSwapChain);
-	SAFE_RELEASE(m_pContext);
-	SAFE_RELEASE(m_pDevice);
-
-	m_hMainWindow = nullptr;
-	m_hInstance = nullptr;
-}
-
 bool Renderer::Initialize(HINSTANCE hInstance, Scene* const pScene)
 {
 	_ASSERT(pScene);
@@ -324,6 +255,75 @@ bool Renderer::InitScene()
 	}
 
 	return true;
+}
+
+void Renderer::Cleanup()
+{
+	m_pScene = nullptr;
+	m_pCursorSphere = nullptr;
+
+	ImGui_ImplDX11_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
+
+	/*if (m_pRandomNoiseConstantBuffer)
+	{
+		delete m_pRandomNoiseConstantBuffer;
+		m_pRandomNoiseConstantBuffer = nullptr;
+	}
+	if (m_pRandomNoise)
+	{
+		delete m_pRandomNoise;
+		m_pRandomNoise = nullptr;
+	}*/
+
+	if (m_pFloatBuffer)
+	{
+		delete m_pFloatBuffer;
+		m_pFloatBuffer = nullptr;
+	}
+	if (m_pPrevBuffer)
+	{
+		delete m_pPrevBuffer;
+		m_pPrevBuffer = nullptr;
+	}
+	if (m_pGBuffer)
+	{
+		delete m_pGBuffer;
+		m_pGBuffer = nullptr;
+	}
+	if (m_pBackBuffer)
+	{
+		delete m_pBackBuffer;
+		m_pBackBuffer = nullptr;
+	}
+	if (m_pMainCamera)
+	{
+		delete m_pMainCamera;
+		m_pMainCamera = nullptr;
+	}
+	if (m_pPostProcessor)
+	{
+		delete m_pPostProcessor;
+		m_pPostProcessor = nullptr;
+	}
+	if (m_pResourceManager)
+	{
+		delete m_pResourceManager;
+		m_pResourceManager = nullptr;
+	}
+	if (m_pTimer)
+	{
+		delete m_pTimer;
+		m_pTimer = nullptr;
+	}
+
+	SAFE_RELEASE(m_pSwapChain);
+	SAFE_RELEASE(m_pContext);
+	SAFE_RELEASE(m_pDevice);
+
+	m_hMainWindow = nullptr;
+	m_hInstance = nullptr;
 }
 
 void Renderer::UpdateGUI()
@@ -603,7 +603,7 @@ Model* Renderer::PickClosest(const DirectX::SimpleMath::Ray* pPickingRay, float*
 	*pMinDist = 1e5f;
 	Model* pMinModel = nullptr;
 
-	for (UINT64 i = 0, size = m_pScene->RenderObjects.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = m_pScene->RenderObjects.size(); i < size; ++i)
 	{
 		Model* pCurModel = m_pScene->RenderObjects[i];
 		float dist = 0.0f;
@@ -1106,21 +1106,21 @@ void Renderer::CreateBuffers()
 {
 	HRESULT hr = S_OK;
 
-	ID3D11Texture2D* pTexture = nullptr;
+	ID3D11Texture2D* pBackBufferTexture = nullptr;
 	D3D11_TEXTURE2D_DESC desc = {};
-	hr = m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pTexture));
+	hr = m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBufferTexture));
 	BREAK_IF_FAILED(hr);
 
 	if (!m_pBackBuffer)
 	{
 		m_pBackBuffer = new Texture;
 	}
-	pTexture->GetDesc(&desc);
-	m_pBackBuffer->Initialize(m_pDevice, m_pContext, pTexture, true);
-	RELEASE(pTexture);
+	pBackBufferTexture->GetDesc(&desc);
+	m_pBackBuffer->Initialize(m_pDevice, m_pContext, pBackBufferTexture, true);
+	RELEASE(pBackBufferTexture);
 
 	// 이전 프레임 저장용.
-	(*m_pBackBuffer->GetTexture2DPPtr())->GetDesc(&desc);
+	m_pBackBuffer->GetTexture2D()->GetDesc(&desc);
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 	if (!m_pPrevBuffer)
 	{
@@ -1193,7 +1193,7 @@ void Renderer::PassGBuffer()
 	SetGlobalConsts(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0);
 	m_pGBuffer->PrepareRender();
 
-	for (UINT64 i = 0, size = m_pScene->RenderObjects.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = m_pScene->RenderObjects.size(); i < size; ++i)
 	{
 		Model* const pModel = m_pScene->RenderObjects[i];
 		m_pResourceManager->SetPipelineState(pModel->GetGBufferPSO(m_pScene->bDrawAsWire));
@@ -1208,7 +1208,7 @@ void Renderer::PassShadow()
 	_ASSERT(m_pScene);
 
 	m_pScene->GetSun()->RenderShadowMap(m_pScene->RenderObjects, nullptr);
-	for (UINT64 i = 0, size = m_pScene->Lights.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = m_pScene->Lights.size(); i < size; ++i)
 	{
 		m_pScene->Lights[i].RenderShadowMap(m_pScene->RenderObjects, nullptr);
 	}
@@ -1251,7 +1251,7 @@ void Renderer::PassDeferredLighting()
 	m_pContext->PSSetShaderResources(7, 1, &pSun->GetShadowMapPtr()->GetCascadeShadowBufferPtr()->pSRV);
 	m_pContext->Draw(6, 0);
 
-	for (UINT64 i = 0, size = m_pScene->Lights.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = m_pScene->Lights.size(); i < size; ++i)
 	{
 		Light& curLight = m_pScene->Lights[i];
 
@@ -1301,7 +1301,7 @@ void Renderer::PassDebug()
 	SetGlobalConsts(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0);
 	m_pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_pGBuffer->DepthBuffer.pDSV);
 
-	for (UINT64 i = 0, size = m_pScene->RenderObjects.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = m_pScene->RenderObjects.size(); i < size; ++i)
 	{
 		Model* const pModel = m_pScene->RenderObjects[i];
 		if (pModel->bDrawNormals)

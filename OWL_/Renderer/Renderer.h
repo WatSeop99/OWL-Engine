@@ -21,10 +21,12 @@ private:
 
 public:
 	Renderer() = default;
-	virtual ~Renderer();
+	~Renderer() { Cleanup(); }
 
 	bool Initialize(HINSTANCE hInstance, Scene* const pScene);
 	bool InitScene();
+
+	void Cleanup();
 
 	void UpdateGUI();
 	void Update(const float DELTA_TIME);

@@ -171,7 +171,7 @@ void PostProcessor::CreatePostBackBuffers()
 
 	HRESULT hr = S_OK;
 	D3D11_TEXTURE2D_DESC desc = {};
-	(*m_pBackBuffer->GetTexture2DPPtr())->GetDesc(&desc);
+	m_pBackBuffer->GetTexture2D()->GetDesc(&desc);
 	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
 	desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
@@ -269,7 +269,7 @@ void PostProcessor::RenderPostProcessing()
 
 	RenderImageFilter(CombineFilter);
 
-	pContext->CopyResource(*m_pPrevBuffer->GetTexture2DPPtr(), *m_pBackBuffer->GetTexture2DPPtr()); // 모션 블러 효과를 위해 렌더링 결과 보관.
+	pContext->CopyResource(m_pPrevBuffer->GetTexture2D(), m_pBackBuffer->GetTexture2D()); // 모션 블러 효과를 위해 렌더링 결과 보관.
 }
 
 void PostProcessor::RenderImageFilter(const ImageFilter& IMAGE_FILTER)

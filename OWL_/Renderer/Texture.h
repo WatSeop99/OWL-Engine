@@ -26,8 +26,8 @@ public:
 
 	void Cleanup();
 
-	inline ID3D11Texture2D** GetTexture2DPPtr() { return &m_pTexture2D; }
-	inline ID3D11Texture3D** GetTexture3DPPtr() { return &m_pTexture3D; }
+	inline ID3D11Texture2D* GetTexture2D() { return m_pTexture2D; }
+	inline ID3D11Texture3D* GetTexture3D() { return m_pTexture3D; }
 
 protected:
 	void CreateTexture();
