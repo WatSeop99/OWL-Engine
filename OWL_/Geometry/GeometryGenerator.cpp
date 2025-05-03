@@ -15,7 +15,7 @@ HRESULT ReadFromFile(std::vector<MeshInfo>& dst, std::wstring& basePath, std::ws
 		goto LB_RET;
 	}
 
-	Normalize(Vector3(0.0f), 1.0f, modelLoader.MeshInfos, modelLoader.AnimData);
+	Normalize(Vector3::Zero, 1.0f, modelLoader.MeshInfos, modelLoader.AnimData);
 	dst = modelLoader.MeshInfos;
 
 LB_RET:
@@ -33,7 +33,7 @@ HRESULT ReadAnimationFromFile(std::tuple<std::vector<MeshInfo>, AnimationData>& 
 		goto LB_RET;
 	}
 
-	Normalize(Vector3(0.0f), 1.0f, modelLoader.MeshInfos, modelLoader.AnimData);
+	Normalize(Vector3::Zero, 1.0f, modelLoader.MeshInfos, modelLoader.AnimData);
 	dst = { modelLoader.MeshInfos, modelLoader.AnimData };
 
 LB_RET:
@@ -52,7 +52,7 @@ HRESULT ReadFromFile(std::vector<MeshInfo>& dst, AnimationData* pAnimData, std::
 		goto LB_RET;
 	}
 
-	Normalize(Vector3(0.0f), 1.0f, modelLoader.MeshInfos, modelLoader.AnimData);
+	Normalize(Vector3::Zero, 1.0f, modelLoader.MeshInfos, modelLoader.AnimData);
 	dst = modelLoader.MeshInfos;
 	if (pAnimData)
 	{
@@ -89,12 +89,12 @@ void Normalize(const Vector3& CENTER, const float LONGEST_LENGTH, std::vector<Me
 	// 모델의 중심을 원점으로 옮기고 크기를 [-1,1]^3으로 스케일 -> 박스 형태로.
 
 	// Normalize vertices
-	Vector3 minVector(1000.0f, 1000.0f, 1000.0f);
-	Vector3 maxVector(-1000.0f, -1000.0f, -1000.0f);
-	for (UINT64 i = 0, totalMesh = meshes.size(); i < totalMesh; ++i)
+	Vector3 minVector(1000.0f);
+	Vector3 maxVector(-1000.0f);
+	for (SIZE_T i = 0, totalMesh = meshes.size(); i < totalMesh; ++i)
 	{
 		MeshInfo& curMesh = meshes[i];
-		for (UINT64 j = 0, vertSize = curMesh.Vertices.size(); j < vertSize; ++j)
+		for (SIZE_T j = 0, vertSize = curMesh.Vertices.size(); j < vertSize; ++j)
 		{
 			Vertex& v = curMesh.Vertices[j];
 			minVector = Min(minVector, v.Position);
@@ -106,15 +106,15 @@ void Normalize(const Vector3& CENTER, const float LONGEST_LENGTH, std::vector<Me
 	float scale = LONGEST_LENGTH / DirectX::XMMax(DirectX::XMMax(delta.x, delta.y), delta.z);
 	Vector3 translation = -(minVector + maxVector) * 0.5f + CENTER;
 
-	for (UINT64 i = 0, totalMesh = meshes.size(); i < totalMesh; ++i)
+	for (SIZE_T i = 0, totalMesh = meshes.size(); i < totalMesh; ++i)
 	{
 		MeshInfo& curMesh = meshes[i];
-		for (UINT64 j = 0, vertSize = curMesh.Vertices.size(); j < vertSize; ++j)
+		for (SIZE_T j = 0, vertSize = curMesh.Vertices.size(); j < vertSize; ++j)
 		{
 			Vertex& v = curMesh.Vertices[j];
 			v.Position = (v.Position + translation) * scale;
 		}
-		for (UINT64 j = 0, skinnedVertSize = curMesh.SkinnedVertices.size(); j < skinnedVertSize; ++j)
+		for (SIZE_T j = 0, skinnedVertSize = curMesh.SkinnedVertices.size(); j < skinnedVertSize; ++j)
 		{
 			SkinnedVertex& v = curMesh.SkinnedVertices[j];
 			v.Position = (v.Position + translation) * scale;
@@ -213,7 +213,7 @@ void MakeGrass(MeshInfo* pDst)
 
 	MakeSquareGrid(pDst, 1, 4);
 
-	for (UINT64 i = 0, size = pDst->Vertices.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = pDst->Vertices.size(); i < size; ++i)
 	{
 		Vertex& v = pDst->Vertices[i];
 
@@ -226,7 +226,7 @@ void MakeGrass(MeshInfo* pDst)
 
 	// 맨 위를 뾰족하게 만들기 위해 삼각형 하나와 정점 하나 삭제.
 	pDst->Indices.erase(pDst->Indices.begin(), pDst->Indices.begin() + 3);
-	for (UINT64 i = 0, size = pDst->Indices.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = pDst->Indices.size(); i < size; ++i)
 	{
 		pDst->Indices[i] -= 1;
 	}
@@ -712,7 +712,7 @@ void MakeTerrainTile(MeshInfo* pDst)
 	MakeSquareGrid(pDst, 10, 10, 256);
 
 	/*srand((unsigned int)time(nullptr));
-	for (UINT64 i = 0, size = pDst->Vertices.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = pDst->Vertices.size(); i < size; ++i)
 	{
 		DirectX::SimpleMath::Vector3& pos = pDst->Vertices[i].Position;
 		pos.y = GetHeight(pos.x, pos.z);
@@ -729,7 +729,7 @@ void SubdivideToSphere(MeshInfo* pDst, const float RADIUS, MeshInfo& meshData)
 	_ASSERT(pDst);
 
 	// 원점이 중심이라고 가정.
-	for (UINT64 i = 0, size = meshData.Vertices.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = meshData.Vertices.size(); i < size; ++i)
 	{
 		Vertex& v = meshData.Vertices[i];
 		v.Position = v.Normal * RADIUS;

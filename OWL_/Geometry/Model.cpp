@@ -72,7 +72,7 @@ void Model::Initialize(Renderer* pRenderer, const std::vector<MeshInfo>& MESH_IN
 	ID3D11DeviceContext* pContext = pRenderer->GetDeviceContext();
 
 	Meshes.reserve(MESH_INFOS.size());
-	for (UINT64 i = 0, meshSize = MESH_INFOS.size(); i < meshSize; ++i)
+	for (SIZE_T i = 0, meshSize = MESH_INFOS.size(); i < meshSize; ++i)
 	{
 		const MeshInfo& MESH_DATA = MESH_INFOS[i];
 
@@ -90,7 +90,7 @@ void Model::Initialize(Renderer* pRenderer, const std::vector<MeshInfo>& MESH_IN
 
 			if (_stat64(albedoTextureA.c_str(), &sourceFileStat) != -1)
 			{
-				std::vector<UINT8> imageData;
+				std::vector<BYTE> imageData;
 				int width = 0;
 				int height = 0;
 				DXGI_FORMAT pixelFormat = DXGI_FORMAT_UNKNOWN;
@@ -133,7 +133,7 @@ void Model::Initialize(Renderer* pRenderer, const std::vector<MeshInfo>& MESH_IN
 
 			if (_stat64(emissiveTextureA.c_str(), &sourceFileStat) != -1)
 			{
-				std::vector<UINT8> imageData;
+				std::vector<BYTE> imageData;
 				int width = 0;
 				int height = 0;
 				DXGI_FORMAT pixelFormat = DXGI_FORMAT_UNKNOWN;
@@ -169,7 +169,7 @@ void Model::Initialize(Renderer* pRenderer, const std::vector<MeshInfo>& MESH_IN
 
 			if (_stat64(normalTextureA.c_str(), &sourceFileStat) != -1)
 			{
-				std::vector<UINT8> imageData;
+				std::vector<BYTE> imageData;
 				int width = 0;
 				int height = 0;
 				DXGI_FORMAT pixelFormat = DXGI_FORMAT_UNKNOWN;
@@ -205,7 +205,7 @@ void Model::Initialize(Renderer* pRenderer, const std::vector<MeshInfo>& MESH_IN
 
 			if (_stat64(heightTextureA.c_str(), &sourceFileStat) != -1)
 			{
-				std::vector<UINT8> imageData;
+				std::vector<BYTE> imageData;
 				int width = 0;
 				int height = 0;
 				DXGI_FORMAT pixelFormat = DXGI_FORMAT_UNKNOWN;
@@ -241,7 +241,7 @@ void Model::Initialize(Renderer* pRenderer, const std::vector<MeshInfo>& MESH_IN
 
 			if (_stat64(aoTextureA.c_str(), &sourceFileStat) != -1)
 			{
-				std::vector<UINT8> imageData;
+				std::vector<BYTE> imageData;
 				int width = 0;
 				int height = 0;
 				DXGI_FORMAT pixelFormat = DXGI_FORMAT_UNKNOWN;
@@ -277,7 +277,7 @@ void Model::Initialize(Renderer* pRenderer, const std::vector<MeshInfo>& MESH_IN
 
 			if (_stat64(metallicTextureA.c_str(), &sourceFileStat) != -1)
 			{
-				std::vector<UINT8> imageData;
+				std::vector<BYTE> imageData;
 				int width = 0;
 				int height = 0;
 				DXGI_FORMAT pixelFormat = DXGI_FORMAT_UNKNOWN;
@@ -313,7 +313,7 @@ void Model::Initialize(Renderer* pRenderer, const std::vector<MeshInfo>& MESH_IN
 
 			if (_stat64(roughnessTextureA.c_str(), &sourceFileStat) != -1)
 			{
-				std::vector<UINT8> imageData;
+				std::vector<BYTE> imageData;
 				int width = 0;
 				int height = 0;
 				DXGI_FORMAT pixelFormat = DXGI_FORMAT_UNKNOWN;
@@ -350,13 +350,13 @@ void Model::Initialize(Renderer* pRenderer, const std::vector<MeshInfo>& MESH_IN
 	// Bounding box 초기화.
 	{
 		BoundingBox = GetBoundingBox(MESH_INFOS[0].Vertices);
-		for (UINT64 i = 1, size = MESH_INFOS.size(); i < size; ++i)
+		for (SIZE_T i = 1, size = MESH_INFOS.size(); i < size; ++i)
 		{
 			DirectX::BoundingBox bb = GetBoundingBox(MESH_INFOS[i].Vertices);
 			ExtendBoundingBox(bb, &BoundingBox);
 		}
 
-		MeshInfo meshData;
+		MeshInfo meshData = {};
 		MakeWireBox(&meshData, BoundingBox.Center, Vector3(BoundingBox.Extents) + Vector3(1e-3f));
 		m_pBoundingBoxMesh = new Mesh;
 		m_pBoundingBoxMesh->Initialize(pDevice, pContext);
@@ -378,10 +378,10 @@ void Model::Initialize(Renderer* pRenderer, const std::vector<MeshInfo>& MESH_IN
 	// Bounding sphere 초기화.
 	{
 		float maxRadius = 0.0f;
-		for (UINT64 i = 0, size = MESH_INFOS.size(); i < size; ++i)
+		for (SIZE_T i = 0, size = MESH_INFOS.size(); i < size; ++i)
 		{
 			const MeshInfo& curMesh = MESH_INFOS[i];
-			for (UINT64 j = 0, vertSize = curMesh.Vertices.size(); j < vertSize; ++j)
+			for (SIZE_T j = 0, vertSize = curMesh.Vertices.size(); j < vertSize; ++j)
 			{
 				const Vertex& v = curMesh.Vertices[j];
 				maxRadius = std::max((Vector3(BoundingBox.Center) - v.Position).Length(), maxRadius);
@@ -441,7 +441,7 @@ void Model::UpdateConstantBuffers()
 		return;
 	}
 
-	for (UINT64 i = 0, size = Meshes.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = Meshes.size(); i < size; ++i)
 	{
 		Mesh* pCurMesh = Meshes[i];
 
@@ -476,7 +476,7 @@ void Model::UpdateWorld(const Matrix& WORLD)
 	pSphereMeshConstData->WorldInverseTranspose = pBoxMeshConstData->WorldInverseTranspose;
 	pSphereMeshConstData->WorldInverse = pBoxMeshConstData->WorldInverse;
 
-	for (UINT64 i = 0, size = Meshes.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = Meshes.size(); i < size; ++i)
 	{
 		Mesh* pCurMesh = Meshes[i];
 
@@ -510,7 +510,7 @@ void Model::Render()
 
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
-	for (UINT64 i = 0, size = Meshes.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = Meshes.size(); i < size; ++i)
 	{
 		Mesh* const pCurMesh = Meshes[i];
 
@@ -560,7 +560,7 @@ void Model::RenderNormals()
 
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 
-	for (UINT64 i = 0, size = Meshes.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = Meshes.size(); i < size; ++i)
 	{
 		Mesh* const pCurMesh = Meshes[i];
 
@@ -613,7 +613,7 @@ void Model::Cleanup()
 		m_pBoundingBoxMesh = nullptr;
 	}
 
-	for (UINT64 i = 0, size = Meshes.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = Meshes.size(); i < size; ++i)
 	{
 		delete Meshes[i];
 		Meshes[i] = nullptr;

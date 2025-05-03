@@ -23,12 +23,12 @@ public:
 	
 	void Cleanup();
 
-	inline eGraphicsPSOType GetPSO(const bool bWIRED) override { return (bWIRED ? GraphicsPSOType_SkinnedWire : GraphicsPSOType_SkinnedSolid); }
-	inline eGraphicsPSOType GetGBufferPSO(const bool bWIRED) override { return (bWIRED ? GraphicsPSOType_GBufferSkinnedWire : GraphicsPSOType_GBufferSkinned); }
+	inline eGraphicsPSOType GetPSO(bool bWired) override { return (bWired ? GraphicsPSOType_SkinnedWire : GraphicsPSOType_SkinnedSolid); }
+	inline eGraphicsPSOType GetGBufferPSO(bool bWired) override { return (bWired ? GraphicsPSOType_GBufferSkinnedWire : GraphicsPSOType_GBufferSkinned); }
 	inline eGraphicsPSOType GetDepthOnlyPSO() override { return GraphicsPSOType_DepthOnlySkinned; }
 	inline eGraphicsPSOType GetDepthOnlyCubePSO() override { return GraphicsPSOType_DepthOnlyCubeSkinned; }
 	inline eGraphicsPSOType GetDepthOnlyCascadePSO() override { return GraphicsPSOType_DepthOnlyCascadeSkinned; }
-	inline eGraphicsPSOType GetReflectPSO(const bool bWIRED) override { return (bWIRED ? GraphicsPSOType_ReflectSkinnedWire : GraphicsPSOType_ReflectSkinnedSolid); }
+	inline eGraphicsPSOType GetReflectPSO(bool bWired) override { return (bWired ? GraphicsPSOType_ReflectSkinnedWire : GraphicsPSOType_ReflectSkinnedSolid); }
 
 public:
 	AnimationData CharacterAnimationData;

@@ -66,7 +66,7 @@ void SkinnedMeshModel::UpdateAnimation(const int CLIP_ID, const int FRAME, const
 	CharacterAnimationData.Update(CLIP_ID, FRAME, DELTA_TIME);
 
 	Matrix* pBoneTransformData = (Matrix*)m_pBoneTransform->pSystemMem;
-	for (UINT64 i = 0, size = CharacterAnimationData.BoneIDToNames.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = CharacterAnimationData.BoneIDToNames.size(); i < size; ++i)
 	{
 		pBoneTransformData[i] = CharacterAnimationData.Get(CLIP_ID, (int)i, FRAME).Transpose();
 	}
