@@ -357,7 +357,7 @@ void Model::Initialize(Renderer* pRenderer, const std::vector<MeshInfo>& MESH_IN
 		}
 
 		MeshInfo meshData = {};
-		MakeWireBox(&meshData, BoundingBox.Center, Vector3(BoundingBox.Extents) + Vector3(1e-3f));
+		MakeWireBox(&meshData, Vector3(BoundingBox.Center), Vector3(BoundingBox.Extents) + Vector3(1e-3f));
 		m_pBoundingBoxMesh = new Mesh;
 		m_pBoundingBoxMesh->Initialize(pDevice, pContext);
 
@@ -392,7 +392,7 @@ void Model::Initialize(Renderer* pRenderer, const std::vector<MeshInfo>& MESH_IN
 		BoundingSphere = DirectX::BoundingSphere(BoundingBox.Center, maxRadius);
 
 		MeshInfo meshData;
-		MakeWireSphere(&meshData, BoundingSphere.Center, BoundingSphere.Radius);
+		MakeWireSphere(&meshData, Vector3(BoundingSphere.Center), BoundingSphere.Radius);
 		m_pBoundingSphereMesh = new Mesh;
 		m_pBoundingSphereMesh->Initialize(pDevice, pContext);
 

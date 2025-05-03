@@ -9,18 +9,18 @@ HRESULT ReadFromFile(std::vector<MeshInfo>& dst, AnimationData* pAnimData, std::
 HRESULT ReadAnimationFromFile(AnimationData* pAnimData, std::wstring& basePath, std::wstring& fileName, bool bRevertNormals = false);
 
 
-void Normalize(const Vector3& CENTER, const float LONGEST_LENGTH, std::vector<MeshInfo>& meshes, AnimationData& animData);
+void Normalize(const Vector3& center, float longestLength, std::vector<MeshInfo>& meshes, AnimationData& animData);
 
-void MakeSquare(MeshInfo* pDst, const float SCALE = 1.0f, const Vector2 TEX_SCALE = Vector2(1.0f));
-void MakeSquareGrid(MeshInfo* pDst, const int NUM_SLICES, const int NUM_STACKS, const float SCALE = 1.0f, const Vector2 TEX_SCALE = Vector2(1.0f));
-void MakeGrass(MeshInfo* pDst);
-void MakeBox(MeshInfo* pDst, const float SCALE = 1.0f);
-void MakeWireBox(MeshInfo* pDst, const Vector3& CENTER, const Vector3& EXTENTS);
-void MakeWireSphere(MeshInfo* pDst, const Vector3& CENTER, const float RADIUS);
-void MakeCylinder(MeshInfo* pDst, const float BOTTOM_RADIUS, const float TOP_RADIUS, const float HEIGHT, const int NUM_SLICES);
-void MakeSphere(MeshInfo* pDst, const float RADIUS, const int NUM_SLICES, const int NUM_STACKS, const Vector2 TEX_SCALE = Vector2(1.0f));
-void MakeTetrahedron(MeshInfo* pDst);
-void MakeIcosahedron(MeshInfo* pDst);
-void MakeTerrainTile(MeshInfo* pDst);
+void MakeSquare(MeshInfo* pOutDst, float scale = 1.0f, Vector2 texScale = Vector2::One);
+void MakeSquareGrid(MeshInfo* pOutDst, int numSlices, int numStacks, float scale = 1.0f, Vector2 texScale = Vector2::One);
+void MakeGrass(MeshInfo* pOutDst);
+void MakeBox(MeshInfo* pOutDst, float scale = 1.0f);
+void MakeWireBox(MeshInfo* pOutDst, Vector3& center, Vector3& extents);
+void MakeWireSphere(MeshInfo* pOutDst, Vector3& center, float radius);
+void MakeCylinder(MeshInfo* pOutDst, float bottomRadius, float topRadius, float height, int numSlices);
+void MakeSphere(MeshInfo* pOutDst, float radius, int numSlices, int numStacks, Vector2 texScale = Vector2::One);
+void MakeTetrahedron(MeshInfo* pOutDst);
+void MakeIcosahedron(MeshInfo* pOutDst);
+void MakeTerrainTile(MeshInfo* pOutDst);
 
-void SubdivideToSphere(MeshInfo* pDst, const float RADIUS, MeshInfo& meshData);
+void SubdivideToSphere(MeshInfo* pOutDst, float radius, MeshInfo& meshData);
