@@ -704,22 +704,6 @@ void MakeIcosahedron(MeshInfo* pOutDst)
 	};
 }
 
-void MakeTerrainTile(MeshInfo* pOutDst)
-{
-	_ASSERT(pOutDst);
-
-	//MakeSquareGrid(pDst, 512, 512, 128, DirectX::SimpleMath::Vector2(512.0f));
-	MakeSquareGrid(pOutDst, 10, 10, 256);
-
-	/*srand((unsigned int)time(nullptr));
-	for (SIZE_T i = 0, size = pDst->Vertices.size(); i < size; ++i)
-	{
-		DirectX::SimpleMath::Vector3& pos = pDst->Vertices[i].Position;
-		pos.y = GetHeight(pos.x, pos.z);
-		pos.y *= 2.0f;
-	}*/
-}
-
 void SubdivideToSphere(MeshInfo* pOutDst, float radius, MeshInfo& meshData)
 {
 	using namespace DirectX;

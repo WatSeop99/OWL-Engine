@@ -255,7 +255,6 @@ void ResourceManager::Cleanup()
 	SAFE_RELEASE(pAerialLUTCS);
 	SAFE_RELEASE(pMultiScatterLUTCS);
 	SAFE_RELEASE(pTransmittanceLUTCS);
-	SAFE_RELEASE(pTerrainGeneratorCS);
 
 	// Input Layouts
 	SAFE_RELEASE(pBasicIL);
@@ -643,114 +642,112 @@ void ResourceManager::InitShaders()
 	UINT numBillboardIEs = _countof(BILLBOARD_IEs);
 	UINT numSunIEs = _countof(SUN_IEs);
 
-	hr = createVertexShaderAndInputLayout(L"./Shaders/BasicVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pBasicVS, &pBasicIL);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/BasicVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pBasicVS, &pBasicIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = createVertexShaderAndInputLayout(L"./Shaders/BasicVS.hlsl", SKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO, &pSkinnedVS, &pSkinnedIL);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/BasicVS.hlsl", SKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO, &pSkinnedVS, &pSkinnedIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = createVertexShaderAndInputLayout(L"./Shaders/NormalVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pNormalVS, &pBasicIL);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/NormalVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pNormalVS, &pBasicIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = createVertexShaderAndInputLayout(L"./Shaders/ScreenQuadVS.hlsl", nullptr, 0, nullptr, &pScreenQuadVS, nullptr);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/ScreenQuadVS.hlsl", nullptr, 0, nullptr, &pScreenQuadVS, nullptr);
 	BREAK_IF_FAILED(hr);
 
-	hr = createVertexShaderAndInputLayout(L"./Shaders/SkyboxVS.hlsl", SKYBOX_IEs, numSkyboxIEs, nullptr, &pSkyboxVS, &pSkyboxIL);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/SkyboxVS.hlsl", SKYBOX_IEs, numSkyboxIEs, nullptr, &pSkyboxVS, &pSkyboxIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = createVertexShaderAndInputLayout(L"./Shaders/DepthOnlyVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pDepthOnlyVS, &pSkyboxIL);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/DepthOnlyVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pDepthOnlyVS, &pSkyboxIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = createVertexShaderAndInputLayout(L"./Shaders/DepthOnlyVS.hlsl", SKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO, &pDepthOnlySkinnedVS, &pSkinnedIL);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/DepthOnlyVS.hlsl", SKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO, &pDepthOnlySkinnedVS, &pSkinnedIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = createVertexShaderAndInputLayout(L"./Shaders/GrassVS.hlsl", GRASS_IEs, numGrassIEs, nullptr, &pGrassVS, &pGrassIL);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/GrassVS.hlsl", GRASS_IEs, numGrassIEs, nullptr, &pGrassVS, &pGrassIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = createVertexShaderAndInputLayout(L"./Shaders/BillboardVS.hlsl", BILLBOARD_IEs, numBillboardIEs, nullptr, &pBillboardVS, &pBillboardIL);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/BillboardVS.hlsl", BILLBOARD_IEs, numBillboardIEs, nullptr, &pBillboardVS, &pBillboardIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = createVertexShaderAndInputLayout(L"./Shaders/GBufferVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pGBufferVS, &pBasicIL);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/GBufferVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pGBufferVS, &pBasicIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = createVertexShaderAndInputLayout(L"./Shaders/GBufferVS.hlsl", SKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO, &pGBufferSkinnedVS, &pSkinnedIL);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/GBufferVS.hlsl", SKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO, &pGBufferSkinnedVS, &pSkinnedIL);
 	BREAK_IF_FAILED(hr);
 
-	hr = createVertexShaderAndInputLayout(L"./Shaders/Atmosphere/SkyLUTVS.hlsl", nullptr, 0, nullptr, &pSkyLUTVS, nullptr);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/Atmosphere/SkyLUTVS.hlsl", nullptr, 0, nullptr, &pSkyLUTVS, nullptr);
 	BREAK_IF_FAILED(hr);
 
-	hr = createVertexShaderAndInputLayout(L"./Shaders/Atmosphere/SkyVS.hlsl", nullptr, 0, nullptr, &pSkyVS, nullptr);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/Atmosphere/SkyVS.hlsl", nullptr, 0, nullptr, &pSkyVS, nullptr);
 	BREAK_IF_FAILED(hr);
 
-	hr = createVertexShaderAndInputLayout(L"./Shaders/Atmosphere/SunVS.hlsl", SUN_IEs, numSunIEs, nullptr, &pSunVS, &pSunIL);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/Atmosphere/SunVS.hlsl", SUN_IEs, numSunIEs, nullptr, &pSunVS, &pSunIL);
 	BREAK_IF_FAILED(hr);
 
 	/*hr = createPixelShader(L"./Shaders/BasicPS.hlsl", &pBasicPS);
 	BREAK_IF_FAILED(hr);*/
-	hr = createPixelShader(L"./Shaders/NormalPS.hlsl", &pNormalPS);
+	hr = CreatePixelShader(L"./Shaders/NormalPS.hlsl", &pNormalPS);
 	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/SkyboxPS.hlsl", &pSkyboxPS);
+	hr = CreatePixelShader(L"./Shaders/SkyboxPS.hlsl", &pSkyboxPS);
 	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/CombinePS.hlsl", &pCombinePS);
+	hr = CreatePixelShader(L"./Shaders/CombinePS.hlsl", &pCombinePS);
 	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/BloomDownPS.hlsl", &pBloomDownPS);
+	hr = CreatePixelShader(L"./Shaders/BloomDownPS.hlsl", &pBloomDownPS);
 	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/BloomUpPS.hlsl", &pBloomUpPS);
+	hr = CreatePixelShader(L"./Shaders/BloomUpPS.hlsl", &pBloomUpPS);
 	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/DepthOnlyPS.hlsl", &pDepthOnlyPS);
+	hr = CreatePixelShader(L"./Shaders/DepthOnlyPS.hlsl", &pDepthOnlyPS);
 	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/PostEffectPS.hlsl", &pPostEffectsPS);
+	hr = CreatePixelShader(L"./Shaders/PostEffectPS.hlsl", &pPostEffectsPS);
 	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/ColorPS.hlsl", &pColorPS);
+	hr = CreatePixelShader(L"./Shaders/ColorPS.hlsl", &pColorPS);
 	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/GrassPS.hlsl", &pGrassPS);
+	hr = CreatePixelShader(L"./Shaders/GrassPS.hlsl", &pGrassPS);
 	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/OceanPS.hlsl", &pOceanPS);
+	hr = CreatePixelShader(L"./Shaders/OceanPS.hlsl", &pOceanPS);
 	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/ExplosionPS.hlsl", &pExplosionPS);
+	hr = CreatePixelShader(L"./Shaders/ExplosionPS.hlsl", &pExplosionPS);
 	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/VolumetricFirePS.hlsl", &pVolumetricFirePS);
+	hr = CreatePixelShader(L"./Shaders/VolumetricFirePS.hlsl", &pVolumetricFirePS);
 	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/GBufferPS.hlsl", &pGBufferPS);
+	hr = CreatePixelShader(L"./Shaders/GBufferPS.hlsl", &pGBufferPS);
 	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/DeferredLightingPS.hlsl", &pDeferredLightingPS);
+	hr = CreatePixelShader(L"./Shaders/DeferredLightingPS.hlsl", &pDeferredLightingPS);
 	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/Atmosphere/SkyLUTPS.hlsl", &pSkyLUTPS);
+	hr = CreatePixelShader(L"./Shaders/Atmosphere/SkyLUTPS.hlsl", &pSkyLUTPS);
 	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/Atmosphere/SkyPS.hlsl", &pSkyPS);
+	hr = CreatePixelShader(L"./Shaders/Atmosphere/SkyPS.hlsl", &pSkyPS);
 	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/Atmosphere/SunPS.hlsl", &pSunPS);
-	BREAK_IF_FAILED(hr);
-
-	hr = createGeometryShader(L"./Shaders/NormalGS.hlsl", &pNormalGS);
-	BREAK_IF_FAILED(hr);
-	hr = createGeometryShader(L"./Shaders/BillboardGS.hlsl", &pBillboardGS);
+	hr = CreatePixelShader(L"./Shaders/Atmosphere/SunPS.hlsl", &pSunPS);
 	BREAK_IF_FAILED(hr);
 
-	hr = createVertexShaderAndInputLayout(L"./Shaders/DepthOnlyCubeVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pDepthOnlyCubeVS, &pSkyboxIL);
+	hr = CreateGeometryShader(L"./Shaders/NormalGS.hlsl", &pNormalGS);
 	BREAK_IF_FAILED(hr);
-	hr = createVertexShaderAndInputLayout(L"./Shaders/DepthOnlyCubeVS.hlsl", SKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO, &pDepthOnlyCubeSkinnedVS, &pSkinnedIL);
-	BREAK_IF_FAILED(hr);
-	hr = createVertexShaderAndInputLayout(L"./Shaders/DepthOnlyCascadeVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pDepthOnlyCascadeVS, &pSkyboxIL);
-	BREAK_IF_FAILED(hr);
-	hr = createVertexShaderAndInputLayout(L"./Shaders/DepthONlyCascadeVS.hlsl", SKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO, &pDepthOnlyCascadeSkinnedVS, &pSkinnedIL);
-	BREAK_IF_FAILED(hr);
-	hr = createGeometryShader(L"./Shaders/DepthOnlyCubeGS.hlsl", &pDepthOnlyCubeGS);
-	BREAK_IF_FAILED(hr);
-	hr = createGeometryShader(L"./Shaders/DepthOnlyCascadeGS.hlsl", &pDepthOnlyCascadeGS);
-	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/DepthOnlyCubePS.hlsl", &pDepthOnlyCubePS);
-	BREAK_IF_FAILED(hr);
-	hr = createPixelShader(L"./Shaders/DepthOnlyCascadePS.hlsl", &pDepthOnlyCascadePS);
+	hr = CreateGeometryShader(L"./Shaders/BillboardGS.hlsl", &pBillboardGS);
 	BREAK_IF_FAILED(hr);
 
-	hr = createComputeShader(L"./Shaders/Atmosphere/AerialLUTCS.hlsl", &pAerialLUTCS);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/DepthOnlyCubeVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pDepthOnlyCubeVS, &pSkyboxIL);
 	BREAK_IF_FAILED(hr);
-	hr = createComputeShader(L"./Shaders/Atmosphere/MultiScatterLUTCS.hlsl", &pMultiScatterLUTCS);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/DepthOnlyCubeVS.hlsl", SKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO, &pDepthOnlyCubeSkinnedVS, &pSkinnedIL);
 	BREAK_IF_FAILED(hr);
-	hr = createComputeShader(L"./Shaders/Atmosphere/TransmittanceLUTCS.hlsl", &pTransmittanceLUTCS);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/DepthOnlyCascadeVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pDepthOnlyCascadeVS, &pSkyboxIL);
 	BREAK_IF_FAILED(hr);
-	hr = createComputeShader(L"./Shaders/TerrainGenerator.hlsl", &pTerrainGeneratorCS);
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/DepthONlyCascadeVS.hlsl", SKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO, &pDepthOnlyCascadeSkinnedVS, &pSkinnedIL);
+	BREAK_IF_FAILED(hr);
+	hr = CreateGeometryShader(L"./Shaders/DepthOnlyCubeGS.hlsl", &pDepthOnlyCubeGS);
+	BREAK_IF_FAILED(hr);
+	hr = CreateGeometryShader(L"./Shaders/DepthOnlyCascadeGS.hlsl", &pDepthOnlyCascadeGS);
+	BREAK_IF_FAILED(hr);
+	hr = CreatePixelShader(L"./Shaders/DepthOnlyCubePS.hlsl", &pDepthOnlyCubePS);
+	BREAK_IF_FAILED(hr);
+	hr = CreatePixelShader(L"./Shaders/DepthOnlyCascadePS.hlsl", &pDepthOnlyCascadePS);
+	BREAK_IF_FAILED(hr);
+
+	hr = CreateComputeShader(L"./Shaders/Atmosphere/AerialLUTCS.hlsl", &pAerialLUTCS);
+	BREAK_IF_FAILED(hr);
+	hr = CreateComputeShader(L"./Shaders/Atmosphere/MultiScatterLUTCS.hlsl", &pMultiScatterLUTCS);
+	BREAK_IF_FAILED(hr);
+	hr = CreateComputeShader(L"./Shaders/Atmosphere/TransmittanceLUTCS.hlsl", &pTransmittanceLUTCS);
 	BREAK_IF_FAILED(hr);
 }
 
@@ -948,11 +945,9 @@ void ResourceManager::InitPipelineStates()
 	ComputePSOs[ComputePSOType_MultiScatterLUT].pComputeShader = pMultiScatterLUTCS;
 
 	ComputePSOs[ComputePSOType_TransmittanceLUT].pComputeShader = pTransmittanceLUTCS;
-
-	ComputePSOs[ComputePSOType_NoiseGenerate].pComputeShader = pTerrainGeneratorCS;
 }
 
-HRESULT ResourceManager::createVertexShaderAndInputLayout(const WCHAR* pszFileName, const D3D11_INPUT_ELEMENT_DESC* pINPUT_ELEMENTS, const UINT ELEMENT_SIZE, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11VertexShader** ppOutVertexShader, ID3D11InputLayout** ppOutInputLayout)
+HRESULT ResourceManager::CreateVertexShaderAndInputLayout(const WCHAR* pszFileName, const D3D11_INPUT_ELEMENT_DESC* pINPUT_ELEMENTS, const UINT ELEMENT_SIZE, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11VertexShader** ppOutVertexShader, ID3D11InputLayout** ppOutInputLayout)
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(pszFileName);
@@ -997,7 +992,7 @@ LB_RET:
 	return hr;
 }
 
-HRESULT ResourceManager::createHullShader(const WCHAR* pszFileName, ID3D11HullShader** ppOutHullShader)
+HRESULT ResourceManager::CreateHullShader(const WCHAR* pszFileName, ID3D11HullShader** ppOutHullShader)
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(pszFileName);
@@ -1031,7 +1026,7 @@ LB_RET:
 	return hr;
 }
 
-HRESULT ResourceManager::createDomainShader(const WCHAR* pszFileName, ID3D11DomainShader** ppOutDomainShader)
+HRESULT ResourceManager::CreateDomainShader(const WCHAR* pszFileName, ID3D11DomainShader** ppOutDomainShader)
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(pszFileName);
@@ -1065,7 +1060,7 @@ LB_RET:
 	return hr;
 }
 
-HRESULT ResourceManager::createGeometryShader(const WCHAR* pszFileName, ID3D11GeometryShader** ppOutGeometryShader)
+HRESULT ResourceManager::CreateGeometryShader(const WCHAR* pszFileName, ID3D11GeometryShader** ppOutGeometryShader)
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(pszFileName);
@@ -1099,7 +1094,7 @@ LB_RET:
 	return hr;
 }
 
-HRESULT ResourceManager::createPixelShader(const WCHAR* pszFileName, ID3D11PixelShader** ppOutPixelShader)
+HRESULT ResourceManager::CreatePixelShader(const WCHAR* pszFileName, ID3D11PixelShader** ppOutPixelShader)
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(pszFileName);
@@ -1133,7 +1128,7 @@ LB_RET:
 	return hr;
 }
 
-HRESULT ResourceManager::createComputeShader(const WCHAR* pszFileName, ID3D11ComputeShader** ppOutComputeShader)
+HRESULT ResourceManager::CreateComputeShader(const WCHAR* pszFileName, ID3D11ComputeShader** ppOutComputeShader)
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(pszFileName);

@@ -138,12 +138,6 @@
     <ClInclude Include="Util\KnM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Geometry\Terrain.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Geometry\TerrainGenerator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="External\DirectXTK\Inc\SimpleMath.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -337,12 +331,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="External\imgui\backends\imgui_impl_win32.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Geometry\Terrain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Geometry\TerrainGenerator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="External\DirectXTex\Auxiliary\DirectXTexEXR.cpp">

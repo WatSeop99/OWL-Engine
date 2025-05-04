@@ -169,8 +169,6 @@
     <ClInclude Include="External\optick\src\optick_serialization.h" />
     <ClInclude Include="External\optick\src\optick_server.h" />
     <ClInclude Include="Geometry\FBXLoader.h" />
-    <ClInclude Include="Geometry\Terrain.h" />
-    <ClInclude Include="Geometry\TerrainGenerator.h" />
     <ClInclude Include="Util\BVHTree.h" />
     <ClInclude Include="Graphics\Atmosphere\AtmosphereProperty.h" />
     <ClInclude Include="Graphics\Atmosphere\AerialLUT.h">
@@ -259,8 +257,6 @@
     <ClCompile Include="External\optick\src\optick_server.cpp" />
     <ClCompile Include="Geometry\FBXLoader.cpp" />
     <ClCompile Include="Geometry\Mesh.cpp" />
-    <ClCompile Include="Geometry\Terrain.cpp" />
-    <ClCompile Include="Geometry\TerrainGenerator.cpp" />
     <ClCompile Include="Util\BVHTree.cpp" />
     <ClCompile Include="Graphics\Atmosphere\AtmosphereProperty.cpp" />
     <ClCompile Include="Graphics\Atmosphere\AerialLUT.cpp">

@@ -10,7 +10,6 @@
 #include "Atmosphere/Sky.h"
 #include "Atmosphere/SkyLUT.h"
 #include "Atmosphere/Sun.h"
-#include "../Geometry/Terrain.h"
 #include "../Renderer/Texture.h"
 #include "Atmosphere/TransmittanceLUT.h"
 #include "../Renderer/ResourceManager.h"
@@ -102,9 +101,8 @@ bool Scene::Initialize(Renderer* pRenderer)
 	// ¹Ù´Ú(°Å¿ï).
 	{
 		// https://freepbr.com/materials/stringy-marble-pbr/
-		MeshInfo meshInfo;
-		//MakeSquareGrid(&meshInfo, 100, 100, 100, Vector2(100.0f));
-		MakeTerrainTile(&meshInfo);
+		MeshInfo meshInfo = {};
+		MakeSquareGrid(&meshInfo, 100, 100, 100);
 
 		std::wstring path = L"./Assets/Textures/PBR/stringy-marble-ue/";
 		meshInfo.szAlbedoTextureFileName = path + L"stringy_marble_albedo.png";

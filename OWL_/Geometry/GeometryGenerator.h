@@ -21,6 +21,5 @@ void MakeCylinder(MeshInfo* pOutDst, float bottomRadius, float topRadius, float 
 void MakeSphere(MeshInfo* pOutDst, float radius, int numSlices, int numStacks, Vector2 texScale = Vector2::One);
 void MakeTetrahedron(MeshInfo* pOutDst);
 void MakeIcosahedron(MeshInfo* pOutDst);
-void MakeTerrainTile(MeshInfo* pOutDst);
 
 void SubdivideToSphere(MeshInfo* pOutDst, float radius, MeshInfo& meshData);
