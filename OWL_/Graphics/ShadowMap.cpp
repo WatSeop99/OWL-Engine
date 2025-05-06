@@ -8,18 +8,18 @@
 
 using DirectX::SimpleMath::Vector4;
 
-void ShadowMap::Initialize(Renderer* pRenderer, const UINT LIGHT_TYPE)
+void ShadowMap::Initialize(Renderer* pRenderer, UINT lightType)
 {
 	_ASSERT(pRenderer);
 
 	m_pRenderer = pRenderer;
-	m_LightType = LIGHT_TYPE;
+	m_LightType = lightType;
 
 	ID3D11Device* pDevice = pRenderer->GetDevice();
 	ID3D11DeviceContext* pContext = pRenderer->GetDeviceContext();
 	int shadowBufferCount = 0;
 
-	switch (LIGHT_TYPE & m_TOTAL_LIGHT_TYPE)
+	switch (lightType & m_TOTAL_LIGHT_TYPE)
 	{
 		case LIGHT_SUN:
 		{
@@ -120,13 +120,13 @@ void ShadowMap::Initialize(Renderer* pRenderer, const UINT LIGHT_TYPE)
 			break;
 	}
 
-	GlobalConstants initialGlobal;
-	ShadowConstants initialShadow;
+	GlobalConstants initialGlobal = {};
+	ShadowConstants initialShadow = {};
 	for (int i = 0; i < shadowBufferCount; ++i)
 	{
 		m_pShadowConstantsBuffers[i].Initialize(pDevice, pContext, sizeof(GlobalConstants), &initialGlobal);
 	}
-	if ((LIGHT_TYPE & m_TOTAL_LIGHT_TYPE) & (LIGHT_SUN | LIGHT_POINT))
+	if ((lightType & m_TOTAL_LIGHT_TYPE) & (LIGHT_SUN | LIGHT_POINT))
 	{
 		m_ShadowConstantsBufferForGS.Initialize(pDevice, pContext, sizeof(ShadowConstants), &initialShadow);
 	}
@@ -179,21 +179,21 @@ void ShadowMap::Update(const LightProperty& PROPERTY, Camera* pLightCam, Camera*
 			// https://stackoverflow.com/questions/59537726/directx-11-point-light-shadowing
 			const Vector3 VIEW_DIRs[6] = // cubemap view vector.
 			{
-				Vector3(1.0f, 0.0f, 0.0f),	// right
-				Vector3(-1.0f, 0.0f, 0.0f), // left
-				Vector3(0.0f, 1.0f, 0.0f),	// up
-				Vector3(0.0f, -1.0f, 0.0f), // down
-				Vector3(0.0f, 0.0f, 1.0f),	// front
-				Vector3(0.0f, 0.0f, -1.0f)	// back
+				Vector3::UnitX,	 // right
+				-Vector3::UnitX, // left
+				Vector3::UnitY,	 // up
+				-Vector3::UnitY, // down
+				Vector3::UnitZ,	 // front
+				- Vector3::UnitZ // back
 			};
 			const Vector3 UP_DIRs[6] = // 위에서 정의한 view vector에 대한 up vector.
 			{
-				Vector3(0.0f, 1.0f, 0.0f),
-				Vector3(0.0f, 1.0f, 0.0f),
-				Vector3(0.0f, 0.0f, -1.0f),
-				Vector3(0.0f, 0.0f, 1.0f),
-				Vector3(0.0f, 1.0f, 0.0f),
-				Vector3(0.0f, 1.0f, 0.0f)
+				Vector3::UnitY,
+				Vector3::UnitY,
+				-Vector3::UnitZ,
+				Vector3::UnitZ,
+				Vector3::UnitY,
+				Vector3::UnitY
 			};
 
 			for (int i = 0; i < 6; ++i)
@@ -277,7 +277,7 @@ void ShadowMap::Render(std::vector<Model*>& pBasicList, Model* pMirror)
 			pContext->OMSetRenderTargets(0, nullptr, m_CascadeShadowBuffer.pDSV);
 			pContext->GSSetConstantBuffers(0, 1, &m_ShadowConstantsBufferForGS.pBuffer);
 
-			for (UINT64 i = 0, size = pBasicList.size(); i < size; ++i)
+			for (SIZE_T i = 0, size = pBasicList.size(); i < size; ++i)
 			{
 				Model* const pCurModel = pBasicList[i];
 				if (pCurModel->bCastShadow && pCurModel->bIsVisible)
@@ -301,7 +301,7 @@ void ShadowMap::Render(std::vector<Model*>& pBasicList, Model* pMirror)
 			pContext->OMSetRenderTargets(0, nullptr, m_ShadowCubeBuffer.pDSV);
 			pContext->GSSetConstantBuffers(0, 1, &m_ShadowConstantsBufferForGS.pBuffer);
 
-			for (UINT64 i = 0, size = pBasicList.size(); i < size; ++i)
+			for (SIZE_T i = 0, size = pBasicList.size(); i < size; ++i)
 			{
 				Model* const pCurModel = pBasicList[i];
 				if (pCurModel->bCastShadow && pCurModel->bIsVisible)
@@ -326,7 +326,7 @@ void ShadowMap::Render(std::vector<Model*>& pBasicList, Model* pMirror)
 			pContext->OMSetRenderTargets(0, nullptr, m_Shadow2DBuffer.pDSV);
 			m_pRenderer->SetGlobalConsts(&m_pShadowConstantsBuffers[0].pBuffer, 0);
 
-			for (UINT64 i = 0, size = pBasicList.size(); i < size; ++i)
+			for (SIZE_T i = 0, size = pBasicList.size(); i < size; ++i)
 			{
 				Model* const pCurModel = pBasicList[i];
 				if (pCurModel->bCastShadow && pCurModel->bIsVisible)
@@ -366,8 +366,6 @@ void ShadowMap::Cleanup()
 void ShadowMap::SetShadowViewport()
 {
 	_ASSERT(m_pRenderer);
-
-
 
 	switch (m_LightType & m_TOTAL_LIGHT_TYPE)
 	{

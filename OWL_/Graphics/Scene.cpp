@@ -132,7 +132,7 @@ bool Scene::Initialize(Renderer* pRenderer)
 		// m_pGround->Meshes[0]->pMaterialBuffer->Height;
 
 		// Vector3 position = Vector3(0.0f, -1.0f, 0.0f);
-		Vector3 position = Vector3(0.0f, -0.0f, 0.0f);
+		Vector3 position = Vector3::Zero;
 		//m_pGround->UpdateWorld(Matrix::CreateRotationX(DirectX::XM_PI * 0.5f) * Matrix::CreateTranslation(position));
 		//m_pGround->UpdateWorld(Matrix::CreateTranslation(position));
 		m_pGround->bCastShadow = false; // 바닥은 그림자 만들기 생략.
@@ -142,8 +142,8 @@ bool Scene::Initialize(Renderer* pRenderer)
 		m_pMirror = m_pGround; // 바닥에 거울처럼 반사 구현.
 	}
 
-	GlobalConstants initialGlobal;
-	LightConstants initialLight;
+	GlobalConstants initialGlobal = {};
+	LightConstants initialLight = {};
 	m_GlobalConstants.Initialize(pDevice, pContext, sizeof(GlobalConstants), &initialGlobal);
 	m_ReflectionGlobalConstants.Initialize(pDevice, pContext, sizeof(GlobalConstants), &initialGlobal);
 	m_LightConstants.Initialize(pDevice, pContext, sizeof(LightConstants), &initialLight);
@@ -158,7 +158,7 @@ bool Scene::Initialize(Renderer* pRenderer)
 	//m_GlobalConstants.CPU.StrengthIBL = 1.0f;
 
 	// 광원마다 shadow map 설정.
-	for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = Lights.size(); i < size; ++i)
 	{
 		Lights[i].Initialize(pRenderer);
 	}
@@ -213,10 +213,10 @@ bool Scene::Initialize(Renderer* pRenderer)
 	return true;
 }
 
-void Scene::Update(const float DELTA_TIME)
+void Scene::Update(float deltaTime)
 {
-	UpdateLights(DELTA_TIME);
-	UpdateGlobalConstants(DELTA_TIME);
+	UpdateLights(deltaTime);
+	UpdateGlobalConstants(deltaTime);
 
 	const Vector3 CAMERA_POS = m_pMainCamera->GetEyePos();
 	const Matrix CAMERA_VIEWPROJECTION = m_pMainCamera->GetView() * m_pMainCamera->GetProjection();
@@ -310,7 +310,7 @@ void Scene::Cleanup()
 	SAFE_RELEASE(m_pEnvSRV);
 
 	Lights.clear();
-	for (UINT64 i = 0, size = RenderObjects.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = RenderObjects.size(); i < size; ++i)
 	{
 		delete RenderObjects[i];
 		RenderObjects[i] = nullptr;
@@ -372,16 +372,16 @@ void Scene::InitCubemaps(std::wstring&& basePath, std::wstring&& envFileName, st
 	pResourceManager->CreateTextureCubeFromFile((basePath + brdfFileName).c_str(), m_pBRDF->GetTexture2DPPtr(), &textureDesc);*/
 }
 
-void Scene::UpdateLights(const float DELTA_TIME)
+void Scene::UpdateLights(float deltaTime)
 {
-	for (UINT64 i = 0, size = Lights.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = Lights.size(); i < size; ++i)
 	{
-		Lights[i].Update(DELTA_TIME, m_pMainCamera);
+		Lights[i].Update(deltaTime, m_pMainCamera);
 		m_ppLightSpheres[i]->UpdateWorld(Matrix::CreateScale(Max(0.01f, Lights[i].Property.Radius)) * Matrix::CreateTranslation(Lights[i].Property.Position));
 	}
 }
 
-void Scene::UpdateGlobalConstants(const float DELTA_TIME)
+void Scene::UpdateGlobalConstants(float deltaTime)
 {
 	const Vector3 EYE_WORLD = m_pMainCamera->GetEyePos();
 	const Matrix REFLECTION = Matrix::CreateReflection(m_MirrorPlane);
@@ -395,7 +395,7 @@ void Scene::UpdateGlobalConstants(const float DELTA_TIME)
 		__debugbreak();
 	}
 
-	pGlobalConstData->GlobalTime += DELTA_TIME;
+	pGlobalConstData->GlobalTime += deltaTime;
 	pGlobalConstData->EyeWorld = EYE_WORLD;
 	pGlobalConstData->View = VIEW.Transpose();
 	pGlobalConstData->Projection = PROJECTION.Transpose();

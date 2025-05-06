@@ -16,7 +16,7 @@ public:
 	bool Initialize(HINSTANCE hInstance);
 	void InitScene();
 	
-	void Update(const float DELTA_TIME);
+	void Update(float deltaTime);
 
 	void Render();
 

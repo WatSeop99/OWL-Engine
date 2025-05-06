@@ -21,7 +21,7 @@ DirectX::BoundingBox GetBoundingBox(const std::vector<Vertex>& VERTICES)
 	Vector3 minCorner = VERTICES[0].Position;
 	Vector3 maxCorner = VERTICES[0].Position;
 
-	for (UINT64 i = 1, size = VERTICES.size(); i < size; ++i)
+	for (SIZE_T i = 1, size = VERTICES.size(); i < size; ++i)
 	{
 		minCorner = Min(minCorner, VERTICES[i].Position);
 		maxCorner = Max(maxCorner, VERTICES[i].Position);

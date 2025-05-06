@@ -6,7 +6,7 @@
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN 
-//#define PROFILING
+#define PROFILING
 #define DX11
 
 #pragma comment(lib, "d3d11.lib")

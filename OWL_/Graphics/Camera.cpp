@@ -2,81 +2,58 @@
 #include "../Util/KnM.h"
 #include "Camera.h"
 
-void Camera::Reset(const Vector3& POS, const float YAW, const float PITCH)
+void Camera::Reset(Vector3& pos, float yaw, float pitch)
 {
-	m_Position = POS;
-	m_Yaw = YAW;
-	m_Pitch = PITCH;
+	m_Position = pos;
+	m_Yaw = yaw;
+	m_Pitch = pitch;
 	UpdateViewDir();
 }
 
-void Camera::UpdateViewDir()
-{
-	// 이동할 때 기준이 되는 정면/오른쪽 방향 계산.
-	m_ViewDirection = Vector3::Transform(Vector3::UnitZ, Matrix::CreateRotationY(m_Yaw));
-	m_RightDirection = m_UpDirection.Cross(m_ViewDirection);
-}
-
-void Camera::UpdateKeyboard(const float DELTA_TIME, Keyboard* const pKeyboard)
+void Camera::UpdateMovements(float deltaTime, Keyboard* const pKeyboard)
 {
 	_ASSERT(pKeyboard);
 
-	if (bUseFirstPersonView)
+	if (!bUseFirstPersonView)
 	{
-		if (pKeyboard->bPressed['W'])
-		{
-			MoveForward(DELTA_TIME);
-		}
-		if (pKeyboard->bPressed['S'])
-		{
-			MoveForward(-DELTA_TIME);
-		}
-		if (pKeyboard->bPressed['D'])
-		{
-			MoveRight(DELTA_TIME);
-		}
-		if (pKeyboard->bPressed['A'])
-		{
-			MoveRight(-DELTA_TIME);
-		}
-		if (pKeyboard->bPressed['E'])
-		{
-			MoveUp(DELTA_TIME);
-		}
-		if (pKeyboard->bPressed['Q'])
-		{
-			MoveUp(-DELTA_TIME);
-		}
+		return;
+	}
+
+	if (pKeyboard->bPressed['W'])
+	{
+		MoveForward(deltaTime);
+	}
+	if (pKeyboard->bPressed['S'])
+	{
+		MoveForward(-deltaTime);
+	}
+	if (pKeyboard->bPressed['D'])
+	{
+		MoveRight(deltaTime);
+	}
+	if (pKeyboard->bPressed['A'])
+	{
+		MoveRight(-deltaTime);
+	}
+	if (pKeyboard->bPressed['E'])
+	{
+		MoveUp(deltaTime);
+	}
+	if (pKeyboard->bPressed['Q'])
+	{
+		MoveUp(-deltaTime);
 	}
 }
 
-void Camera::UpdateMouse(const float MOUSE_NDC_X, const float MOUSE_NDC_Y)
+void Camera::UpdateDirection(float mouseNDCX, float mouseNDCY)
 {
 	if (bUseFirstPersonView)
 	{
 		// 얼마나 회전할지 계산.
-		m_Yaw = MOUSE_NDC_X * DirectX::XM_2PI;       // 좌우 360도.
-		m_Pitch = -MOUSE_NDC_Y * DirectX::XM_PIDIV2; // 위 아래 90도.
+		m_Yaw = mouseNDCX * DirectX::XM_2PI;       // 좌우 360도.
+		m_Pitch = -mouseNDCY * DirectX::XM_PIDIV2; // 위 아래 90도.
 		UpdateViewDir();
 	}
-}
-
-void Camera::MoveForward(const float DELTA_TIME)
-{
-	// 이동후의_위치 = 현재_위치 + 이동방향 * 속도 * 시간차이.
-	m_Position += m_ViewDirection * m_Speed * DELTA_TIME;
-}
-
-void Camera::MoveUp(const float DELTA_TIME)
-{
-	// 이동후의_위치 = 현재_위치 + 이동방향 * 속도 * 시간차이.
-	m_Position += m_UpDirection * m_Speed * DELTA_TIME;
-}
-
-void Camera::MoveRight(const float DELTA_TIME)
-{
-	// 이동후의_위치 = 현재_위치 + 이동방향 * 속도 * 시간차이.
-	m_Position += m_RightDirection * m_Speed * DELTA_TIME;
 }
 
 void Camera::PrintView()
@@ -162,4 +139,29 @@ FrustumDirection Camera::GetFrustumDirection()
 	result.FrustumD.Normalize();
 
 	return result;
+}
+
+void Camera::UpdateViewDir()
+{
+	// 이동할 때 기준이 되는 정면/오른쪽 방향 계산.
+	m_ViewDirection = Vector3::Transform(Vector3::UnitZ, Matrix::CreateRotationY(m_Yaw));
+	m_RightDirection = m_UpDirection.Cross(m_ViewDirection);
+}
+
+void Camera::MoveForward(float deltaTime)
+{
+	// 이동후의_위치 = 현재_위치 + 이동방향 * 속도 * 시간차이.
+	m_Position += m_ViewDirection * m_Speed * deltaTime;
+}
+
+void Camera::MoveUp(float deltaTime)
+{
+	// 이동후의_위치 = 현재_위치 + 이동방향 * 속도 * 시간차이.
+	m_Position += m_UpDirection * m_Speed * deltaTime;
+}
+
+void Camera::MoveRight(float deltaTime)
+{
+	// 이동후의_위치 = 현재_위치 + 이동방향 * 속도 * 시간차이.
+	m_Position += m_RightDirection * m_Speed * deltaTime;
 }

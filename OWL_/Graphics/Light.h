@@ -28,7 +28,7 @@ public:
 
 	inline void SetPosition(const Vector3& POS) { m_LightViewCamera.SetEyePos(POS); }
 	inline void SetDirection(const Vector3& DIR) { m_LightViewCamera.SetViewDir(DIR); }
-	inline void SetShadowSize(const UINT WIDTH, const UINT HEIGHT) { m_ShadowMap.SetShadowWidth(WIDTH); m_ShadowMap.SetShadowHeight(HEIGHT); }
+	inline void SetShadowSize(UINT width, UINT height) { m_ShadowMap.SetShadowWidth(width); m_ShadowMap.SetShadowHeight(height); }
 
 public:
 	bool bRotated = false;

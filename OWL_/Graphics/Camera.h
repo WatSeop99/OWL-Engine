@@ -20,24 +20,19 @@ public:
 	Camera() { UpdateViewDir(); }
 	~Camera() = default;
 
-	void Reset(const Vector3& POS, const float YAW, const float PITCH);
-
-	void UpdateViewDir();
-	void UpdateKeyboard(const float DELTA_TIME, Keyboard* const pKeyboard);
-	void UpdateMouse(const float mouseNDCX, const float mouseNDCY);
-
-	void MoveForward(const float DELTA_TIME);
-	void MoveRight(const float DELTA_TIME);
-	void MoveUp(const float DELTA_TIME);
+	void Reset(Vector3& pos, float yaw, float pitch);
+	
+	void UpdateMovements(float deltaTime, Keyboard* const pKeyboard);
+	void UpdateDirection(float mouseNDCX, float mouseNDCY);
 
 	void PrintView();
 
 	Matrix GetView();
 	Matrix GetProjection();
-	inline Vector3 __vectorcall GetEyePos() { return m_Position; }
-	inline Vector3 __vectorcall GetViewDir() { return m_ViewDirection; }
-	inline Vector3 __vectorcall GetUpDir() { return m_UpDirection; }
-	inline Vector3 __vectorcall GetRightDir() { return m_RightDirection; }
+	inline Vector3 GetEyePos() { return m_Position; }
+	inline Vector3 GetViewDir() { return m_ViewDirection; }
+	inline Vector3 GetUpDir() { return m_UpDirection; }
+	inline Vector3 GetRightDir() { return m_RightDirection; }
 	inline float GetProjectionFovAngleY() { return m_ProjectionFovAngleY; }
 	inline float GetAspectRatio() { return m_Aspect; }
 	inline float GetNearZ() { return m_NearZ; }
@@ -45,12 +40,19 @@ public:
 	FrustumDirection GetFrustumDirection();
 
 	inline void SetAspectRatio(const float ASPECT_RATIO) { m_Aspect = ASPECT_RATIO; }
-	inline void __vectorcall SetEyePos(const Vector3& POS) { m_Position = POS; }
-	inline void __vectorcall SetViewDir(const Vector3& VIEW_DIR) { m_ViewDirection = VIEW_DIR; }
-	inline void __vectorcall SetUpDir(const Vector3& UP_DIR) { m_UpDirection = UP_DIR; }
+	inline void SetEyePos(const Vector3& POS) { m_Position = POS; }
+	inline void SetViewDir(const Vector3& VIEW_DIR) { m_ViewDirection = VIEW_DIR; }
+	inline void SetUpDir(const Vector3& UP_DIR) { m_UpDirection = UP_DIR; }
 	inline void SetProjectionFovAngleY(const float ANGLE) { m_ProjectionFovAngleY = ANGLE; }
 	inline void SetNearZ(const float NEAR_Z) { m_NearZ = NEAR_Z; }
 	inline void SetFarZ(const float FAR_Z) { m_FarZ = FAR_Z; }
+
+protected:
+	void UpdateViewDir();
+
+	void MoveForward(float deltaTime);
+	void MoveRight(float deltaTime);
+	void MoveUp(float deltaTime);
 
 public:
 	bool bUseFirstPersonView = false;

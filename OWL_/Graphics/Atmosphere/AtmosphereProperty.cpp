@@ -1,6 +1,8 @@
 #include "../../Common.h"
 #include "AtmosphereProperty.h"
 
+// https://github.com/AirGuanZ/AtmosphereRenderer
+
 AtmosphereProperty AtmosphereProperty::ToStdUnit()
 {
     AtmosphereProperty ret = *this;

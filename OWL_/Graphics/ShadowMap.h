@@ -12,11 +12,14 @@ class Model;
 
 class ShadowMap
 {
+private:
+	const UINT m_TOTAL_LIGHT_TYPE = (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT | LIGHT_SUN);
+
 public:
-	ShadowMap(const UINT WIDTH = 1280, const UINT HEIGHT = 1280) : m_ShadowWidth(WIDTH), m_ShadowHeight(HEIGHT) {}
+	ShadowMap(UINT width = 1280, UINT height = 1280) : m_ShadowWidth(width), m_ShadowHeight(height) {}
 	~ShadowMap() { Cleanup(); }
 
-	void Initialize(Renderer* pRenderer, const UINT LIGHT_TYPE);
+	void Initialize(Renderer* pRenderer, UINT lightType);
 
 	void Update(const LightProperty& PROPERTY, Camera* pLightCam, Camera* pMainCamera);
 
@@ -33,8 +36,8 @@ public:
 
 	inline ConstantBuffer* GetShadowConstantBuffers() { return m_pShadowConstantsBuffers; }
 
-	inline void SetShadowWidth(const UINT WIDTH) { m_ShadowWidth = WIDTH; }
-	inline void SetShadowHeight(const UINT HEIGHT) { m_ShadowHeight = HEIGHT; }
+	inline void SetShadowWidth(UINT width) { m_ShadowWidth = width; }
+	inline void SetShadowHeight(UINT height) { m_ShadowHeight = height; }
 
 protected:
 	void SetShadowViewport();
@@ -42,8 +45,6 @@ protected:
 	void CalculateCascadeLightViewProjection(Vector3* pPosition, Matrix* pView, Matrix* pProjection, const Matrix& VIEW, const Matrix& PROJECTION, const Vector3& DIR, int cascadeIndex);
 
 private:
-	const UINT m_TOTAL_LIGHT_TYPE = (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT | LIGHT_SUN);
-
 	UINT m_ShadowWidth = 0;
 	UINT m_ShadowHeight = 0;
 	UINT m_LightType = LIGHT_OFF;

@@ -16,7 +16,7 @@ void CheckD3DMemoryLeak()
 
 	GetDebugInterface(IID_PPV_ARGS(&pDebug));
 
-	OutputDebugStringW(L"================================== Direct3D Object Memory Leak List ==================================\n");
+	OutputDebugStringW(L"================================== Direct3D Object Memory Leak List =================================\n");
 	pDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_DETAIL);
 	OutputDebugStringW(L"===========================================================================================\n");
 
@@ -32,8 +32,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 #endif
 
 #ifdef PROFILING
-	OPTICK_APP("OWL_Engine");
-	OPTICK_START_CAPTURE();
+	//OPTICK_START_CAPTURE();
 #endif
 
 	DebugApp2* pApp = new DebugApp2;
@@ -50,7 +49,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	}
 
 #ifdef PROFILING
-	OPTICK_STOP_CAPTURE();
+	//OPTICK_STOP_CAPTURE();
+	//OPTICK_SAVE_CAPTURE("OWL_Engine");
+	//OPTICK_SHUTDOWN();
 #endif
 
 #ifdef _DEBUG

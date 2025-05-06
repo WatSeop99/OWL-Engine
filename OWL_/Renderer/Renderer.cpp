@@ -362,16 +362,13 @@ void Renderer::UpdateGUI()
 	ImGui::End();
 }
 
-void Renderer::Update(const float DELTA_TIME)
+void Renderer::Update(float deltaTime)
 {
 	_ASSERT(m_pMainCamera);
 	_ASSERT(m_pScene);
 
-	// 카메라의 이동.
-	m_pMainCamera->UpdateKeyboard(DELTA_TIME, &m_Keyboard);
-
-	// 마우스 처리.
-	ProcessKeyboardControl(DELTA_TIME);
+	m_pMainCamera->UpdateMovements(deltaTime, &m_Keyboard);
+	ProcessKeyboardControl(deltaTime);
 	ProcessMouseControl();
 
 	// 후처리 프로세서 업데이트.
@@ -477,7 +474,7 @@ void Renderer::OnMouseMove(int mouseX, int mouseY)
 	m_Mouse.MouseNDCY = Clamp(m_Mouse.MouseNDCY, -1.0f, 1.0f);
 
 	// 카메라 시점 회전.
-	m_pMainCamera->UpdateMouse(m_Mouse.MouseNDCX, m_Mouse.MouseNDCY);
+	m_pMainCamera->UpdateDirection(m_Mouse.MouseNDCX, m_Mouse.MouseNDCY);
 }
 
 void Renderer::OnMouseClick(bool bLeft, bool bClicked, int mouseX, int mouseY)
@@ -622,7 +619,7 @@ Model* Renderer::PickClosest(const DirectX::SimpleMath::Ray* pPickingRay, float*
 	return pMinModel;
 }
 
-void Renderer::ProcessKeyboardControl(const float DELTA_TIME)
+void Renderer::ProcessKeyboardControl(float deltaTime)
 {
 	// 키보드 조작에 따른 캐릭터 조작.
 	// 만약, 키보드 조작을 따르는 다른 컨트롤이 있다면 추가할 것.
@@ -648,7 +645,7 @@ void Renderer::ProcessKeyboardControl(const float DELTA_TIME)
 	{
 	case Idle:
 	{
-		Vector3 deltaPos = Vector3(1.0f, 1.0f, 1.0f) * (pAnimationData->Velocity * DELTA_TIME);
+		Vector3 deltaPos = Vector3::One * (pAnimationData->Velocity * deltaTime);
 		pAnimationData->Position += deltaPos;
 
 		if (m_Keyboard.bPressed[VK_UP])
@@ -669,7 +666,7 @@ void Renderer::ProcessKeyboardControl(const float DELTA_TIME)
 	{
 		pAnimationData->UpdateVelocity(s_State, s_FrameCount);
 
-		Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * DELTA_TIME);
+		Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * deltaTime);
 		pAnimationData->Position += deltaPos;
 
 		if (s_FrameCount == ANIMATION_CLIP_SIZE)
@@ -686,20 +683,20 @@ void Renderer::ProcessKeyboardControl(const float DELTA_TIME)
 	{
 		if (m_Keyboard.bPressed[VK_RIGHT])
 		{
-			Quaternion newRot = Quaternion::CreateFromYawPitchRoll(DegreeToRadian(60.0f) * DELTA_TIME * 2.0f, 0.0f, 0.0f);
+			Quaternion newRot = Quaternion::CreateFromYawPitchRoll(DegreeToRadian(60.0f) * deltaTime * 2.0f, 0.0f, 0.0f);
 			pAnimationData->Direction = Vector3::TransformNormal(pAnimationData->Direction, Matrix::CreateFromQuaternion(newRot));
 			pAnimationData->Rotation = Quaternion::Concatenate(pAnimationData->Rotation, newRot);
 		}
 		if (m_Keyboard.bPressed[VK_LEFT])
 		{
-			Quaternion newRot = Quaternion::CreateFromYawPitchRoll(DegreeToRadian(-60.0f) * DELTA_TIME * 2.0f, 0.0f, 0.0f);
+			Quaternion newRot = Quaternion::CreateFromYawPitchRoll(DegreeToRadian(-60.0f) * deltaTime * 2.0f, 0.0f, 0.0f);
 			pAnimationData->Direction = Vector3::TransformNormal(pAnimationData->Direction, Matrix::CreateFromQuaternion(newRot));
 			pAnimationData->Rotation = Quaternion::Concatenate(pAnimationData->Rotation, newRot);
 		}
 
 		pAnimationData->UpdateVelocity(s_State, s_FrameCount);
 
-		Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * DELTA_TIME);
+		Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * deltaTime);
 		pAnimationData->Position += deltaPos;
 
 		if (!m_Keyboard.bPressed[VK_UP])
@@ -720,7 +717,7 @@ void Renderer::ProcessKeyboardControl(const float DELTA_TIME)
 	{
 		pAnimationData->UpdateVelocity(s_State, s_FrameCount);
 
-		Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * DELTA_TIME);
+		Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * deltaTime);
 		pAnimationData->Position += deltaPos;
 
 		if (s_FrameCount == ANIMATION_CLIP_SIZE)
@@ -740,7 +737,7 @@ void Renderer::ProcessKeyboardControl(const float DELTA_TIME)
 
 	Matrix newWorld = Matrix::CreateFromQuaternion(pAnimationData->Rotation) * Matrix::CreateTranslation(pAnimationData->Position);
 	m_pScene->pMainController->UpdateWorld(newWorld);
-	m_pScene->pMainController->UpdateAnimation(s_State, s_FrameCount, DELTA_TIME);
+	m_pScene->pMainController->UpdateAnimation(s_State, s_FrameCount, deltaTime);
 
 	++s_FrameCount;
 }
@@ -751,11 +748,11 @@ void Renderer::ProcessMouseControl()
 
 	static Model* s_pActiveModel = nullptr;
 	static float s_PrevRatio = 0.0f;
-	static Vector3 s_PrevPos(0.0f);
-	static Vector3 s_PrevVector(0.0f);
+	static Vector3 s_PrevPos = Vector3::Zero;
+	static Vector3 s_PrevVector = Vector3::Zero;
 
 	// 적용할 회전과 이동 초기화.
-	Quaternion dragRotation = Quaternion::CreateFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), 0.0f);
+	Quaternion dragRotation = Quaternion::CreateFromAxisAngle(Vector3::UnitX, 0.0f);
 	Vector3 dragTranslation(0.0f);
 	Vector3 pickPoint(0.0f);
 	float dist = 0.0f;
@@ -775,7 +772,7 @@ void Renderer::ProcessMouseControl()
 		const Ray CUR_RAY = DirectX::SimpleMath::Ray(WORLD_NEAR, dir);
 
 
-		if (s_pActiveModel == nullptr) // 이전 프레임에서 아무 물체도 선택되지 않았을 경우에는 새로 선택.
+		if (!s_pActiveModel) // 이전 프레임에서 아무 물체도 선택되지 않았을 경우에는 새로 선택.
 		{
 			Model* pSelectedModel = PickClosest(&CUR_RAY, &dist);
 			if (pSelectedModel)
@@ -1245,8 +1242,7 @@ void Renderer::PassDeferredLighting()
 	}
 
 	// Draw obejct for each light.
-
-	// light vector 다시 잡아야 함. 지금 vector는 2차원임.
+	
 	Sun* pSun = m_pScene->GetSun();
 	memcpy(&pLightConstsData->Lights, &pSun->SunProperty, sizeof(LightProperty));
 	pLightConstantBuffer->Upload();

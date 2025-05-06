@@ -18,7 +18,7 @@ class Sun;
 class Texture;
 class TransmittanceLUT;
 
-class Scene
+class Scene final
 {
 public:
 	Scene() = default;
@@ -26,7 +26,7 @@ public:
 
 	bool Initialize(Renderer* pRenderer);
 
-	void Update(const float DELTA_TIME);
+	void Update(float deltaTime);
 
 	void Cleanup();
 
@@ -52,8 +52,8 @@ public:
 protected:
 	void InitCubemaps(std::wstring&& basePath, std::wstring&& envFileName, std::wstring&& specularFileName, std::wstring&& irradianceFileName, std::wstring&& brdfFileName);
 
-	void UpdateLights(const float DELTA_TIME);
-	void UpdateGlobalConstants(const float DELTA_TIME);
+	void UpdateLights(float deltaTime);
+	void UpdateGlobalConstants(float deltaTime);
 
 public:
 	std::vector<Model*> RenderObjects; // opaque.

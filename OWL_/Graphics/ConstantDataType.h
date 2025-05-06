@@ -10,10 +10,6 @@
 #define LIGHT_SUN 0x08
 #define LIGHT_SHADOW 0x10
 
-//using DirectX::SimpleMath::Matrix;
-//using DirectX::SimpleMath::Vector2;
-//using DirectX::SimpleMath::Vector3;
-
 ALIGN(16) struct MeshConstants
 {
 	DirectX::SimpleMath::Matrix World;
@@ -30,7 +26,7 @@ ALIGN(16) struct MeshConstants
 
 ALIGN(16) struct MaterialConstants
 {
-	DirectX::SimpleMath::Vector3 AlbedoFactor = DirectX::SimpleMath::Vector3(1.0f);
+	DirectX::SimpleMath::Vector3 AlbedoFactor = DirectX::SimpleMath::Vector3::One;
 	float RoughnessFactor = 1.0f;
 	float MetallicFactor = 1.0f;
 	DirectX::SimpleMath::Vector3 EmissionFactor;

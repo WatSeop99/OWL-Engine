@@ -8,22 +8,6 @@
 #define LIGHT_SUN 0x08
 #define LIGHT_SHADOW 0x10
 
-// 샘플러들을 모든 쉐이더에서 공통으로 사용
-SamplerState g_LinearWrapSampler : register(s0);
-SamplerState g_LinearClampSampler : register(s1);
-SamplerState g_ShadowPointSampler : register(s2);
-SamplerState g_ShadowLinearSampler : register(s3);
-SamplerComparisonState g_ShadowCompareSampler : register(s4);
-SamplerState g_PointWrapSampler : register(s5);
-SamplerState g_LinearMirrorSampler : register(s6);
-SamplerState g_PointClampSampler : register(s7);
-
-// 공용 텍스춰들 t10 부터 시작
-TextureCube g_EnvIBLTex : register(t10);
-TextureCube g_SpecularIBLTex : register(t11);
-TextureCube g_IrradianceIBLTex : register(t12);
-Texture2D g_BRDFTex : register(t13);
-
 struct Light
 {
     float3 Radiance; // Strength
@@ -96,10 +80,26 @@ cbuffer MaterialConstants : register(b3)
     float dummy2;
 };
 
+// 샘플러들을 모든 쉐이더에서 공통으로 사용
+SamplerState g_LinearWrapSampler : register(s0);
+SamplerState g_LinearClampSampler : register(s1);
+SamplerState g_ShadowPointSampler : register(s2);
+SamplerState g_ShadowLinearSampler : register(s3);
+SamplerComparisonState g_ShadowCompareSampler : register(s4);
+SamplerState g_PointWrapSampler : register(s5);
+SamplerState g_LinearMirrorSampler : register(s6);
+SamplerState g_PointClampSampler : register(s7);
+
 #ifdef SKINNED
 // 관절 개수 제약을 없애게 위해 StructuredBuffer 사용
 StructuredBuffer<matrix> g_BoneTransforms : register(t9);
 #endif
+
+// 공용 텍스춰들 t10 부터 시작
+TextureCube g_EnvIBLTex : register(t10);
+TextureCube g_SpecularIBLTex : register(t11);
+TextureCube g_IrradianceIBLTex : register(t12);
+Texture2D g_BRDFTex : register(t13);
 
 struct VertexShaderInput
 {

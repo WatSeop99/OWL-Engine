@@ -7,7 +7,7 @@ enum eTextureType
 	TextureType_Texture3D,
 };
 
-class Texture
+class Texture final
 {
 public:
 	Texture() = default;

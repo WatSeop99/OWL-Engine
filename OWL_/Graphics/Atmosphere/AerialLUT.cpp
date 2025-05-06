@@ -21,7 +21,7 @@ void AerialLUT::Update()
 	_ASSERT(m_pAerialConstantBuffer);
 	_ASSERT(m_pShadowMap);
 
-	GlobalConstants* pShadowConstData = (GlobalConstants*)(m_pShadowMap->GetShadowConstantBuffers()[0].pSystemMem);
+	GlobalConstants* pShadowConstData = (GlobalConstants*)m_pShadowMap->GetShadowConstantBuffers()[0].pSystemMem;
 	if (!pShadowConstData)
 	{
 		__debugbreak();

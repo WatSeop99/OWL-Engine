@@ -65,7 +65,7 @@ void ImageFilter::SetShaderResources(const std::vector<ID3D11ShaderResourceView*
 {
 	m_pSRVs.clear();
 	m_pSRVs.resize(RESOURCES.size());
-	for (UINT64 i = 0, size = RESOURCES.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = RESOURCES.size(); i < size; ++i)
 	{
 		m_pSRVs[i] = RESOURCES[i];
 	}
@@ -75,7 +75,7 @@ void ImageFilter::SetRenderTargets(const std::vector<ID3D11RenderTargetView*>& T
 {
 	m_pRTVs.clear();
 	m_pRTVs.resize(TARGETS.size());
-	for (UINT64 i = 0, size = TARGETS.size(); i < size; ++i)
+	for (SIZE_T i = 0, size = TARGETS.size(); i < size; ++i)
 	{
 		m_pRTVs[i] = TARGETS[i];
 	}

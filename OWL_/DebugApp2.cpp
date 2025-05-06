@@ -44,8 +44,14 @@ int DebugApp2::Run()
 	MSG msg = { 0, };
 	while (msg.message != WM_QUIT && msg.message != WM_DESTROY)
 	{
+#ifdef PROFILING
+		OPTICK_FRAME("MainThread");
+#endif
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
+#ifdef PROFILING
+			OPTICK_EVENT("TranslateMessage");
+#endif
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
@@ -168,16 +174,16 @@ void DebugApp2::InitScene()
 	}
 }
 
-void DebugApp2::Update(const float DELTA_TIME)
+void DebugApp2::Update(float deltaTime)
 {
 #ifdef PROFILING
-	OPTICK_EVENT("Update");
+	OPTICK_CATEGORY("Update", Optick::Category::Rendering);
 #endif
 
 	UpdateGUI();
 
-	m_pScene->Update(DELTA_TIME);
-	m_pRenderer->Update(DELTA_TIME);
+	m_pScene->Update(deltaTime);
+	m_pRenderer->Update(deltaTime);
 }
 
 void DebugApp2::Render()
@@ -185,10 +191,10 @@ void DebugApp2::Render()
 	_ASSERT(m_pRenderer);
 
 #ifdef PROFILING
-	OPTICK_EVENT("Render");
+	OPTICK_CATEGORY("Render", Optick::Category::Rendering);
 #endif
 
-	Timer* pTimer = m_pRenderer->GetTimer();
+	//Timer* pTimer = m_pRenderer->GetTimer();
 
 	//pTimer->Start(true);
 

@@ -1,6 +1,6 @@
 #pragma once
 
-class ConstantBuffer
+class ConstantBuffer final
 {
 public:
 	ConstantBuffer() = default;

@@ -29,7 +29,7 @@ public:
 	void Cleanup();
 
 	void UpdateGUI();
-	void Update(const float DELTA_TIME);
+	void Update(float deltaTime);
 
 	void RenderGUI();
 	void Render();
@@ -60,7 +60,7 @@ public:
 	void SetPipelineState(const ComputePSO* pPSO);
 
 	Model* PickClosest(const DirectX::SimpleMath::Ray* pPickingRay, float* pMinDist);
-	void ProcessKeyboardControl(const float DELTA_TIME);
+	void ProcessKeyboardControl(float deltaTime);
 	void ProcessMouseControl();
 
 private:

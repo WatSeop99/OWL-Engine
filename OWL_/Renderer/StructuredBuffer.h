@@ -1,6 +1,6 @@
 #pragma once
 
-class StructuredBuffer
+class StructuredBuffer final
 {
 public:
 	StructuredBuffer() = default;
