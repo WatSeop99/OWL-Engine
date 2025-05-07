@@ -635,15 +635,15 @@ void ResourceManager::InitShaders()
 	{
 		{ "SKINNED", "1" }, { NULL, NULL }
 	};
-	UINT numBasicIEs = _countof(BASIC_IEs);
-	UINT numSkinnedIEs = _countof(SKINNED_IEs);
-	UINT numSkyboxIEs = _countof(SKYBOX_IEs);
-	UINT numGrassIEs = _countof(GRASS_IEs);
-	UINT numBillboardIEs = _countof(BILLBOARD_IEs);
-	UINT numSunIEs = _countof(SUN_IEs);
+	UINT numBasicIEs = ARRAYSIZE(BASIC_IEs);
+	UINT numSkinnedIEs = ARRAYSIZE(SKINNED_IEs);
+	UINT numSkyboxIEs = ARRAYSIZE(SKYBOX_IEs);
+	UINT numGrassIEs = ARRAYSIZE(GRASS_IEs);
+	UINT numBillboardIEs = ARRAYSIZE(BILLBOARD_IEs);
+	UINT numSunIEs = ARRAYSIZE(SUN_IEs);
 
-	hr = CreateVertexShaderAndInputLayout(L"./Shaders/BasicVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pBasicVS, &pBasicIL);
-	BREAK_IF_FAILED(hr);
+	/*hr = CreateVertexShaderAndInputLayout(L"./Shaders/BasicVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pBasicVS, &pBasicIL);
+	BREAK_IF_FAILED(hr);*/
 
 	hr = CreateVertexShaderAndInputLayout(L"./Shaders/BasicVS.hlsl", SKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO, &pSkinnedVS, &pSkinnedIL);
 	BREAK_IF_FAILED(hr);

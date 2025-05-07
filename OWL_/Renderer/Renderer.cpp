@@ -400,13 +400,16 @@ void Renderer::Render()
 	m_pContext->PSSetSamplers(0, (UINT)m_pResourceManager->SamplerStates.size(), m_pResourceManager->SamplerStates.data());
 
 	PassGBuffer();
-	PassShadow();
+	PassShadow(); // SSAO를 구현해야할까?
 
 	m_pScene->GetSkyLUT()->Generate();
 	m_pScene->GetAerialLUT()->Generate();
 
 	PassDeferredLighting();
 	PassSky();
+
+	// PassForward() 구현할 것.
+	// 여기에는 PassSSR(반사처리), PassAlpha(투명도 처리), PassDebug를 구현해야 함.
 	PassDebug();
 
 	m_pPostProcessor->Render();

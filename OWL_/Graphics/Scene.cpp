@@ -244,10 +244,10 @@ void Scene::Update(float deltaTime)
 	m_pSky->SetCamera(&CAMERA_FRUSTUM);
 	m_pSky->Update();
 
-	/*if (m_pMirror)
+	if (m_pMirror)
 	{
 		m_pMirror->UpdateConstantBuffers();
-	}*/
+	}
 
 	for (SIZE_T i = 0, size = RenderObjects.size(); i < size; ++i)
 	{
