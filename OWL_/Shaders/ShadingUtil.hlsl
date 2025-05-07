@@ -1,7 +1,7 @@
 #ifndef SHADING_UTIL
 #define SHADING_UTIL
 
-#include "ShadowUtil.hlsli"
+#include "ShadowUtil.hlsl"
 
 static const float3 F_DIELECTRIC = 0.04f; // 비금속(Dielectric) 재질의 F0.
 

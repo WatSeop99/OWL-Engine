@@ -622,250 +622,6 @@ Model* Renderer::PickClosest(const DirectX::SimpleMath::Ray* pPickingRay, float*
 	return pMinModel;
 }
 
-void Renderer::ProcessKeyboardControl(float deltaTime)
-{
-	// 키보드 조작에 따른 캐릭터 조작.
-	// 만약, 키보드 조작을 따르는 다른 컨트롤이 있다면 추가할 것.
-
-	_ASSERT(m_pScene);
-	_ASSERT(m_pScene->pMainController);
-
-	enum
-	{
-		Idle = 0,
-		IdleToWalk,
-		Walk,
-		WalkToStop
-	};
-
-	static int s_State = Idle;
-	static int s_FrameCount = 0;
-
-	AnimationData* pAnimationData = &m_pScene->pMainController->CharacterAnimationData;
-	const SIZE_T ANIMATION_CLIP_SIZE = pAnimationData->Clips[s_State].Keys[0].size();
-
-	switch (s_State)
-	{
-	case Idle:
-	{
-		Vector3 deltaPos = Vector3::One * (pAnimationData->Velocity * deltaTime);
-		pAnimationData->Position += deltaPos;
-
-		if (m_Keyboard.bPressed[VK_UP])
-		{
-			s_State = IdleToWalk;
-			s_FrameCount = 0;
-			pAnimationData->UpdateVelocity(s_State, s_FrameCount);
-		}
-		else if (s_FrameCount == ANIMATION_CLIP_SIZE)
-		{
-			s_FrameCount = 0;
-		}
-
-		break;
-	}
-
-	case IdleToWalk:
-	{
-		pAnimationData->UpdateVelocity(s_State, s_FrameCount);
-
-		Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * deltaTime);
-		pAnimationData->Position += deltaPos;
-
-		if (s_FrameCount == ANIMATION_CLIP_SIZE)
-		{
-			s_State = Walk;
-			s_FrameCount = 0;
-			pAnimationData->UpdateVelocity(s_State, s_FrameCount);
-		}
-
-		break;
-	}
-
-	case Walk:
-	{
-		if (m_Keyboard.bPressed[VK_RIGHT])
-		{
-			Quaternion newRot = Quaternion::CreateFromYawPitchRoll(DegreeToRadian(60.0f) * deltaTime * 2.0f, 0.0f, 0.0f);
-			pAnimationData->Direction = Vector3::TransformNormal(pAnimationData->Direction, Matrix::CreateFromQuaternion(newRot));
-			pAnimationData->Rotation = Quaternion::Concatenate(pAnimationData->Rotation, newRot);
-		}
-		if (m_Keyboard.bPressed[VK_LEFT])
-		{
-			Quaternion newRot = Quaternion::CreateFromYawPitchRoll(DegreeToRadian(-60.0f) * deltaTime * 2.0f, 0.0f, 0.0f);
-			pAnimationData->Direction = Vector3::TransformNormal(pAnimationData->Direction, Matrix::CreateFromQuaternion(newRot));
-			pAnimationData->Rotation = Quaternion::Concatenate(pAnimationData->Rotation, newRot);
-		}
-
-		pAnimationData->UpdateVelocity(s_State, s_FrameCount);
-
-		Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * deltaTime);
-		pAnimationData->Position += deltaPos;
-
-		if (!m_Keyboard.bPressed[VK_UP])
-		{
-			s_State = WalkToStop;
-			s_FrameCount = 0;
-		}
-		if (s_FrameCount == ANIMATION_CLIP_SIZE)
-		{
-			s_FrameCount = 0;
-			pAnimationData->UpdateVelocity(s_State, s_FrameCount);
-		}
-
-		break;
-	}
-
-	case WalkToStop:
-	{
-		pAnimationData->UpdateVelocity(s_State, s_FrameCount);
-
-		Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * deltaTime);
-		pAnimationData->Position += deltaPos;
-
-		if (s_FrameCount == ANIMATION_CLIP_SIZE)
-		{
-			s_State = Idle;
-			s_FrameCount = 0;
-			pAnimationData->UpdateVelocity(s_State, s_FrameCount);
-		}
-
-		break;
-	}
-
-	default:
-		__debugbreak();
-		break;
-	}
-
-	Matrix newWorld = Matrix::CreateFromQuaternion(pAnimationData->Rotation) * Matrix::CreateTranslation(pAnimationData->Position);
-	m_pScene->pMainController->UpdateWorld(newWorld);
-	m_pScene->pMainController->UpdateAnimation(s_State, s_FrameCount, deltaTime);
-
-	++s_FrameCount;
-}
-
-void Renderer::ProcessMouseControl()
-{
-	_ASSERT(m_pMainCamera);
-
-	static Model* s_pActiveModel = nullptr;
-	static float s_PrevRatio = 0.0f;
-	static Vector3 s_PrevPos = Vector3::Zero;
-	static Vector3 s_PrevVector = Vector3::Zero;
-
-	// 적용할 회전과 이동 초기화.
-	Quaternion dragRotation = Quaternion::CreateFromAxisAngle(Vector3::UnitX, 0.0f);
-	Vector3 dragTranslation(0.0f);
-	Vector3 pickPoint(0.0f);
-	float dist = 0.0f;
-
-	// 사용자가 두 버튼 중 하나만 누른다고 가정.
-	if (m_Mouse.bMouseLeftButton || m_Mouse.bMouseRightButton)
-	{
-		const Matrix VIEW = m_pMainCamera->GetView();
-		const Matrix PROJECTION = m_pMainCamera->GetProjection();
-		const Vector3 NDC_NEAR = Vector3(m_Mouse.MouseNDCX, m_Mouse.MouseNDCY, 0.0f);
-		const Vector3 NDC_FAR = Vector3(m_Mouse.MouseNDCX, m_Mouse.MouseNDCY, 1.0f);
-		const Matrix INV_PROJECTION_VIEW = (VIEW * PROJECTION).Invert();
-		const Vector3 WORLD_NEAR = Vector3::Transform(NDC_NEAR, INV_PROJECTION_VIEW);
-		const Vector3 WORLD_FAR = Vector3::Transform(NDC_FAR, INV_PROJECTION_VIEW);
-		Vector3 dir = WORLD_FAR - WORLD_NEAR;
-		dir.Normalize();
-		const Ray CUR_RAY = DirectX::SimpleMath::Ray(WORLD_NEAR, dir);
-
-
-		if (!s_pActiveModel) // 이전 프레임에서 아무 물체도 선택되지 않았을 경우에는 새로 선택.
-		{
-			Model* pSelectedModel = PickClosest(&CUR_RAY, &dist);
-			if (pSelectedModel)
-			{
-#ifdef _DEBUG
-				char szDebugString[256];
-				sprintf_s(szDebugString, 256, "newly selected model: %s\n", pSelectedModel->Name.c_str());
-				OutputDebugStringA(szDebugString);
-#endif
-
-				s_pActiveModel = pSelectedModel;
-				m_pPickedModel = pSelectedModel; // GUI 조작용 포인터.
-				pickPoint = CUR_RAY.position + dist * CUR_RAY.direction;
-				if (m_Mouse.bMouseLeftButton) // 왼쪽 버튼 회전 준비.
-				{
-					s_PrevVector = pickPoint - s_pActiveModel->BoundingSphere.Center;
-					s_PrevVector.Normalize();
-				}
-				else
-				{
-					// 오른쪽 버튼 이동 준비
-					m_Mouse.bMouseDragStartFlag = false;
-					s_PrevRatio = dist / (WORLD_FAR - WORLD_NEAR).Length();
-					s_PrevPos = pickPoint;
-				}
-			}
-		}
-		else // 이미 선택된 물체가 있었던 경우.
-		{
-			if (m_Mouse.bMouseLeftButton) // 왼쪽 버튼으로 계속 회전.
-			{
-				if (CUR_RAY.Intersects(s_pActiveModel->BoundingSphere, dist))
-				{
-					pickPoint = CUR_RAY.position + dist * CUR_RAY.direction;
-				}
-				else // 바운딩 스피어에 가장 가까운 점을 찾기.
-				{
-					Vector3 c = s_pActiveModel->BoundingSphere.Center - WORLD_NEAR;
-					Vector3 centerToRay = dir.Dot(c) * dir - c;
-					pickPoint = c + centerToRay * Clamp(s_pActiveModel->BoundingSphere.Radius / centerToRay.Length(), 0.0f, 1.0f);
-					pickPoint += WORLD_NEAR;
-				}
-
-				Vector3 currentVector = pickPoint - s_pActiveModel->BoundingSphere.Center;
-				currentVector.Normalize();
-				float theta = acos(s_PrevVector.Dot(currentVector));
-				if (theta > DirectX::XM_PI / 180.0f * 3.0f)
-				{
-					Vector3 axis = s_PrevVector.Cross(currentVector);
-					axis.Normalize();
-					dragRotation = Quaternion::CreateFromAxisAngle(axis, theta);
-					s_PrevVector = currentVector;
-				}
-
-			}
-			else // 오른쪽 버튼으로 계속 이동.
-			{
-				Vector3 newPos = WORLD_NEAR + s_PrevRatio * (WORLD_FAR - WORLD_NEAR);
-				if ((newPos - s_PrevPos).Length() > 1e-3)
-				{
-					dragTranslation = newPos - s_PrevPos;
-					s_PrevPos = newPos;
-				}
-				pickPoint = newPos; // Cursor sphere 그려질 위치.
-			}
-		}
-	}
-	else
-	{
-		// 버튼에서 손을 땠을 경우에는 움직일 모델은 nullptr로 설정.
-		s_pActiveModel = nullptr;
-	}
-
-	if (s_pActiveModel)
-	{
-		Vector3 translation = s_pActiveModel->World.Translation();
-		s_pActiveModel->World.Translation(Vector3(0.0f));
-		s_pActiveModel->UpdateWorld(s_pActiveModel->World * Matrix::CreateFromQuaternion(dragRotation) * Matrix::CreateTranslation(dragTranslation + translation));
-		s_pActiveModel->BoundingSphere.Center = s_pActiveModel->World.Translation();
-
-		// 충돌 지점에 작은 구 그리기.
-		m_pCursorSphere->bIsVisible = true;
-		m_pCursorSphere->UpdateWorld(Matrix::CreateTranslation(pickPoint));
-	}
-	else
-	{
-		m_pCursorSphere->bIsVisible = false;
-	}
-}
-
 void Renderer::InitMainWindow()
 {
 	_ASSERT(m_hInstance);
@@ -1326,4 +1082,248 @@ void Renderer::PassDebug()
 	ID3D11RenderTargetView* pNullRTV = nullptr;
 	ID3D11DepthStencilView* pNullDSV = nullptr;
 	m_pContext->OMSetRenderTargets(1, &pNullRTV, pNullDSV);
+}
+
+void Renderer::ProcessKeyboardControl(float deltaTime)
+{
+	// 키보드 조작에 따른 캐릭터 조작.
+	// 만약, 키보드 조작을 따르는 다른 컨트롤이 있다면 추가할 것.
+
+	_ASSERT(m_pScene);
+	_ASSERT(m_pScene->pMainController);
+
+	enum
+	{
+		Idle = 0,
+		IdleToWalk,
+		Walk,
+		WalkToStop
+	};
+
+	static int s_State = Idle;
+	static int s_FrameCount = 0;
+
+	AnimationData* pAnimationData = &m_pScene->pMainController->CharacterAnimationData;
+	const SIZE_T ANIMATION_CLIP_SIZE = pAnimationData->Clips[s_State].Keys[0].size();
+
+	switch (s_State)
+	{
+	case Idle:
+	{
+		Vector3 deltaPos = Vector3::One * (pAnimationData->Velocity * deltaTime);
+		pAnimationData->Position += deltaPos;
+
+		if (m_Keyboard.bPressed[VK_UP])
+		{
+			s_State = IdleToWalk;
+			s_FrameCount = 0;
+			pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+		}
+		else if (s_FrameCount == ANIMATION_CLIP_SIZE)
+		{
+			s_FrameCount = 0;
+		}
+
+		break;
+	}
+
+	case IdleToWalk:
+	{
+		pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+
+		Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * deltaTime);
+		pAnimationData->Position += deltaPos;
+
+		if (s_FrameCount == ANIMATION_CLIP_SIZE)
+		{
+			s_State = Walk;
+			s_FrameCount = 0;
+			pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+		}
+
+		break;
+	}
+
+	case Walk:
+	{
+		if (m_Keyboard.bPressed[VK_RIGHT])
+		{
+			Quaternion newRot = Quaternion::CreateFromYawPitchRoll(DegreeToRadian(60.0f) * deltaTime * 2.0f, 0.0f, 0.0f);
+			pAnimationData->Direction = Vector3::TransformNormal(pAnimationData->Direction, Matrix::CreateFromQuaternion(newRot));
+			pAnimationData->Rotation = Quaternion::Concatenate(pAnimationData->Rotation, newRot);
+		}
+		if (m_Keyboard.bPressed[VK_LEFT])
+		{
+			Quaternion newRot = Quaternion::CreateFromYawPitchRoll(DegreeToRadian(-60.0f) * deltaTime * 2.0f, 0.0f, 0.0f);
+			pAnimationData->Direction = Vector3::TransformNormal(pAnimationData->Direction, Matrix::CreateFromQuaternion(newRot));
+			pAnimationData->Rotation = Quaternion::Concatenate(pAnimationData->Rotation, newRot);
+		}
+
+		pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+
+		Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * deltaTime);
+		pAnimationData->Position += deltaPos;
+
+		if (!m_Keyboard.bPressed[VK_UP])
+		{
+			s_State = WalkToStop;
+			s_FrameCount = 0;
+		}
+		if (s_FrameCount == ANIMATION_CLIP_SIZE)
+		{
+			s_FrameCount = 0;
+			pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+		}
+
+		break;
+	}
+
+	case WalkToStop:
+	{
+		pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+
+		Vector3 deltaPos = pAnimationData->Direction * (pAnimationData->Velocity * deltaTime);
+		pAnimationData->Position += deltaPos;
+
+		if (s_FrameCount == ANIMATION_CLIP_SIZE)
+		{
+			s_State = Idle;
+			s_FrameCount = 0;
+			pAnimationData->UpdateVelocity(s_State, s_FrameCount);
+		}
+
+		break;
+	}
+
+	default:
+		__debugbreak();
+		break;
+	}
+
+	Matrix newWorld = Matrix::CreateFromQuaternion(pAnimationData->Rotation) * Matrix::CreateTranslation(pAnimationData->Position);
+	m_pScene->pMainController->UpdateWorld(newWorld);
+	m_pScene->pMainController->UpdateAnimation(s_State, s_FrameCount, deltaTime);
+
+	++s_FrameCount;
+}
+
+void Renderer::ProcessMouseControl()
+{
+	_ASSERT(m_pMainCamera);
+
+	static Model* s_pActiveModel = nullptr;
+	static float s_PrevRatio = 0.0f;
+	static Vector3 s_PrevPos = Vector3::Zero;
+	static Vector3 s_PrevVector = Vector3::Zero;
+
+	// 적용할 회전과 이동 초기화.
+	Quaternion dragRotation = Quaternion::CreateFromAxisAngle(Vector3::UnitX, 0.0f);
+	Vector3 dragTranslation(0.0f);
+	Vector3 pickPoint(0.0f);
+	float dist = 0.0f;
+
+	// 사용자가 두 버튼 중 하나만 누른다고 가정.
+	if (m_Mouse.bMouseLeftButton || m_Mouse.bMouseRightButton)
+	{
+		const Matrix VIEW = m_pMainCamera->GetView();
+		const Matrix PROJECTION = m_pMainCamera->GetProjection();
+		const Vector3 NDC_NEAR = Vector3(m_Mouse.MouseNDCX, m_Mouse.MouseNDCY, 0.0f);
+		const Vector3 NDC_FAR = Vector3(m_Mouse.MouseNDCX, m_Mouse.MouseNDCY, 1.0f);
+		const Matrix INV_PROJECTION_VIEW = (VIEW * PROJECTION).Invert();
+		const Vector3 WORLD_NEAR = Vector3::Transform(NDC_NEAR, INV_PROJECTION_VIEW);
+		const Vector3 WORLD_FAR = Vector3::Transform(NDC_FAR, INV_PROJECTION_VIEW);
+		Vector3 dir = WORLD_FAR - WORLD_NEAR;
+		dir.Normalize();
+		const Ray CUR_RAY = DirectX::SimpleMath::Ray(WORLD_NEAR, dir);
+
+
+		if (!s_pActiveModel) // 이전 프레임에서 아무 물체도 선택되지 않았을 경우에는 새로 선택.
+		{
+			Model* pSelectedModel = PickClosest(&CUR_RAY, &dist);
+			if (pSelectedModel)
+			{
+#ifdef _DEBUG
+				char szDebugString[256];
+				sprintf_s(szDebugString, 256, "newly selected model: %s\n", pSelectedModel->Name.c_str());
+				OutputDebugStringA(szDebugString);
+#endif
+
+				s_pActiveModel = pSelectedModel;
+				m_pPickedModel = pSelectedModel; // GUI 조작용 포인터.
+				pickPoint = CUR_RAY.position + dist * CUR_RAY.direction;
+				if (m_Mouse.bMouseLeftButton) // 왼쪽 버튼 회전 준비.
+				{
+					s_PrevVector = pickPoint - s_pActiveModel->BoundingSphere.Center;
+					s_PrevVector.Normalize();
+				}
+				else
+				{
+					// 오른쪽 버튼 이동 준비
+					m_Mouse.bMouseDragStartFlag = false;
+					s_PrevRatio = dist / (WORLD_FAR - WORLD_NEAR).Length();
+					s_PrevPos = pickPoint;
+				}
+			}
+		}
+		else // 이미 선택된 물체가 있었던 경우.
+		{
+			if (m_Mouse.bMouseLeftButton) // 왼쪽 버튼으로 계속 회전.
+			{
+				if (CUR_RAY.Intersects(s_pActiveModel->BoundingSphere, dist))
+				{
+					pickPoint = CUR_RAY.position + dist * CUR_RAY.direction;
+				}
+				else // 바운딩 스피어에 가장 가까운 점을 찾기.
+				{
+					Vector3 c = s_pActiveModel->BoundingSphere.Center - WORLD_NEAR;
+					Vector3 centerToRay = dir.Dot(c) * dir - c;
+					pickPoint = c + centerToRay * Clamp(s_pActiveModel->BoundingSphere.Radius / centerToRay.Length(), 0.0f, 1.0f);
+					pickPoint += WORLD_NEAR;
+				}
+
+				Vector3 currentVector = pickPoint - s_pActiveModel->BoundingSphere.Center;
+				currentVector.Normalize();
+				float theta = acos(s_PrevVector.Dot(currentVector));
+				if (theta > DirectX::XM_PI / 180.0f * 3.0f)
+				{
+					Vector3 axis = s_PrevVector.Cross(currentVector);
+					axis.Normalize();
+					dragRotation = Quaternion::CreateFromAxisAngle(axis, theta);
+					s_PrevVector = currentVector;
+				}
+
+			}
+			else // 오른쪽 버튼으로 계속 이동.
+			{
+				Vector3 newPos = WORLD_NEAR + s_PrevRatio * (WORLD_FAR - WORLD_NEAR);
+				if ((newPos - s_PrevPos).Length() > 1e-3)
+				{
+					dragTranslation = newPos - s_PrevPos;
+					s_PrevPos = newPos;
+				}
+				pickPoint = newPos; // Cursor sphere 그려질 위치.
+			}
+		}
+	}
+	else
+	{
+		// 버튼에서 손을 땠을 경우에는 움직일 모델은 nullptr로 설정.
+		s_pActiveModel = nullptr;
+	}
+
+	if (s_pActiveModel)
+	{
+		Vector3 translation = s_pActiveModel->World.Translation();
+		s_pActiveModel->World.Translation(Vector3(0.0f));
+		s_pActiveModel->UpdateWorld(s_pActiveModel->World * Matrix::CreateFromQuaternion(dragRotation) * Matrix::CreateTranslation(dragTranslation + translation));
+		s_pActiveModel->BoundingSphere.Center = s_pActiveModel->World.Translation();
+
+		// 충돌 지점에 작은 구 그리기.
+		m_pCursorSphere->bIsVisible = true;
+		m_pCursorSphere->UpdateWorld(Matrix::CreateTranslation(pickPoint));
+	}
+	else
+	{
+		m_pCursorSphere->bIsVisible = false;
+	}
 }

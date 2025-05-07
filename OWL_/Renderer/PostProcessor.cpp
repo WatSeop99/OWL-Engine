@@ -222,7 +222,16 @@ void PostProcessor::RenderPostEffects()
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext(); 
 
 	// PostEffects (m_pGlobalConstsGPU »ç¿ë).
-	SetViewport();
+	
+	// Set the viewport
+	m_Viewport.TopLeftX = 0;
+	m_Viewport.TopLeftY = 0;
+	m_Viewport.Width = (float)m_ScreenWidth;
+	m_Viewport.Height = (float)m_ScreenHeight;
+	m_Viewport.MinDepth = 0.0f;
+	m_Viewport.MaxDepth = 1.0f;
+	m_pRenderer->SetViewport(&m_Viewport, 1);
+
 	pResourceManager->SetPipelineState(GraphicsPSOType_PostEffects);
 	SetGlobalConsts(&m_pGlobalConstsGPU);
 
@@ -279,21 +288,6 @@ void PostProcessor::RenderImageFilter(const ImageFilter& IMAGE_FILTER)
 	ID3D11DeviceContext* pContext = m_pRenderer->GetDeviceContext();
 	IMAGE_FILTER.Render(pContext);
 	pContext->Draw(6, 0);
-}
-
-void PostProcessor::SetViewport()
-{
-	_ASSERT(m_pRenderer);
-
-	// Set the viewport
-	m_Viewport.TopLeftX = 0;
-	m_Viewport.TopLeftY = 0;
-	m_Viewport.Width = (float)m_ScreenWidth;
-	m_Viewport.Height = (float)m_ScreenHeight;
-	m_Viewport.MinDepth = 0.0f;
-	m_Viewport.MaxDepth = 1.0f;
-
-	m_pRenderer->SetViewport(&m_Viewport, 1);
 }
 
 void PostProcessor::SetRenderConfig(const PostProcessingBuffers& CONFIG)

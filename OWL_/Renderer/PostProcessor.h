@@ -43,7 +43,6 @@ protected:
 	void RenderPostProcessing();
 	void RenderImageFilter(const ImageFilter& IMAGE_FILTER);
 
-	void SetViewport();
 	void SetRenderConfig(const PostProcessingBuffers& CONFIG);
 	void SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU);
 

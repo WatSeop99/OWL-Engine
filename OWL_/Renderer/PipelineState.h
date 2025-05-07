@@ -47,9 +47,10 @@ public:
 class ComputePSO final
 {
 public:
-	~ComputePSO() { Destroy(); }
+	ComputePSO() = default;
+	~ComputePSO() { Cleanup(); }
 
-	void Destroy() { pComputeShader = nullptr; }
+	void Cleanup() { pComputeShader = nullptr; }
 
 	inline void operator=(const ComputePSO& RHS) { pComputeShader = RHS.pComputeShader; };
 

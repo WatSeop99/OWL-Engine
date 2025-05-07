@@ -1,12 +1,12 @@
-#include "Common.hlsli"
+#include "CommonHeader/Common.hlsli"
 
 Texture2D<float4> g_HeightTexture : register(t6);
 Texture2D<float4> g_ColorMap : register(t7);
 
-PixelShaderInput main(VertexShaderInput input)
+VertexShaderOutput main(VertexShaderInput input)
 {
     // 뷰 좌표계는 NDC이기 때문에 월드 좌표를 이용해서 조명 계산.
-    PixelShaderInput output;
+    VertexShaderOutput output;
     
 #ifdef SKINNED
     float weights[8];

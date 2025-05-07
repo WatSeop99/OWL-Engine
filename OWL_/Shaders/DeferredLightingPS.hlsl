@@ -1,5 +1,5 @@
-#include "Common.hlsli"
-#include "ShadingUtil.hlsli"
+#include "CommonHeader/Common.hlsli"
+#include "ShadingUtil.hlsl"
 
 struct SamplingPixelShaderInput
 {

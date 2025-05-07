@@ -60,8 +60,6 @@ public:
 	void SetPipelineState(const ComputePSO* pPSO);
 
 	Model* PickClosest(const DirectX::SimpleMath::Ray* pPickingRay, float* pMinDist);
-	void ProcessKeyboardControl(float deltaTime);
-	void ProcessMouseControl();
 
 private:
 	void InitMainWindow();
@@ -82,6 +80,9 @@ private:
 	void PassDeferredLighting();
 	void PassSky();
 	void PassDebug();
+
+	void ProcessKeyboardControl(float deltaTime);
+	void ProcessMouseControl();
 
 private:
 	HINSTANCE m_hInstance = nullptr;

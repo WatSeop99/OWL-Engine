@@ -1,4 +1,4 @@
-#include "Common.hlsli"
+#include "CommonHeader/Common.hlsli"
 
 cbuffer Consts : register(b3) // b3 ¡÷¿«
 {
