@@ -684,46 +684,46 @@ void ResourceManager::InitShaders()
 	hr = CreateVertexShaderAndInputLayout(L"./Shaders/Atmosphere/SunVS.hlsl", SUN_IEs, numSunIEs, nullptr, &pSunVS, &pSunIL);
 	BREAK_IF_FAILED(hr);
 
-	/*hr = createPixelShader(L"./Shaders/BasicPS.hlsl", &pBasicPS);
+	/*hr = createPixelShader(L"./Shaders/BasicPS.hlsl", nullptr,&pBasicPS);
 	BREAK_IF_FAILED(hr);*/
-	hr = CreatePixelShader(L"./Shaders/NormalPS.hlsl", &pNormalPS);
+	hr = CreatePixelShader(L"./Shaders/NormalPS.hlsl", nullptr, &pNormalPS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/SkyboxPS.hlsl", &pSkyboxPS);
+	hr = CreatePixelShader(L"./Shaders/SkyboxPS.hlsl", nullptr, &pSkyboxPS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/CombinePS.hlsl", &pCombinePS);
+	hr = CreatePixelShader(L"./Shaders/CombinePS.hlsl", nullptr, &pCombinePS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/BloomDownPS.hlsl", &pBloomDownPS);
+	hr = CreatePixelShader(L"./Shaders/BloomDownPS.hlsl", nullptr, &pBloomDownPS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/BloomUpPS.hlsl", &pBloomUpPS);
+	hr = CreatePixelShader(L"./Shaders/BloomUpPS.hlsl", nullptr, &pBloomUpPS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/DepthOnlyPS.hlsl", &pDepthOnlyPS);
+	hr = CreatePixelShader(L"./Shaders/DepthOnlyPS.hlsl", nullptr, &pDepthOnlyPS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/PostEffectPS.hlsl", &pPostEffectsPS);
+	hr = CreatePixelShader(L"./Shaders/PostEffectPS.hlsl", nullptr, &pPostEffectsPS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/ColorPS.hlsl", &pColorPS);
+	hr = CreatePixelShader(L"./Shaders/ColorPS.hlsl", nullptr, &pColorPS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/GrassPS.hlsl", &pGrassPS);
+	hr = CreatePixelShader(L"./Shaders/GrassPS.hlsl", nullptr, &pGrassPS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/OceanPS.hlsl", &pOceanPS);
+	hr = CreatePixelShader(L"./Shaders/OceanPS.hlsl", nullptr, &pOceanPS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/ExplosionPS.hlsl", &pExplosionPS);
+	hr = CreatePixelShader(L"./Shaders/ExplosionPS.hlsl", nullptr, &pExplosionPS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/VolumetricFirePS.hlsl", &pVolumetricFirePS);
+	hr = CreatePixelShader(L"./Shaders/VolumetricFirePS.hlsl", nullptr, &pVolumetricFirePS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/GBufferPS.hlsl", &pGBufferPS);
+	hr = CreatePixelShader(L"./Shaders/GBufferPS.hlsl", nullptr, &pGBufferPS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/DeferredLightingPS.hlsl", &pDeferredLightingPS);
+	hr = CreatePixelShader(L"./Shaders/DeferredLightingPS.hlsl", nullptr, &pDeferredLightingPS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/Atmosphere/SkyLUTPS.hlsl", &pSkyLUTPS);
+	hr = CreatePixelShader(L"./Shaders/Atmosphere/SkyLUTPS.hlsl", nullptr, &pSkyLUTPS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/Atmosphere/SkyPS.hlsl", &pSkyPS);
+	hr = CreatePixelShader(L"./Shaders/Atmosphere/SkyPS.hlsl", nullptr, &pSkyPS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/Atmosphere/SunPS.hlsl", &pSunPS);
+	hr = CreatePixelShader(L"./Shaders/Atmosphere/SunPS.hlsl", nullptr, &pSunPS);
 	BREAK_IF_FAILED(hr);
 
-	hr = CreateGeometryShader(L"./Shaders/NormalGS.hlsl", &pNormalGS);
+	hr = CreateGeometryShader(L"./Shaders/NormalGS.hlsl", nullptr, &pNormalGS);
 	BREAK_IF_FAILED(hr);
-	hr = CreateGeometryShader(L"./Shaders/BillboardGS.hlsl", &pBillboardGS);
+	hr = CreateGeometryShader(L"./Shaders/BillboardGS.hlsl", nullptr, &pBillboardGS);
 	BREAK_IF_FAILED(hr);
 
 	hr = CreateVertexShaderAndInputLayout(L"./Shaders/DepthOnlyCubeVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pDepthOnlyCubeVS, &pSkyboxIL);
@@ -734,20 +734,20 @@ void ResourceManager::InitShaders()
 	BREAK_IF_FAILED(hr);
 	hr = CreateVertexShaderAndInputLayout(L"./Shaders/DepthONlyCascadeVS.hlsl", SKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO, &pDepthOnlyCascadeSkinnedVS, &pSkinnedIL);
 	BREAK_IF_FAILED(hr);
-	hr = CreateGeometryShader(L"./Shaders/DepthOnlyCubeGS.hlsl", &pDepthOnlyCubeGS);
+	hr = CreateGeometryShader(L"./Shaders/DepthOnlyCubeGS.hlsl", nullptr, &pDepthOnlyCubeGS);
 	BREAK_IF_FAILED(hr);
-	hr = CreateGeometryShader(L"./Shaders/DepthOnlyCascadeGS.hlsl", &pDepthOnlyCascadeGS);
+	hr = CreateGeometryShader(L"./Shaders/DepthOnlyCascadeGS.hlsl", nullptr, &pDepthOnlyCascadeGS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/DepthOnlyCubePS.hlsl", &pDepthOnlyCubePS);
+	hr = CreatePixelShader(L"./Shaders/DepthOnlyCubePS.hlsl", nullptr, &pDepthOnlyCubePS);
 	BREAK_IF_FAILED(hr);
-	hr = CreatePixelShader(L"./Shaders/DepthOnlyCascadePS.hlsl", &pDepthOnlyCascadePS);
+	hr = CreatePixelShader(L"./Shaders/DepthOnlyCascadePS.hlsl", nullptr, &pDepthOnlyCascadePS);
 	BREAK_IF_FAILED(hr);
 
-	hr = CreateComputeShader(L"./Shaders/Atmosphere/AerialLUTCS.hlsl", &pAerialLUTCS);
+	hr = CreateComputeShader(L"./Shaders/Atmosphere/AerialLUTCS.hlsl", nullptr, &pAerialLUTCS);
 	BREAK_IF_FAILED(hr);
-	hr = CreateComputeShader(L"./Shaders/Atmosphere/MultiScatterLUTCS.hlsl", &pMultiScatterLUTCS);
+	hr = CreateComputeShader(L"./Shaders/Atmosphere/MultiScatterLUTCS.hlsl", nullptr, &pMultiScatterLUTCS);
 	BREAK_IF_FAILED(hr);
-	hr = CreateComputeShader(L"./Shaders/Atmosphere/TransmittanceLUTCS.hlsl", &pTransmittanceLUTCS);
+	hr = CreateComputeShader(L"./Shaders/Atmosphere/TransmittanceLUTCS.hlsl", nullptr, &pTransmittanceLUTCS);
 	BREAK_IF_FAILED(hr);
 }
 
@@ -953,7 +953,7 @@ HRESULT ResourceManager::CreateVertexShaderAndInputLayout(const WCHAR* pszFileNa
 	_ASSERT(pszFileName);
 	_ASSERT(ppOutVertexShader && !(*ppOutVertexShader));
 
-	HRESULT hr = S_OK;
+	HRESULT hr;
 
 	ID3DBlob* pShaderBlob = nullptr;
 	ID3DBlob* pErrorBlob = nullptr;
@@ -992,7 +992,7 @@ LB_RET:
 	return hr;
 }
 
-HRESULT ResourceManager::CreateHullShader(const WCHAR* pszFileName, ID3D11HullShader** ppOutHullShader)
+HRESULT ResourceManager::CreateHullShader(const WCHAR* pszFileName, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11HullShader** ppOutHullShader)
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(pszFileName);
@@ -1008,7 +1008,7 @@ HRESULT ResourceManager::CreateHullShader(const WCHAR* pszFileName, ID3D11HullSh
 	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-	hr = D3DCompileFromFile(pszFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "hs_5_0", compileFlags, 0, &pShaderBlob, &pErrorBlob);
+	hr = D3DCompileFromFile(pszFileName, pSHADER_MACROS, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "hs_5_0", compileFlags, 0, &pShaderBlob, &pErrorBlob);
 	if (FAILED(hr))
 	{
 		if (pErrorBlob)
@@ -1026,7 +1026,7 @@ LB_RET:
 	return hr;
 }
 
-HRESULT ResourceManager::CreateDomainShader(const WCHAR* pszFileName, ID3D11DomainShader** ppOutDomainShader)
+HRESULT ResourceManager::CreateDomainShader(const WCHAR* pszFileName, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11DomainShader** ppOutDomainShader)
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(pszFileName);
@@ -1042,7 +1042,7 @@ HRESULT ResourceManager::CreateDomainShader(const WCHAR* pszFileName, ID3D11Doma
 	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-	hr = D3DCompileFromFile(pszFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ds_5_0", compileFlags, 0, &pShaderBlob, &pErrorBlob);
+	hr = D3DCompileFromFile(pszFileName, pSHADER_MACROS, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ds_5_0", compileFlags, 0, &pShaderBlob, &pErrorBlob);
 	if (FAILED(hr))
 	{
 		if (pErrorBlob)
@@ -1060,7 +1060,7 @@ LB_RET:
 	return hr;
 }
 
-HRESULT ResourceManager::CreateGeometryShader(const WCHAR* pszFileName, ID3D11GeometryShader** ppOutGeometryShader)
+HRESULT ResourceManager::CreateGeometryShader(const WCHAR* pszFileName, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11GeometryShader** ppOutGeometryShader)
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(pszFileName);
@@ -1076,7 +1076,7 @@ HRESULT ResourceManager::CreateGeometryShader(const WCHAR* pszFileName, ID3D11Ge
 	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-	hr = D3DCompileFromFile(pszFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "gs_5_0", compileFlags, 0, &pShaderBlob, &pErrorBlob);
+	hr = D3DCompileFromFile(pszFileName, pSHADER_MACROS, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "gs_5_0", compileFlags, 0, &pShaderBlob, &pErrorBlob);
 	if (FAILED(hr))
 	{
 		if (pErrorBlob)
@@ -1094,7 +1094,7 @@ LB_RET:
 	return hr;
 }
 
-HRESULT ResourceManager::CreatePixelShader(const WCHAR* pszFileName, ID3D11PixelShader** ppOutPixelShader)
+HRESULT ResourceManager::CreatePixelShader(const WCHAR* pszFileName, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11PixelShader** ppOutPixelShader)
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(pszFileName);
@@ -1110,7 +1110,7 @@ HRESULT ResourceManager::CreatePixelShader(const WCHAR* pszFileName, ID3D11Pixel
 	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-	hr = D3DCompileFromFile(pszFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_0", compileFlags, 0, &pShaderBlob, &pErrorBlob);
+	hr = D3DCompileFromFile(pszFileName, pSHADER_MACROS, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_0", compileFlags, 0, &pShaderBlob, &pErrorBlob);
 	if (FAILED(hr))
 	{
 		if (pErrorBlob != nullptr)
@@ -1128,7 +1128,7 @@ LB_RET:
 	return hr;
 }
 
-HRESULT ResourceManager::CreateComputeShader(const WCHAR* pszFileName, ID3D11ComputeShader** ppOutComputeShader)
+HRESULT ResourceManager::CreateComputeShader(const WCHAR* pszFileName, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11ComputeShader** ppOutComputeShader)
 {
 	_ASSERT(m_pDevice);
 	_ASSERT(pszFileName);
@@ -1144,7 +1144,7 @@ HRESULT ResourceManager::CreateComputeShader(const WCHAR* pszFileName, ID3D11Com
 	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-	hr = D3DCompileFromFile(pszFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_0", compileFlags, 0, &pShaderBlob, &pErrorBlob);
+	hr = D3DCompileFromFile(pszFileName, pSHADER_MACROS, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_0", compileFlags, 0, &pShaderBlob, &pErrorBlob);
 	if (FAILED(hr))
 	{
 		if (pErrorBlob)

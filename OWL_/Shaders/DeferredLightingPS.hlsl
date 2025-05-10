@@ -138,7 +138,6 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
     }
 
     float3 radiance = light.Radiance * spotFator * att * shadowFactor;
-    //float3 radiance = light.Radiance * shadowFactor;
     return radiance;
 }
 

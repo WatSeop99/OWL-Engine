@@ -34,11 +34,11 @@ protected:
 	// volume shader Á¦¿Ü.
 
 	HRESULT CreateVertexShaderAndInputLayout(const WCHAR* pszFileName, const D3D11_INPUT_ELEMENT_DESC* pINPUT_ELEMENTS, const UINT ELEMENT_SIZE, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11VertexShader** ppOutVertexShader, ID3D11InputLayout** ppOutInputLayout);
-	HRESULT CreateHullShader(const WCHAR* pszFileName, ID3D11HullShader** ppOutHullShader);
-	HRESULT CreateDomainShader(const WCHAR* pszFileName, ID3D11DomainShader** ppOutDomainShader);
-	HRESULT CreateGeometryShader(const WCHAR* pszFileName, ID3D11GeometryShader** ppOutGeometryShader);
-	HRESULT CreatePixelShader(const WCHAR* pszFileName, ID3D11PixelShader** ppOutPixelShader);
-	HRESULT CreateComputeShader(const WCHAR* pszFileName, ID3D11ComputeShader** ppOutComputeShader);
+	HRESULT CreateHullShader(const WCHAR* pszFileName, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11HullShader** ppOutHullShader);
+	HRESULT CreateDomainShader(const WCHAR* pszFileName, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11DomainShader** ppOutDomainShader);
+	HRESULT CreateGeometryShader(const WCHAR* pszFileName, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11GeometryShader** ppOutGeometryShader);
+	HRESULT CreatePixelShader(const WCHAR* pszFileName, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11PixelShader** ppOutPixelShader);
+	HRESULT CreateComputeShader(const WCHAR* pszFileName, const D3D_SHADER_MACRO* pSHADER_MACROS, ID3D11ComputeShader** ppOutComputeShader);
 
 public:
 	ID3D11SamplerState* pLinearWrapSS = nullptr;

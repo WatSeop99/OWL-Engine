@@ -30,7 +30,7 @@ void ConstantBuffer::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCon
 	}
 
 
-	HRESULT hr = S_OK;
+	HRESULT hr;
 
 	D3D11_BUFFER_DESC bufferDesc = {};
 	bufferDesc.ByteWidth = (CBSize + 255) & ~255;
