@@ -30,6 +30,10 @@ public:
 
 	void Cleanup();
 
+	void BindGlobalConstantBuffer(UINT startSlot, int stage = PipelineStage_ALL);
+	void BindGlobalReflectConstantBuffer(UINT startSlot, int stage = PipelineStage_ALL);
+	void BindLightConstantBuffer(UINT startSlot, int stage = PipelineStage_ALL);
+
 	inline ConstantBuffer* GetGlobalConstantBuffer() { return &m_GlobalConstants; }
 	inline ConstantBuffer* GetLightConstantBuffer() { return &m_LightConstants; }
 

@@ -44,6 +44,7 @@ public:
 	bool bIsVisible = true;
 	bool bCastShadow = true;
 	bool bIsPickable = false; // 마우스로 선택/조작 가능 여부.
+	bool bPicked = false;
 
 	std::vector<Mesh*> Meshes;
 

@@ -92,7 +92,8 @@ bool DebugApp2::Initialize(HINSTANCE hInstance)
 
 	InitScene();
 
-	m_pRenderer->SetPickedModel(m_pCharacter);
+	//m_pRenderer->SetPickedModel(m_pCharacter);
+	m_pRenderer->SetPickedModel(m_pScene->RenderObjects[m_pScene->RenderObjects.size() - 2]);
 
 LB_RET:
 	return bRet;
@@ -109,7 +110,7 @@ void DebugApp2::InitScene()
 	m_pRenderer->InitScene();
 
 	{
-		MeshInfo meshInfo;
+		/*MeshInfo meshInfo;
 		MakeBox(&meshInfo, 0.4f);
 
 		Model* pBox = new Model;
@@ -117,7 +118,17 @@ void DebugApp2::InitScene()
 
 		pBox->UpdateWorld(Matrix::CreateTranslation(Vector3(0.5f, 1.0f, 0.2)));
 
-		m_pScene->RenderObjects.push_back(pBox);
+		m_pScene->RenderObjects.push_back(pBox);*/
+
+		MeshInfo meshInfo;
+		MakeSphere(&meshInfo, 1.0f, 40, 40);
+
+		Model* pSphere = new Model;
+		pSphere->Initialize(m_pRenderer, { meshInfo });
+
+		pSphere->UpdateWorld(Matrix::CreateTranslation(Vector3(0.5f, 1.0f, 0.2)));
+
+		m_pScene->RenderObjects.push_back(pSphere);
 	}
 
 	// Main Object.
@@ -168,6 +179,7 @@ void DebugApp2::InitScene()
 		}
 		m_pCharacter->UpdateWorld(Matrix::CreateTranslation(center));
 		m_pCharacter->CharacterAnimationData.Position = center;
+		m_pCharacter->bPicked = true;
 
 		m_pScene->RenderObjects.push_back(m_pCharacter); // 리스트에 등록
 		m_pScene->pMainController = m_pCharacter;

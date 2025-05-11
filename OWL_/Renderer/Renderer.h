@@ -54,6 +54,8 @@ public:
 	inline Mouse* GetMouse() { return &m_Mouse; }
 
 	inline void SetPickedModel(Model* const pModel) { m_pPickedModel = pModel; }
+	void SetConstantBuffers(ID3D11Buffer** ppResources, UINT startSlots, UINT bufferCount, int stage);
+	void SetShaderResources(ID3D11ShaderResourceView** ppResources, UINT startSlots, UINT bufferCount, int stage);
 	void SetGlobalConsts(ID3D11Buffer** ppGlobalConstsGPU, UINT slot);
 	void SetViewport(const D3D11_VIEWPORT* pViewports, const UINT NUM_VIEWPORT);
 	void SetPipelineState(const GraphicsPSO* pPSO);

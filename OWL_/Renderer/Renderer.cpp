@@ -225,8 +225,8 @@ bool Renderer::InitScene()
 		m_pCursorSphere->bCastShadow = false; // 그림자 X
 
 		MaterialConstants* pMaterialConstData = (MaterialConstants*)m_pCursorSphere->Meshes[0]->MaterialConstant.pSystemMem;
-		pMaterialConstData->AlbedoFactor = Vector3(0.0f);
-		pMaterialConstData->EmissionFactor = Vector3(0.0f, 1.0f, 0.0f);
+		pMaterialConstData->AlbedoFactor = Vector3::Zero;
+		pMaterialConstData->EmissionFactor = Vector3::UnitY;
 
 		m_pScene->RenderObjects.push_back(m_pCursorSphere);
 	}
@@ -484,32 +484,18 @@ void Renderer::OnMouseClick(bool bLeft, bool bClicked, int mouseX, int mouseY)
 {
 	if (bLeft)
 	{
-		if (bClicked)
+		m_Mouse.bMouseLeftButton = bClicked;
+		if (bClicked && !m_Mouse.bMouseLeftButton)
 		{
-			if (!m_Mouse.bMouseLeftButton)
-			{
-				m_Mouse.bMouseDragStartFlag = true; // 드래그를 새로 시작하는지 확인.
-			}
-			m_Mouse.bMouseLeftButton = true;
-		}
-		else
-		{
-			m_Mouse.bMouseLeftButton = false;
+			m_Mouse.bMouseDragStartFlag = true; // 드래그를 새로 시작하는지 확인.
 		}
 	}
 	else
 	{
-		if (bClicked)
+		m_Mouse.bMouseRightButton = bClicked;
+		if (bClicked && !m_Mouse.bMouseRightButton)
 		{
-			if (!m_Mouse.bMouseRightButton)
-			{
-				m_Mouse.bMouseDragStartFlag = true; // 드래그를 새로 시작하는지 확인.
-			}
-			m_Mouse.bMouseRightButton = true;
-		}
-		else
-		{
-			m_Mouse.bMouseRightButton = false;
+			m_Mouse.bMouseDragStartFlag = true; // 드래그를 새로 시작하는지 확인.
 		}
 	}
 
@@ -527,34 +513,77 @@ void Renderer::OnMouseWheel(WPARAM wheelValue)
 
 void Renderer::OnKeyboardClick(bool bClicked, WPARAM keyCode)
 {
-	if (bClicked)
+	m_Keyboard.bPressed[keyCode] = bClicked;
+	if (!bClicked)
 	{
-		m_Keyboard.bPressed[keyCode] = true;
-
-		// 이 섹션은 키 누름 한번만 반영하기 위한 것.
-
-		if (keyCode == 'F')  // f키 일인칭 시점.
-		{
-			_ASSERT(m_pMainCamera);
-			m_pMainCamera->bUseFirstPersonView = !m_pMainCamera->bUseFirstPersonView;
-		}
-		if (keyCode == 'P') // 애니메이션 일시중지할 때 사용.
-		{
-			m_bPauseAnimation = !m_bPauseAnimation;
-		}
-		if (keyCode == 'Z') // 카메라 설정 화면에 출력.
-		{
-			_ASSERT(m_pMainCamera);
-			m_pMainCamera->PrintView();
-		}
-		if (keyCode == VK_F1)
-		{
-			WindowF1Sync();
-		}
+		return;
 	}
-	else
+
+	if (keyCode == 'F')  // f키 일인칭 시점.
 	{
-		m_Keyboard.bPressed[keyCode] = false;
+		_ASSERT(m_pMainCamera);
+		m_pMainCamera->bUseFirstPersonView = !m_pMainCamera->bUseFirstPersonView;
+	}
+	if (keyCode == 'P') // 애니메이션 일시중지할 때 사용.
+	{
+		m_bPauseAnimation = !m_bPauseAnimation;
+	}
+	if (keyCode == 'Z') // 카메라 설정 화면에 출력.
+	{
+		_ASSERT(m_pMainCamera);
+		m_pMainCamera->PrintView();
+	}
+	if (keyCode == VK_F1)
+	{
+		WindowF1Sync();
+	}
+}
+
+void Renderer::SetConstantBuffers(ID3D11Buffer** ppResources, UINT startSlots, UINT bufferCount, int stage)
+{
+	_ASSERT(m_pContext);
+	_ASSERT(ppResources);
+	_ASSERT(bufferCount > 0);
+	
+	if (stage & PipelineStage_VS)
+	{
+		m_pContext->VSSetConstantBuffers(startSlots, bufferCount, ppResources);
+	}
+	if (stage & PipelineStage_GS)
+	{
+		m_pContext->GSSetConstantBuffers(startSlots, bufferCount, ppResources);
+	}
+	if (stage & PipelineStage_PS)
+	{
+		m_pContext->GSSetConstantBuffers(startSlots, bufferCount, ppResources);
+	}
+	if (stage & PipelineStage_CS)
+	{
+		m_pContext->CSSetConstantBuffers(startSlots, bufferCount, ppResources);
+	}
+}
+
+void Renderer::SetShaderResources(ID3D11ShaderResourceView** ppResources, UINT startSlots, UINT bufferCount, int stage)
+{
+	_ASSERT(m_pContext);
+	_ASSERT(ppResources);
+	_ASSERT(bufferCount > 0);
+
+	if (stage & PipelineStage_VS)
+	{
+		m_pContext->VSSetShaderResources(startSlots, bufferCount, ppResources);
+	}
+	if (stage & PipelineStage_GS)
+	{
+		m_pContext->GSSetShaderResources(startSlots, bufferCount, ppResources);
+	}
+	if (stage & PipelineStage_PS)
+	{
+		m_pContext->PSSetShaderResources(startSlots, bufferCount, ppResources);
+	}
+	if (stage & PipelineStage_CS)
+	{
+		m_pContext->CSSetShaderResources(startSlots, bufferCount, ppResources);
 	}
 }
 
@@ -950,6 +979,8 @@ void Renderer::PassGBuffer()
 
 	SetMainViewport();
 	SetGlobalConsts(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0);
+	//SetConstantBuffers(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0, 1, PipelineStage_VS | PipelineStage_GS | PipelineStage_PS);
+	//m_pScene->BindGlobalConstantBuffer(0, PipelineStage_VS | PipelineStage_GS | PipelineStage_PS);
 	m_pGBuffer->PrepareRender();
 
 	for (SIZE_T i = 0, size = m_pScene->RenderObjects.size(); i < size; ++i)
@@ -980,6 +1011,8 @@ void Renderer::PassDeferredLighting()
 	SetMainViewport();
 	m_pResourceManager->SetPipelineState(GraphicsPSOType_DeferredRendering);
 	SetGlobalConsts(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0);
+	//SetConstantBuffers(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0, 1, PipelineStage_VS | PipelineStage_GS | PipelineStage_PS);
+	//m_pScene->BindGlobalConstantBuffer(0, PipelineStage_VS | PipelineStage_GS | PipelineStage_PS);
 
 	const float CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	m_pContext->ClearRenderTargetView(m_pFloatBuffer->pRTV, CLEAR_COLOR);
@@ -1057,6 +1090,8 @@ void Renderer::PassDebug()
 
 	SetMainViewport();
 	SetGlobalConsts(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0);
+	//SetConstantBuffers(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0, 1, PipelineStage_VS | PipelineStage_GS | PipelineStage_PS);
+	//m_pScene->BindGlobalConstantBuffer(0, PipelineStage_VS | PipelineStage_GS | PipelineStage_PS);
 	m_pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_pGBuffer->DepthBuffer.pDSV);
 
 	for (SIZE_T i = 0, size = m_pScene->RenderObjects.size(); i < size; ++i)

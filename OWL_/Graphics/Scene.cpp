@@ -322,6 +322,24 @@ void Scene::Cleanup()
 	m_pRenderer = nullptr;
 }
 
+void Scene::BindGlobalConstantBuffer(UINT startSlot, int stage)
+{
+	_ASSERT(m_pRenderer);
+	m_pRenderer->SetConstantBuffers(&m_GlobalConstants.pBuffer, startSlot, 1, stage);
+}
+
+void Scene::BindGlobalReflectConstantBuffer(UINT startSlot, int stage)
+{
+	_ASSERT(m_pRenderer);
+	m_pRenderer->SetConstantBuffers(&m_ReflectionGlobalConstants.pBuffer, startSlot, 1, stage);
+}
+
+void Scene::BindLightConstantBuffer(UINT startSlot, int stage)
+{
+	_ASSERT(m_pRenderer);
+	m_pRenderer->SetConstantBuffers(&m_LightConstants.pBuffer, startSlot, 1, stage);
+}
+
 void Scene::InitCubemaps(std::wstring&& basePath, std::wstring&& envFileName, std::wstring&& specularFileName, std::wstring&& irradianceFileName, std::wstring&& brdfFileName)
 {
 	_ASSERT(m_pRenderer);

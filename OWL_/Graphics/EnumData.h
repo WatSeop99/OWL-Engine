@@ -52,9 +52,9 @@ enum eComputePSOType
 
 enum ePipelineStage
 {
-	PipelineStage_VS = 0,
-	PipelineStage_GS,
-	PipelineStage_PS,
-	PipelineStage_CS,
-	PipelineStage_Count
+	PipelineStage_VS  = 0x00000000F,
+	PipelineStage_GS  = 0x0000000F0,
+	PipelineStage_PS  = 0x000000F00,
+	PipelineStage_CS  = 0x00000F000,
+	PipelineStage_ALL = 0x00000FFFF
 };
