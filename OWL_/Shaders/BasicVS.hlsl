@@ -1,4 +1,4 @@
-#include "Common.hlsli"
+#include "CommonHeader/Common.hlsli"
 
 Texture2D<float4> g_HeightTex : register(t6);
 

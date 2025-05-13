@@ -256,6 +256,101 @@ void Scene::Update(float deltaTime)
 	}
 }
 
+void Scene::UpdateGUI()
+{
+	GlobalConstants* pGlobalConstsData = (GlobalConstants*)m_GlobalConstants.pSystemMem;
+	ResourceManager* pResourceManager = (ResourceManager*)m_pRenderer->GetResourceManager();
+
+	ImGui::Begin("Scene Control");
+
+	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+	if (ImGui::TreeNode("Skybox"))
+	{
+		ImGui::SliderFloat("Strength", &pGlobalConstsData->StrengthIBL, 0.0f, 0.5f);
+		ImGui::RadioButton("Env", &pGlobalConstsData->TextureToDraw, 0);
+		ImGui::SameLine();
+		ImGui::RadioButton("Specular", &pGlobalConstsData->TextureToDraw, 1);
+		ImGui::SameLine();
+		ImGui::RadioButton("Irradiance", &pGlobalConstsData->TextureToDraw, 2);
+		ImGui::SliderFloat("EnvLodBias", &pGlobalConstsData->EnvLODBias, 0.0f, 10.0f);
+		ImGui::TreePop();
+	}
+
+	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+	if (ImGui::TreeNode("Mirror"))
+	{
+		ImGui::SliderFloat("Alpha", &MirrorAlpha, 0.0f, 1.0f);
+		const float BLEND_COLOR[4] = { MirrorAlpha, MirrorAlpha, MirrorAlpha, 1.0f };
+		if (bDrawAsWire)
+		{
+			pResourceManager->GraphicsPSOs[GraphicsPSOType_MirrorBlendWire].SetBlendFactor(BLEND_COLOR);
+		}
+		else
+		{
+			pResourceManager->GraphicsPSOs[GraphicsPSOType_MirrorBlendSolid].SetBlendFactor(BLEND_COLOR);
+		}
+
+		MaterialConstants* pMaterialConstData = (MaterialConstants*)m_pMirror->Meshes[0]->MaterialConstant.pSystemMem;
+		if (!pMaterialConstData)
+		{
+			__debugbreak();
+		}
+
+		ImGui::SliderFloat("Metallic", &pMaterialConstData->MetallicFactor, 0.0f, 1.0f);
+		ImGui::SliderFloat("Roughness", &pMaterialConstData->RoughnessFactor, 0.0f, 1.0f);
+
+		ImGui::TreePop();
+	}
+
+	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+	if (ImGui::TreeNode("Light"))
+	{
+		ImGui::SliderFloat("Halo Radius", &Lights[1].Property.HaloRadius, 0.0f, 2.0f);
+		ImGui::SliderFloat("Halo Strength", &Lights[1].Property.HaloStrength, 0.0f, 1.0f);
+		ImGui::SliderFloat("Radius", &Lights[1].Property.Radius, 0.0f, 0.5f);
+
+		ImGui::TreePop();
+	}
+
+	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+	if (ImGui::TreeNode("Material"))
+	{
+		ImGui::SliderFloat("LodBias", &pGlobalConstsData->LODBias, 0.0f, 10.0f);
+
+		int flag = 0;
+		Model* pPickedModel = m_pRenderer->GetPickedModel();
+
+		if (pPickedModel)
+		{
+			for (UINT64 i = 0, size = pPickedModel->Meshes.size(); i < size; ++i)
+			{
+				MaterialConstants* pMaterialConstData = (MaterialConstants*)pPickedModel->Meshes[i]->MaterialConstant.pSystemMem;
+				MeshConstants* pMeshConstData = (MeshConstants*)pPickedModel->Meshes[i]->MeshConstant.pSystemMem;
+				flag += ImGui::SliderFloat("Metallic", &pMaterialConstData->MetallicFactor, 0.0f, 1.0f);
+				flag += ImGui::SliderFloat("Roughness", &pMaterialConstData->RoughnessFactor, 0.0f, 1.0f);
+				flag += ImGui::CheckboxFlags("AlbedoTexture", &pMaterialConstData->bUseAlbedoMap, 1);
+				flag += ImGui::CheckboxFlags("EmissiveTexture", &pMaterialConstData->bUseEmissiveMap, 1);
+				flag += ImGui::CheckboxFlags("Use NormalMapping", &pMaterialConstData->bUseNormalMap, 1);
+				flag += ImGui::CheckboxFlags("Use AO", &pMaterialConstData->bUseAOMap, 1);
+				flag += ImGui::CheckboxFlags("Use HeightMapping", &pMeshConstData->bUseHeightMap, 1);
+				flag += ImGui::SliderFloat("HeightScale", &pMeshConstData->HeightScale, 0.0f, 0.1f);
+				flag += ImGui::CheckboxFlags("Use MetallicMap", &pMaterialConstData->bUseMetallicMap, 1);
+				flag += ImGui::CheckboxFlags("Use RoughnessMap", &pMaterialConstData->bUseRoughnessMap, 1);
+			}
+
+			if (flag)
+			{
+				pPickedModel->UpdateConstantBuffers();
+			}
+			ImGui::Checkbox("Draw Normals", &pPickedModel->bDrawNormals);
+		}
+
+		ImGui::TreePop();
+	}
+
+	ImGui::End();
+}
+
 void Scene::Cleanup()
 {
 	// SaveScene();

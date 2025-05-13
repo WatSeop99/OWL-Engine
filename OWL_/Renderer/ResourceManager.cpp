@@ -642,11 +642,11 @@ void ResourceManager::InitShaders()
 	UINT numBillboardIEs = ARRAYSIZE(BILLBOARD_IEs);
 	UINT numSunIEs = ARRAYSIZE(SUN_IEs);
 
-	/*hr = CreateVertexShaderAndInputLayout(L"./Shaders/BasicVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pBasicVS, &pBasicIL);
-	BREAK_IF_FAILED(hr);*/
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/BasicVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pBasicVS, &pBasicIL);
+	BREAK_IF_FAILED(hr);
 
-	/*hr = CreateVertexShaderAndInputLayout(L"./Shaders/BasicVS.hlsl", SKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO, &pSkinnedVS, &pSkinnedIL);
-	BREAK_IF_FAILED(hr);*/
+	hr = CreateVertexShaderAndInputLayout(L"./Shaders/BasicVS.hlsl", SKINNED_IEs, numSkinnedIEs, pSKINNED_MACRO, &pSkinnedVS, &pSkinnedIL);
+	BREAK_IF_FAILED(hr);
 
 	hr = CreateVertexShaderAndInputLayout(L"./Shaders/NormalVS.hlsl", BASIC_IEs, numBasicIEs, nullptr, &pNormalVS, &pBasicIL);
 	BREAK_IF_FAILED(hr);

@@ -326,42 +326,6 @@ void Renderer::Cleanup()
 	m_hInstance = nullptr;
 }
 
-void Renderer::UpdateGUI()
-{
-	_ASSERT(m_DeltaTimeData.size() > 0);
-	_ASSERT(m_FrameRateData.size() > 0);
-
-	static int s_DeltaTimeIndex = 0;
-	static int s_FrameIndex = 0;
-
-	const ImGuiIO& IMGUI_IO = ImGui::GetIO();
-
-	ImGui::Begin("Profile");
-
-	if (s_DeltaTimeIndex == m_DeltaTimeData.size())
-	{
-		s_DeltaTimeIndex = 0;
-	}
-	m_DeltaTimeData[s_DeltaTimeIndex++] = IMGUI_IO.DeltaTime;
-	ImGui::PushID("dt");
-	ImGui::Text("%s\t%-3.4f %s", "dt", IMGUI_IO.DeltaTime, "ms");
-	ImGui::PlotLines("##plotvar", m_DeltaTimeData.data(), (int)m_DeltaTimeData.size(), s_DeltaTimeIndex, nullptr, FLT_MAX, FLT_MAX, { 0, 50 });
-	ImGui::PopID();
-
-
-	if (s_FrameIndex == m_FrameRateData.size())
-	{
-		s_FrameIndex = 0;
-	}
-	m_FrameRateData[s_FrameIndex++] = IMGUI_IO.Framerate;
-	ImGui::PushID("fps");
-	ImGui::Text("%s\t%-3.4f", "fps", IMGUI_IO.Framerate);
-	ImGui::PlotLines("##plotvar", m_FrameRateData.data(), (int)m_FrameRateData.size(), s_FrameIndex, nullptr, FLT_MAX, FLT_MAX, { 0, 50 });
-	ImGui::PopID();
-
-	ImGui::End();
-}
-
 void Renderer::Update(float deltaTime)
 {
 	_ASSERT(m_pMainCamera);
@@ -371,27 +335,18 @@ void Renderer::Update(float deltaTime)
 	ProcessKeyboardControl(deltaTime);
 	ProcessMouseControl();
 
-	// 후처리 프로세서 업데이트.
 	m_pPostProcessor->Update();
 }
 
-void Renderer::RenderGUI()
+void Renderer::UpdateGUI()
 {
+	UpdateProfilingUI();
+	UpdateRenderOptionUI();
+
 	ImGui::Begin("Scene");
 	ImVec2 wsize = ImGui::GetWindowSize();
 	ImGui::Image((ImTextureID)(intptr_t)m_pPrevBuffer->pSRV, wsize, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f));
 	ImGui::End();
-
-	SetMainViewport();
-	ImGui::Render();
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
-	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-	{
-		// 생성된 플랫폼 윈도우들에 대해 업데이트 & 렌더까지 처리
-		ImGui::UpdatePlatformWindows();
-		ImGui::RenderPlatformWindowsDefault();
-	}
 }
 
 void Renderer::Render()
@@ -417,6 +372,30 @@ void Renderer::Render()
 	RenderGUI();
 
 	m_pSwapChain->Present(1, 0);
+}
+
+void Renderer::RenderGUI()
+{
+	SetMainViewport();
+	ImGui::Render();
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+#ifdef _DEBUG
+	//ImGuiPlatformIO& pio = ImGui::GetPlatformIO();
+	//for (int i = 0; i < pio.Viewports.Size; i++)
+	//{
+	//	ImGuiViewport* vp = pio.Viewports[i];
+	//	ImDrawData* dd = ImGui::GetPlatformDrawData(vp)->Data[0];
+	//	assert(dd != nullptr);  // nullptr이면 문제
+	//}
+#endif
+
+	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		// 생성된 플랫폼 윈도우들에 대해 업데이트 & 렌더까지 처리
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
+	}
 }
 
 void Renderer::OnResize(int width, int height)
@@ -802,12 +781,17 @@ LB_EXIT:
 
 void Renderer::InitGUI()
 {
+	_ASSERT(m_hMainWindow);
+	_ASSERT(m_pDevice);
+	_ASSERT(m_pContext);
+	_ASSERT(m_ScreenWidth > 0 && m_ScreenHeight > 0);
+
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.DisplaySize = ImVec2((float)m_ScreenWidth, (float)m_ScreenHeight);
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_ViewportsEnable;
+	io.ConfigFlags = ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 
 	// Setup Platform/Renderer backends
 	if (!ImGui_ImplWin32_Init(m_hMainWindow))
@@ -1361,4 +1345,63 @@ void Renderer::ProcessMouseControl()
 	{
 		m_pCursorSphere->bIsVisible = false;
 	}
+}
+
+void Renderer::UpdateProfilingUI()
+{
+	_ASSERT(m_DeltaTimeData.size() > 0);
+	_ASSERT(m_FrameRateData.size() > 0);
+
+	static int s_DeltaTimeIndex = 0;
+	static int s_FrameIndex = 0;
+
+	const ImGuiIO& IMGUI_IO = ImGui::GetIO();
+
+	ImGui::Begin("Profile");
+
+	if (s_DeltaTimeIndex == m_DeltaTimeData.size())
+	{
+		s_DeltaTimeIndex = 0;
+	}
+	m_DeltaTimeData[s_DeltaTimeIndex++] = IMGUI_IO.DeltaTime;
+	ImGui::PushID("dt");
+	ImGui::Text("%s\t%-3.4f %s", "dt", IMGUI_IO.DeltaTime, "ms");
+	ImGui::PlotLines("##plotvar", m_DeltaTimeData.data(), (int)m_DeltaTimeData.size(), s_DeltaTimeIndex, nullptr, FLT_MAX, FLT_MAX, { 0, 50 });
+	ImGui::PopID();
+
+
+	if (s_FrameIndex == m_FrameRateData.size())
+	{
+		s_FrameIndex = 0;
+	}
+	m_FrameRateData[s_FrameIndex++] = IMGUI_IO.Framerate;
+	ImGui::PushID("fps");
+	ImGui::Text("%s\t%-3.4f", "fps", IMGUI_IO.Framerate);
+	ImGui::PlotLines("##plotvar", m_FrameRateData.data(), (int)m_FrameRateData.size(), s_FrameIndex, nullptr, FLT_MAX, FLT_MAX, { 0, 50 });
+	ImGui::PopID();
+
+	ImGui::End();
+}
+
+void Renderer::UpdateRenderOptionUI()
+{
+	_ASSERT(m_pMainCamera);
+	_ASSERT(m_pScene);
+	_ASSERT(m_pPostProcessor);
+
+	ImGui::Begin("RenderOption");
+
+	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+	if (ImGui::TreeNode("DrawOption"))
+	{
+		ImGui::Checkbox("Use FPV", &m_pMainCamera->bUseFirstPersonView);
+		ImGui::Checkbox("Wireframe", &m_pScene->bDrawAsWire);
+		ImGui::Checkbox("DrawOBB", &m_pScene->bDrawOBB);
+		ImGui::Checkbox("DrawBSphere", &m_pScene->bDrawBS);
+		ImGui::TreePop();
+	}
+
+	m_pPostProcessor->UpdateGUI();
+
+	ImGui::End();
 }

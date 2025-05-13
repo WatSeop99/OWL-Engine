@@ -114,6 +114,39 @@ void PostProcessor::Update()
 	}
 }
 
+void PostProcessor::UpdateGUI()
+{
+	_ASSERT(m_pPostEffectsConstantBuffer);
+	_ASSERT(PostEffectsUpdateFlag == 0);
+
+	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+	if (ImGui::TreeNode("Post Effects"))
+	{
+		PostEffectsConstants* pPostEffectConstData = (PostEffectsConstants*)m_pPostEffectsConstantBuffer->pSystemMem;
+		if (!pPostEffectConstData)
+		{
+			__debugbreak();
+		}
+
+		PostEffectsUpdateFlag += ImGui::RadioButton("Render", &pPostEffectConstData->Mode, 1);
+		ImGui::SameLine();
+		PostEffectsUpdateFlag += ImGui::RadioButton("Depth", &pPostEffectConstData->Mode, 2);
+		PostEffectsUpdateFlag += ImGui::SliderFloat("DepthScale", &pPostEffectConstData->DepthScale, 0.0f, 1.0f);
+		PostEffectsUpdateFlag += ImGui::SliderFloat("Fog", &pPostEffectConstData->FogStrength, 0.0f, 10.0f);
+
+		ImGui::TreePop();
+	}
+	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+	if (ImGui::TreeNode("Post Processing"))
+	{
+		ImageFilterConstData* pCombineFilterConstData = (ImageFilterConstData*)CombineFilter.GetConstantBufferPtr()->pSystemMem;
+		CombineUpdateFlag += ImGui::SliderFloat("Bloom Strength", &pCombineFilterConstData->Strength, 0.0f, 1.0f);
+		CombineUpdateFlag += ImGui::SliderFloat("Exposure", &pCombineFilterConstData->Option1, 0.0f, 10.0f);
+		CombineUpdateFlag += ImGui::SliderFloat("Gamma", &pCombineFilterConstData->Option2, 0.1f, 5.0f);
+		ImGui::TreePop();
+	}
+}
+
 void PostProcessor::Render()
 {
 	RenderPostEffects();

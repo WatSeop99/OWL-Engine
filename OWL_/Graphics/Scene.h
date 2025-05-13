@@ -27,6 +27,7 @@ public:
 	bool Initialize(Renderer* pRenderer);
 
 	void Update(float deltaTime);
+	void UpdateGUI();
 
 	void Cleanup();
 

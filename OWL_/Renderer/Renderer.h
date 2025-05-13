@@ -27,12 +27,12 @@ public:
 	bool InitScene();
 
 	void Cleanup();
-
-	void UpdateGUI();
+	
 	void Update(float deltaTime);
-
-	void RenderGUI();
+	void UpdateGUI();
+	
 	void Render();
+	void RenderGUI();
 
 	void OnResize(int width, int height);
 	void OnMouseMove(int mouseX, int mouseY);
@@ -85,6 +85,9 @@ private:
 
 	void ProcessKeyboardControl(float deltaTime);
 	void ProcessMouseControl();
+
+	void UpdateProfilingUI();
+	void UpdateRenderOptionUI();
 
 private:
 	HINSTANCE m_hInstance = nullptr;

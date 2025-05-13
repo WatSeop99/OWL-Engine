@@ -234,18 +234,9 @@ void DebugApp2::UpdateGUI()
 	//ImGui::DockSpaceOverViewport();
 
 	m_pRenderer->UpdateGUI();
+	m_pScene->UpdateGUI();
 
-	ImGui::Begin("Scene Control");
-
-	ImGui::SetNextItemOpen(false, ImGuiCond_Once);
-	if (ImGui::TreeNode("General"))
-	{
-		ImGui::Checkbox("Use FPV", &pMainCamera->bUseFirstPersonView);
-		ImGui::Checkbox("Wireframe", &m_pScene->bDrawAsWire);
-		ImGui::Checkbox("DrawOBB", &m_pScene->bDrawOBB);
-		ImGui::Checkbox("DrawBSphere", &m_pScene->bDrawBS);
-		ImGui::TreePop();
-	}
+	/*ImGui::Begin("Scene Control");
 
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Skybox"))
@@ -257,33 +248,6 @@ void DebugApp2::UpdateGUI()
 		ImGui::SameLine();
 		ImGui::RadioButton("Irradiance", &pGlobalConstsCPU->TextureToDraw, 2);
 		ImGui::SliderFloat("EnvLodBias", &pGlobalConstsCPU->EnvLODBias, 0.0f, 10.0f);
-		ImGui::TreePop();
-	}
-
-	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-	if (ImGui::TreeNode("Post Effects"))
-	{
-		PostEffectsConstants* pPostEffectConstData = (PostEffectsConstants*)pPostProcessor->GetPostEffectConstantBuffer()->pSystemMem;
-		if (!pPostEffectConstData)
-		{
-			__debugbreak();
-		}
-
-		pPostProcessor->PostEffectsUpdateFlag += ImGui::RadioButton("Render", &pPostEffectConstData->Mode, 1);
-		ImGui::SameLine();
-		pPostProcessor->PostEffectsUpdateFlag += ImGui::RadioButton("Depth", &pPostEffectConstData->Mode, 2);
-		pPostProcessor->PostEffectsUpdateFlag += ImGui::SliderFloat("DepthScale", &pPostEffectConstData->DepthScale, 0.0f, 1.0f);
-		pPostProcessor->PostEffectsUpdateFlag += ImGui::SliderFloat("Fog", &pPostEffectConstData->FogStrength, 0.0f, 10.0f);
-
-		ImGui::TreePop();
-	}
-
-	if (ImGui::TreeNode("Post Processing"))
-	{
-		ImageFilterConstData* pCombineFilterConstData = (ImageFilterConstData*)pPostProcessor->CombineFilter.GetConstantBufferPtr()->pSystemMem;
-		pPostProcessor->CombineUpdateFlag += ImGui::SliderFloat("Bloom Strength", &pCombineFilterConstData->Strength, 0.0f, 1.0f);
-		pPostProcessor->CombineUpdateFlag += ImGui::SliderFloat("Exposure", &pCombineFilterConstData->Option1, 0.0f, 10.0f);
-		pPostProcessor->CombineUpdateFlag += ImGui::SliderFloat("Gamma", &pCombineFilterConstData->Option2, 0.1f, 5.0f);
 		ImGui::TreePop();
 	}
 
@@ -360,5 +324,5 @@ void DebugApp2::UpdateGUI()
 		ImGui::TreePop();
 	}
 
-	ImGui::End();
+	ImGui::End();*/
 }

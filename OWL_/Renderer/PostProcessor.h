@@ -26,6 +26,7 @@ public:
 	void Initialize(Renderer* pRenderer, const PostProcessingBuffers& CONFIG, const int WIDTH, const int HEIGHT, const int BLOOMLEVELS);
 
 	void Update();
+	void UpdateGUI();
 
 	void Render();
 
