@@ -309,6 +309,13 @@
     <ClCompile Include="Util\Util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Shaders\SSRReflectionPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <FileType>Document</FileType>
+    </None>
     <None Include="Shaders\Atmosphere\AerialLUTCS.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">main</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">main</EntryPointName>

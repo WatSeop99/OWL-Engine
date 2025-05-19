@@ -438,5 +438,6 @@
     <None Include="Shaders\Atmosphere\TransmittanceLUTCS.hlsl" />
     <None Include="Shaders\CommonHeader\LightResource.hlsli" />
     <None Include="Shaders\CommonHeader\ObjectResource.hlsli" />
+    <None Include="Shaders\SSRReflectionPS.hlsl" />
   </ItemGroup>
 </Project>

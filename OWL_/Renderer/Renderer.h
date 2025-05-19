@@ -80,6 +80,7 @@ private:
 	void PassGBuffer();
 	void PassShadow();
 	void PassDeferredLighting();
+	void PassForward();
 	void PassSky();
 	void PassDebug();
 

@@ -58,8 +58,7 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
                         }
                     
                         lightTexcoord.xy = float2(lightScreen.x, -lightScreen.y);
-                        lightTexcoord.xy += 1.0f;
-                        lightTexcoord.xy *= 0.5f;
+                        lightTexcoord.xy = (lightTexcoord.xy + 1.0f) * 0.5f;
                     
                         float depth = g_CascadeShadowMaps.SampleLevel(g_ShadowPointSampler, float3(lightTexcoord.xy, i), 0.0f);
                         if (depth <= lightScreen.z - 0.005f || depth >= lightScreen.z + 0.005f)
@@ -67,16 +66,10 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
                             index = i;
                             break;
                         }
-
-                        //lightTexcoord = float3(lightScreen.x, -lightScreen.y, lightScreen.z);
-                        //lightTexcoord = (lightTexcoord + 1.0f) * 0.5f;
-                        
-
                     }
                     
                     if (index != -1)
                     {
-                        //shadowFactor = PCSSForDirectionalLight(g_CascadeShadowMaps, g_ShadowPointSampler, g_ShadowCompareSampler, index, lightTexcoord.xy, lightScreen.z - 0.001f, light.InverseProjections[index], light.Radius * radiusScale);
                         shadowFactor = PCSSForDirectionalLight(g_CascadeShadowMaps, g_ShadowPointSampler, g_ShadowCompareSampler, index, lightTexcoord.xy, lightScreen.z - 0.0001f, light.InverseProjections[index], light.Radius * radiusScale);
                     }
                 }
@@ -125,8 +118,7 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
         
                     // 카메라(광원)에서 볼 때의 텍스춰 좌표 계산. ([-1, 1], [-1, 1]) ==> ([0, 1], [0, 1])
                     lightTexcoord.xy = float2(lightScreen.x, -lightScreen.y);
-                    lightTexcoord.xy += 1.0f;
-                    lightTexcoord.xy *= 0.5f;
+                    lightTexcoord.xy = (lightTexcoord.xy + 1.0f) * 0.5f;
        
                     shadowFactor = PCSSForSpotLight(g_Shadow2DMap, g_ShadowPointSampler, g_ShadowCompareSampler, lightTexcoord.xy, lightScreen.z - 0.0001f, light.InverseProjections[0], light.Radius * radiusScale);
                 }

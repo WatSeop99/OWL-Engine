@@ -361,10 +361,10 @@ void Renderer::Render()
 	m_pScene->GetAerialLUT()->Generate();
 
 	PassDeferredLighting();
-	PassSky();
 
 	// PassForward() 구현할 것.
 	// 여기에는 PassSSR(반사처리), PassAlpha(투명도 처리), PassDebug를 구현해야 함.
+	PassForward();
 	PassDebug();
 
 	m_pPostProcessor->Render();
@@ -1053,8 +1053,19 @@ void Renderer::PassDeferredLighting()
 	}
 }
 
+void Renderer::PassForward()
+{
+	PassSky();
+	
+	// Reflectance
+
+
+	// Refraction
+}
+
 void Renderer::PassSky()
 {
+	_ASSERT(m_pContext);
 	_ASSERT(m_pScene);
 
 	SetMainViewport();
