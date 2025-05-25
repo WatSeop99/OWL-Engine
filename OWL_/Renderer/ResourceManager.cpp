@@ -1021,7 +1021,6 @@ void ResourceManager::InitPipelineStates()
 
 	GraphicsPSOs[GraphicsPSOType_SSR].pVertexShader = pScreenQuadVS;
 	GraphicsPSOs[GraphicsPSOType_SSR].pPixelShader = pSSRReflectionPS;
-	GraphicsPSOs[GraphicsPSOType_SSR].pBlendState = pAdditiveBS;
 
 	ComputePSOs[ComputePSOType_AerialLUT].pComputeShader = pAerialLUTCS;
 	

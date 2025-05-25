@@ -34,7 +34,7 @@ bool Scene::Initialize(Renderer* pRenderer)
 	// 조명 설정.
 	{
 		// 조명 0.
-		Lights[0].Property.Radiance = Vector3(1.0f);
+		Lights[0].Property.Radiance = Vector3::One;
 		Lights[0].Property.FallOffEnd = 7.0f;
 		Lights[0].Property.Position = Vector3(0.0f, 0.4f, 0.0f);
 		Lights[0].Property.SpotPower = 2.0f;
@@ -43,7 +43,7 @@ bool Scene::Initialize(Renderer* pRenderer)
 		Lights[0].Property.LightType = LIGHT_OFF;
 
 		// 조명 1.
-		Lights[1].Property.Radiance = Vector3(1.0f);
+		Lights[1].Property.Radiance = Vector3::One;
 		Lights[1].Property.FallOffEnd = 10.0f;
 		Lights[1].Property.Position = Vector3(1.0f, 1.1f, 2.0f);
 		Lights[1].Property.SpotPower = 2.0f;
@@ -54,9 +54,9 @@ bool Scene::Initialize(Renderer* pRenderer)
 		Lights[1].Property.LightType = LIGHT_OFF;
 
 		// 조명 2.
-		Lights[2].Property.Radiance = Vector3(1.0f);
+		Lights[2].Property.Radiance = Vector3::One;
 		Lights[2].Property.Position = Vector3(5.0f);
-		Lights[2].Property.Direction = Vector3(-1.0f, -1.0f, -1.0f);
+		Lights[2].Property.Direction = -Vector3::One;
 		Lights[2].Property.Direction.Normalize();
 		Lights[2].Property.LightType = LIGHT_DIRECTIONAL | LIGHT_SHADOW;
 		Lights[2].Property.Radius = 0.05f;
@@ -67,7 +67,7 @@ bool Scene::Initialize(Renderer* pRenderer)
 	{
 		for (int i = 0; i < 3; ++i)
 		{
-			MeshInfo sphere;
+			MeshInfo sphere = {};
 			MakeSphere(&sphere, 1.0f, 20, 20);
 
 			m_ppLightSpheres[i] = new Model;
@@ -78,7 +78,7 @@ bool Scene::Initialize(Renderer* pRenderer)
 			pMaterialConstData->AlbedoFactor = Vector3::Zero;
 			pMaterialConstData->EmissionFactor = Vector3(1.0f, 1.0f, 0.0f);
 			m_ppLightSpheres[i]->bCastShadow = false; // 조명 표시 물체들은 그림자 X.
-			for (UINT64 j = 0, size = m_ppLightSpheres[i]->Meshes.size(); j < size; ++j)
+			for (SIZE_T j = 0, size = m_ppLightSpheres[i]->Meshes.size(); j < size; ++j)
 			{
 				Mesh* pCurMesh = m_ppLightSpheres[i]->Meshes[j];
 
@@ -102,15 +102,15 @@ bool Scene::Initialize(Renderer* pRenderer)
 	{
 		// https://freepbr.com/materials/stringy-marble-pbr/
 		MeshInfo meshInfo = {};
-		MakeSquareGrid(&meshInfo, 100, 100, 100);
+		MakeSquareGrid(&meshInfo, 100, 100, 100, Vector2(50.0f));
 
-		std::wstring path = L"./Assets/Textures/PBR/stringy-marble-ue/";
-		meshInfo.szAlbedoTextureFileName = path + L"stringy_marble_albedo.png";
-		meshInfo.szEmissiveTextureFileName = L"";
-		meshInfo.szAOTextureFileName = path + L"stringy_marble_ao.png";
-		meshInfo.szMetallicTextureFileName = path + L"stringy_marble_Metallic.png";
-		meshInfo.szNormalTextureFileName = path + L"stringy_marble_Normal-dx.png";
-		meshInfo.szRoughnessTextureFileName = path + L"stringy_marble_Roughness.png";
+		//std::wstring path = L"./Assets/Textures/PBR/stringy-marble-ue/";
+		//meshInfo.szAlbedoTextureFileName = path + L"stringy_marble_albedo.png";
+		//meshInfo.szEmissiveTextureFileName = L"";
+		//meshInfo.szAOTextureFileName = path + L"stringy_marble_ao.png";
+		//meshInfo.szMetallicTextureFileName = path + L"stringy_marble_Metallic.png";
+		//meshInfo.szNormalTextureFileName = path + L"stringy_marble_Normal-dx.png";
+		//meshInfo.szRoughnessTextureFileName = path + L"stringy_marble_Roughness.png";
 
 		m_pGround = new Model;
 		m_pGround->Initialize(pRenderer, { meshInfo });
@@ -124,17 +124,16 @@ bool Scene::Initialize(Renderer* pRenderer)
 		pMeshConstData->bUseHeightMap = TRUE;
 
 		MaterialConstants* pMatertialConstData = (MaterialConstants*)m_pGround->Meshes[0]->MaterialConstant.pSystemMem;
-		pMatertialConstData->AlbedoFactor = Vector3(0.7f);
+		pMatertialConstData->AlbedoFactor = Vector3(0.9f);
 		pMatertialConstData->EmissionFactor = Vector3::Zero;
-		pMatertialConstData->MetallicFactor = 0.7f;
-		pMatertialConstData->RoughnessFactor = 0.3f;
+		//pMatertialConstData->MetallicFactor = 0.7f;
+		pMatertialConstData->MetallicFactor = 0.8f;
+		pMatertialConstData->RoughnessFactor = 0.2f;
 
 		// m_pGround->Meshes[0]->pMaterialBuffer->Height;
 
 		// Vector3 position = Vector3(0.0f, -1.0f, 0.0f);
 		Vector3 position = Vector3::Zero;
-		//m_pGround->UpdateWorld(Matrix::CreateRotationX(DirectX::XM_PI * 0.5f) * Matrix::CreateTranslation(position));
-		//m_pGround->UpdateWorld(Matrix::CreateTranslation(position));
 		m_pGround->bCastShadow = false; // 바닥은 그림자 만들기 생략.
 		RenderObjects.push_back(m_pGround);
 

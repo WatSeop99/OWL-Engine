@@ -539,7 +539,7 @@ void Renderer::SetConstantBuffers(ID3D11Buffer** ppResources, UINT startSlots, U
 	}
 	if (stage & PipelineStage_PS)
 	{
-		m_pContext->GSSetConstantBuffers(startSlots, bufferCount, ppResources);
+		m_pContext->PSSetConstantBuffers(startSlots, bufferCount, ppResources);
 	}
 	if (stage & PipelineStage_CS)
 	{
@@ -973,9 +973,7 @@ void Renderer::PassGBuffer()
 	_ASSERT(m_pScene);
 
 	SetMainViewport();
-	SetGlobalConsts(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0);
-	//SetConstantBuffers(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0, 1, PipelineStage_VS | PipelineStage_GS | PipelineStage_PS);
-	//m_pScene->BindGlobalConstantBuffer(0, PipelineStage_VS | PipelineStage_GS | PipelineStage_PS);
+	SetConstantBuffers(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0, 1, PipelineStage_VS | PipelineStage_GS | PipelineStage_PS);
 	m_pGBuffer->PrepareRender();
 
 	for (SIZE_T i = 0, size = m_pScene->RenderObjects.size(); i < size; ++i)
@@ -1005,9 +1003,7 @@ void Renderer::PassDeferredLighting()
 
 	SetMainViewport();
 	m_pResourceManager->SetPipelineState(GraphicsPSOType_DeferredRendering);
-	SetGlobalConsts(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0);
-	//SetConstantBuffers(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0, 1, PipelineStage_VS | PipelineStage_GS | PipelineStage_PS);
-	//m_pScene->BindGlobalConstantBuffer(0, PipelineStage_VS | PipelineStage_GS | PipelineStage_PS);
+	SetConstantBuffers(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0, 1, PipelineStage_VS | PipelineStage_GS | PipelineStage_PS);
 
 	const float CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	m_pContext->ClearRenderTargetView(m_pDeferredBuffer->pRTV, CLEAR_COLOR);
@@ -1033,7 +1029,7 @@ void Renderer::PassDeferredLighting()
 	Sun* pSun = m_pScene->GetSun();
 	memcpy(&pLightConstsData->Lights, &pSun->SunProperty, sizeof(LightProperty));
 	pLightConstantBuffer->Upload();
-	SetGlobalConsts(&pLightConstantBuffer->pBuffer, 1);
+	SetConstantBuffers(&pLightConstantBuffer->pBuffer, 1, 1, PipelineStage_VS | PipelineStage_PS);
 	m_pContext->PSSetShaderResources(7, 1, &pSun->GetShadowMapPtr()->GetCascadeShadowBufferPtr()->pSRV);
 	m_pContext->Draw(6, 0);
 
@@ -1043,7 +1039,7 @@ void Renderer::PassDeferredLighting()
 
 		memcpy(&pLightConstsData->Lights, &m_pScene->Lights[i].Property, sizeof(LightProperty));
 		pLightConstantBuffer->Upload();
-		SetGlobalConsts(&pLightConstantBuffer->pBuffer, 1);
+		SetConstantBuffers(&pLightConstantBuffer->pBuffer, 1, 1, PipelineStage_VS | PipelineStage_PS);
 
 		switch (curLight.Property.LightType & (LIGHT_DIRECTIONAL | LIGHT_POINT | LIGHT_SPOT))
 		{
@@ -1100,12 +1096,12 @@ void Renderer::PassSSR()
 	_ASSERT(m_pFloatBuffer);
 
 	SetMainViewport();
-	// float buffer를 렌더타겟하고 srv로 같이 쓸 수가 없다. 하나 더 만들던가, 아님 deferred 할때 렌더타겟을 바꾸던가 해야한다.
 	m_pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, nullptr);
 
 	m_pResourceManager->SetPipelineState(GraphicsPSOType_SSR);
-	SetGlobalConsts(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0);
-	SetConstantBuffers(&m_pScene->GetSSRConstantBuffer()->pBuffer, 1, 1, PipelineStage_PS);
+
+	ID3D11Buffer* ppBuffers[2] = { m_pScene->GetGlobalConstantBuffer()->pBuffer, m_pScene->GetSSRConstantBuffer()->pBuffer };
+	SetConstantBuffers(ppBuffers, 0, 2, PipelineStage_PS);
 
 	ID3D11ShaderResourceView* ppResources[4] =
 	{
@@ -1118,7 +1114,9 @@ void Renderer::PassSSR()
 
 	m_pContext->Draw(6, 0);
 
+	ID3D11Buffer* ppNullCBVs[2] = { nullptr, };
 	ID3D11ShaderResourceView* ppNullSRVs[4] = { nullptr, };
+	m_pContext->PSSetConstantBuffers(0, 2, ppNullCBVs);
 	m_pContext->PSSetShaderResources(0, 4, ppNullSRVs);
 }
 
@@ -1127,9 +1125,7 @@ void Renderer::PassDebug()
 	_ASSERT(m_pScene);
 
 	SetMainViewport();
-	SetGlobalConsts(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0);
-	//SetConstantBuffers(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0, 1, PipelineStage_VS | PipelineStage_GS | PipelineStage_PS);
-	//m_pScene->BindGlobalConstantBuffer(0, PipelineStage_VS | PipelineStage_GS | PipelineStage_PS);
+	SetConstantBuffers(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0, 1, PipelineStage_VS | PipelineStage_GS | PipelineStage_PS);
 	m_pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_pGBuffer->DepthBuffer.pDSV);
 
 	for (SIZE_T i = 0, size = m_pScene->RenderObjects.size(); i < size; ++i)

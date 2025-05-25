@@ -126,6 +126,12 @@ void DebugApp2::InitScene()
 		Model* pSphere = new Model;
 		pSphere->Initialize(m_pRenderer, { meshInfo });
 
+		Mesh* pCurMesh = pSphere->Meshes[0];
+		MaterialConstants* pMaterialConstData = (MaterialConstants*)pCurMesh->MaterialConstant.pSystemMem;
+		pMaterialConstData->AlbedoFactor = Vector3(0.5f, 0.5f, 0.5f);
+		pMaterialConstData->RoughnessFactor = 0.3f;
+		pMaterialConstData->MetallicFactor = 0.7f;
+
 		pSphere->UpdateWorld(Matrix::CreateTranslation(Vector3(0.5f, 1.0f, 0.2)));
 
 		m_pScene->RenderObjects.push_back(pSphere);

@@ -61,7 +61,7 @@ PixelShaderOutput main(PixelShaderInput input)
     float3 emission = bUseEmissiveMap ? g_EmissiveTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, lod).rgb : g_EmissionFactor;
     float height = bUseHeightMap ? g_HeightTexture.SampleLevel(g_LinearClampSampler, input.Texcoord, 0.0f).r : 0.0f;
     
-    if(bUseColorMap)
+    if (bUseColorMap)
     {
         albedo = input.Color;
         height = 0.0f;

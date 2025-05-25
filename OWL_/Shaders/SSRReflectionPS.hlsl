@@ -100,7 +100,7 @@ float4 SSRRayMarch(in float3 dir, inout float3 hitCoord)
 
 float4 main(PSInput input) : SV_TARGET
 {
-    float4 normalMetallic = g_NormalTex.Sample(g_LinearPointBorderSampler, input.Tex);
+    float3 normal = g_NormalTex.Sample(g_LinearPointBorderSampler, input.Tex).rgb;
     float4 sceneColor = g_SceneTex.SampleLevel(g_LinearClampSampler, input.Tex, 0.0f);
     
     float metallic = g_ExtraTex.Sample(g_LinearPointBorderSampler, input.Tex).r;
@@ -108,9 +108,8 @@ float4 main(PSInput input) : SV_TARGET
     {
         return sceneColor;
     }
-    float3 normal = normalMetallic.rgb;
+    
     normal = 2.0f * normal - 1.0f;
-    normal = normalize(normal);
 
     float depth = g_DepthTex.Sample(g_LinearClampSampler, input.Tex);
     float3 viewSpacePosition = GetViewSpacePosition(input.Tex, depth);
@@ -124,5 +123,5 @@ float4 main(PSInput input) : SV_TARGET
     float reflectionIntensity = saturate(screenEdgeFactor * saturate(reflectDirection.z) * (coords.w));
 
     float3 reflectionColor = reflectionIntensity * g_SceneTex.SampleLevel(g_LinearClampSampler, coords.xy, 0.0f).rgb;
-    return sceneColor + metallic * max(0, float4(reflectionColor, 1.0f));
+    return sceneColor + metallic * max(0.0f, float4(reflectionColor, 1.0f));
 }
