@@ -5,7 +5,7 @@
 
 static const float3 F_DIELECTRIC = 0.04f; // 비금속(Dielectric) 재질의 F0.
 
-float3 SchlickFresnel(float3 F0, float NdotH)
+float3 SchlickFresnel(in float3 F0, in float NdotH)
 {
     return F0 + (1.0f - F0) * pow(2.0f, (-5.55473f * NdotH - 6.98316f) * NdotH);
     //return F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);

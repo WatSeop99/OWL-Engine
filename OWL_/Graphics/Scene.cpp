@@ -75,7 +75,7 @@ bool Scene::Initialize(Renderer* pRenderer)
 			m_ppLightSpheres[i]->UpdateWorld(Matrix::CreateTranslation(Lights[i].Property.Position));
 
 			MaterialConstants* pMaterialConstData = (MaterialConstants*)m_ppLightSpheres[i]->Meshes[0]->MaterialConstant.pSystemMem;
-			pMaterialConstData->AlbedoFactor = Vector3(0.0f);
+			pMaterialConstData->AlbedoFactor = Vector3::Zero;
 			pMaterialConstData->EmissionFactor = Vector3(1.0f, 1.0f, 0.0f);
 			m_ppLightSpheres[i]->bCastShadow = false; // 조명 표시 물체들은 그림자 X.
 			for (UINT64 j = 0, size = m_ppLightSpheres[i]->Meshes.size(); j < size; ++j)
@@ -83,7 +83,7 @@ bool Scene::Initialize(Renderer* pRenderer)
 				Mesh* pCurMesh = m_ppLightSpheres[i]->Meshes[j];
 
 				MaterialConstants* pMeshMaterialConstData = (MaterialConstants*)pCurMesh->MaterialConstant.pSystemMem;
-				pMeshMaterialConstData->AlbedoFactor = Vector3(0.0f);
+				pMeshMaterialConstData->AlbedoFactor = Vector3::Zero;
 				pMeshMaterialConstData->EmissionFactor = Vector3(1.0f, 1.0f, 0.0f);
 			}
 
@@ -125,8 +125,8 @@ bool Scene::Initialize(Renderer* pRenderer)
 
 		MaterialConstants* pMatertialConstData = (MaterialConstants*)m_pGround->Meshes[0]->MaterialConstant.pSystemMem;
 		pMatertialConstData->AlbedoFactor = Vector3(0.7f);
-		pMatertialConstData->EmissionFactor = Vector3(0.0f);
-		pMatertialConstData->MetallicFactor = 0.5f;
+		pMatertialConstData->EmissionFactor = Vector3::Zero;
+		pMatertialConstData->MetallicFactor = 0.7f;
 		pMatertialConstData->RoughnessFactor = 0.3f;
 
 		// m_pGround->Meshes[0]->pMaterialBuffer->Height;
@@ -144,9 +144,11 @@ bool Scene::Initialize(Renderer* pRenderer)
 
 	GlobalConstants initialGlobal = {};
 	LightConstants initialLight = {};
+	SSRConstants initialSSR = {};
 	m_GlobalConstants.Initialize(pDevice, pContext, sizeof(GlobalConstants), &initialGlobal);
 	m_ReflectionGlobalConstants.Initialize(pDevice, pContext, sizeof(GlobalConstants), &initialGlobal);
 	m_LightConstants.Initialize(pDevice, pContext, sizeof(LightConstants), &initialLight);
+	m_SSRConstants.Initialize(pDevice, pContext, sizeof(SSRConstants), &initialSSR);
 
 	GlobalConstants* pGlobalConstData = (GlobalConstants*)m_GlobalConstants.pSystemMem;
 	if (!pGlobalConstData)

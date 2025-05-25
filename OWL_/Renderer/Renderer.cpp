@@ -277,6 +277,11 @@ void Renderer::Cleanup()
 		m_pRandomNoise = nullptr;
 	}*/
 
+	if (m_pDeferredBuffer)
+	{
+		delete m_pDeferredBuffer;
+		m_pDeferredBuffer = nullptr;
+	}
 	if (m_pFloatBuffer)
 	{
 		delete m_pFloatBuffer;
@@ -909,11 +914,17 @@ void Renderer::CreateBuffers()
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 	desc.MiscFlags = 0;
 	desc.CPUAccessFlags = 0;
+	if (!m_pDeferredBuffer)
+	{
+		m_pDeferredBuffer = new Texture;
+	}
+	m_pDeferredBuffer->Initialize(m_pDevice, m_pContext, desc, nullptr, true);
 	if (!m_pFloatBuffer)
 	{
 		m_pFloatBuffer = new Texture;
 	}
 	m_pFloatBuffer->Initialize(m_pDevice, m_pContext, desc, nullptr, true);
+	
 
 	if (!m_pGBuffer)
 	{
@@ -999,8 +1010,8 @@ void Renderer::PassDeferredLighting()
 	//m_pScene->BindGlobalConstantBuffer(0, PipelineStage_VS | PipelineStage_GS | PipelineStage_PS);
 
 	const float CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	m_pContext->ClearRenderTargetView(m_pFloatBuffer->pRTV, CLEAR_COLOR);
-	m_pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, nullptr);
+	m_pContext->ClearRenderTargetView(m_pDeferredBuffer->pRTV, CLEAR_COLOR);
+	m_pContext->OMSetRenderTargets(1, &m_pDeferredBuffer->pRTV, nullptr);
 
 	ID3D11ShaderResourceView* ppSRVs[5] = { m_pGBuffer->AlbedoBuffer.pSRV, m_pGBuffer->NormalBuffer.pSRV, m_pGBuffer->PositionBuffer.pSRV, m_pGBuffer->EmissionBuffer.pSRV, m_pGBuffer->ExtraBuffer.pSRV };
 	m_pContext->PSSetShaderResources(0, 5, ppSRVs);
@@ -1058,7 +1069,10 @@ void Renderer::PassForward()
 	PassSky();
 	
 	// Reflectance
-
+	PassSSR();
+	/*{
+		m_pContext->CopyResource(m_pFloatBuffer->GetTexture2D(), m_pDeferredBuffer->GetTexture2D());
+	}*/
 
 	// Refraction
 }
@@ -1067,9 +1081,10 @@ void Renderer::PassSky()
 {
 	_ASSERT(m_pContext);
 	_ASSERT(m_pScene);
+	_ASSERT(m_pDeferredBuffer);
 
 	SetMainViewport();
-	m_pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, m_pGBuffer->DepthBuffer.pDSV);
+	m_pContext->OMSetRenderTargets(1, &m_pDeferredBuffer->pRTV, m_pGBuffer->DepthBuffer.pDSV);
 
 	m_pScene->GetSky()->Render(m_pScene->GetSkyLUT()->GetSkyLUT());
 	m_pScene->GetSun()->Render();
@@ -1077,6 +1092,34 @@ void Renderer::PassSky()
 	ID3D11RenderTargetView* pNullRTV = nullptr;
 	ID3D11DepthStencilView* pNullDSV = nullptr;
 	m_pContext->OMSetRenderTargets(1, &pNullRTV, pNullDSV);
+}
+
+void Renderer::PassSSR()
+{
+	_ASSERT(m_pContext);
+	_ASSERT(m_pFloatBuffer);
+
+	SetMainViewport();
+	// float buffer를 렌더타겟하고 srv로 같이 쓸 수가 없다. 하나 더 만들던가, 아님 deferred 할때 렌더타겟을 바꾸던가 해야한다.
+	m_pContext->OMSetRenderTargets(1, &m_pFloatBuffer->pRTV, nullptr);
+
+	m_pResourceManager->SetPipelineState(GraphicsPSOType_SSR);
+	SetGlobalConsts(&m_pScene->GetGlobalConstantBuffer()->pBuffer, 0);
+	SetConstantBuffers(&m_pScene->GetSSRConstantBuffer()->pBuffer, 1, 1, PipelineStage_PS);
+
+	ID3D11ShaderResourceView* ppResources[4] =
+	{
+		m_pGBuffer->NormalBuffer.pSRV,
+		m_pGBuffer->ExtraBuffer.pSRV,
+		m_pDeferredBuffer->pSRV,
+		m_pGBuffer->DepthBuffer.pSRV
+	};
+	m_pContext->PSSetShaderResources(0, 4, ppResources);
+
+	m_pContext->Draw(6, 0);
+
+	ID3D11ShaderResourceView* ppNullSRVs[4] = { nullptr, };
+	m_pContext->PSSetShaderResources(0, 4, ppNullSRVs);
 }
 
 void Renderer::PassDebug()

@@ -54,12 +54,12 @@ PixelShaderOutput main(PixelShaderInput input)
     float distance = length(input.WorldPosition - g_EyeWorld);
     lod = distance / 10.0f;
 
-    float4 albedo = (bUseAlbedoMap ? g_AlbedoTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, lod) * float4(g_AlbedoFactor, 1.0f) : float4(g_AlbedoFactor, 1.0f));
-    float ao = (bUseAOMap ? g_AOTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, lod).r : 1.0f);
-    float metallic = (bUseMetallicMap ? g_MetallicTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, lod).b * g_MetallicFactor : g_MetallicFactor);
-    float roughness = (bUseRoughnessMap ? g_RoughnessTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, lod).g * g_RoughnessFactor : g_RoughnessFactor);
-    float3 emission = (bUseEmissiveMap ? g_EmissiveTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, lod).rgb : g_EmissionFactor);
-    float height = (bUseHeightMap ? g_HeightTexture.SampleLevel(g_LinearClampSampler, input.Texcoord, 0.0f).r : 0.0f);
+    float4 albedo = bUseAlbedoMap ? g_AlbedoTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, lod) * float4(g_AlbedoFactor, 1.0f) : float4(g_AlbedoFactor, 1.0f);
+    float ao = bUseAOMap ? g_AOTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, lod).r : 1.0f;
+    float metallic = bUseMetallicMap ? g_MetallicTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, lod).r : g_MetallicFactor;
+    float roughness = bUseRoughnessMap ? g_RoughnessTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, lod).r * g_RoughnessFactor : g_RoughnessFactor;
+    float3 emission = bUseEmissiveMap ? g_EmissiveTex.SampleLevel(g_LinearWrapSampler, input.Texcoord, lod).rgb : g_EmissionFactor;
+    float height = bUseHeightMap ? g_HeightTexture.SampleLevel(g_LinearClampSampler, input.Texcoord, 0.0f).r : 0.0f;
     
     if(bUseColorMap)
     {

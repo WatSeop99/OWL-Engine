@@ -82,6 +82,7 @@ private:
 	void PassDeferredLighting();
 	void PassForward();
 	void PassSky();
+	void PassSSR();
 	void PassDebug();
 
 	void ProcessKeyboardControl(float deltaTime);
@@ -111,6 +112,7 @@ private:
 
 	Texture* m_pBackBuffer = nullptr;
 	Texture* m_pFloatBuffer = nullptr;
+	Texture* m_pDeferredBuffer = nullptr;
 	Texture* m_pPrevBuffer = nullptr;
 	GBuffer* m_pGBuffer = nullptr;
 

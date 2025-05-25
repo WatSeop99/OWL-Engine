@@ -14,14 +14,14 @@ static const float NEAR_PLANE = 0.01f;
 static const float FAR_PLANE = 50.0f;
 
 // NdcDepthToViewDepth.
-float N2V(float ndcDepth, matrix invProj)
+float N2V(in float ndcDepth, in matrix invProj)
 {
     // return invProj[3][2] / (ndcDepth - invProj[2][2]);
     float4 pointView = mul(float4(0.0f, 0.0f, ndcDepth, 1.0f), invProj);
     return pointView.z / pointView.w;
 }
 
-float2 VogelSample(int i, int nrSample, float startTheta)
+float2 VogelSample(in int i, in int nrSample, in float startTheta)
 {
     const float GOLDEN_ANGLE = 2.4f;
     float idx = (float)i;

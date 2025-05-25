@@ -43,12 +43,13 @@ protected:
 public:
 	ID3D11SamplerState* pLinearWrapSS = nullptr;
 	ID3D11SamplerState* pLinearClampSS = nullptr;
-	ID3D11SamplerState* pPointClampSS = nullptr;
-	ID3D11SamplerState* pShadowPointSS = nullptr;
-	ID3D11SamplerState* pShadowLinearSS = nullptr;
-	ID3D11SamplerState* pShadowCompareSS = nullptr;
-	ID3D11SamplerState* pPointWrapSS = nullptr;
+	ID3D11SamplerState* pLinearBorderSS = nullptr;
 	ID3D11SamplerState* pLinearMirrorSS = nullptr;
+	ID3D11SamplerState* pPointClampSS = nullptr;
+	ID3D11SamplerState* pPointWrapSS = nullptr;
+	ID3D11SamplerState* pPointBorderSS = nullptr;
+	ID3D11SamplerState* pLinearPointBorderSS = nullptr;
+	ID3D11SamplerState* pLinearPointBorderComparisonSS = nullptr;
 	ID3D11SamplerState* pSkyLUTSS = nullptr;
 	std::vector<ID3D11SamplerState*> SamplerStates;
 
@@ -107,6 +108,7 @@ public:
 	ID3D11PixelShader* pSkyLUTPS = nullptr;
 	ID3D11PixelShader* pSkyPS = nullptr;
 	ID3D11PixelShader* pSunPS = nullptr;
+	ID3D11PixelShader* pSSRReflectionPS = nullptr;
 	ID3D11GeometryShader* pNormalGS = nullptr;
 	ID3D11GeometryShader* pBillboardGS = nullptr;
 	ID3D11GeometryShader* pDepthOnlyCubeGS = nullptr;

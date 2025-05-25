@@ -299,11 +299,11 @@ void PostProcessor::RenderPostProcessing()
 	
 	if (pCombineFilterConstData->Strength > 0.0f)
 	{
-		for (UINT64 i = 0, size = m_pBloomDownFilters.size(); i < size; ++i)
+		for (SIZE_T i = 0, size = m_pBloomDownFilters.size(); i < size; ++i)
 		{
 			RenderImageFilter(m_pBloomDownFilters[i]);
 		}
-		for (UINT64 i = 0, size = m_pBloomUpFilters.size(); i < size; ++i)
+		for (SIZE_T i = 0, size = m_pBloomUpFilters.size(); i < size; ++i)
 		{
 			RenderImageFilter(m_pBloomUpFilters[i]);
 		}

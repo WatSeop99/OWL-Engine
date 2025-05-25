@@ -26,13 +26,23 @@ TextureCube g_SpecularIBLTex : register(t11);
 TextureCube g_IrradianceIBLTex : register(t12);
 Texture2D g_BRDFTex : register(t13);
 
+//SamplerState g_LinearWrapSampler : register(s0);
+//SamplerState g_LinearClampSampler : register(s1);
+//SamplerState g_PointBorderSampler : register(s2); // g_ShadowPointSampler
+//SamplerState g_LinearBorderSampler : register(s3); // g_ShadowLinearSampler
+//SamplerComparisonState g_LinearPointCompareSampler : register(s4); // g_ShadowCompareSampler
+//SamplerState g_PointWrapSampler : register(s5);
+//SamplerState g_LinearMirrorSampler : register(s6);
+//SamplerState g_PointClampSampler : register(s7);
+
 SamplerState g_LinearWrapSampler : register(s0);
 SamplerState g_LinearClampSampler : register(s1);
-SamplerState g_ShadowPointSampler : register(s2);
-SamplerState g_ShadowLinearSampler : register(s3);
-SamplerComparisonState g_ShadowCompareSampler : register(s4);
-SamplerState g_PointWrapSampler : register(s5);
-SamplerState g_LinearMirrorSampler : register(s6);
-SamplerState g_PointClampSampler : register(s7);
+SamplerState g_LinearBorderSampler : register(s2);
+SamplerState g_LinearMirrorSampler : register(s3);
+SamplerState g_PointWrapSampler : register(s4);
+SamplerState g_PointClampSampler : register(s5);
+SamplerState g_PointBorderSampler : register(s6);
+SamplerState g_LinearPointBorderSampler : register(s7);
+SamplerComparisonState g_LinearPointCompareSampler : register(s8);
 
 #endif

@@ -14,8 +14,9 @@ cbuffer SSRConstants : register(b1)
 }
 
 Texture2D<float4> g_NormalTex : register(t0);
-Texture2D<float4> g_SceneTex : register(t1);
-Texture2D<float> g_DepthTex : register(t2);
+Texture2D<float4> g_ExtraTex : register(t1); // { metallic, roughness, ao, height }
+Texture2D<float4> g_SceneTex : register(t2);
+Texture2D<float> g_DepthTex : register(t3);
 
 static const int SSR_MAX_STEPS = 16;
 static const int SSR_BINARY_SEARCH_STEPS = 16;
@@ -99,10 +100,10 @@ float4 SSRRayMarch(in float3 dir, inout float3 hitCoord)
 
 float4 main(PSInput input) : SV_TARGET
 {
-    float4 normalMetallic = g_NormalTex.Sample(LinearBorderSampler, input.Tex);
+    float4 normalMetallic = g_NormalTex.Sample(g_LinearPointBorderSampler, input.Tex);
     float4 sceneColor = g_SceneTex.SampleLevel(g_LinearClampSampler, input.Tex, 0.0f);
     
-    float metallic = normalMetallic.a;
+    float metallic = g_ExtraTex.Sample(g_LinearPointBorderSampler, input.Tex).r;
     if (metallic < 0.01f)
     {
         return sceneColor;

@@ -173,7 +173,7 @@ void DebugApp2::InitScene()
 			Mesh* pCurMesh = m_pCharacter->Meshes[i];
 
 			MaterialConstants* pMaterialConstData = (MaterialConstants*)pCurMesh->MaterialConstant.pSystemMem;
-			pMaterialConstData->AlbedoFactor = Vector3(1.0f);
+			pMaterialConstData->AlbedoFactor = Vector3::One;
 			pMaterialConstData->RoughnessFactor = 0.8f;
 			pMaterialConstData->MetallicFactor = 0.0f;
 		}

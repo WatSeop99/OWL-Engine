@@ -38,6 +38,7 @@ enum eGraphicsPSOType
 	GraphicsPSOType_SkyLUT,
 	GraphicsPSOType_Sky,
 	GraphicsPSOType_Sun,
+	GraphicsPSOType_SSR,
 	GraphicsPSOType_VolumeSmoke,
 	GraphicsPSOType_Count
 };

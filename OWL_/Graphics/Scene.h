@@ -37,6 +37,7 @@ public:
 
 	inline ConstantBuffer* GetGlobalConstantBuffer() { return &m_GlobalConstants; }
 	inline ConstantBuffer* GetLightConstantBuffer() { return &m_LightConstants; }
+	inline ConstantBuffer* GetSSRConstantBuffer() { return &m_SSRConstants; }
 
 	inline AerialLUT* GetAerialLUT() { return m_pAerialLUT; }
 	inline SkyLUT* GetSkyLUT() { return m_pSkyLUT; }
@@ -78,6 +79,7 @@ private:
 	ConstantBuffer m_GlobalConstants;
 	ConstantBuffer m_ReflectionGlobalConstants;
 	ConstantBuffer m_LightConstants;
+	ConstantBuffer m_SSRConstants;
 
 	// 공통으로 사용하는 환경맵 리소스들.
 	Texture* m_pEnv = nullptr;

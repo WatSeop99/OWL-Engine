@@ -120,3 +120,10 @@ ALIGN(16) struct ImageFilterConstData
 	float Option3 = 0.0f; // blur in CombinePS.hlsl
 	float Option4 = 0.0f;
 };
+
+ALIGN(16) struct SSRConstants
+{
+	float SSRRayStep = 1.60f;
+	float SSRRayHitThreshold = 2.00f;
+	float dummy2[2];
+};

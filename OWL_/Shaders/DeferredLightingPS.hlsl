@@ -23,19 +23,20 @@ Texture2DArray g_CascadeShadowMaps : register(t7);
 float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, float3 normalWorld)
 {
     // Directional light.
-    float3 lightVec = ((light.Type & LIGHT_SUN) ? -light.Direction : representativePoint - posWorld); // light.position - posWorld;
+    float3 lightVec = (light.Type & LIGHT_SUN) ? -light.Direction : representativePoint - posWorld; // light.position - posWorld;
     float lightDist = length(lightVec);
     lightVec /= lightDist;
 
     // Spot light.
-    float spotFator = ((light.Type & LIGHT_SPOT) ? pow(max(-dot(lightVec, light.Direction), 0.0f), light.SpotPower) : 1.0f);
+    float spotFator = (light.Type & LIGHT_SPOT) ? pow(max(-dot(lightVec, light.Direction), 0.0f), light.SpotPower) : 1.0f;
         
     // Distance attenuation.
-    float att = ((light.Type & LIGHT_SUN) ? 1.0f : saturate((light.FallOffEnd - lightDist) / (light.FallOffEnd - light.FallOffStart)));
+    float att = (light.Type & LIGHT_SUN) ? 1.0f : saturate((light.FallOffEnd - lightDist) / (light.FallOffEnd - light.FallOffStart));
 
     // Shadow map.
     float shadowFactor = 1.0f;
 
+    [branch]
     if (light.Type & LIGHT_SHADOW)
     {
         float4 lightScreen = float4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -60,7 +61,7 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
                         lightTexcoord.xy = float2(lightScreen.x, -lightScreen.y);
                         lightTexcoord.xy = (lightTexcoord.xy + 1.0f) * 0.5f;
                     
-                        float depth = g_CascadeShadowMaps.SampleLevel(g_ShadowPointSampler, float3(lightTexcoord.xy, i), 0.0f);
+                        float depth = g_CascadeShadowMaps.SampleLevel(g_PointBorderSampler, float3(lightTexcoord.xy, i), 0.0f);
                         if (depth <= lightScreen.z - 0.005f || depth >= lightScreen.z + 0.005f)
                         {
                             index = i;
@@ -70,7 +71,7 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
                     
                     if (index != -1)
                     {
-                        shadowFactor = PCSSForDirectionalLight(g_CascadeShadowMaps, g_ShadowPointSampler, g_ShadowCompareSampler, index, lightTexcoord.xy, lightScreen.z - 0.0001f, light.InverseProjections[index], light.Radius * radiusScale);
+                        shadowFactor = PCSSForDirectionalLight(g_CascadeShadowMaps, g_PointBorderSampler, g_LinearPointCompareSampler, index, lightTexcoord.xy, lightScreen.z - 0.0001f, light.InverseProjections[index], light.Radius * radiusScale);
                     }
                 }
                 break;
@@ -105,7 +106,7 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
         
                     lightTexcoord = lightToPos;
         
-                    shadowFactor = PCSSForPointLight(g_ShadowCubeMap, g_ShadowPointSampler, g_ShadowCompareSampler, lightTexcoord, lightScreen.z - 0.0001f, light.InverseProjections[0], light.Radius * radiusScale);
+                    shadowFactor = PCSSForPointLight(g_ShadowCubeMap, g_PointBorderSampler, g_LinearPointCompareSampler, lightTexcoord, lightScreen.z - 0.0001f, light.InverseProjections[0], light.Radius * radiusScale);
                 }
                 break;
             
@@ -120,7 +121,7 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
                     lightTexcoord.xy = float2(lightScreen.x, -lightScreen.y);
                     lightTexcoord.xy = (lightTexcoord.xy + 1.0f) * 0.5f;
        
-                    shadowFactor = PCSSForSpotLight(g_Shadow2DMap, g_ShadowPointSampler, g_ShadowCompareSampler, lightTexcoord.xy, lightScreen.z - 0.0001f, light.InverseProjections[0], light.Radius * radiusScale);
+                    shadowFactor = PCSSForSpotLight(g_Shadow2DMap, g_PointBorderSampler, g_LinearPointCompareSampler, lightTexcoord.xy, lightScreen.z - 0.0001f, light.InverseProjections[0], light.Radius * radiusScale);
                 }
                 break;
             

@@ -150,17 +150,17 @@ std::wstring RemoveExtension(const std::wstring& filePath)
 
 int Min(const int X, const int Y)
 {
-    return (X < Y ? X : Y);
+    return (X < Y) ? X : Y;
 }
 
 UINT Min(const UINT X, const UINT Y)
 {
-    return (X < Y ? X : Y);
+    return (X < Y) ? X : Y;
 }
 
 float Min(const float X, const float Y)
 {
-    return (X < Y ? X : Y);
+    return (X < Y) ? X : Y;
 }
 
 Vector3 Min(const Vector3& V1, const Vector3& V2)
@@ -174,17 +174,17 @@ Vector3 Min(const Vector3& V1, const Vector3& V2)
 
 int Max(const int X, const int Y)
 {
-    return (X > Y ? X : Y);
+    return (X > Y) ? X : Y;
 }
 
 UINT Max(const UINT X, const UINT Y)
 {
-    return (X > Y ? X : Y);
+    return (X > Y) ? X : Y;
 }
 
 float Max(const float X, const float Y)
 {
-    return (X > Y ? X : Y);
+    return (X > Y) ? X : Y;
 }
 
 Vector3 Max(const Vector3& V1, const Vector3& V2)

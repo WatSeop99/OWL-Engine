@@ -51,14 +51,14 @@ void GBuffer::PrepareRender()
 	_ASSERT(m_pContext);
 
 	const float CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	ID3D11RenderTargetView* ppRTVs[5] = { AlbedoBuffer.pRTV, NormalBuffer.pRTV, PositionBuffer.pRTV, EmissionBuffer.pRTV, ExtraBuffer.pRTV };
-	
 	m_pContext->ClearRenderTargetView(AlbedoBuffer.pRTV, CLEAR_COLOR);
 	m_pContext->ClearRenderTargetView(NormalBuffer.pRTV, CLEAR_COLOR);
 	m_pContext->ClearRenderTargetView(PositionBuffer.pRTV, CLEAR_COLOR);
 	m_pContext->ClearRenderTargetView(EmissionBuffer.pRTV, CLEAR_COLOR);
 	m_pContext->ClearRenderTargetView(ExtraBuffer.pRTV, CLEAR_COLOR);
 	m_pContext->ClearDepthStencilView(DepthBuffer.pDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	ID3D11RenderTargetView* ppRTVs[5] = { AlbedoBuffer.pRTV, NormalBuffer.pRTV, PositionBuffer.pRTV, EmissionBuffer.pRTV, ExtraBuffer.pRTV };
 	m_pContext->OMSetRenderTargets(5, ppRTVs, DepthBuffer.pDSV);
 }
 

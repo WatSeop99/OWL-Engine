@@ -80,7 +80,7 @@ HRESULT ResourceManager::CreateTextureFromFile(const WCHAR* pszFileName, ID3D11T
 	int width = 0;
 	int height = 0;
 	std::vector<UINT8> imageData;
-	//DXGI_FORMAT pixelFormat = (bUseSRGB ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM);
+	//DXGI_FORMAT pixelFormat = bUseSRGB ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT pixelFormat;
 
 	if (GetFileExtension(pszFileName).compare(L"exr") == 0)
@@ -183,10 +183,11 @@ void ResourceManager::Cleanup()
 	SAFE_RELEASE(pLinearWrapSS);
 	SAFE_RELEASE(pLinearClampSS);
 	SAFE_RELEASE(pPointClampSS);
-	SAFE_RELEASE(pShadowPointSS);
-	SAFE_RELEASE(pShadowLinearSS);
-	SAFE_RELEASE(pShadowCompareSS);
+	SAFE_RELEASE(pPointBorderSS);
+	SAFE_RELEASE(pLinearBorderSS);
+	SAFE_RELEASE(pLinearPointBorderComparisonSS);
 	SAFE_RELEASE(pPointWrapSS);
+	SAFE_RELEASE(pLinearPointBorderSS);
 	SAFE_RELEASE(pLinearMirrorSS);
 	SAFE_RELEASE(pSkyLUTSS);
 
@@ -248,6 +249,7 @@ void ResourceManager::Cleanup()
 	SAFE_RELEASE(pSkyLUTPS);
 	SAFE_RELEASE(pSkyPS);
 	SAFE_RELEASE(pSunPS);
+	SAFE_RELEASE(pSSRReflectionPS);
 
 	SAFE_RELEASE(pNormalGS);
 	SAFE_RELEASE(pBillboardGS);
@@ -284,97 +286,172 @@ void ResourceManager::InitSamplers()
 	_ASSERT(m_pDevice);
 
 	HRESULT hr = S_OK;
-
 	D3D11_SAMPLER_DESC sampDesc = {};
+
 	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.MipLODBias = 0.0f;
+	sampDesc.MaxAnisotropy = 16;
 	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	ZeroMemory(sampDesc.BorderColor, sizeof(float) * 4);
 	sampDesc.MinLOD = 0.0f;
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	hr = m_pDevice->CreateSamplerState(&sampDesc, &pLinearWrapSS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pLinearWrapSS, "g_pLinearWrapSS");
+	SET_DEBUG_INFO_TO_OBJECT(pLinearWrapSS, "LinearWrapSS");
 
 	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.MipLODBias = 0.0f;
+	sampDesc.MaxAnisotropy = 16;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	ZeroMemory(sampDesc.BorderColor, sizeof(float) * 4);
+	sampDesc.MinLOD = 0.0f;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	hr = m_pDevice->CreateSamplerState(&sampDesc, &pPointWrapSS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pPointWrapSS, "pPointWrapSS");
+	SET_DEBUG_INFO_TO_OBJECT(pPointWrapSS, "PointWrapSS");
 
 	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
 	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
 	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampDesc.MipLODBias = 0.0f;
+	sampDesc.MaxAnisotropy = 16;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	ZeroMemory(sampDesc.BorderColor, sizeof(float) * 4);
+	sampDesc.MinLOD = 0.0f;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	hr = m_pDevice->CreateSamplerState(&sampDesc, &pLinearClampSS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pLinearClampSS, "pLinearClampSS");
+	SET_DEBUG_INFO_TO_OBJECT(pLinearClampSS, "LinearClampSS");
 
 	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampDesc.MipLODBias = 0.0f;
+	sampDesc.MaxAnisotropy = 16;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	ZeroMemory(sampDesc.BorderColor, sizeof(float) * 4);
+	sampDesc.MinLOD = 0.0f;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	hr = m_pDevice->CreateSamplerState(&sampDesc, &pPointClampSS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pPointClampSS, "pPointClampSS");
+	SET_DEBUG_INFO_TO_OBJECT(pPointClampSS, "PointClampSS");
 
 	// shadowPointSS.
-	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
-	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
-	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
-	sampDesc.BorderColor[0] = 1.0f; // 큰 Z값
 	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
-	hr = m_pDevice->CreateSamplerState(&sampDesc, &pShadowPointSS);
-	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pShadowPointSS, "pShadowPointSS");
-
 	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
 	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
 	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	sampDesc.MipLODBias = 0.0f;
+	sampDesc.MaxAnisotropy = 16;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 	sampDesc.BorderColor[0] = 1.0f; // 큰 Z값
-	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	hr = m_pDevice->CreateSamplerState(&sampDesc, &pShadowLinearSS);
+	sampDesc.MinLOD = 0.0f;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	hr = m_pDevice->CreateSamplerState(&sampDesc, &pPointBorderSS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pShadowLinearSS, "pShadowLinearSS");
+	SET_DEBUG_INFO_TO_OBJECT(pPointBorderSS, "PointBorderSS");
+
+	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	sampDesc.MipLODBias = 0.0f;
+	sampDesc.MaxAnisotropy = 16;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDesc.BorderColor[0] = 1.0f; // 큰 Z값
+	sampDesc.MinLOD = 0.0f;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	hr = m_pDevice->CreateSamplerState(&sampDesc, &pLinearBorderSS);
+	BREAK_IF_FAILED(hr);
+	SET_DEBUG_INFO_TO_OBJECT(pLinearBorderSS, "LinearBorderSS");
 
 	// shadowCompareSS, 쉐이더 안에서는 SamplerComparisonState
 	// Filter = "_COMPARISON_" 주의
 	// https://www.gamedev.net/forums/topic/670575-uploading-samplercomparisonstate-in-hlsl/
+	sampDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
 	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
 	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
 	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
-	sampDesc.BorderColor[0] = 100.0f; // 큰 Z값
-	sampDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+	sampDesc.MipLODBias = 0.0f;
+	sampDesc.MaxAnisotropy = 16;
 	sampDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
-	hr = m_pDevice->CreateSamplerState(&sampDesc, &pShadowCompareSS);
+	sampDesc.BorderColor[0] = 100.0f; // 큰 Z값
+	sampDesc.MinLOD = 0.0f;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	hr = m_pDevice->CreateSamplerState(&sampDesc, &pLinearPointBorderComparisonSS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pShadowCompareSS, "pShadowCompareSS");
+	SET_DEBUG_INFO_TO_OBJECT(pLinearPointBorderComparisonSS, "LinearPointBorderComparisonSS");
 
 	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_MIRROR;
 	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_MIRROR;
 	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_MIRROR;
+	sampDesc.MipLODBias = 0.0f;
+	sampDesc.MaxAnisotropy = 16;
 	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	sampDesc.BorderColor[4] = { 0.0f, };
+	ZeroMemory(sampDesc.BorderColor, sizeof(float) * 4);
+	sampDesc.MinLOD = 0.0f;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	hr = m_pDevice->CreateSamplerState(&sampDesc, &pLinearMirrorSS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pLinearMirrorSS, "pLinearMirrorSS");
+	SET_DEBUG_INFO_TO_OBJECT(pLinearMirrorSS, "LinearMirrorSS");
+
+	sampDesc.Filter = D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	sampDesc.MipLODBias = 0.0f;
+	sampDesc.MaxAnisotropy = 16;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	ZeroMemory(sampDesc.BorderColor, sizeof(float) * 4);
+	sampDesc.MinLOD = 0.0f;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	hr = m_pDevice->CreateSamplerState(&sampDesc, &pLinearPointBorderSS);
+	BREAK_IF_FAILED(hr);
+	SET_DEBUG_INFO_TO_OBJECT(pLinearPointBorderSS, "LinearPointBorderSS");
 
 	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
 	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampDesc.MipLODBias = 0.0f;
+	sampDesc.MaxAnisotropy = 16;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	ZeroMemory(sampDesc.BorderColor, sizeof(float) * 4);
+	sampDesc.MinLOD = 0.0f;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	hr = m_pDevice->CreateSamplerState(&sampDesc, &pSkyLUTSS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pSkyLUTSS, "pSkyLUTSS");
+	SET_DEBUG_INFO_TO_OBJECT(pSkyLUTSS, "SkyLUTSS");
 
 	// 샘플러 순서가 "Common.hlsli"에서와 일관성 있어야 함
 	SamplerStates.reserve(8);
-	SamplerStates.push_back(pLinearWrapSS);    // s0
-	SamplerStates.push_back(pLinearClampSS);   // s1
-	SamplerStates.push_back(pShadowPointSS);   // s2
-	SamplerStates.push_back(pShadowLinearSS);  // s3
-	SamplerStates.push_back(pShadowCompareSS); // s4
-	SamplerStates.push_back(pPointWrapSS);     // s5
-	SamplerStates.push_back(pLinearMirrorSS);  // s6
-	SamplerStates.push_back(pPointClampSS);    // s7
+	//SamplerStates.push_back(pLinearWrapSS);    // s0
+	//SamplerStates.push_back(pLinearClampSS);   // s1
+	//SamplerStates.push_back(pPointBorderSS);   // s2
+	//SamplerStates.push_back(pLinearBorderSS);  // s3
+	//SamplerStates.push_back(pLinearPointBorderComparisonSS); // s4
+	//SamplerStates.push_back(pPointWrapSS);     // s5
+	//SamplerStates.push_back(pLinearMirrorSS);  // s6
+	//SamplerStates.push_back(pPointClampSS);    // s7
+
+	SamplerStates.push_back(pLinearWrapSS);
+	SamplerStates.push_back(pLinearClampSS);
+	SamplerStates.push_back(pLinearBorderSS);
+	SamplerStates.push_back(pLinearMirrorSS);
+	SamplerStates.push_back(pPointWrapSS);
+	SamplerStates.push_back(pPointClampSS);
+	SamplerStates.push_back(pPointBorderSS);
+	SamplerStates.push_back(pLinearPointBorderSS);
+	SamplerStates.push_back(pLinearPointBorderComparisonSS);
 }
 
 void ResourceManager::InitRasterizerStates()
@@ -388,51 +465,51 @@ void ResourceManager::InitRasterizerStates()
 	rasterDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_BACK;
 	rasterDesc.FrontCounterClockwise = FALSE;
 	rasterDesc.DepthClipEnable = TRUE;
-	rasterDesc.MultisampleEnable = TRUE; // MSAA.
+	rasterDesc.MultisampleEnable = FALSE; // MSAA.
 	hr = m_pDevice->CreateRasterizerState(&rasterDesc, &pSolidRS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pSolidRS, "pSolidRS");
+	SET_DEBUG_INFO_TO_OBJECT(pSolidRS, "SolidRS");
 
 	// 거울에 반사되면 삼각형의 Winding이 바뀌기 때문에 CCW로 그려야함
 	rasterDesc.FrontCounterClockwise = TRUE;
 	hr = m_pDevice->CreateRasterizerState(&rasterDesc, &pSolidCcwRS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pSolidCcwRS, "pSolidCcwRS");
+	SET_DEBUG_INFO_TO_OBJECT(pSolidCcwRS, "SolidCcwRS");
 
 	rasterDesc.FillMode = D3D11_FILL_MODE::D3D11_FILL_WIREFRAME;
 	hr = m_pDevice->CreateRasterizerState(&rasterDesc, &pWireCcwRS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pWireCcwRS, "pWireCcwRS");
+	SET_DEBUG_INFO_TO_OBJECT(pWireCcwRS, "WireCcwRS");
 
 	rasterDesc.FrontCounterClockwise = FALSE;
 	hr = m_pDevice->CreateRasterizerState(&rasterDesc, &pWireRS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pWireRS, "pWireRS");
+	SET_DEBUG_INFO_TO_OBJECT(pWireRS, "WireRS");
 
 	ZeroMemory(&rasterDesc, sizeof(D3D11_RASTERIZER_DESC));
 	rasterDesc.FillMode = D3D11_FILL_MODE::D3D11_FILL_SOLID;
 	rasterDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_NONE; // 양면
 	rasterDesc.FrontCounterClockwise = FALSE;
 	rasterDesc.DepthClipEnable = TRUE;
-	rasterDesc.MultisampleEnable = TRUE; // MSAA.
+	rasterDesc.MultisampleEnable = FALSE; // MSAA.
 	hr = m_pDevice->CreateRasterizerState(&rasterDesc, &pSolidBothRS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pSolidBothRS, "pSolidBothRS");
+	SET_DEBUG_INFO_TO_OBJECT(pSolidBothRS, "SolidBothRS");
 
 	rasterDesc.FrontCounterClockwise = TRUE;
 	hr = m_pDevice->CreateRasterizerState(&rasterDesc, &pSolidBothCcwRS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pSolidBothCcwRS, "pSolidBothCcwRS");
+	SET_DEBUG_INFO_TO_OBJECT(pSolidBothCcwRS, "SolidBothCcwRS");
 
 	rasterDesc.FillMode = D3D11_FILL_MODE::D3D11_FILL_WIREFRAME; // 양면, Wire
 	hr = m_pDevice->CreateRasterizerState(&rasterDesc, &pWireBothCcwRS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pWireBothCcwRS, "pWireBothCcwRS");
+	SET_DEBUG_INFO_TO_OBJECT(pWireBothCcwRS, "WireBothCcwRS");
 
 	rasterDesc.FrontCounterClockwise = FALSE;
 	hr = m_pDevice->CreateRasterizerState(&rasterDesc, &pWireBothRS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pWireBothRS, "pWireBothRS");
+	SET_DEBUG_INFO_TO_OBJECT(pWireBothRS, "WireBothRS");
 
 	ZeroMemory(&rasterDesc, sizeof(D3D11_RASTERIZER_DESC));
 	rasterDesc.FillMode = D3D11_FILL_MODE::D3D11_FILL_SOLID;
@@ -441,7 +518,7 @@ void ResourceManager::InitRasterizerStates()
 	rasterDesc.DepthClipEnable = FALSE;
 	hr = m_pDevice->CreateRasterizerState(&rasterDesc, &pPostProcessingRS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pPostProcessingRS, "pPostProcessingRS");
+	SET_DEBUG_INFO_TO_OBJECT(pPostProcessingRS, "PostProcessingRS");
 }
 
 void ResourceManager::InitBlendStates()
@@ -465,7 +542,7 @@ void ResourceManager::InitBlendStates()
 	mirrorBlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 	hr = m_pDevice->CreateBlendState(&mirrorBlendDesc, &pMirrorBS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pMirrorBS, "pMirrorBS");
+	SET_DEBUG_INFO_TO_OBJECT(pMirrorBS, "MirrorBS");
 
 
 	D3D11_BLEND_DESC blendDesc = {};
@@ -481,7 +558,7 @@ void ResourceManager::InitBlendStates()
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 	hr = m_pDevice->CreateBlendState(&blendDesc, &pAdditiveBS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pAdditiveBS, "pAdditiveBS");
+	SET_DEBUG_INFO_TO_OBJECT(pAdditiveBS, "AdditiveBS");
 
 	// Dst: 현재 백버퍼, Src: 새로 픽셀 쉐이더에서 출력.
 	ZeroMemory(&blendDesc, sizeof(blendDesc));
@@ -497,7 +574,7 @@ void ResourceManager::InitBlendStates()
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 	hr = m_pDevice->CreateBlendState(&blendDesc, &pAlphaBS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pAlphaBS, "pAlphaBS");
+	SET_DEBUG_INFO_TO_OBJECT(pAlphaBS, "AlphaBS");
 }
 
 void ResourceManager::InitDepthStencilStates()
@@ -527,7 +604,7 @@ void ResourceManager::InitDepthStencilStates()
 	dsDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
 	hr = m_pDevice->CreateDepthStencilState(&dsDesc, &pDrawDSS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pDrawDSS, "pDrawDSS");
+	SET_DEBUG_INFO_TO_OBJECT(pDrawDSS, "DrawDSS");
 
 	dsDesc.DepthEnable = TRUE;
 	dsDesc.StencilEnable = FALSE;
@@ -535,7 +612,7 @@ void ResourceManager::InitDepthStencilStates()
 	dsDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 	hr = m_pDevice->CreateDepthStencilState(&dsDesc, &pSkyDSS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pSkyDSS, "pSkyDSS");
+	SET_DEBUG_INFO_TO_OBJECT(pSkyDSS, "SkyDSS");
 
 	dsDesc.DepthEnable = TRUE;
 	dsDesc.StencilEnable = FALSE;
@@ -543,7 +620,7 @@ void ResourceManager::InitDepthStencilStates()
 	dsDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 	hr = m_pDevice->CreateDepthStencilState(&dsDesc, &pSunDSS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pSunDSS, "pSunDSS");
+	SET_DEBUG_INFO_TO_OBJECT(pSunDSS, "SunDSS");
 
 	// Stencil에 1로 표기해주는 DSS.
 	dsDesc.DepthEnable = TRUE; // 이미 그려진 물체 유지.
@@ -559,7 +636,7 @@ void ResourceManager::InitDepthStencilStates()
 	dsDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
 	hr = m_pDevice->CreateDepthStencilState(&dsDesc, &pMaskDSS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pMaskDSS, "g_pMaskDSS");
+	SET_DEBUG_INFO_TO_OBJECT(pMaskDSS, "MaskDSS");
 
 	// Stencil에 1로 표기된 경우에"만" 그리는 DSS.
 	// DepthBuffer는 초기화된 상태로 가정.
@@ -575,7 +652,7 @@ void ResourceManager::InitDepthStencilStates()
 	dsDesc.FrontFace.StencilFunc = D3D11_COMPARISON_EQUAL;
 	hr = m_pDevice->CreateDepthStencilState(&dsDesc, &pDrawMaskedDSS);
 	BREAK_IF_FAILED(hr);
-	SET_DEBUG_INFO_TO_OBJECT(pDrawMaskedDSS, "pDrawMaskedDSS");
+	SET_DEBUG_INFO_TO_OBJECT(pDrawMaskedDSS, "DrawMaskedDSS");
 }
 
 void ResourceManager::InitShaders()
@@ -719,6 +796,8 @@ void ResourceManager::InitShaders()
 	hr = CreatePixelShader(L"./Shaders/Atmosphere/SkyPS.hlsl", nullptr, &pSkyPS);
 	BREAK_IF_FAILED(hr);
 	hr = CreatePixelShader(L"./Shaders/Atmosphere/SunPS.hlsl", nullptr, &pSunPS);
+	BREAK_IF_FAILED(hr);
+	hr = CreatePixelShader(L"./Shaders/SSRReflectionPS.hlsl", nullptr, &pSSRReflectionPS);
 	BREAK_IF_FAILED(hr);
 
 	hr = CreateGeometryShader(L"./Shaders/NormalGS.hlsl", nullptr, &pNormalGS);
@@ -939,6 +1018,10 @@ void ResourceManager::InitPipelineStates()
 	GraphicsPSOs[GraphicsPSOType_Sun].pPixelShader = pSunPS;
 	GraphicsPSOs[GraphicsPSOType_Sun].pDepthStencilState = pSunDSS;
 	GraphicsPSOs[GraphicsPSOType_Sun].pInputLayout = pSunIL;
+
+	GraphicsPSOs[GraphicsPSOType_SSR].pVertexShader = pScreenQuadVS;
+	GraphicsPSOs[GraphicsPSOType_SSR].pPixelShader = pSSRReflectionPS;
+	GraphicsPSOs[GraphicsPSOType_SSR].pBlendState = pAdditiveBS;
 
 	ComputePSOs[ComputePSOType_AerialLUT].pComputeShader = pAerialLUTCS;
 	
