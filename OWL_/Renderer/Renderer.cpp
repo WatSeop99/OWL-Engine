@@ -212,6 +212,8 @@ bool Renderer::InitScene()
 {
 	_ASSERT(m_pScene);
 
+	m_pMainCamera->Reset(Vector3(3.74966f, 5.03645f, -2.54918f), -0.819048f, 0.741502f);
+
 	m_pPostProcessor->SetGlobalConstants(m_pScene->GetGlobalConstantBuffer());
 
 	// 커서 표시 (Main sphere와의 충돌이 감지되면 월드 공간에 작게 그려지는 구).
@@ -377,6 +379,7 @@ void Renderer::Render()
 	RenderGUI();
 
 	m_pSwapChain->Present(1, 0);
+	//m_pSwapChain->Present(0, 0);
 }
 
 void Renderer::RenderGUI()

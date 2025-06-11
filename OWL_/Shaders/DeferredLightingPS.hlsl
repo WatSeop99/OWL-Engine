@@ -48,7 +48,7 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
             case LIGHT_SUN:
                 {
                     int index = -1;
-                    
+                
                     for (int i = 0; i < 4; ++i)
                     {
                         lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[i]);
@@ -57,18 +57,27 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
                         {
                             continue;
                         }
-                    
+                
                         lightTexcoord.xy = float2(lightScreen.x, -lightScreen.y);
                         lightTexcoord.xy = (lightTexcoord.xy + 1.0f) * 0.5f;
-                    
+                
+                        // shadow map에 기록된 값들이 너무 1쪽에 치중되어져 있다.
+                        // 그래서 그런지 밑바닥을 제외하고 그림자 적용하면 깔끔하게 되는데
+                        // 밑바닥 포함해서 그림자 적용하면 이전처럼 자글자글해진다.
+                        // 어차피 infinite terrain 적용할꺼면 그림자 전체 다 적용할껀데
+                        // 지금처럼 자글자글해지면 골아파짐.
+                        // 따라서 depth 저장을 역저장?역변환? 하여튼 FGED에 있는 기법을 이용해봐야할듯.
+                        // https://github.com/microsoft/DirectXMath/issues/158 
+                        // reverse-z 한번 고려해볼것.
                         float depth = g_CascadeShadowMaps.SampleLevel(g_PointBorderSampler, float3(lightTexcoord.xy, i), 0.0f);
-                        if (depth <= lightScreen.z - 0.005f || depth >= lightScreen.z + 0.005f)
+                        if (depth <= lightScreen.z - 0.007f || depth >= lightScreen.z + 0.007f)
                         {
                             index = i;
                             break;
                         }
                     }
-                    
+                
+                    [branch]
                     if (index != -1)
                     {
                         shadowFactor = PCSSForDirectionalLight(g_CascadeShadowMaps, g_PointBorderSampler, g_LinearPointCompareSampler, index, lightTexcoord.xy, lightScreen.z - 0.0001f, light.InverseProjections[index], light.Radius * radiusScale);
@@ -90,7 +99,7 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
                     int index = 0;
                     float maxDotProduct = -2.0f;
                     float3 lightToPos = normalize(posWorld - light.Position);
-                    
+                
                     for (int i = 0; i < 6; ++i)
                     {
                         float curDot = dot(lightToPos, VIEW_DIRs[i]);
@@ -113,11 +122,11 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
             case LIGHT_DIRECTIONAL:
             case LIGHT_SPOT:
                 {
-                    // Project posWorld to light screen.  
+                // Project posWorld to light screen.  
                     lightScreen = mul(float4(posWorld, 1.0f), light.ViewProjection[0]);
                     lightScreen.xyz /= lightScreen.w;
         
-                    // 카메라(광원)에서 볼 때의 텍스춰 좌표 계산. ([-1, 1], [-1, 1]) ==> ([0, 1], [0, 1])
+                // 카메라(광원)에서 볼 때의 텍스춰 좌표 계산. ([-1, 1], [-1, 1]) ==> ([0, 1], [0, 1])
                     lightTexcoord.xy = float2(lightScreen.x, -lightScreen.y);
                     lightTexcoord.xy = (lightTexcoord.xy + 1.0f) * 0.5f;
        

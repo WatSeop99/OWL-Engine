@@ -21,6 +21,7 @@ public:
 	void Render();
 
 private:
+	void CalculateFrame();
 	void UpdateGUI();
 
 private:

@@ -8,6 +8,8 @@
 #define WIN32_LEAN_AND_MEAN 
 #define PROFILING
 #define DX11
+//#define DX12
+//#define DXR
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -39,9 +41,6 @@
 #define ALIGN(size) __declspec(align(size))
 
 #include <Windows.h>
-//#include <wrl.h>
-//#include <wrl/client.h>
-//#include <comdef.h>
 #include <errhandlingapi.h>
 #include <stringapiset.h>
 #include <minwindef.h>

@@ -101,14 +101,17 @@ void Camera::PrintView()
 
 Matrix Camera::GetView()
 {
-	return (Matrix::CreateTranslation(-m_Position) * Matrix::CreateRotationY(-m_Yaw) * Matrix::CreateRotationX(-m_Pitch)); // m_Pitch가 양수이면 고개를 드는 방향.
+	return Matrix::CreateTranslation(-m_Position) * Matrix::CreateRotationY(-m_Yaw) * Matrix::CreateRotationX(-m_Pitch); // m_Pitch가 양수이면 고개를 드는 방향.
 }
 
 Matrix Camera::GetProjection()
 {
-	return (m_bUsePerspectiveProjection ?
-			DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(m_ProjectionFovAngleY), m_Aspect, m_NearZ, m_FarZ) :
-			DirectX::XMMatrixOrthographicOffCenterLH(-m_Aspect, m_Aspect, -1.0f, 1.0f, m_NearZ, m_FarZ));
+	// https://github.com/microsoft/DirectXMath/issues/158
+	// reverse-z 적용해보는거 한번 고려해볼것.
+
+	return m_bUsePerspectiveProjection ?
+		DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(m_ProjectionFovAngleY), m_Aspect, m_NearZ, m_FarZ) :
+		DirectX::XMMatrixOrthographicOffCenterLH(-m_Aspect, m_Aspect, -1.0f, 1.0f, m_NearZ, m_FarZ);
 }
 
 FrustumDirection Camera::GetFrustumDirection()

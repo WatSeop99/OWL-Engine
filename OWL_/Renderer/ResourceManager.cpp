@@ -383,7 +383,7 @@ void ResourceManager::InitSamplers()
 	sampDesc.MipLODBias = 0.0f;
 	sampDesc.MaxAnisotropy = 16;
 	sampDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
-	sampDesc.BorderColor[0] = 100.0f; // 큰 Z값
+	sampDesc.BorderColor[0] = 1000.0f; // 큰 Z값
 	sampDesc.MinLOD = 0.0f;
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	hr = m_pDevice->CreateSamplerState(&sampDesc, &pLinearPointBorderComparisonSS);

@@ -389,7 +389,6 @@
     </None>
     <None Include="packages.config" />
     <None Include="Shaders\ShadingUtil.hlsl" />
-    <None Include="Shaders\ShadowUtil.hlsl" />
     <None Include="Shaders\TileableNoise.hlsli" />
     <None Include="Shaders\Hash.hlsli" />
     <None Include="Shaders\CommonHeader\GlobalResource.hlsli" />
@@ -439,5 +438,6 @@
     <None Include="Shaders\CommonHeader\LightResource.hlsli" />
     <None Include="Shaders\CommonHeader\ObjectResource.hlsli" />
     <None Include="Shaders\SSRReflectionPS.hlsl" />
+    <None Include="Shaders\ShadowUtil.hlsl" />
   </ItemGroup>
 </Project>

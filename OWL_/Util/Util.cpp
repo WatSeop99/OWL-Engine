@@ -6,207 +6,261 @@
 
 std::wstring UTF8ToWideString(const std::string& str)
 {
-    wchar_t wstr[MAX_PATH];
-    if (!MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, str.c_str(), -1, wstr, MAX_PATH))
-    {
-        wstr[0] = L'\0';
-    }
-    return wstr;
+	WCHAR wstr[MAX_PATH];
+	if (!MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, str.c_str(), -1, wstr, MAX_PATH))
+	{
+		wstr[0] = L'\0';
+	}
+	return wstr;
 }
 
 std::string WideStringToUTF8(const std::wstring& wstr)
 {
-    char str[MAX_PATH];
-    if (!WideCharToMultiByte(CP_ACP, MB_PRECOMPOSED, wstr.c_str(), -1, str, MAX_PATH, nullptr, nullptr))
-    {
-        str[0] = L'\0';
-    }
-    return str;
+	char str[MAX_PATH];
+	if (!WideCharToMultiByte(CP_ACP, MB_PRECOMPOSED, wstr.c_str(), -1, str, MAX_PATH, nullptr, nullptr))
+	{
+		str[0] = L'\0';
+	}
+	return str;
 }
 
 std::string ToLower(const std::string& str)
 {
-    std::string lower_case = str;
-    std::locale loc;
-    for (char& s : lower_case)
-    {
-        s = std::tolower(s, loc);
-    }
-    return lower_case;
+	std::string lower_case = str;
+	std::locale loc;
+	for (char& s : lower_case)
+	{
+		s = std::tolower(s, loc);
+	}
+	return lower_case;
 }
 
 std::wstring ToLower(const std::wstring& str)
 {
-    std::wstring lower_case = str;
-    std::locale loc;
-    for (wchar_t& s : lower_case)
-    {
-        s = std::tolower(s, loc);
-    }
-    return lower_case;
+	std::wstring lower_case = str;
+	std::locale loc;
+	for (wchar_t& s : lower_case)
+	{
+		s = std::tolower(s, loc);
+	}
+	return lower_case;
 }
 
 std::string GetBasePath(const std::string& filePath)
 {
-    size_t lastSlash;
-    if ((lastSlash = filePath.rfind('/')) != std::string::npos)
-    {
-        return filePath.substr(0, lastSlash + 1);
-    }
-    else if ((lastSlash = filePath.rfind('\\')) != std::string::npos)
-    {
-        return filePath.substr(0, lastSlash + 1);
-    }
-    else
-    {
-        return "";
-    }
+	size_t lastSlash;
+	if ((lastSlash = filePath.rfind('/')) != std::string::npos)
+	{
+		return filePath.substr(0, lastSlash + 1);
+	}
+	else if ((lastSlash = filePath.rfind('\\')) != std::string::npos)
+	{
+		return filePath.substr(0, lastSlash + 1);
+	}
+	else
+	{
+		return "";
+	}
 }
 
 std::wstring GetBasePath(const std::wstring& filePath)
 {
-    size_t lastSlash;
-    if ((lastSlash = filePath.rfind(L'/')) != std::wstring::npos)
-    {
-        return filePath.substr(0, lastSlash + 1);
-    }
-    else if ((lastSlash = filePath.rfind(L'\\')) != std::wstring::npos)
-    {
-        return filePath.substr(0, lastSlash + 1);
-    }
-    else
-    {
-        return L"";
-    }
+	size_t lastSlash;
+	if ((lastSlash = filePath.rfind(L'/')) != std::wstring::npos)
+	{
+		return filePath.substr(0, lastSlash + 1);
+	}
+	else if ((lastSlash = filePath.rfind(L'\\')) != std::wstring::npos)
+	{
+		return filePath.substr(0, lastSlash + 1);
+	}
+	else
+	{
+		return L"";
+	}
 }
 
 std::string RemoveBasePath(const std::string& filePath)
 {
-    size_t lastSlash;
-    if ((lastSlash = filePath.rfind('/')) != std::string::npos)
-    {
-        return filePath.substr(lastSlash + 1, std::string::npos);
-    }
-    else if ((lastSlash = filePath.rfind('\\')) != std::string::npos)
-    {
-        return filePath.substr(lastSlash + 1, std::string::npos);
-    }
-    else
-    {
-        return filePath;
-    }
+	SIZE_T lastSlash;
+	if ((lastSlash = filePath.rfind('/')) != std::string::npos)
+	{
+		return filePath.substr(lastSlash + 1, std::string::npos);
+	}
+	else if ((lastSlash = filePath.rfind('\\')) != std::string::npos)
+	{
+		return filePath.substr(lastSlash + 1, std::string::npos);
+	}
+	else
+	{
+		return filePath;
+	}
 }
 
 std::wstring RemoveBasePath(const std::wstring& filePath)
 {
-    size_t lastSlash;
-    if ((lastSlash = filePath.rfind(L'/')) != std::string::npos)
-    {
-        return filePath.substr(lastSlash + 1, std::string::npos);
-    }
-    else if ((lastSlash = filePath.rfind(L'\\')) != std::string::npos)
-    {
-        return filePath.substr(lastSlash + 1, std::string::npos);
-    }
-    else
-    {
-        return filePath;
-    }
+	SIZE_T lastSlash;
+	if ((lastSlash = filePath.rfind(L'/')) != std::string::npos)
+	{
+		return filePath.substr(lastSlash + 1, std::string::npos);
+	}
+	else if ((lastSlash = filePath.rfind(L'\\')) != std::string::npos)
+	{
+		return filePath.substr(lastSlash + 1, std::string::npos);
+	}
+	else
+	{
+		return filePath;
+	}
 }
 
 std::string GetFileExtension(const std::string& filePath)
 {
-    std::string fileName = RemoveBasePath(filePath);
-    size_t extOffset = fileName.rfind('.');
-    if (extOffset == std::wstring::npos)
-    {
-        return "";
-    }
+	std::string fileName = RemoveBasePath(filePath);
+	SIZE_T extOffset = fileName.rfind('.');
+	if (extOffset == std::wstring::npos)
+	{
+		return "";
+	}
 
-    return fileName.substr(extOffset + 1);
+	return fileName.substr(extOffset + 1);
 }
 
 std::wstring GetFileExtension(const std::wstring& filePath)
 {
-    std::wstring fileName = RemoveBasePath(filePath);
-    size_t extOffset = fileName.rfind(L'.');
-    if (extOffset == std::wstring::npos)
-    {
-        return L"";
-    }
+	std::wstring fileName = RemoveBasePath(filePath);
+	SIZE_T extOffset = fileName.rfind(L'.');
+	if (extOffset == std::wstring::npos)
+	{
+		return L"";
+	}
 
-    return fileName.substr(extOffset + 1);
+	return fileName.substr(extOffset + 1);
 }
 
 std::string RemoveExtension(const std::string& filePath)
 {
-    return filePath.substr(0, filePath.rfind("."));
+	return filePath.substr(0, filePath.rfind("."));
 }
 
 std::wstring RemoveExtension(const std::wstring& filePath)
 {
-    return filePath.substr(0, filePath.rfind(L"."));
+	return filePath.substr(0, filePath.rfind(L"."));
 }
 
 int Min(const int X, const int Y)
 {
-    return (X < Y) ? X : Y;
+	return (X < Y) ? X : Y;
 }
 
 UINT Min(const UINT X, const UINT Y)
 {
-    return (X < Y) ? X : Y;
+	return (X < Y) ? X : Y;
 }
 
 float Min(const float X, const float Y)
 {
-    return (X < Y) ? X : Y;
+	return (X < Y) ? X : Y;
 }
 
 Vector3 Min(const Vector3& V1, const Vector3& V2)
 {
-    DirectX::XMVECTOR v1 = DirectX::XMLoadFloat3(&V1);
-    DirectX::XMVECTOR v2 = DirectX::XMLoadFloat3(&V2);
-    DirectX::XMVECTOR ret = DirectX::XMVectorMin(v1, v2);
+	DirectX::XMVECTOR v1 = DirectX::XMLoadFloat3(&V1);
+	DirectX::XMVECTOR v2 = DirectX::XMLoadFloat3(&V2);
+	DirectX::XMVECTOR ret = DirectX::XMVectorMin(v1, v2);
 
-    return Vector3(ret);
+	return Vector3(ret);
 }
 
 int Max(const int X, const int Y)
 {
-    return (X > Y) ? X : Y;
+	return (X > Y) ? X : Y;
 }
 
 UINT Max(const UINT X, const UINT Y)
 {
-    return (X > Y) ? X : Y;
+	return (X > Y) ? X : Y;
 }
 
 float Max(const float X, const float Y)
 {
-    return (X > Y) ? X : Y;
+	return (X > Y) ? X : Y;
 }
 
 Vector3 Max(const Vector3& V1, const Vector3& V2)
 {
-    DirectX::XMVECTOR v1 = DirectX::XMLoadFloat3(&V1);
-    DirectX::XMVECTOR v2 = DirectX::XMLoadFloat3(&V2);
-    DirectX::XMVECTOR ret = DirectX::XMVectorMax(v1, v2);
+	DirectX::XMVECTOR v1 = DirectX::XMLoadFloat3(&V1);
+	DirectX::XMVECTOR v2 = DirectX::XMLoadFloat3(&V2);
+	DirectX::XMVECTOR ret = DirectX::XMVectorMax(v1, v2);
 
-    return Vector3(ret);
+	return Vector3(ret);
 }
 
 float Clamp(const float VAL, const float LOWER, const float UPPER)
 {
-    return Min(Max(VAL, LOWER), UPPER);
+	return Min(Max(VAL, LOWER), UPPER);
 }
 
 float Lerp(const float A, const float B, const float F)
 {
-    return A + F * (B - A);
+	return A + F * (B - A);
 }
 
 float DegreeToRadian(const float ANGLE)
 {
-    return ANGLE / 180.0f * DirectX::XM_PI;
+	return ANGLE / 180.0f * DirectX::XM_PI;
+}
+
+DirectX::XMMATRIX __vectorcall MatrixPerspectiveFovLH(float FovAngleY, float AspectRatio, float NearZ, float FarZ)
+{
+	_ASSERT(NearZ > 0.f && FarZ > 0.f);
+	_ASSERT(!DirectX::XMScalarNearEqual(FovAngleY, 0.0f, 0.00001f * 2.0f));
+	_ASSERT(!DirectX::XMScalarNearEqual(AspectRatio, 0.0f, 0.00001f));
+	_ASSERT(!DirectX::XMScalarNearEqual(FarZ, NearZ, 0.00001f));
+
+	static const DirectX::XMVECTORU32 MASK_Y = { { { 0x00000000, 0xFFFFFFFF, 0x00000000, 0x00000000 } } };
+	static const DirectX::XMVECTORF32 IDENTITY_R3 = { { { 0.0f, 0.0f, 0.0f, 1.0f } } };
+
+#ifdef _XM_SSE_INTRINSICS_
+	float SinFov;
+	float CosFov;
+	DirectX::XMScalarSinCos(&SinFov, &CosFov, 0.5f * FovAngleY);
+
+	float fRange = FarZ / (FarZ - NearZ);
+	float Height = CosFov / SinFov;
+	DirectX::XMVECTOR rMem = { Height / AspectRatio, Height, fRange, -fRange * NearZ };
+
+	// Copy from memory to SSE register
+	DirectX::XMVECTOR vValues = rMem;
+	DirectX::XMVECTOR vTemp = _mm_setzero_ps();
+
+	DirectX::XMMATRIX M;
+
+	// Height/AspectRatio, 0, 0, 0
+	vTemp = _mm_move_ss(vTemp, vValues);
+	M.r[0] = vTemp;
+
+	// 0, Height, 0, 0
+	vTemp = vValues;
+	vTemp = _mm_and_ps(vTemp, MASK_Y);
+	M.r[1] = vTemp;
+
+	// 여기서 2, 3번째 행?열?을 바꿔야 함.
+
+	// x=fRange, y=-fRange * NearZ, 0, 1.0f
+	vTemp = _mm_setzero_ps();
+	vValues = _mm_shuffle_ps(vValues, IDENTITY_R3, _MM_SHUFFLE(3, 2, 3, 2));
+	// 0, 0, fRange, 1.0f
+	vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(3, 0, 0, 0));
+	M.r[2] = vTemp;
+
+	// 0, 0, -fRange * NearZ, 0.0f
+	vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(2, 1, 0, 0));
+	M.r[3] = vTemp;
+
+	return M;
+#else
+	MessageBox(nullptr, TEXT("Instruction does not support SSE"), TEXT("Error"), MB_OK);
+	_ASSERT(FALSE);
+#endif
 }

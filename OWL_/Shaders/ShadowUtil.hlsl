@@ -10,8 +10,8 @@
 // #define LIGHT_FRUSTUM_WIDTH 0.2f
 //static const float LIGHT_FRUSTUM_WIDTH = 0.34641f;
 static const float LIGHT_FRUSTUM_WIDTH = 20.0f;
-static const float NEAR_PLANE = 0.01f;
-static const float FAR_PLANE = 50.0f;
+static const float NEAR_PLANE = 0.1f;
+static const float FAR_PLANE = 1000.0f;
 
 // NdcDepthToViewDepth.
 float N2V(in float ndcDepth, in matrix invProj)
@@ -24,8 +24,8 @@ float N2V(in float ndcDepth, in matrix invProj)
 float2 VogelSample(in int i, in int nrSample, in float startTheta)
 {
     const float GOLDEN_ANGLE = 2.4f;
-    float idx = (float)i;
-    float r = sqrt(idx + 0.5f) / sqrt((float)nrSample);
+    float idx = (float) i;
+    float r = sqrt(idx + 0.5f) / sqrt((float) nrSample);
     float theta = idx * GOLDEN_ANGLE + startTheta;
     return float2(cos(theta), sin(theta)) * r;
 }
@@ -47,7 +47,7 @@ float PCFFilterDirectionalLight(Texture2DArray shadowMap, SamplerComparisonState
     float sum = 0.0f;
     for (int i = 0; i < 64; ++i)
     {
-        float2 offset = diskSamples128[i] * filterRadiusUV;
+        float2 offset = diskSamples64[i] * filterRadiusUV;
         sum += shadowMap.SampleCmpLevelZero(shadowCompare, float3(uv + offset, shadowMapIndex), zReceiverNDC);
     }
     return sum / 64.0f;
@@ -173,7 +173,7 @@ float PCSSForDirectionalLight(Texture2DArray shadowMap, SamplerState shadowPoint
 
     FindBlockerInDirectionalLight(avgBlockerDepthView, numBlockers, shadowMap, shadowPoint, uv, zReceiverView, shadowMapIndex, inverseProjection, lightRadiusWorld);
 
-    if (numBlockers < 1)
+    if (numBlockers < 1.0f)
     {
         // There are no occluders so early out(this saves filtering).
         return 1.0f;
@@ -201,7 +201,7 @@ float PCSSForPointLight(TextureCube shadowMap, SamplerState shadowPoint, Sampler
 
     FindBlockerInPointLight(avgBlockerDepthView, numBlockers, shadowMap, shadowPoint, uvw, zReceiverView, inverseProjection, lightRadiusWorld);
 
-    if (numBlockers < 1)
+    if (numBlockers < 1.0f)
     {
         // There are no occluders so early out(this saves filtering).
         return 1.0f;

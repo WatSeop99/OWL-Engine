@@ -134,7 +134,11 @@ bool Scene::Initialize(Renderer* pRenderer)
 
 		// Vector3 position = Vector3(0.0f, -1.0f, 0.0f);
 		Vector3 position = Vector3::Zero;
-		m_pGround->bCastShadow = false; // 바닥은 그림자 만들기 생략.
+		// 바닥 그림자를 생성하게 되면, 같은 z-buffer에 값이 쓰이게 된다.
+		// 그래서 그값이 많이 차이가 나지 않아서 그런지 깍뚜기 현상이 생겨버린다.
+		// gpt가 말하길 텍셀 문제라고 함.
+		// sun 쪽에 상수버퍼 넣어주고 뭔가 해봐야할듯
+		m_pGround->bCastShadow = true; // 바닥은 그림자 만들기 생략.
 		RenderObjects.push_back(m_pGround);
 
 		m_MirrorPlane = DirectX::SimpleMath::Plane(position, Vector3::UnitY);
@@ -323,7 +327,7 @@ void Scene::UpdateGUI()
 
 		if (pPickedModel)
 		{
-			for (UINT64 i = 0, size = pPickedModel->Meshes.size(); i < size; ++i)
+			for (SIZE_T i = 0, size = pPickedModel->Meshes.size(); i < size; ++i)
 			{
 				MaterialConstants* pMaterialConstData = (MaterialConstants*)pPickedModel->Meshes[i]->MaterialConstant.pSystemMem;
 				MeshConstants* pMeshConstData = (MeshConstants*)pPickedModel->Meshes[i]->MeshConstant.pSystemMem;

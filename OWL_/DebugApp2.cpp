@@ -42,13 +42,18 @@ int DebugApp2::Run()
 
 	// 메인 루프.
 	MSG msg = { 0, };
-	while (msg.message != WM_QUIT && msg.message != WM_DESTROY)
+	while (TRUE)
 	{
 #ifdef PROFILING
 		OPTICK_FRAME("MainThread");
 #endif
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
+			if (msg.message == WM_QUIT || msg.message == WM_DESTROY)
+			{
+				break;
+			}
+
 #ifdef PROFILING
 			OPTICK_EVENT("TranslateMessage");
 #endif
@@ -59,6 +64,7 @@ int DebugApp2::Run()
 		{
 			Update(ImGui::GetIO().DeltaTime);
 			Render();
+			CalculateFrame();
 		}
 	}
 
@@ -106,7 +112,6 @@ void DebugApp2::InitScene()
 
 	HRESULT hr = S_OK;
 
-	m_pRenderer->GetCamera()->Reset(Vector3(3.74966f, 5.03645f, -2.54918f), -0.819048f, 0.741502f);
 	m_pRenderer->InitScene();
 
 	{
@@ -220,6 +225,26 @@ void DebugApp2::Render()
 
 	//OutputDebugStringA("Rendering time ==> ");
 	//pTimer->End();
+}
+
+void DebugApp2::CalculateFrame()
+{
+	static DWORD s_FrameCount = 0;
+	static ULONGLONG s_PrevTickCount = 0;
+
+	ULONGLONG curTickCount = GetTickCount64();
+	++s_FrameCount;
+
+	if (curTickCount - s_PrevTickCount > 1000)
+	{
+		s_PrevTickCount = curTickCount;
+
+		WCHAR szTitle[64];
+		swprintf_s(szTitle, L"OWL Engine FPS:%u", s_FrameCount);
+		SetWindowText(m_pRenderer->GetWindowHandle(), szTitle);
+
+		s_FrameCount = 0;
+	}
 }
 
 void DebugApp2::UpdateGUI()

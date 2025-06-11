@@ -24,8 +24,9 @@ static const int SSR_BINARY_SEARCH_STEPS = 16;
 float3 GetViewSpacePosition(in float2 texcoord, in float depth)
 {
     float4 clipSpaceLocation;
-    clipSpaceLocation.xy = texcoord * 2.0f - 1.0f;
-    clipSpaceLocation.y *= -1;
+    //clipSpaceLocation.xy = texcoord * 2.0f - 1.0f;
+    clipSpaceLocation.xy = texcoord;
+    //clipSpaceLocation.y *= -1;
     clipSpaceLocation.z = depth;
     clipSpaceLocation.w = 1.0f;
     float4 homogenousLocation = mul(clipSpaceLocation, g_InverseProjection);
@@ -62,10 +63,10 @@ float4 SSRBinarySearch(in float3 dir, inout float3 hitCoord)
     float3 viewSpacePosition = GetViewSpacePosition(projectedCoord.xy, depth);
     float depthDifference = hitCoord.z - viewSpacePosition.z;
 
-    return float4(projectedCoord.xy, depth, abs(depthDifference) < g_SSRRayHitThreshold ? 1.0f : 0.0f);
+    return float4(projectedCoord.xy, depth, (abs(depthDifference) < g_SSRRayHitThreshold) ? 1.0f : 0.0f);
 }
 
-float4 SSRRayMarch(in float3 dir, inout float3 hitCoord)
+float4 SSRRayMarch(in float3 dir, in float3 hitCoord)
 {
     float depth;
     for (int i = 0; i < SSR_MAX_STEPS; ++i)
@@ -120,7 +121,7 @@ float4 main(PSInput input) : SV_TARGET
 
     float2 coordsEdgeFactor = float2(1.0f, 1.0f) - pow(saturate(abs(coords.xy - float2(0.5f, 0.5f)) * 2.0f), 8.0f);
     float screenEdgeFactor = saturate(min(coordsEdgeFactor.x, coordsEdgeFactor.y));
-    float reflectionIntensity = saturate(screenEdgeFactor * saturate(reflectDirection.z) * (coords.w));
+    float reflectionIntensity = saturate(screenEdgeFactor * saturate(reflectDirection.z) * coords.w);
 
     float3 reflectionColor = reflectionIntensity * g_SceneTex.SampleLevel(g_LinearClampSampler, coords.xy, 0.0f).rgb;
     return sceneColor + metallic * max(0.0f, float4(reflectionColor, 1.0f));

@@ -30,7 +30,8 @@ void Sun::Initialize(Renderer* pRenderer, Camera* pMainCamera)
 	m_pSunCamera->SetFarZ(1000.0f);
 
 	//m_pSunShadowMap = new ShadowMap(4096, 4096);
-	m_pSunShadowMap = new ShadowMap(6144, 6144);
+	//m_pSunShadowMap = new ShadowMap(6142, 6142);
+	m_pSunShadowMap = new ShadowMap(8192, 8192);
 	m_pSunShadowMap->Initialize(pRenderer, SunProperty.LightType);
 }
 
